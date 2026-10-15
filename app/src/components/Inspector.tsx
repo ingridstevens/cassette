@@ -1,8 +1,9 @@
 import { ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
-import { useT } from "../i18n";
-import TranscribeFields from "./TranscribeFields";
+import { currentLang, useT } from "../i18n";
+import { ExtrasField, LanguageField, ModelField, NamesField, TranscriptOnlyField, langMode } from "./TranscribeFields";
+import SpeakerCountField from "./SpeakerCountField";
 import { Models } from "./useModels";
-import { modelName } from "./modelInfo";
+import { WHISPER_MODELS, modelName } from "./modelInfo";
 import { langName } from "../languages";
 import { FILE_MANAGER, ModelStatus, Options, PALETTE, Project, baseName, bytes, defaultName, displayName, fmt } from "../types";
 import "../styles/project.css";
@@ -154,8 +155,48 @@ function OptionsTab({ project, visible, canTranscribe, onAskAgain, onPatch, onOp
             : <button type="button" className="btn small" onClick={() => onOpenSettings?.("Storage and models")}>{t("Download in Settings")}</button>}
         </div>
       )}
-      <TranscribeFields eff={eff} set={(p) => set(p)} status={status} models={models} found={found} advanced onOpenSettings={onOpenSettings} />
+      <OptionRows eff={eff} set={set} status={status} models={models} found={found} speakers={liveSpeakers(project).length} onOpenSettings={onOpenSettings} />
       <div className="pv-sticky"><button type="button" className="btn sun pv-wide" disabled={!canTranscribe} onClick={onAskAgain}>{has ? t("Transcribe again…") : t("Transcribe")}</button></div>
+    </div>
+  );
+}
+
+type RowKey = "lang" | "model" | "speakers" | "extras" | "names";
+
+/** Each setting as one row that shows its current value; a click opens that row's choices and closes the others, so the tab fits on one screen. */
+function OptionRows({ eff, set, status, models, found, speakers, onOpenSettings }: { eff: Options; set(p: Partial<Options>): void; status: ModelStatus | null; models: Models; found: string; speakers: number; onOpenSettings?(section?: string): void }) {
+  const t = useT();
+  const [open, setOpen] = useState<RowKey | null>(null);
+  const id = useId();
+  const mode = langMode(eff);
+  const range = eff.numSpeakers === "range";
+  const n = Number(eff.numSpeakers);
+  const translate = eff.translate ?? currentLang() === "en";
+  const extras = [translate && t("English translation"), eff.verbatim && t("Write hesitations down"), eff.vad && t("Skip silence")].filter(Boolean).join(", ");
+  const tag = WHISPER_MODELS.find((m) => m.id === eff.model)?.tag;
+  const fields = { eff, set, status, models, found, onOpenSettings, advanced: true, bare: true };
+  const rows: [RowKey, string, string, string, ReactNode][] = [
+    ["lang", t("Languages"), mode === "one" ? langName(eff.language) : mode === "several" ? t("Several languages") : t("Detect automatically"), mode === "auto" && found ? t("Found: {found}.", { found }) : "", <LanguageField {...fields} />],
+    ["model", t("Transcription model"), t(modelName(eff.model)), status && !status.whisper[eff.model] ? t("Not downloaded") : tag ? t(tag) : "", <ModelField {...fields} />],
+    ["speakers", t("Speakers"), eff.noDiarize ? t("Transcript only") : range ? t("{min} to {max} speakers", { min: eff.minSpeakers ?? "2", max: eff.maxSpeakers ?? "4" }) : n > 0 ? (n === 1 ? t("{count} speaker", { count: n }) : t("{count} speakers", { count: n })) : t("Detect automatically"),
+      !eff.noDiarize && !eff.numSpeakers && speakers > 0 ? t("Found {count} last time", { count: speakers }) : "",
+      <><SpeakerCountField eff={eff} set={set} /><TranscriptOnlyField {...fields} /></>],
+    ["extras", t("Extras"), extras || t("None"), "", <ExtrasField {...fields} />],
+    ["names", t("Names and special words"), eff.prompt.trim() || t("None added"), "", <NamesField {...fields} />],
+  ];
+  return (
+    <div className="pv-rows">
+      {rows.map(([key, label, value, hint, body]) => (
+        <div key={key} className={"pv-row" + (open === key ? " open" : "")}>
+          <button type="button" className="pv-row-head" aria-expanded={open === key} aria-controls={open === key ? `${id}-${key}` : undefined} onClick={() => setOpen(open === key ? null : key)}>
+            <span className="pv-row-label">{label}</span>
+            <span className="pv-row-value">{value}</span>
+            {hint && <span className="pv-row-hint">{hint}</span>}
+            <svg className="pv-row-chev" viewBox="0 0 16 16" aria-hidden><path d="M6 3.5 10.5 8 6 12.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          </button>
+          {open === key && <div className="pv-row-body" id={`${id}-${key}`}>{body}</div>}
+        </div>
+      ))}
     </div>
   );
 }

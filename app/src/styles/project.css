@@ -363,7 +363,7 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .pv-dl { display: flex; align-items: center; gap: 6px; flex: none; align-self: center; }
 .pv-more { color: var(--ink2); font-size: 12.5px; }
 .pv-fields .pv-start-col { min-width: 0; }
-.pv-options .pv-sticky { position: sticky; bottom: 0; margin: 0 -2px; padding: 10px 2px 4px; background: var(--surface); box-shadow: 0 -1px 0 var(--line); z-index: 2; }
+.pv-options .pv-sticky { position: sticky; bottom: 0; padding: 10px 0 4px; z-index: 2; }
 .pv-options .pv-sticky .btn { margin-top: 0; }
 .pv-inspector .pv-radio, .pv-inspector .pv-check { padding: 9px 10px; }
 .menu-head { padding: 8px 12px 4px; font: 650 11px var(--font-ui); letter-spacing: .05em; text-transform: uppercase; color: var(--ink3); }
@@ -376,3 +376,22 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .pv-radio > label > b { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; }
 .pv-radio .badge, .st-table .badge { white-space: nowrap; margin-left: 0; }
 .st-table .badge { margin-left: 6px; }
+
+/* Options tab: one row per setting showing its current value; a row opens to show its choices */
+.pv-rows { display: flex; flex-direction: column; border-radius: 14px; background: color-mix(in srgb, var(--surface) 72%, transparent); box-shadow: inset 0 0 0 1px var(--line); }
+.pv-row + .pv-row { border-top: 1px solid var(--line); }
+.pv-row-head { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; align-items: center; text-align: left; padding: 11px 14px; border: 0; border-radius: 14px; background: none; color: inherit; font: inherit; cursor: pointer; }
+.pv-row-head:hover { background: color-mix(in srgb, var(--tint) 5%, transparent); }
+.pv-row-label { font-size: 12.5px; font-weight: 600; color: var(--ink2); }
+.pv-row-value { grid-column: 1; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-row-hint { grid-column: 1; font-size: 12.5px; color: var(--ink2); }
+.pv-row-chev { grid-column: 2; grid-row: 1 / span 3; width: 16px; height: 16px; color: var(--ink3); transition: transform .15s; }
+.pv-row.open .pv-row-chev { transform: rotate(90deg); }
+.pv-row-body { padding: 0 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.pv-row-body .pv-radios { gap: 4px; }
+.pv-rows .pv-radio, .pv-rows .pv-check { background: none; box-shadow: none; padding: 8px 10px; border-radius: 10px; }
+.pv-rows .pv-radio:has(input:checked), .pv-rows .pv-check:has(input:checked) { background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--accent-solid, #e8467c); }
+.pv-rows .pv-radio .btn.small:not(.quiet) { background: none; box-shadow: none; padding: 0 4px; color: var(--violet-ink); }
+.pv-rows .pv-more { padding: 2px 10px; }
+.pv-rows .field { padding: 2px 10px; }
+@media (prefers-reduced-motion: reduce) { .pv-row-chev { transition: none; } }
