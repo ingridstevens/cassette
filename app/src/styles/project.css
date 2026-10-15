@@ -405,15 +405,16 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .btn.pv-more { flex: none; gap: 4px; }
 .btn.pv-more .i { width: 16px; height: 16px; transition: transform .18s; }
 .btn.pv-more[aria-expanded="true"] .i { transform: rotate(180deg); }
-.pv-drawer { flex: 1 1 100%; display: grid; gap: 8px; padding: 10px 0 14px; border-top: 1px solid var(--line); animation: pv-fold .18s ease-out; }
+.pv-drawer { flex: 1 1 100%; display: grid; gap: 14px; margin-top: 8px; padding: 18px 0 20px; border-top: 1px solid var(--line); animation: pv-fold .18s ease-out; }
 .pv-drawer[hidden] { display: none; }
-.pv-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
-.pv-tools .btn { min-height: 40px; gap: 6px; }
+/* the buttons' own side padding is pulled back so their text lines up with the strip above */
+.pv-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 0 -10px; }
+.pv-tools .btn { min-height: 36px; gap: 8px; }
 .pv-tools .btn .i { width: 18px; height: 18px; }
-.pv-sep { width: 1px; height: 22px; background: var(--line); margin: 0 6px; }
-.pv-rate { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink2); }
-.pv-rate select { height: 36px; border-radius: 10px; }
-.pv-drawer .pv-hint { display: block; }
+.pv-sep { width: 1px; height: 20px; background: var(--line); margin: 0 8px; }
+.pv-rate { margin-left: auto; display: flex; align-items: center; gap: 10px; padding-right: 10px; font-size: 13px; color: var(--ink2); }
+.pv-rate select { height: 34px; padding: 0 10px; border: 0; border-radius: 999px; background: rgba(124, 92, 255, .1); color: var(--ink); font: 600 13px var(--font-ui); cursor: pointer; }
+.pv-drawer .pv-hint { display: block; padding-top: 2px; }
 @keyframes pv-fold { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .pv-drawer { animation: none; } .btn.pv-more .i { transition: none; } }
 @media (max-width: 900px) { .pv-now { max-width: 120px; } .pv-rate { margin-left: 0; } }
