@@ -34,15 +34,19 @@ names, that suggestion is dropped. The model can still pick passages you find du
 
 The suggestions and the summary are written by a small language model that **runs on your computer**. Nothing is sent anywhere. It is a one-time
 download, offered when you first press **Suggest highlights** or **Write a summary**, or any time under Settings, **Storage and models**,
-**Language model**:
+**Language model**. There you can download several, delete them, and press **Use** to choose the one every project uses. You can also switch
+in the **Language model** menu of the Highlights tab.
 
-| Size | Download | Use it when |
+| Model | Download (Mac with an Apple chip / elsewhere) | Use it when |
 | --- | --- | --- |
-| Small and quick | about 0.9 GB on a Mac with an Apple chip, about 1.1 GB elsewhere | Short recordings and clear speech. On a very short recording it may find fewer highlights, or leave the topics of a summary empty. |
-| Better quality, slower | about 4.3 GB on a Mac with an Apple chip, about 4.7 GB elsewhere | Longer recordings, mixed languages, better summaries. |
+| Qwen3 1.7B | about 1.0 GB / 1.1 GB | Short recordings and clear speech, or an older computer. |
+| **Qwen3 4B** (recommended) | about 2.3 GB / 2.5 GB | Most recordings. A good balance of quality and speed. |
+| Gemma 3 4B | about 2.6 GB / 2.5 GB | An alternative to Qwen3 4B that is very good across languages. Its licence is Google's Gemma terms, not an open-source licence. |
+| Qwen2.5 7B | about 4.3 GB / 4.7 GB | Longer recordings and better summaries, if you have the space and the patience. |
 
-The model is Qwen2.5 Instruct (Apache-2.0), and it works in German, English, French and Spanish. Reasons and summaries are written in the language
-of the recording. On a Mac with an Apple chip it runs on the graphics chip through MLX. On Windows and Linux it runs on llama.cpp; **that path has not
+All of them work in German, English, French and Spanish. The Qwen3 and Gemma models were tried on the English and German sample interviews
+before they were added to the list. Reasons and summaries are written in the language of the recording. If you downloaded the earlier *Small and quick* model (Qwen2.5 1.5B),
+it stays in the list so you can keep using it or delete it; it is weak in German, so a newer one is better. On a Mac with an Apple chip it runs on the graphics chip through MLX. On Windows and Linux it runs on llama.cpp; **that path has not
 been tested yet**. If a build of the app does not include the language model, the tab says so and highlighting by hand keeps working.
 
 ## Save highlights

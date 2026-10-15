@@ -5,7 +5,7 @@ import subprocess
 
 from engine.highlights import find_highlights, locate
 from engine.llm import chunk_lines, extract_json
-from engine.summarize import parse_clock, summarize
+from engine.summarize import parse_clock, snap_topics, summarize, topic_range
 
 
 def seg(start, text, speaker="A", per=0.5):
@@ -79,7 +79,20 @@ def test_highlights_drop_invented_quotes_and_duplicates_and_bad_lines():
 
 
 def test_highlights_survive_a_model_that_does_not_answer_in_json():
-    assert find_highlights(SEGS, NAMES, Fake("I could not find anything."), count=3) == []
+    assert find_highlights(SEGS, NAMES, Fake("I could not find anything.", "Still nothing."), count=3) == []
+
+
+def test_highlights_accept_rows_instead_of_objects():
+    q = "the best thing we ever did was to stop planning"
+    for answer in ([1, q, 9, "honest"], [[1, q, 9, "honest"]]):
+        out = find_highlights(SEGS, NAMES, Fake(json.dumps(answer)), count=3)
+        assert [(h["speaker"], h["score"], h["reason"]) for h in out] == [("B", 9.0, "honest")]
+
+
+def test_highlights_ask_once_more_when_the_answer_is_prose():
+    llm = Fake("[1] Ben: the best thing we ever did was to stop planning\n9 - honest", json.dumps([{"line": 1, "quote": "the best thing we ever did was to stop planning", "score": 9}]))
+    out = find_highlights(SEGS, NAMES, llm, count=3)
+    assert [h["speaker"] for h in out] == ["B"] and "JSON list and nothing else" in llm.prompts[1]
 
 
 def test_highlights_are_limited_to_count_and_sorted_by_time():
@@ -100,9 +113,20 @@ def test_summary_parses_topics_decisions_actions():
                          "decisions": ["Launch on 5 May", ""], "actions": [{"text": "Write the announcement", "owner": "Anna"}, {"text": "Book a room", "owner": "null"}]})
     s = summarize(SEGS, NAMES, Fake(answer), "en")
     assert s["summary"] == "They talked about shipping."
-    assert s["topics"] == [{"start": 10.0, "title": "Shipping weekly"}, {"start": 30.0, "title": "Launch"}]
+    assert s["topics"] == [{"start": 10.0, "title": "Shipping weekly"}]  # a 37-second recording gets one topic, however many the model wrote
     assert s["decisions"] == ["Launch on 5 May"]
     assert s["actions"] == [{"text": "Write the announcement", "owner": "Anna"}, {"text": "Book a room", "owner": None}]
+
+
+def test_topics_snap_to_the_line_they_fall_in_once_per_line():
+    topics = [{"start": 0.0, "title": "Intro"}, {"start": 5.0, "title": "Weather"}, {"start": 15.0, "title": "Shipping"}, {"start": 20.0, "title": "Again"}, {"start": 31.0, "title": "Launch"}]
+    assert snap_topics(topics, SEGS) == [{"start": 0.0, "title": "Intro"}, {"start": 10.0, "title": "Shipping"}, {"start": 30.0, "title": "Launch"}]
+
+
+def test_short_recordings_ask_for_fewer_topics():
+    assert topic_range(30) == "exactly 1"
+    assert topic_range(600) == "between 2 and 5"
+    assert topic_range(3 * 3600) == "between 2 and 8"
 
 
 def test_summary_of_a_long_recording_summarises_the_parts_first():
@@ -170,3 +194,16 @@ def test_export_clips_one_file_per_clip(tmp_path):
         assert [p.rsplit("/", 1)[1] for p in paths] == [f"01 - Anna Ben - 0m02s.{fmt}", f"02 - 0m07s.{fmt}"]
         info = subprocess.run([ffmpeg_exe(), "-i", paths[0]], capture_output=True, text=True).stderr
         assert "Duration: 00:00:02.6" in info or "Duration: 00:00:02.7" in info or "Duration: 00:00:02.5" in info  # 2 s plus 0.3 s of room on each side
+
+
+def test_retired_language_models_are_listed_only_for_people_who_have_them(tmp_path, monkeypatch):
+    from engine import llm, models
+
+    monkeypatch.setenv("ENGINE_MODELS_DIR", str(tmp_path))
+    monkeypatch.setattr(llm, "backend", lambda: "mlx")
+    ids = lambda: [m["id"] for m in models.llm_status()["catalog"]]  # noqa: E731
+    assert "small" not in ids() and models.llm_status()["default"] in ids()
+    snap = tmp_path / ("models--" + llm.repo_for("small", "mlx")[0].replace("/", "--")) / "snapshots" / "abc"
+    snap.mkdir(parents=True)
+    (snap / "model.safetensors").write_bytes(b"x")
+    assert "small" in ids()

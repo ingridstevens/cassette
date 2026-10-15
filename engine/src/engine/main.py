@@ -246,14 +246,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     h = sub.add_parser("highlights")
     h.add_argument("transcript")
-    h.add_argument("--model", default="small", help="language model size: small or best")
+    h.add_argument("--model", default="qwen3-4b", help="language model id, as listed by `models status` (default: qwen3-4b)")
     h.add_argument("--count", type=int, help="how many highlights (default: by length of the recording)")
     h.add_argument("--output-language", help="language of the reasons (default: the recording's language)")
     h.set_defaults(fn=cmd_highlights)
 
     sm = sub.add_parser("summarize")
     sm.add_argument("transcript")
-    sm.add_argument("--model", default="small", help="language model size: small or best")
+    sm.add_argument("--model", default="qwen3-4b", help="language model id, as listed by `models status` (default: qwen3-4b)")
     sm.add_argument("--output-language", help="language of the summary (default: the recording's language)")
     sm.set_defaults(fn=cmd_summarize)
 

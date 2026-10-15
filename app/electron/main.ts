@@ -93,7 +93,7 @@ app.whenReady().then(() => {
     const jobId = typeof o?.jobId === "string" && o.jobId.length <= 80 ? o.jobId : randomUUID();
     const tmp = path.join(os.tmpdir(), `transcript-${randomUUID()}.json`);
     fs.writeFileSync(tmp, JSON.stringify(payload));
-    const a = [kind, tmp, "--model", o?.model === "best" ? "best" : "small", ...(kind === "highlights" && Number.isInteger(o?.count) && (o.count as number) > 0 ? ["--count", String(o.count)] : [])];
+    const a = [kind, tmp, ...(typeof o?.model === "string" && /^[a-z0-9][a-z0-9.-]{0,40}$/.test(o.model) ? ["--model", o.model] : []), ...(kind === "highlights" && Number.isInteger(o?.count) && (o.count as number) > 0 ? ["--count", String(o.count)] : [])];
     try { return await runEngine(jobId, a, baseEnv(), (e) => send("engine-event", { jobId, source: "llm", clientId: o?.clientId, ...e })); }
     finally { fs.rmSync(tmp, { force: true }); }
   });

@@ -48,8 +48,28 @@ def _ask(llm: LocalLLM, lines: list[str], want: int, language: str) -> list[dict
         f"give a reason of at most 12 words, written in {language}. "
         'Reply with a JSON list only, for example [{"line": 12, "quote": "…", "score": 8, "reason": "…"}]. Reply [] if nothing is worth quoting.'
     )
-    data = extract_json(llm.chat(SYSTEM, user, max_tokens=900))
-    return [d for d in data if isinstance(d, dict)] if isinstance(data, list) else []
+    def items(answer: str) -> list[dict] | None:
+        data = extract_json(answer)
+        return _as_items(data) if isinstance(data, list) else None
+
+    found = items(llm.chat(SYSTEM, user, max_tokens=900))
+    if found is None:  # small models sometimes answer in prose; asking once more for the JSON alone usually fixes it
+        found = items(llm.chat(SYSTEM, user + "\n\nYour answer must be the JSON list and nothing else.", max_tokens=900))
+    return found or []
+
+
+def _as_items(data: list) -> list[dict] | None:
+    """The suggestions in a parsed answer, or None when it holds none. Besides the asked-for objects, accepts the shapes small models
+    drift into: rows like [line, quote, score, reason], or one flat list of those values. A prose answer such as "[3] Anna: …" parses
+    as the list [3] and counts as none."""
+    if not data:
+        return []
+    keys = ("line", "quote", "score", "reason")
+    if any(isinstance(d, dict) for d in data):
+        return [d for d in data if isinstance(d, dict)]
+    rows = [d for d in data if isinstance(d, list)] or ([data[i:i + 4] for i in range(0, len(data), 4)] if len(data) % 4 == 0 else [data])
+    out = [dict(zip(keys, r)) for r in rows if len(r) >= 2 and isinstance(r[1], str)]
+    return out or None
 
 
 def default_count(duration: float) -> int:

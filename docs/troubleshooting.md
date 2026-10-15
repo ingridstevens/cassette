@@ -78,7 +78,7 @@ and send its form (**Agree and access repository**). If it still says **Form not
 ## Suggest highlights or Write a summary doesn't work
 - **"The language model is not downloaded yet":** open the Highlights tab and press **Download the language model**, or use Settings, Storage and models. It needs one online download.
 - **The tab says the language model is not part of this version:** the build you run doesn't include it (on Windows and Linux it needs llama.cpp, which is not tested yet). Highlighting by hand still works.
-- **It found nothing, or the summary is very short:** the *Small and quick* model struggles with very short recordings. Try *Better quality, slower*.
+- **It found nothing, or the summary is very short:** small models struggle with very short recordings. Try a bigger one in Settings, Storage and models.
 - **It stops with an error:** the message is shown in the tab and the details are in the activity log (Settings, Privacy). A computer with little memory may not be able to load the larger model; use the small one.
 
 ## macOS says “Apple could not verify … is free of malware”

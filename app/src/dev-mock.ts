@@ -11,7 +11,14 @@ let token = "";
 let stopDl = false;
 const mlxSt: Record<string, boolean> = { tiny: false, base: false, small: false, medium: false, "large-v3-turbo": false, "large-v3": false };
 const hint = () => (token ? "hf_…" + token.slice(-4) : "");
-const llmSt: Record<string, boolean> = { small: false, best: false };
+const llmCatalog = [
+  { id: "small", label: "Qwen2.5 1.5B", like: "The first small model. Weak in German: use a newer one", languages: ["en", "de", "fr", "es"], license: "Apache-2.0", bytes: 868628559, retired: true },
+  { id: "qwen3-1.7b", label: "Qwen3 1.7B", like: "Small and quick. Fine for short recordings and clear speech", languages: ["en", "de", "fr", "es"], license: "Apache-2.0", bytes: 984015687 },
+  { id: "qwen3-4b", label: "Qwen3 4B", like: "Good balance of quality and speed", languages: ["en", "de", "fr", "es"], license: "Apache-2.0", bytes: 2278972236 },
+  { id: "gemma3-4b", label: "Gemma 3 4B", like: "Mid-sized. Very good across languages", languages: ["en", "de", "fr", "es"], license: "Gemma", bytes: 2600191231 },
+  { id: "best", label: "Qwen2.5 7B", like: "Large and slower. Finds better highlights and writes better summaries", languages: ["en", "de", "fr", "es"], license: "Apache-2.0", bytes: 4284346255 },
+];
+const llmSt: Record<string, boolean> = Object.fromEntries(llmCatalog.map((m) => [m.id, false]));
 if (location.search.includes("ready")) { llmSt.small = true; }
 if (location.search.includes("ready")) { st.whisper.small = true; st.whisper.tiny = true; st.diarization = true; token = "hf_mock1234"; }
 
@@ -62,7 +69,7 @@ function fake() {
   importModels: async () => { await wait(400); return { type: "done", imported: ["pyannote/speaker-diarization-3.1"] }; },
   models: async (action: string, name?: string) => {
     if (action === "check") { await wait(300); return { type: "done", valid: true, kind: "read", username: "demo-user", repos: { "pyannote/speaker-diarization-3.1": true, "pyannote/segmentation-3.0": !location.search.includes("denied"), "pyannote/wespeaker-voxceleb-resnet34-LM": true } }; }
-    if (action === "status") return { llm: { available: !location.search.includes("nollm"), backend: "mlx", models: llmSt, bytes: { small: 868628559, best: 4284346255 } }, mlxAvailable: true, mlx: mlxSt, mlxSizes: { tiny: 74e6, base: 144e6, small: 481e6, medium: 1525e6, "large-v3-turbo": 1614e6, "large-v3": 3084e6 }, ...st, dir: "/Users/demo/Library/Application Support/Local Transcriber/models", sizes };
+    if (action === "status") return { llm: { available: !location.search.includes("nollm"), backend: "mlx", default: "qwen3-4b", catalog: llmCatalog.filter((m) => llmSt[m.id] || !m.retired).map(({ bytes: _b, retired: _r, ...m }) => m), models: llmSt, bytes: Object.fromEntries(llmCatalog.map((m) => [m.id, m.bytes])) }, mlxAvailable: true, mlx: mlxSt, mlxSizes: { tiny: 74e6, base: 144e6, small: 481e6, medium: 1525e6, "large-v3-turbo": 1614e6, "large-v3": 3084e6 }, ...st, dir: "/Users/demo/Library/Application Support/Local Transcriber/models", sizes };
     if (action === "download") {
       stopDl = false;
       for (let i = 1; i <= 20; i++) {
