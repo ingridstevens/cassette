@@ -497,7 +497,7 @@ export default function ProjectView({ project, progress, blocker, waiting, visib
             <div className="pv-tools" role="group">
               <button type="button" className="btn quiet small" onClick={markStart}>{t("Start clip")}</button>
               <button type="button" className="btn quiet small" onClick={markEnd}>{t("End clip")}</button>
-              {sel && <button type="button" className="btn quiet small" onClick={async () => { if (await window.api.saveClip(path, sel[0], sel[1])) flash(t("Clip saved ✓")); }}>{t("Save clip")}</button>}
+              <button type="button" className="btn quiet small" disabled={!sel} onClick={async () => { if (sel && await window.api.saveClip(path, sel[0], sel[1])) flash(t("Clip saved ✓")); }}>{t("Save clip")}</button>
             </div>
             <div className="pv-hint pv-keys">{t("Drag the waveform to save a clip · Space or K plays · J / L skip 10 s · Double-click a word to fix it")}</div>
           </div>
