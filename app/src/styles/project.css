@@ -36,7 +36,7 @@
 .pv-w:hover { background: rgba(124, 92, 255, .1); }
 .pv-w.weak { text-decoration: underline dotted var(--ink3); text-underline-offset: 4px; }
 .pv-w.hit { background: rgba(255, 196, 60, .55); border-radius: 4px; padding: 0 2px; }
-.pv-w.cur { background: var(--sun-btn); color: var(--ink); border-radius: 5px; padding: 0 3px; }
+.pv-w.cur { background: var(--sun-btn); color: var(--on-sun); border-radius: 5px; padding: 0 3px; }
 
 /* docked player */
 .pv-dock { position: absolute; left: 28px; right: 24px; bottom: 22px; height: 104px; display: flex; align-items: center; gap: 20px; padding: 0 24px; border-radius: 26px; z-index: 5; }

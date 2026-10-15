@@ -33,6 +33,10 @@ html[data-mode="dark"] .setup-slim.info .mark { background: var(--violet); color
 html[data-mode="dark"] .setup-slim .btn.quiet { color: var(--warn-ink); }
 html[data-mode="dark"] .setup-slim.info .btn.quiet { color: var(--ink2); }
 html[data-mode="dark"] .alert.err { color: var(--err-ink); }
+/* the light-mode violet focus ring is too faint on dark surfaces; levels 2 and 3 use their own accent */
+html[data-mode="dark"]:not([data-level="2"], [data-level="3"]) :is(a, button, [tabindex], input[type="radio"], input[type="checkbox"], .mood input[type="range"]):focus-visible { outline-color: var(--violet); }
+html[data-mode="dark"]:not([data-level="2"], [data-level="3"]) :is(input, select, textarea):not([type="radio"], [type="checkbox"], [type="range"]):focus-visible { box-shadow: inset 0 0 0 2px var(--violet), 0 0 0 4px color-mix(in srgb, var(--violet) 25%, transparent); }
+html[data-mode="dark"]:not([data-level="2"], [data-level="3"]) .share-radio:has(input:focus-visible) { outline-color: var(--violet); }
 html[data-mode="dark"] select.input { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c6bcdc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
 
 /* ---- dark: cloudy tuesday (level 1) ---- */
@@ -51,6 +55,8 @@ html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) {
 html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) body { background: #111113; }
 /* white text needs a deeper blue than the one used for links and outlines */
 html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) .btn.sun { background: #0a64d8; }
+/* the current word: white on the bright link blue is too faint */
+html[data-mode="dark"][data-level="2"] .pv-w.cur { background: #0a64d8; }
 html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) .side { background: #1c1c1e; }
 html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) :is(.inspector, .pv-inspector) { background: #18181a; }
 html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) :is(.card, .dialog) { background: #1c1c1e; }
@@ -65,6 +71,7 @@ html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) .mood input[type="
 html[data-mode="dark"][data-level="3"] { --page: #0d0d0d; --accent-solid: #7aa7e0; --wave-progress: #7aa7e0; }
 html[data-mode="dark"][data-level="3"] body { background: #0d0d0d; }
 html[data-mode="dark"][data-level="3"] .btn.sun { background: #2f5d94; }
+html[data-mode="dark"][data-level="3"] .pv-w.cur { background: #2f5d94; }
 html[data-mode="dark"][data-level="3"] .side { background: #161616; }
 html[data-mode="dark"][data-level="3"] :is(.inspector, .pv-inspector) { background: #121212; }
 html[data-mode="dark"][data-level="3"] .pv-turn.now { background: #1d2430; }
