@@ -2,7 +2,7 @@ import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "../i18n";
 import ReviewBar from "./ReviewBar";
 import StartSheet, { TRIAL_SECONDS, spanText, useStartEstimate } from "./StartSheet";
-import { acceptWord, addHighlight, fixWord, highlightOf, unsureWords, withSuggestions, ExportOpts, Options, JobProgress, MOD_KEY, Project, Result, baseName, displayName, fmt, joinWithPrevious, retext, revertLine, splitSegment } from "../types";
+import { acceptWord, addHighlight, fixWord, highlightOf, unsureWords, withSuggestions, ExportOpts, Options, JobProgress, MOD_KEY, PALETTE, Project, Result, baseName, displayName, fmt, joinWithPrevious, retext, revertLine, splitSegment } from "../types";
 import "../styles/project.css";
 import ExportMenu from "./ExportMenu";
 import { langName } from "../languages";
@@ -87,6 +87,23 @@ export default function ProjectView({ project, progress, blocker, waiting, visib
   const [dialog, setDialog] = useState<"again" | "stop" | null>(null);
   const [details, setDetails] = useState(false);
   const flash = (m: string) => { setNotice(m); setTimeout(() => setNotice(""), 2800); };
+  // ---- player: the strip stays one row; "Details" folds the speaker and clip tools out below it, and remembers its state
+  const [dockOpen, setDockOpen] = useState(() => { try { return localStorage.getItem("dockOpen") === "1"; } catch { return false; } });
+  const toggleDock = () => setDockOpen((o) => { const n = !o; try { localStorage.setItem("dockOpen", n ? "1" : "0"); } catch { /* remembered state is a convenience only */ } return n; });
+  const [clipStart, setClipStart] = useState<number | null>(null);
+  const turns = result?.segments ?? [];
+  const nowTurn = turns.find((s) => time >= s.start && time <= s.end);
+  const nowName = nowTurn && result ? displayName(nowTurn.speaker, result.speakers, names) : "";
+  const nowColor = nowTurn && result ? PALETTE[Math.max(0, result.speakers.indexOf(nowTurn.speaker)) % PALETTE.length] : "";
+  const prevTurn = () => { const p = [...turns].reverse().find((s) => s.start < time - 1.5); player.current?.seek(p ? p.start : 0); };
+  const nextTurn = () => { const n = turns.find((s) => s.start > time + 0.05); if (n) player.current?.seek(n.start); };
+  const replayTurn = () => { const c = [...turns].reverse().find((s) => s.start <= time); player.current?.seek(c ? c.start : 0); };
+  const copyTime = async () => {
+    const text = `[${fmt(time)}]${nowName ? " " + nowName : ""}`;
+    try { await navigator.clipboard.writeText(text); flash(t("Copied {text}", { text })); } catch { flash(text); }
+  };
+  const markStart = () => { setClipStart(time); flash(t("Clip start marked")); };
+  const markEnd = () => { if (clipStart === null || time <= clipStart) { flash(t("Mark the clip start first")); return; } player.current?.markClip(clipStart, time); setClipStart(null); };
 
   // ---- highlights and summary (the language model runs on this computer, in the engine)
   const [llmJob, setLlmJob] = useState<LlmJob | null>(null);
@@ -449,15 +466,40 @@ export default function ProjectView({ project, progress, blocker, waiting, visib
           </div>
           <div className="pv-clock">
             <div>{fmt(time)} <span>/ {fmt(duration || result?.duration || 0)}</span></div>
-            <button type="button" className={"pv-speed" + (rate !== 1 ? " on" : "")} aria-label={t("Playback speed {rate}×. Click to change.", { rate })} title={t("Playback speed: click to change")}
-              onClick={() => chooseRate(SPEEDS[(SPEEDS.indexOf(rate) + 1) % SPEEDS.length] ?? 1)}>{rate}×</button>
           </div>
           <Waveform key={project.id} ref={player} path={path} result={result} onTime={setTime} onSelection={setSel} onPlaying={setPlaying} onDuration={setDuration} />
+          {result && (
+            <div className="pv-now" aria-live="off">
+              <i style={{ background: nowName ? nowColor : undefined }} aria-hidden />
+              <span>{nowName || t("Between speakers")}</span>
+            </div>
+          )}
+          <button type="button" className="btn quiet small pv-more" aria-expanded={dockOpen} aria-controls="pv-drawer" onClick={toggleDock}>
+            {dockOpen ? t("Less") : t("Details")}
+            <svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+          </button>
           <div className="pv-dock-side">
             <div className="pv-actions">
               {sel && <button type="button" className="btn quiet small" onClick={async () => { if (await window.api.saveClip(path, sel[0], sel[1])) flash(t("Clip saved ✓")); }}>{t("Save clip")}</button>}
             </div>
-            <div className="pv-hint" title={t("Keyboard: K or Space plays and pauses, J goes back 10 seconds, L forward 10 seconds")}>{t("Drag the waveform to save a clip · Space or K plays · J / L skip 10 s · Double-click a word to fix it")}</div>
+          </div>
+          <div className="pv-drawer" id="pv-drawer" hidden={!dockOpen}>
+            <div className="pv-tools" role="group">
+              <button type="button" className="btn quiet small" onClick={prevTurn} title={t("Previous speaker")}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14M19 6v12l-9-6z" /></svg>{t("Previous")}</button>
+              <button type="button" className="btn quiet small" onClick={replayTurn} title={t("Replay this turn")}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v4h4" /></svg>{t("Replay")}</button>
+              <button type="button" className="btn quiet small" onClick={nextTurn} title={t("Next speaker")}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 5v14M5 6v12l9-6z" /></svg>{t("Next")}</button>
+              <span className="pv-sep" aria-hidden />
+              <button type="button" className="btn quiet small" onClick={() => void copyTime()}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.5" /><path d="M5 15V6.5A1.5 1.5 0 0 1 6.5 5H15" /></svg>{t("Copy time")}</button>
+              <label className="pv-rate"><span>{t("Speed")}</span>
+                <select value={rate} aria-label={t("Playback speed")} onChange={(e) => chooseRate(Number(e.target.value))}>{SPEEDS.map((r) => <option key={r} value={r}>{r}×</option>)}</select>
+              </label>
+            </div>
+            <div className="pv-tools" role="group">
+              <button type="button" className="btn quiet small" onClick={markStart}>{t("Start clip")}</button>
+              <button type="button" className="btn quiet small" onClick={markEnd}>{t("End clip")}</button>
+              {sel && <button type="button" className="btn quiet small" onClick={async () => { if (await window.api.saveClip(path, sel[0], sel[1])) flash(t("Clip saved ✓")); }}>{t("Save clip")}</button>}
+            </div>
+            <div className="pv-hint pv-keys">{t("Drag the waveform to save a clip · Space or K plays · J / L skip 10 s · Double-click a word to fix it")}</div>
           </div>
         </div>
 

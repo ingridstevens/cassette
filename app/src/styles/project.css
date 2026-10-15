@@ -397,3 +397,27 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .pv-rows .pv-more { padding: 2px 10px; }
 .pv-rows .field { padding: 2px 10px; }
 @media (prefers-reduced-motion: reduce) { .pv-row-chev { transition: none; } }
+
+/* player: one row on top, "Details" folds the speaker and clip tools out underneath */
+.pv-now { display: flex; align-items: center; gap: 8px; flex: none; max-width: 170px; font: 600 13px var(--font-ui); color: var(--ink2); }
+.pv-now i { width: 10px; height: 10px; border-radius: 50%; flex: none; background: var(--ink3); }
+.pv-now span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.btn.pv-more { flex: none; gap: 4px; }
+.btn.pv-more .i { width: 16px; height: 16px; transition: transform .18s; }
+.btn.pv-more[aria-expanded="true"] .i { transform: rotate(180deg); }
+.pv-drawer { flex: 1 1 100%; display: grid; gap: 8px; padding: 10px 0 14px; border-top: 1px solid var(--line); animation: pv-fold .18s ease-out; }
+.pv-drawer[hidden] { display: none; }
+.pv-tools { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.pv-tools .btn { min-height: 40px; gap: 6px; }
+.pv-tools .btn .i { width: 18px; height: 18px; }
+.pv-sep { width: 1px; height: 22px; background: var(--line); margin: 0 6px; }
+.pv-rate { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink2); }
+.pv-rate select { height: 36px; border-radius: 10px; }
+.pv-drawer .pv-hint { display: block; }
+@keyframes pv-fold { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .pv-drawer { animation: none; } .btn.pv-more .i { transition: none; } }
+@media (max-width: 900px) { .pv-now { max-width: 120px; } .pv-rate { margin-left: 0; } }
+.pv-dock .pv-wave { min-width: 110px; }
+.pv-dock .pv-now { max-width: 130px; }
+.pv-dock .pv-clock { width: 72px; }
+.pv-dock { column-gap: 12px; }
