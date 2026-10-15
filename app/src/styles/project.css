@@ -380,7 +380,9 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 /* Options tab: one row per setting showing its current value; a row opens to show its choices */
 .pv-rows { display: flex; flex-direction: column; border-radius: 14px; background: color-mix(in srgb, var(--surface) 72%, transparent); box-shadow: inset 0 0 0 1px var(--line); }
 .pv-row + .pv-row { border-top: 1px solid var(--line); }
-.pv-row-head { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; align-items: center; text-align: left; padding: 11px 14px; border: 0; border-radius: 14px; background: none; color: inherit; font: inherit; cursor: pointer; }
+.pv-row-head { width: 100%; display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 10px; align-items: center; text-align: left; padding: 11px 14px; border: 0; border-radius: 0; background: none; color: inherit; font: inherit; cursor: pointer; }
+.pv-row:first-child .pv-row-head { border-radius: 14px 14px 0 0; }
+.pv-row:last-child:not(.open) .pv-row-head { border-bottom-left-radius: 14px; border-bottom-right-radius: 14px; }
 .pv-row-head:hover { background: color-mix(in srgb, var(--tint) 5%, transparent); }
 .pv-row-label { font-size: 12.5px; font-weight: 600; color: var(--ink2); }
 .pv-row-value { grid-column: 1; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
