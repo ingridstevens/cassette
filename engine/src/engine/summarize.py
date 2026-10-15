@@ -26,6 +26,26 @@ def _lines(segs: list[dict], names: dict) -> list[str]:
     return [f"[{_clock(s['start'])}] {names.get(s['speaker'], s['speaker'])}: {s['text']}" for s in segs]
 
 
+def max_topics(duration: float) -> int:
+    """About one topic per two minutes, so a short clip isn't cut into a topic every few seconds."""
+    return max(1, min(8, round(duration / 120)))
+
+
+def topic_range(duration: float) -> str:
+    most = max_topics(duration)
+    return "exactly 1" if most == 1 else f"between 2 and {most}"
+
+
+def snap_topics(topics: list[dict], segs: list[dict]) -> list[dict]:
+    """Moves each topic to the start of the line its time falls in (models round times or make them up), and keeps one topic per line."""
+    out: list[dict] = []
+    for tp in sorted(topics, key=lambda t: t["start"]):
+        seg = next((s for s in reversed(segs) if s["start"] <= tp["start"] + 0.5), segs[0])
+        if not any(o["start"] == seg["start"] for o in out):
+            out.append({"start": float(seg["start"]), "title": tp["title"]})
+    return out
+
+
 def _texts(items, key: str | None = None) -> list[str]:
     out = []
     for x in items if isinstance(items, list) else []:
@@ -61,7 +81,7 @@ def summarize(segs: list[dict], names: dict, llm: LocalLLM, language: str = "en"
         '"topics": [{"time": "m:ss", "title": "short title"}], '
         '"decisions": ["a decision that was made"], '
         '"actions": [{"text": "a task that was agreed", "owner": "the person responsible, or null"}]}\n'
-        f"The recording is {_clock(duration)} long. Use between 2 and 8 topics, each with the time it starts, taken from the transcript. "
+        f"The recording is {_clock(duration)} long. Use {topic_range(duration)} topics, each with the time it starts, taken from the transcript. "
         "Use empty lists when there are no decisions or tasks."
     )
     raw = llm.chat(SYSTEM, user, max_tokens=1100)
@@ -81,4 +101,4 @@ def summarize(segs: list[dict], names: dict, llm: LocalLLM, language: str = "en"
         owner = x.get("owner") if isinstance(x, dict) else None
         if isinstance(text, str) and text.strip():
             actions.append({"text": text.strip(), "owner": owner.strip() if isinstance(owner, str) and owner.strip().lower() not in ("", "null", "none", "n/a") else None})
-    return {"summary": str(data.get("summary") or "").strip(), "topics": sorted(topics, key=lambda t: t["start"]), "decisions": _texts(data.get("decisions")), "actions": actions}
+    return {"summary": str(data.get("summary") or "").strip(), "topics": snap_topics(topics, segs)[:max_topics(duration)], "decisions": _texts(data.get("decisions")), "actions": actions}

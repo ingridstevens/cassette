@@ -1,13 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "../i18n";
 import { Highlight, ModelStatus, PALETTE, Project, Summary, bytes, displayName, fmt } from "../types";
+import { setLlm, useLlm } from "./llmChoice";
 import { useModels } from "./useModels";
 import "../styles/project.css";
 
 export type LlmJob = { kind: "highlights" | "summarize"; fraction: number | null; message: string };
-export const LLM_SIZES: [string, string][] = [["small", "Small and quick"], ["best", "Better quality, slower"]];
-const MODEL_KEY = "llmModel";
-export const chosenLlm = () => { try { return localStorage.getItem(MODEL_KEY) === "best" ? "best" : "small"; } catch { return "small"; } };
 const FORMAT_KEY = "clipFormat";
 const chosenFormat = () => { try { const f = localStorage.getItem(FORMAT_KEY); return f === "wav" || f === "m4a" ? f : "mp3"; } catch { return "mp3"; } };
 
@@ -20,24 +18,27 @@ interface Props {
   onSaveClips(format: string): void; onSaveOne(h: Highlight): void; onEditSummary(text: string): void; onClearSummary(): void;
 }
 
-/** Grows a text box to show all of its text. */
-const fit = (el: HTMLTextAreaElement | null) => { if (el) { el.style.height = "auto"; el.style.height = `${el.scrollHeight + 2}px`; } };
+/** Grows the box to its text. A hidden tab measures 0, so it is measured again when the tab is shown. */
+const fit = (el: HTMLTextAreaElement | null) => { if (el && el.offsetParent) { el.style.height = "auto"; el.style.height = `${el.scrollHeight + 2}px`; } };
 
 export default function HighlightsTab({ project, visible, job, error, onSuggest, onSummarize, onStop, onKeep, onRemove, onKeepAll, onDismissAll, onPlay, onSeek, onSaveClips, onSaveOne, onEditSummary, onClearSummary }: Props) {
   const t = useT();
   const { result, names } = project;
   const [status, setStatus] = useState<ModelStatus | null>(null);
-  const [model, setModel] = useState(chosenLlm);
   const [format, setFormat] = useState(chosenFormat);
   const [copied, setCopied] = useState(false);
   const alive = useRef(true);
+  const sumBox = useRef<HTMLTextAreaElement>(null);
   useEffect(() => () => { alive.current = false; }, []);
+  useEffect(() => { if (visible) fit(sumBox.current); }, [visible, project.result?.summary]);
   const refresh = useCallback(() => { window.api.models("status").then((r) => { if (alive.current && r) setStatus(r as unknown as ModelStatus); }).catch(() => {}); }, []);
   useEffect(() => { if (visible) refresh(); }, [visible, refresh]);
   const models = useModels(refresh);
+  const model = useLlm(status?.llm);
   if (!result) return <p className="note">{t("Highlights appear here once the recording is transcribed.")}</p>;
 
   const llm = status?.llm;
+  const catalog = llm?.catalog ?? [];
   const have = !!llm?.models?.[model];
   const size = llm?.bytes?.[model];
   const all = result.highlights ?? [];
@@ -46,7 +47,6 @@ export default function HighlightsTab({ project, visible, job, error, onSuggest,
   const downloading = models.busy === `download llm-${model}`;
   const pct = models.dl?.fraction != null ? Math.round(models.dl.fraction * 100) : null;
   const summary: Summary | undefined = result.summary;
-  const choose = (m: string) => { setModel(m); try { localStorage.setItem(MODEL_KEY, m); } catch { /* the choice is a convenience */ } };
   const chooseFormat = (f: string) => { setFormat(f); try { localStorage.setItem(FORMAT_KEY, f); } catch { /* same */ } };
   const show = (start: number) => {
     const i = result.segments.findIndex((s) => start < s.end);
@@ -84,7 +84,7 @@ export default function HighlightsTab({ project, visible, job, error, onSuggest,
           <button type="button" className="btn quiet small" onClick={models.cancel}>{t("Cancel")}</button>
         </div>
       ) : (
-        <button type="button" className="btn small" disabled={!!models.busy} onClick={() => models.run("download", `llm-${model}`)}>{t("Download the language model ({size})", { size: bytes(size ?? 0) })}</button>
+        <button type="button" className="btn small" disabled={!!models.busy} onClick={() => models.run("download", `llm-${model}`, size)}>{t("Download the language model ({size})", { size: bytes(size ?? 0) })}</button>
       )}
       {models.errInfo && <div className="alert err" role="alert"><span><b>{models.errInfo.title}</b> {models.errInfo.body}</span></div>}
     </div>
@@ -97,8 +97,8 @@ export default function HighlightsTab({ project, visible, job, error, onSuggest,
         <p className="note">{t("Select words in the transcript and choose “Highlight this passage”, or let the language model suggest some. Use them for soundbites, quotes and show notes.")}</p>
         {llm?.available && (
           <label className="field">{t("Language model")}
-            <select className="input" value={model} onChange={(e) => choose(e.target.value)} disabled={running}>
-              {LLM_SIZES.map(([id, label]) => <option key={id} value={id}>{t(label)}{llm.models?.[id] ? " ✓" : ` (${bytes(llm.bytes?.[id] ?? 0)})`}</option>)}
+            <select className="input" value={model} onChange={(e) => setLlm(e.target.value)} disabled={running}>
+              {catalog.map(({ id, label }) => <option key={id} value={id}>{label}{llm.models?.[id] ? " ✓" : ` (${bytes(llm.bytes?.[id] ?? 0)})`}</option>)}
             </select>
           </label>
         )}
@@ -167,7 +167,7 @@ export default function HighlightsTab({ project, visible, job, error, onSuggest,
         {summary && (
           <div className="pv-sum-body">
             <label className="field">{t("Summary")}
-              <textarea className="input" rows={3} defaultValue={summary.summary} key={summary.at ?? 0} ref={fit} onInput={(e) => fit(e.currentTarget)} onBlur={(e) => { if (e.target.value !== summary.summary) onEditSummary(e.target.value); }} />
+              <textarea className="input" rows={3} defaultValue={summary.summary} key={summary.at ?? 0} ref={(el) => { sumBox.current = el; fit(el); }} onInput={(e) => fit(e.currentTarget)} onBlur={(e) => { if (e.target.value !== summary.summary) onEditSummary(e.target.value); }} />
             </label>
             {summary.topics.length > 0 && (
               <>

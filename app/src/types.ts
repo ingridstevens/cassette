@@ -13,13 +13,15 @@ export interface Result { language: string; duration: number; speakers: string[]
 export interface Options {
   model: string; language: string; numSpeakers: string; vad: boolean; prompt: string; noDiarize: boolean; device: string; autosave: boolean; /** Mixed languages: undefined = automatic, true = always per speaker turn, false = off. */ multilingual?: boolean; /** Add an English translation under lines in other languages (undefined = on when the app is in English). */ translate?: boolean; /** Ask the speech model to write hesitations (um, äh) down. */ verbatim?: boolean; /** Speech engine: "auto" (default) uses the Apple GPU when it can, "faster" always uses the CPU engine. */ whisperEngine?: "auto" | "faster"; minSpeakers?: string; maxSpeakers?: string; /** 0 fairytale sunset … 3 boring corporate */ lookLevel?: number; boring?: boolean; /** Light or dark: "system" (the default) follows the computer. */ colorScheme?: "system" | "light" | "dark"; /** Language of the app itself: "system" (match the computer, the default) or a language id. */ appLanguage?: "system" | "en" | "de" | "fr" | "es";
 }
+/** A language model the app offers for highlights and summaries. `label` is a model name; `like` is English text the app translates. */
+export interface LlmModel { id: string; label: string; like: string; languages: string[]; license: string }
 export interface ModelStatus {
   whisper: Record<string, boolean>; diarization: boolean; dir?: string;
   sizes?: { whisper: Record<string, number>; diarization: number };
   /** Apple Silicon only: the Apple GPU (MLX) versions of the models. */
   mlxAvailable?: boolean; mlx?: Record<string, boolean>; mlxSizes?: Record<string, number>;
   /** The local language model (highlights and summaries). `available` is false when this build of the engine cannot run it. */
-  llm?: { available: boolean; backend?: "mlx" | "gguf"; models?: Record<string, boolean>; bytes?: Record<string, number> };
+  llm?: { available: boolean; backend?: "mlx" | "gguf"; default?: string; catalog?: LlmModel[]; models?: Record<string, boolean>; bytes?: Record<string, number> };
 }
 /**
  * Turns a byte count into text using a given unit base. The bytes are always exact; only the label differs by system:

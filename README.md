@@ -145,7 +145,7 @@ Face hub in offline mode. Your token is stored encrypted with Electron `safeStor
 | --- | --- |
 | Words | [faster-whisper](https://github.com/SYSTRAN/faster-whisper) (tiny to large-v3, including large-v3-turbo) on the CPU; on an Apple chip's graphics chip via MLX-Whisper (optional per-size download, several times faster in our tests); an NVIDIA GPU path exists for Windows and Linux (untested) |
 | Speakers | [pyannote](https://github.com/pyannote/pyannote-audio) 3.1, on the Apple GPU or CUDA when available |
-| Highlights and summaries | A small local language model (Qwen2.5): MLX on Apple chips, llama.cpp elsewhere |
+| Highlights and summaries | A small local language model you choose (Qwen3, Gemma 3 or Qwen2.5): MLX on Apple chips, llama.cpp elsewhere |
 | Window | Electron and React |
 
 ## Honest limits

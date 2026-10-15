@@ -15,7 +15,7 @@ approximate downloads (Windows shows slightly smaller numbers; see [file sizes](
 ## Language model (highlights and summaries)
 
 Suggesting highlights and writing summaries uses a separate, small language model, not one of the sizes above. It runs on this computer
-and is a one-time download (about 0.9 GB or 4.3 GB on a Mac with an Apple chip). See [Highlights](highlights.md#the-language-model).
+and is a one-time download of 1 to 4.3 GB, depending on which one you pick. See [Highlights](highlights.md#the-language-model).
 
 ## Apple GPU versions (Apple Silicon Macs)
 

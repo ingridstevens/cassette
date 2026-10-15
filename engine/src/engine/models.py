@@ -64,12 +64,16 @@ def _llm_cached(name: str) -> bool:
 
 def llm_status() -> dict:
     """Whether the local language model can run here, which size is downloaded, and how big each download is."""
-    from .llm import LLM_MODELS, backend
+    from .llm import DEFAULT_LLM, LLM_MODELS, backend
 
     be = backend()
     if be is None:
         return {"available": False}
-    return {"available": True, "backend": be, "models": {n: _llm_cached(n) for n in LLM_MODELS}, "bytes": {n: m["bytes"][be] for n, m in LLM_MODELS.items()}}
+    have = {n: _llm_cached(n) for n in LLM_MODELS}
+    catalog = [{"id": n, "label": m["label"], "like": m["like"], "languages": m["languages"], "license": m["license"]}
+               for n, m in LLM_MODELS.items() if have[n] or not m.get("retired")]
+    return {"available": True, "backend": be, "default": DEFAULT_LLM, "catalog": catalog,
+            "models": have, "bytes": {n: m["bytes"][be] for n, m in LLM_MODELS.items()}}
 
 
 def status() -> dict:

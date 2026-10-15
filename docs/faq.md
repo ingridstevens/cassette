@@ -40,7 +40,7 @@ from huggingface.co; after that it works offline. See [Highlights](highlights.md
 **Can I save a highlight as audio, as text, or both?** Both, as separate actions. **Save clip** on one highlight, or **Save N audio clips…** for all of them, writes audio
 (one file per highlight, in a folder you choose). **Export, Highlights and marked lines (text)** or **Highlights (Word)** writes the text of all highlights in one file.
 
-**The suggested highlights are not good. What can I do?** Try the **Better quality, slower** language model (Settings, Storage and models), or highlight the passages yourself by
+**The suggested highlights are not good. What can I do?** Try a bigger language model, such as Qwen3 4B or Qwen2.5 7B (Settings, Storage and models), or highlight the passages yourself by
 selecting words. The small model can find fewer highlights on a very short recording. It cannot make things up in your transcript, because every suggestion is checked against the real words.
 
 **Can I replace a word everywhere?** Yes: type it in the find box, press **Replace**, and use **Replace all**. Changed lines can be put back one by one. See [Highlights](highlights.md#search-and-replace).

@@ -39,21 +39,25 @@ export function useModels(refresh: () => void) {
   }), []);
   useEffect(() => { window.api.token().then((t) => { setTokenSet(!!t); setTokenHint(t); }); }, []);
 
-  const run = useCallback(async (action: "download" | "delete", name: string) => {
+  /** `size` is the download size when the caller knows it better than MODEL_BYTES (the language models come with their sizes). Resolves to whether it worked. */
+  const run = useCallback(async (action: "download" | "delete", name: string, size?: number) => {
     setErrInfo(null); setLast({ action, name });
     if (action === "download") {
-      const need = MODEL_BYTES[name] ?? MODEL_BYTES[name.replace(/^mlx-/, "")] ?? 5e8, free = await window.api.diskFree();
+      const need = size || (MODEL_BYTES[name] ?? MODEL_BYTES[name.replace(/^mlx-/, "")] ?? 5e8), free = await window.api.diskFree();
       if (free != null && free < need * 1.5 + 5e8) {
         setErrInfo({ kind: "space", title: t("Not enough free space"), body: t("This download needs about {need} free, including room to unpack it, and you have {free}. Empty the Trash or remove files you no longer need.", { need: bytes(need * 1.5 + 5e8), free: bytes(free) }) });
-        return;
+        return false;
       }
     }
     setBusy(`${action} ${name}`);
+    let ok = false;
     try {
       const r = await window.api.models(action, name);
       if (r?.type === "error" && !r.cancelled) setErrInfo(friendly(String(r.message)));
+      ok = r?.type !== "error";
     } catch (e) { setErrInfo(friendly(String(e))); }
     setBusy(""); setDl(null); refresh();
+    return ok;
   }, [refresh]);
 
   /** Asks Hugging Face (online) whether the saved token works and which model pages still need "Agree". Null when it can't be reached. */

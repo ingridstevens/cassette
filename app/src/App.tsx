@@ -39,6 +39,8 @@ export default function App() {
 
   const refresh = useCallback(() => { window.api.models("status").then((r) => r && setStatus(r as unknown as ModelStatus)); }, []);
   useEffect(refresh, [refresh]);
+  // Models can also be downloaded from a project (the Highlights tab keeps its own status), so Settings re-reads what is on disk.
+  useEffect(() => { if (page === "settings") refresh(); }, [page, refresh]);
   const models = useModels(refresh);
   const P = useProjects(opts, addLog);
   useEffect(() => { try { localStorage.setItem("opts", JSON.stringify(opts)); } catch { /* storage unavailable */ } applyLook(opts); setLanguage(opts.appLanguage); }, [opts]);

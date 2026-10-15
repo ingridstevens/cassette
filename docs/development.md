@@ -29,10 +29,10 @@ python -m engine translate <file> --start s --end s [--language xx] [--model sma
 python -m engine models status | download <name> | delete <name> | import <folder> | check   # <name> may be mlx-small etc. (Apple GPU versions)
 python -m engine export <transcript.json> <out> --format docx|txt|csv|srt|vtt|md|json|chapters|edl|minutes|highlights|redacted|quotes|changes|combined-csv
 python -m engine clip <input> <output> --start s --end s
-python -m engine highlights <transcript.json> [--model small|best] [--count N]   # suggest quotable passages (local language model)
-python -m engine summarize <transcript.json> [--model small|best]                 # summary, topics, decisions, action items
+python -m engine highlights <transcript.json> [--model qwen3-4b] [--count N]   # suggest quotable passages (local language model)
+python -m engine summarize <transcript.json> [--model qwen3-4b]                 # summary, topics, decisions, action items
 python -m engine export-clips <input> <folder> --clips clips.json [--format mp3|wav|m4a] [--pad 0.3]   # one audio file per clip
-python -m engine models download llm-small | llm-best   # the language model
+python -m engine models download llm-qwen3-4b   # a language model; the ids are in LLM_MODELS in llm.py
 ```
 
 ### Protocol
