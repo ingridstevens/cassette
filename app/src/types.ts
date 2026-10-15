@@ -1,0 +1,234 @@
+import type { Api } from "../electron/preload";
+import { t } from "./i18n";
+
+declare global { interface Window { api: Api } }
+
+export interface Word { start: number; end: number; word: string; speaker: string; prob?: number; /** The user confirmed this word is right (review mode), so it is no longer marked as unsure. */ checked?: boolean }
+export interface Segment { start: number; end: number; speaker: string; text: string; words: Word[]; edited?: boolean; /** English translation of a line in another language. */ translation?: string; marked?: boolean; overlap?: boolean; /** Language of this line when it differs from the recording (set by hand). */ lang?: string; chapter?: string; orig?: { text: string; words: Word[] } }
+/** A passage worth quoting, as a stretch of the recording (so it survives editing, splitting and joining lines). `suggested` ones come from the language model and wait for the user to keep or dismiss them. */
+export interface Highlight { id: string; start: number; end: number; text: string; speaker: string; ai?: boolean; suggested?: boolean; reason?: string }
+/** What the language model wrote about the recording. The user can edit `summary`. */
+export interface Summary { summary: string; topics: { start: number; title: string }[]; decisions: string[]; actions: { text: string; owner: string | null }[]; model?: string; at?: number }
+export interface Result { language: string; duration: number; speakers: string[]; segments: Segment[]; highlights?: Highlight[]; summary?: Summary }
+export interface Options {
+  model: string; language: string; numSpeakers: string; vad: boolean; prompt: string; noDiarize: boolean; device: string; autosave: boolean; /** Mixed languages: undefined = automatic, true = always per speaker turn, false = off. */ multilingual?: boolean; /** Add an English translation under lines in other languages (undefined = on when the app is in English). */ translate?: boolean; /** Ask the speech model to write hesitations (um, äh) down. */ verbatim?: boolean; /** Speech engine: "auto" (default) uses the Apple GPU when it can, "faster" always uses the CPU engine. */ whisperEngine?: "auto" | "faster"; minSpeakers?: string; maxSpeakers?: string; /** 0 fairytale sunset … 3 boring corporate */ lookLevel?: number; boring?: boolean; /** Light or dark: "system" (the default) follows the computer. */ colorScheme?: "system" | "light" | "dark"; /** Language of the app itself: "system" (match the computer, the default) or a language id. */ appLanguage?: "system" | "en" | "de" | "fr" | "es";
+}
+export interface ModelStatus {
+  whisper: Record<string, boolean>; diarization: boolean; dir?: string;
+  sizes?: { whisper: Record<string, number>; diarization: number };
+  /** Apple Silicon only: the Apple GPU (MLX) versions of the models. */
+  mlxAvailable?: boolean; mlx?: Record<string, boolean>; mlxSizes?: Record<string, number>;
+  /** The local language model (highlights and summaries). `available` is false when this build of the engine cannot run it. */
+  llm?: { available: boolean; backend?: "mlx" | "gguf"; models?: Record<string, boolean>; bytes?: Record<string, number> };
+}
+/**
+ * Turns a byte count into text using a given unit base. The bytes are always exact; only the label differs by system:
+ * macOS and most Linux desktops (GNOME Files) count 1 GB = 1000³ bytes, Windows Explorer counts in 1024s but still writes "GB".
+ */
+export function formatBytes(n: number, base: 1000 | 1024): string {
+  if (!(n > 0)) return "0";
+  if (n >= base ** 3) return `${(n / base ** 3).toFixed(1)} GB`;
+  if (n >= base ** 2) return `${Math.round(n / base ** 2)} MB`;
+  return `${Math.max(1, Math.round(n / base))} KB`;
+}
+/** File sizes as this operating system would show them, so our numbers match Finder, Explorer or Files. */
+export const bytes = (n: number) => formatBytes(n, SIZE_BASE);
+
+const SUNSET_PALETTE = ["#ff5f8a", "#ff9a52", "#a87bff", "#4fb3ff", "#2fc9a0", "#f2b134", "#e46bd6", "#8a8fb0"];
+/** Plain office colours for the boring looks: still clearly different from each other, nothing pastel. */
+const OFFICE_PALETTE = ["#1f4e79", "#c55a11", "#7f7f7f", "#bf9000", "#2e75b6", "#548235", "#7030a0", "#a50021"];
+/** The office colours, lightened so they read on a dark background. */
+const OFFICE_DARK = ["#6fa8dc", "#f4a261", "#b0b0b0", "#e9c46a", "#7cb7f0", "#8fc36b", "#b48ae0", "#f07090"];
+/** Speaker colours. Mutated in place by applyLook so every component that imports it picks up the current look. */
+export const PALETTE: string[] = [...SUNSET_PALETTE];
+export const fmt = (s: number) => {
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = Math.floor(s % 60);
+  return (h ? `${h}:${String(m).padStart(2, "0")}` : String(m)) + `:${String(sec).padStart(2, "0")}`;
+};
+
+/** Friendly default for engine ids like SPEAKER_00 -> "Speaker 1". */
+export const defaultName = (id: string, speakers: string[]) => (/^SPEAKER_\d+$/.test(id) ? t("Speaker {n}", { n: Math.max(0, speakers.indexOf(id)) + 1 }) : id);
+export const displayName = (id: string, speakers: string[], names: Record<string, string>) => names[id]?.trim() || defaultName(id, speakers);
+
+export type ProjectStatus = "idle" | "queued" | "running" | "done" | "error";
+/** What the last run did, shown in the Info tab. Filled from the engine's `done` event. */
+export interface RunMeta {
+  model?: string; device?: string; speakerDevice?: string; secondsSpeakers?: number; secondsTranscribe?: number; languageProb?: number; /** Seconds of speech per language, when each speaker turn was detected on its own. */ languages?: Record<string, number>; mixed?: boolean; translated?: number; finishedAt?: number;
+}
+export interface Project {
+  id: string; path: string; name: string; addedAt: number;
+  result: Result | null; names: Record<string, string>;
+  status: ProjectStatus; error?: string;
+  /** Per-project overrides of the global options (language, model, number of speakers, skip silence, transcript only, vocabulary). */
+  opts?: Partial<Options>;
+  meta?: RunMeta;
+  /** A run that redoes only part of an existing transcript (a line or a selection): the transcript stays on screen. Not saved. */
+  partial?: boolean;
+  /** The transcript covers only the first minutes, run to check the settings before the whole recording. */
+  trial?: boolean;
+  /** The transcript this one replaced (one step back, so "Replace" can be undone). */
+  previous?: { result: Result; names: Record<string, string>; meta?: RunMeta };
+}
+export interface JobProgress { stage: string; fraction: number | null; message: string }
+export const MEDIA_EXT = /\.(mp3|wav|m4a|flac|ogg|opus|aac|mp4|mov|mkv|webm)$/i;
+export const baseName = (p: string) => p.split(/[\\/]/).pop() ?? p;
+export const stripExt = (n: string) => n.replace(/\.[^.]+$/, "");
+
+/** OS-specific wording, so labels match what the user's system calls things. */
+const ua = typeof navigator === "undefined" ? "" : navigator.userAgent;
+export const IS_MAC = ua.includes("Macintosh");
+export const IS_WIN = ua.includes("Windows");
+export const MOD_KEY = IS_MAC ? "⌘" : "Ctrl+";
+/** 1000 on macOS and Linux (decimal), 1024 on Windows (binary, still labelled KB/MB/GB). RAM is always shown in binary by every system, so it is not affected. */
+export const SIZE_BASE: 1000 | 1024 = IS_WIN ? 1024 : 1000;
+export const FILE_MANAGER = IS_MAC ? "Finder" : IS_WIN ? "File Explorer" : "file manager";
+
+/**
+ * Replace a line's text after the user fixed it. Word timings are kept when the number of words is unchanged
+ * (a corrected word keeps its slot); otherwise the words are spread evenly over the line's time span.
+ * The first original is remembered so the line can be reverted.
+ */
+export function retext(seg: Segment, raw: string): Segment {
+  const text = raw.replace(/\s+/g, " ").trim();
+  if (!text || text === seg.text) return seg;
+  const tokens = text.split(" ");
+  const orig = seg.orig ?? { text: seg.text, words: seg.words };
+  let words: Word[];
+  if (tokens.length === seg.words.length) {
+    words = seg.words.map((w, i) => (w.word.trim() === tokens[i] ? w : { ...w, word: (w.word.match(/^\s*/) as RegExpMatchArray)[0] + tokens[i] + (w.word.match(/\s*$/) as RegExpMatchArray)[0], prob: 1 }));
+  } else {
+    const step = Math.max(seg.end - seg.start, 0.01) / tokens.length;
+    words = tokens.map((t, i) => ({ start: seg.start + i * step, end: seg.start + (i + 1) * step, word: (i === 0 ? "" : " ") + t, speaker: seg.speaker, prob: 1 }));
+  }
+  const same = text === orig.text;
+  return { ...seg, text, words, orig: same ? undefined : orig, edited: same ? undefined : true };
+}
+
+/** Put a line back to what the model heard. */
+export function revertLine(seg: Segment): Segment {
+  if (!seg.orig) return seg;
+  const { orig, edited: _edited, ...rest } = seg;
+  return { ...rest, text: orig.text, words: orig.words.map((w) => ({ ...w, speaker: seg.speaker })) };
+}
+
+/** Options the export dialog collects. They travel to the engine inside the transcript JSON as `options`. */
+export interface ExportOpts { maxChars: number; maxLines: number; speakerNames: boolean; offsetSeconds: number; fps: number; /** Drop-frame timecode (only meaningful at 29.97 and 59.94 fps). */ dropFrame?: boolean; startTimecode: string; /** Text exports: keep hesitations (verbatim, the default) or remove them. */ style: "verbatim" | "clean"; pauseMarks: boolean; timestamps: boolean }
+export const DEFAULT_EXPORT_OPTS: ExportOpts = { maxChars: 42, maxLines: 2, speakerNames: true, offsetSeconds: 0, fps: 25, startTimecode: "01:00:00:00", style: "verbatim", pauseMarks: false, timestamps: true };
+/** Default chapter title for a line: its first five words. */
+export const chapterDefault = (text: string) => text.split(/\s+/).filter(Boolean).slice(0, 5).join(" ");
+
+/** Look levels: 0 fairytale sunset (default), 1 cloudy tuesday, 2 open-plan office, 3 boring corporate. Applied as data-level on <html>. */
+export const LOOKS = [
+  { name: "Fairytale sunset", caption: "Everything glows. This is the intended experience." },
+  { name: "Cloudy Tuesday", caption: "The glow has been politely asked to leave." },
+  { name: "Open-plan office", caption: "We have aligned on blue." },
+  { name: "Boring corporate", caption: "Per my last email, this is the look." },
+] as const;
+export const lookLevelOf = (o: { lookLevel?: number; boring?: boolean }) => Math.min(3, Math.max(0, o.lookLevel ?? (o.boring ? 2 : 0)));
+type LookOpts = { lookLevel?: number; boring?: boolean; colorScheme?: "system" | "light" | "dark" };
+/** Dark when chosen, or when "system" and the computer is in dark mode. */
+export const isDark = (o: LookOpts) => o.colorScheme === "dark" || (o.colorScheme !== "light" && window.matchMedia?.("(prefers-color-scheme: dark)").matches);
+/** Sets the look (data-level) and light or dark (data-mode) on <html>, and picks speaker colours that read well on it. */
+export const applyLook = (o: LookOpts) => {
+  const level = lookLevelOf(o), dark = isDark(o), el = document.documentElement;
+  el.dataset.level = String(level);
+  el.dataset.mode = dark ? "dark" : "light";
+  const palette = level >= 2 ? (dark ? OFFICE_DARK : OFFICE_PALETTE) : SUNSET_PALETTE;
+  PALETTE.splice(0, PALETTE.length, ...palette);
+};
+
+const joinText = (words: Word[]) => words.map((w) => w.word).join("").trim();
+
+/** Split a line before word `k` (1 ≤ k < words). Both parts keep the speaker; the first keeps chapter and mark. Returns null if k is out of range. */
+export function splitSegment(seg: Segment, k: number): [Segment, Segment] | null {
+  if (!Number.isInteger(k) || k < 1 || k >= seg.words.length) return null;
+  const a = seg.words.slice(0, k), b = seg.words.slice(k);
+  const { orig: _o, ...rest } = seg;
+  const second: Segment = { ...rest, chapter: undefined, marked: undefined, start: b[0].start, end: seg.end, words: b, text: joinText(b) };
+  delete second.chapter; delete second.marked;
+  return [{ ...rest, end: a[a.length - 1].end, words: a, text: joinText(a) }, second];
+}
+
+/** Join line `i` into the line before it (the previous line's speaker, chapter and mark win). Returns null for the first line. */
+export function joinWithPrevious(segs: Segment[], i: number): Segment[] | null {
+  if (i < 1 || i >= segs.length) return null;
+  const prev = segs[i - 1], cur = segs[i];
+  const words = [...prev.words, ...cur.words.map((w) => ({ ...w, speaker: prev.speaker }))];
+  const { orig: _o, ...rest } = prev;
+  const joined: Segment = { ...rest, end: cur.end, words, text: joinText(words), ...(prev.edited || cur.edited ? { edited: true } : {}) };
+  return [...segs.slice(0, i - 1), joined, ...segs.slice(i + 1)];
+}
+
+/** Words the model was unsure of and the user has not checked yet. */
+export const isUnsure = (w: Word) => (w.prob ?? 1) < 0.5 && !w.checked;
+export interface UnsureRef { seg: number; word: number }
+export function unsureWords(segs: Segment[]): UnsureRef[] {
+  return segs.flatMap((s, seg) => s.words.flatMap((w, word) => (isUnsure(w) ? [{ seg, word }] : [])));
+}
+
+/** Review mode: the user confirmed the word. It stays as heard, and stops being marked. */
+export function acceptWord(seg: Segment, j: number): Segment {
+  return { ...seg, words: seg.words.map((w, k) => (k === j ? { ...w, checked: true } : w)) };
+}
+
+/**
+ * Review mode: replace one word (an empty replacement removes it). Only that word changes: the other words keep their timing and
+ * their "unsure" state, so fixing or removing one word never clears the others. A replacement of several words shares the old word's time slot.
+ * "Put back what the model heard" works as for any edit.
+ */
+export function fixWord(seg: Segment, j: number, text: string): Segment {
+  const w = seg.words[j];
+  if (!w) return seg;
+  const fixed = text.replace(/\s+/g, " ").trim();
+  if (fixed === w.word.trim()) return acceptWord(seg, j);
+  if (!fixed && seg.words.length === 1) return seg; // removing the only word would leave an empty line
+  const lead = (w.word.match(/^\s*/) as RegExpMatchArray)[0], trail = (w.word.match(/\s*$/) as RegExpMatchArray)[0];
+  const tokens = fixed ? fixed.split(" ") : [];
+  const step = (w.end - w.start) / Math.max(tokens.length, 1);
+  const made: Word[] = tokens.map((tk, i) => ({ ...w, start: w.start + i * step, end: w.start + (i + 1) * step, word: (i === 0 ? lead : " ") + tk + (i === tokens.length - 1 ? trail : ""), prob: 1, checked: undefined }));
+  const words = [...seg.words.slice(0, j), ...made, ...seg.words.slice(j + 1)];
+  const next = words.map((x) => x.word).join("").replace(/\s+/g, " ").trim();
+  const orig = seg.orig ?? { text: seg.text, words: seg.words };
+  const same = next === orig.text;
+  return { ...seg, text: next, words, orig: same ? undefined : orig, edited: same ? undefined : true };
+}
+
+const wordsText = (words: Word[]) => words.map((w) => w.word).join("").trim();
+
+/** A highlight over words `a`..`b` (inclusive) of a line. Null when the range is empty or outside the line. */
+export function highlightOf(seg: Segment, a: number, b: number, extra: Partial<Highlight> = {}): Highlight | null {
+  const lo = Math.min(a, b), hi = Math.max(a, b);
+  const ws = seg.words.slice(Math.max(0, lo), hi + 1);
+  if (!ws.length || !wordsText(ws)) return null;
+  return { id: crypto.randomUUID(), start: ws[0].start, end: ws[ws.length - 1].end, text: wordsText(ws), speaker: seg.speaker, ...extra };
+}
+
+/** The words (first and last index) that a text selection of `from`..`to` characters of the line's text covers, whole words only. */
+export function wordsInSelection(seg: Segment, from: number, to: number): [number, number] | null {
+  const full = seg.words.map((w) => w.word).join(""), lead = full.length - full.trimStart().length;
+  let pos = 0, first = -1, last = -1;
+  seg.words.forEach((w, j) => {
+    const lo = pos + (w.word.length - w.word.trimStart().length) - lead, hi = pos + w.word.trimEnd().length - lead;
+    pos += w.word.length;
+    if (hi > from && lo < to) { if (first < 0) first = j; last = j; }
+  });
+  return first < 0 ? null : [first, last];
+}
+
+const overlaps = (a: { start: number; end: number }, b: { start: number; end: number }) => Math.min(a.end, b.end) - Math.max(a.start, b.start) > 0.05;
+/** Whether a word lies inside a highlight. */
+export const wordIn = (w: Word, h: Highlight) => w.start >= h.start - 0.05 && w.end <= h.end + 0.05;
+
+/** Adds a highlight unless the same stretch is already highlighted; a suggestion that the user highlights by hand becomes a kept one. Sorted by time. */
+export function addHighlight(list: Highlight[], h: Highlight): Highlight[] {
+  const same = list.find((x) => Math.abs(x.start - h.start) < 0.05 && Math.abs(x.end - h.end) < 0.05);
+  if (same) return list.map((x) => (x === same ? { ...x, suggested: undefined } : x));
+  return [...list, h].sort((a, b) => a.start - b.start);
+}
+
+/** New suggestions from the language model replace the old unanswered ones and skip stretches that are already highlighted. */
+export function withSuggestions(list: Highlight[], found: Omit<Highlight, "id">[]): Highlight[] {
+  const kept = list.filter((h) => !h.suggested);
+  const fresh = found.filter((f) => !kept.some((k) => overlaps(k, f))).map((f) => ({ ...f, id: crypto.randomUUID(), ai: true, suggested: true }));
+  return [...kept, ...fresh].sort((a, b) => a.start - b.start);
+}

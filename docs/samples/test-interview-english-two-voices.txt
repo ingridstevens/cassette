@@ -1,0 +1,10 @@
+[00:00:00] Speaker 2: Welcome to the show, today I'm talking with Daniel about how small teams can organize their audio archives.
+[00:00:06] Speaker 1: Thanks for having me, I've spent about 10 years cleaning up recordings, so I have plenty of opinions.
+[00:00:13] Speaker 2: Let's start with the basics, what is the most common mistake people make with their interviews?
+[00:00:19] Speaker 1: They never name their files properly, 6 months later nobody remembers who said what, or when it was recorded. And
+[00:00:26] Speaker 2: that's where a transcript with speaker labels helps, right?
+[00:00:30] Speaker 1: Exactly. Once every line has a name and a timestamp, you can search the whole archive in seconds, and quote people accurately.
+[00:00:39] Speaker 2: Do you trust the automatic transcript, or do you always check it by hand?
+[00:00:43] Speaker 1: I always read it while listening. Technical terms and names are the usual trouble, so I fix those first.
+[00:00:50] Speaker 2: That sounds like a good tip to end on. Daniel, thank you so much. my
+[00:00:55] Speaker 1: pleasure it was fun

@@ -1,0 +1,15 @@
+{
+  "name": "diarization",
+  "version": "1.0.0",
+  "description": "Offline desktop app: drop an audio or video file, get a transcript with speakers in German, English, French or Spanish (and other languages Whisper knows, with varying accuracy). Transcription and speaker detection run on your computer; your audio is never uploaded.",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

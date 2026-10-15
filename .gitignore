@@ -1,0 +1,16 @@
+.venv/
+__pycache__/
+node_modules/
+dist/
+release/
+build/
+*.spec.bak
+.DS_Store
+# downloaded models (the app fetches them itself) and generated caches
+.models/
+.vite/
+dist-electron/
+.pytest_cache/
+# local test recordings and scratch screenshots: keep them on this computer
+test-media/
+shots/

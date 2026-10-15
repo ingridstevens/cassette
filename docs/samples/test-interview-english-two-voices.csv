@@ -1,0 +1,11 @@
+start_seconds,end_seconds,start,end,speaker,text
+0.00,6.00,00:00:00,00:00:06,Speaker 2,"Welcome to the show, today I'm talking with Daniel about how small teams can organize their audio archives."
+6.58,12.90,00:00:06,00:00:12,Speaker 1,"Thanks for having me, I've spent about 10 years cleaning up recordings, so I have plenty of opinions."
+13.86,18.70,00:00:13,00:00:18,Speaker 2,"Let's start with the basics, what is the most common mistake people make with their interviews?"
+19.48,26.66,00:00:19,00:00:26,Speaker 1,"They never name their files properly, 6 months later nobody remembers who said what, or when it was recorded. And"
+26.66,29.88,00:00:26,00:00:29,Speaker 2,"that's where a transcript with speaker labels helps, right?"
+30.46,38.34,00:00:30,00:00:38,Speaker 1,"Exactly. Once every line has a name and a timestamp, you can search the whole archive in seconds, and quote people accurately."
+39.10,43.32,00:00:39,00:00:43,Speaker 2,"Do you trust the automatic transcript, or do you always check it by hand?"
+43.92,50.14,00:00:43,00:00:50,Speaker 1,"I always read it while listening. Technical terms and names are the usual trouble, so I fix those first."
+50.84,55.76,00:00:50,00:00:55,Speaker 2,"That sounds like a good tip to end on. Daniel, thank you so much. my"
+55.76,57.20,00:00:55,00:00:57,Speaker 1,pleasure it was fun

@@ -1,0 +1,71 @@
+{
+  "source": "test-interview-english-two-voices.m4a",
+  "language": "en",
+  "duration": 58.0035,
+  "speakers": {
+    "SPEAKER_00": "Speaker 1",
+    "SPEAKER_01": "Speaker 2"
+  },
+  "segments": [
+    {
+      "start": 0,
+      "end": 6,
+      "speaker": "SPEAKER_01",
+      "text": "Welcome to the show, today I'm talking with Daniel about how small teams can organize their audio archives."
+    },
+    {
+      "start": 6.58,
+      "end": 12.9,
+      "speaker": "SPEAKER_00",
+      "text": "Thanks for having me, I've spent about 10 years cleaning up recordings, so I have plenty of opinions."
+    },
+    {
+      "start": 13.86,
+      "end": 18.7,
+      "speaker": "SPEAKER_01",
+      "text": "Let's start with the basics, what is the most common mistake people make with their interviews?"
+    },
+    {
+      "start": 19.48,
+      "end": 26.66,
+      "speaker": "SPEAKER_00",
+      "text": "They never name their files properly, 6 months later nobody remembers who said what, or when it was recorded. And"
+    },
+    {
+      "start": 26.66,
+      "end": 29.88,
+      "speaker": "SPEAKER_01",
+      "text": "that's where a transcript with speaker labels helps, right?"
+    },
+    {
+      "start": 30.46,
+      "end": 38.34,
+      "speaker": "SPEAKER_00",
+      "text": "Exactly. Once every line has a name and a timestamp, you can search the whole archive in seconds, and quote people accurately."
+    },
+    {
+      "start": 39.1,
+      "end": 43.32,
+      "speaker": "SPEAKER_01",
+      "text": "Do you trust the automatic transcript, or do you always check it by hand?"
+    },
+    {
+      "start": 43.92,
+      "end": 50.14,
+      "speaker": "SPEAKER_00",
+      "text": "I always read it while listening. Technical terms and names are the usual trouble, so I fix those first."
+    },
+    {
+      "start": 50.84,
+      "end": 55.76,
+      "speaker": "SPEAKER_01",
+      "text": "That sounds like a good tip to end on. Daniel, thank you so much. my"
+    },
+    {
+      "start": 55.76,
+      "end": 57.2,
+      "speaker": "SPEAKER_00",
+      "text": "pleasure it was fun"
+    }
+  ]
+}

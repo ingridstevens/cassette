@@ -1,0 +1,23 @@
+# Glossary
+
+- **Transcription:** turning speech into text.
+- **Speaker detection (diarization):** working out who is speaking when, so each line gets a speaker.
+- **Model:** the downloaded files the app uses to understand speech. They live in the models folder.
+- **Hugging Face:** a website that hosts the speaker models. It needs a free account to accept their terms.
+- **Token:** a password-like code from your Hugging Face account. The app uses it only to download the speaker model.
+- **Gated model:** a model whose page asks you to fill in a short form and click **Agree and access repository** before you may download it.
+- **Speaker detection (diarization):** working out where one voice stops and the next starts, so each line says who is talking. It doesn't know who anyone is: speakers are numbered, and you name them.
+- **Chapter:** a titled marker at the start of a topic. Exports as a `0:00 Title` list. See [Chapters](chapters.md).
+- **Mark:** a flag on a line (decision, action item, quote). Feeds the minutes and the quote list.
+- **Highlight:** a passage you selected (or accepted from a suggestion) to quote. Can be saved as text and as audio. See [Highlights](highlights.md).
+- **Language model:** the small model that suggests highlights and writes summaries. It runs on your computer.
+- **SRT / VTT:** subtitle file formats. **EDL:** marker file for DaVinci Resolve.
+- **Unsure word:** a word the model gave a low confidence (under 50%), shown with a dotted underline. **Review** steps through them.
+- **Turn:** one stretch of one person speaking, as found by speaker detection.
+- **Mixed languages:** a recording where people speak different languages. The app detects the language for each speaker's turn.
+- **Translation:** an English version of a line in another language, made by the speech model (English only).
+- **Overlap:** a stretch where two people talk at once; the line is tagged and the words go to the louder speaker.
+- **Unsure word / Review mode:** a word the model gave low confidence (dotted underline). Review mode steps through them with the audio so you can fix or confirm each. See [Using the app](using-the-app.md#reviewing-unsure-words).
+- **Split / Join:** break a line in two at a word, or join it back to the line before.
+- **Verbatim / clean copy:** an export that keeps "um" and "äh" versus one that removes them (and says so).
+- **Offline:** works without the internet. Only model downloads go online.

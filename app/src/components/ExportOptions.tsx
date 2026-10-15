@@ -1,0 +1,111 @@
+import { KeyboardEvent, useEffect, useId, useRef, useState } from "react";
+import { useT } from "../i18n";
+import { DEFAULT_EXPORT_OPTS, ExportOpts } from "../types";
+
+export type OptionsKind = "srt" | "vtt" | "edl" | "text";
+const KEY = "export-options";
+const TC = /^\d{2}:[0-5]\d:[0-5]\d[:;]\d{2}$/;
+/** Frame rates a timeline can have. 23.976, 29.97 and 59.94 are the broadcast rates (NTSC); the last two can use drop-frame timecode. */
+const FPS = [23.976, 24, 25, 29.97, 30, 50, 59.94, 60];
+const DROP_FPS = [29.97, 59.94];
+const TITLES: Record<OptionsKind, string> = { srt: "Subtitle options", vtt: "Web subtitle options", edl: "Marker options (DaVinci Resolve)", text: "Text style" };
+
+export function loadExportOpts(): ExportOpts {
+  try { return { ...DEFAULT_EXPORT_OPTS, ...JSON.parse(localStorage.getItem(KEY) ?? "{}") }; } catch { return { ...DEFAULT_EXPORT_OPTS }; }
+}
+
+export default function ExportOptions({ kind, onCancel, onConfirm }: { kind: OptionsKind; onCancel(): void; onConfirm(o: ExportOpts): void }) {
+  const t = useT();
+  const [o, setO] = useState<ExportOpts>(loadExportOpts);
+  const box = useRef<HTMLDivElement>(null);
+  const id = useId();
+  useEffect(() => {
+    const before = document.activeElement as HTMLElement | null;
+    box.current?.querySelector<HTMLElement>("input, select")?.focus();
+    return () => before?.focus?.();
+  }, []);
+  const tcOk = TC.test(o.startTimecode);
+  const subs = kind === "srt" || kind === "vtt";
+  const key = (e: KeyboardEvent) => {
+    if (e.key === "Escape") { e.stopPropagation(); onCancel(); return; }
+    if (e.key !== "Tab") return;
+    const f = Array.from(box.current!.querySelectorAll<HTMLElement>("input, select, button:not([disabled])"));
+    const first = f[0], last = f[f.length - 1];
+    if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+    else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+  };
+  const submit = () => {
+    if (kind === "edl" && !tcOk) return;
+    const clean: ExportOpts = { ...o, maxChars: Math.min(60, Math.max(20, Math.round(o.maxChars) || 42)), offsetSeconds: Number.isFinite(o.offsetSeconds) ? o.offsetSeconds : 0 };
+    try { localStorage.setItem(KEY, JSON.stringify(clean)); } catch { /* storage can be unavailable */ }
+    onConfirm(clean);
+  };
+  return (
+    <div className="scrim" onKeyDown={key}>
+      <div className="dialog" role="dialog" aria-modal="true" aria-labelledby={id + "t"} ref={box}
+        onKeyDown={(e) => { if (e.key === "Enter" && (e.target as HTMLElement).tagName !== "BUTTON") { e.preventDefault(); submit(); } }}>
+        <h2 id={id + "t"}>{t(TITLES[kind])}</h2>
+        {kind === "text" ? (
+          <>
+            <p>{t("Applies to Word, text, Markdown, spreadsheet, minutes and anonymised exports. Subtitles always keep their times. Your transcript itself is never changed.")}</p>
+            <label className="field">{t("Hesitations (um, uh…)")}
+              <select value={o.style} onChange={(e) => setO({ ...o, style: e.target.value as ExportOpts["style"] })}>
+                <option value="verbatim">{t("Keep them (verbatim)")}</option>
+                <option value="clean">{t("Remove them (clean copy)")}</option>
+              </select>
+              <span className="note">{t("Whisper sometimes leaves hesitations out by itself, so even “keep them” is not a guaranteed word-for-word record. A clean copy says so at the top.")}</span>
+            </label>
+            <div className="pv-opt-row">
+              <span id={id + "pm"}>{t("Mark pauses")}</span>
+              <button type="button" role="switch" className="switch" aria-checked={o.pauseMarks} aria-labelledby={id + "pm"} onClick={() => setO({ ...o, pauseMarks: !o.pauseMarks })} />
+            </div>
+            <span className="note">{t("Adds (.) for about half a second, (..) for about one second and (...) for two seconds or more.")}</span>
+            <div className="pv-opt-row">
+              <span id={id + "ts"}>{t("Show times")}</span>
+              <button type="button" role="switch" className="switch" aria-checked={o.timestamps} aria-labelledby={id + "ts"} onClick={() => setO({ ...o, timestamps: !o.timestamps })} />
+            </div>
+          </>
+        ) : subs ? (
+          <>
+            <label className="field">{t("Max characters per line (20–60)")}
+              <input type="number" min={20} max={60} value={o.maxChars} onChange={(e) => setO({ ...o, maxChars: Number(e.target.value) })} />
+            </label>
+            <label className="field">{t("Max lines per subtitle")}
+              <select value={o.maxLines} onChange={(e) => setO({ ...o, maxLines: Number(e.target.value) })}><option value={1}>1</option><option value={2}>2</option></select>
+            </label>
+            <div className="pv-opt-row">
+              <span id={id + "sw"}>{t("Put speaker names in subtitles")}</span>
+              <button type="button" role="switch" className="switch" aria-checked={o.speakerNames} aria-labelledby={id + "sw"} onClick={() => setO({ ...o, speakerNames: !o.speakerNames })} />
+            </div>
+            <label className="field">{t("Shift all times by (seconds)")}
+              <input type="number" step={0.1} value={o.offsetSeconds} onChange={(e) => setO({ ...o, offsetSeconds: Number(e.target.value) })} />
+              <span className="note">{t("Use a negative number to move subtitles earlier. Times never go below 0.")}</span>
+            </label>
+          </>
+        ) : (
+          <>
+            <p>{t("One marker per chapter, or per speaker turn if you have not marked chapters. Import it in Resolve with File → Import → Timeline Markers from EDL.")}</p>
+            <label className="field">{t("Frame rate")}
+              <select value={o.fps} onChange={(e) => setO({ ...o, fps: Number(e.target.value) })}>{FPS.map((f) => <option key={f} value={f}>{t("{fps} fps", { fps: f })}</option>)}</select>
+              <span className="note">{t("Pick the rate of your timeline. If markers drift on a long recording, this is usually the cause.")}</span>
+            </label>
+            {DROP_FPS.includes(o.fps) && (
+              <div className="pv-opt-row">
+                <span id={id + "df"}>{t("Drop-frame timecode")}</span>
+                <button type="button" role="switch" className="switch" aria-checked={!!o.dropFrame} aria-labelledby={id + "df"} onClick={() => setO({ ...o, dropFrame: !o.dropFrame })} />
+              </div>
+            )}
+            <label className="field">{t("Start timecode")}
+              <input type="text" value={o.startTimecode} placeholder="01:00:00:00" aria-invalid={!tcOk} aria-describedby={id + "tc"} onChange={(e) => setO({ ...o, startTimecode: e.target.value })} />
+              <span className="note" id={id + "tc"}>{tcOk ? t("Hours:minutes:seconds:frames, like your timeline start.") : o.dropFrame && DROP_FPS.includes(o.fps) ? t("Use the form 01:00:00;00 for drop-frame.") : t("Use the form 01:00:00:00.")}</span>
+            </label>
+          </>
+        )}
+        <div className="row">
+          <button type="button" className="btn" onClick={onCancel}>{t("Cancel")}</button>
+          <button type="button" className="btn sun" disabled={kind === "edl" && !tcOk} onClick={submit}>{kind === "text" ? t("Save") : t("Export")}</button>
+        </div>
+      </div>
+    </div>
+  );
+}

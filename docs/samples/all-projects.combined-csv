@@ -1,0 +1,27 @@
+project,start_seconds,end_seconds,start,end,speaker,text
+test-interview-german-two-voices,0.00,5.84,00:00:00,00:00:05,Frauen,"Herzlich Willkommen zum Interview. Heute sprechen wir über das Projekt, das vor drei Jahren begann."
+test-interview-german-two-voices,6.62,12.46,00:00:06,00:00:12,Manner,"Danke für die Einladung. Ich freue mich sehr, dass wir heute über unsere Arbeit sprechen können."
+test-interview-german-two-voices,13.28,16.66,00:00:13,00:00:16,Frauen,Wie kam es eigentlich dazu? Was war der Ausgangspunkt?
+test-interview-german-two-voices,17.54,23.68,00:00:17,00:00:23,Manner,"Eigentlich war es ein Zufall. Wir haben im Sommer angefangen, ohne zu wissen, wohin es führt."
+test-interview-german-two-voices,24.50,28.12,00:00:24,00:00:28,Frauen,Und welche Fachbegriffe sollten unsere Hörerinnen und Hörer kennen?
+test-interview-german-two-voices,28.12,36.80,00:00:28,00:00:36,Manner,"Wichtig sind vor allem Fachbegriffe wie Sprechererkennung, Zeitstempel und Transkript. Damit lässt sich alles schnell wiederfinden."
+test-interview-german-two-voices,37.64,41.06,00:00:37,00:00:41,Frauen,Das klingt sehr praktisch. Vielen Dank für das Gespräch.
+test-interview-german-two-voices,41.56,44.24,00:00:41,00:00:44,Manner,Sehr gerne. Es hat mir wirklich Spaß gemacht.
+test-interview-english-two-voices,0.00,6.00,00:00:00,00:00:06,Speaker 2,"Welcome to the show, today I'm talking with Daniel about how small teams can organize their audio archives."
+test-interview-english-two-voices,6.58,12.90,00:00:06,00:00:12,Speaker 1,"Thanks for having me, I've spent about 10 years cleaning up recordings, so I have plenty of opinions."
+test-interview-english-two-voices,13.86,18.70,00:00:13,00:00:18,Speaker 2,"Let's start with the basics, what is the most common mistake people make with their interviews?"
+test-interview-english-two-voices,19.48,26.66,00:00:19,00:00:26,Speaker 1,"They never name their files properly, 6 months later nobody remembers who said what, or when it was recorded. And"
+test-interview-english-two-voices,26.66,29.88,00:00:26,00:00:29,Speaker 2,"that's where a transcript with speaker labels helps, right?"
+test-interview-english-two-voices,30.46,38.34,00:00:30,00:00:38,Speaker 1,"Exactly. Once every line has a name and a timestamp, you can search the whole archive in seconds, and quote people accurately."
+test-interview-english-two-voices,39.10,43.32,00:00:39,00:00:43,Speaker 2,"Do you trust the automatic transcript, or do you always check it by hand?"
+test-interview-english-two-voices,43.92,50.14,00:00:43,00:00:50,Speaker 1,"I always read it while listening. Technical terms and names are the usual trouble, so I fix those first."
+test-interview-english-two-voices,50.84,55.76,00:00:50,00:00:55,Speaker 2,"That sounds like a good tip to end on. Daniel, thank you so much. my"
+test-interview-english-two-voices,55.76,57.20,00:00:55,00:00:57,Speaker 1,pleasure it was fun
+Test three voices copy,0.18,0.84,00:00:00,00:00:00,F,irgendwo ab?
+Test three voices copy,1.58,5.92,00:00:01,00:00:05,M,"Genau, also es speichert quasi nicht mit dem Text selber ab, es ist"
+Test three voices copy,5.92,5.92,00:00:05,00:00:05,F,ein
+Test three voices copy,5.92,14.40,00:00:05,00:00:14,M,"Vektoraum. Genau, da bist du so, ja, okay, dann lass mal das mal."
+Test three voices copy,14.94,20.53,00:00:14,00:00:20,F,"Ja, es gibt viele neue Fachbegriffe, und so langsam."
+Test three voices copy,24.04,24.66,00:00:24,00:00:24,M,Ja.
+Test three voices copy,24.66,32.98,00:00:24,00:00:32,M,"Dann kommen wir zum eigentlich interessanten, also eigentlich unserem Telefonverlauf. da kann man jetzt hier auf"
+Test three voices copy,32.98,36.30,00:00:32,00:00:36,I,und dann spreche ich

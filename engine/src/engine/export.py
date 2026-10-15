@@ -1,0 +1,670 @@
+"""Transcript exporters. Segments: {start, end, speaker, text}; names maps speaker id -> display name."""
+import csv
+import io
+import json
+
+
+def _name(seg: dict, names: dict[str, str]) -> str:
+    return names.get(seg["speaker"], seg["speaker"])
+
+
+def _ts(sec: float, sep: str = ",", hours: bool = True) -> str:
+    ms = round(sec * 1000)
+    h, ms = divmod(ms, 3_600_000)
+    m, ms = divmod(ms, 60_000)
+    s, ms = divmod(ms, 1000)
+    return f"{h:02d}:{m:02d}:{s:02d}{sep}{ms:03d}"
+
+
+# ---- Words the exports write themselves (everything else is the user's own text) -----------------------------
+_L = {
+    "en": {"summary": "Summary", "topics": "Topics", "actions": "Action items", "keyquotes": "Key quotes", "highlights": "Highlights", "nohighlights": "Nothing was highlighted. Select text in the transcript and choose Highlight.", "aisummary": "Written by a language model on this computer. Check it before you share it.", "aihighlight": "suggested by the language model", "speaker": "speaker", "speakers": "speakers", "participants": "Participants: ", "footer": "Made with Local Transcriber  ·  page ",
+           "attendees": "Attendees", "decisions": "Decisions and action items", "nomarks": "No lines were marked. Mark a line in the transcript to list it here.",
+           "record": "Record", "minutes": "Meeting minutes", "edited1": "{n} edited line of {m}", "editedN": "{n} edited lines of {m}",
+           "original": "original: ", "edited": "edited:   ",
+           "cleannote": "Edited copy: hesitations such as “um” and “uh” were removed. This is not a verbatim record.", "pausenote": "Pauses are marked (.) about half a second, (..) about one second, (...) two seconds or more.", "overlap": "overlap",
+           "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]},
+    "de": {"summary": "Zusammenfassung", "topics": "Themen", "actions": "Aufgaben", "keyquotes": "Zitate", "highlights": "Highlights", "nohighlights": "Nichts wurde hervorgehoben. Markiere Text im Transkript und wähle Hervorheben.", "aisummary": "Von einem Sprachmodell auf diesem Computer geschrieben. Bitte vor dem Weitergeben prüfen.", "aihighlight": "vom Sprachmodell vorgeschlagen", "speaker": "Sprecher", "speakers": "Sprecher", "participants": "Teilnehmende: ", "footer": "Erstellt mit Local Transcriber  ·  Seite ",
+           "attendees": "Teilnehmende", "decisions": "Beschlüsse und Aufgaben", "nomarks": "Es wurden keine Zeilen markiert. Markiere eine Zeile im Transkript, damit sie hier erscheint.",
+           "record": "Protokoll", "minutes": "Besprechungsprotokoll", "edited1": "{n} geänderte Zeile von {m}", "editedN": "{n} geänderte Zeilen von {m}",
+           "original": "Original:  ", "edited": "Geändert: ",
+           "cleannote": "Bearbeitete Fassung: Füllwörter wie „äh“ und „ähm“ wurden entfernt. Das ist kein wörtliches Protokoll.", "pausenote": "Pausen sind markiert: (.) etwa eine halbe Sekunde, (..) etwa eine Sekunde, (...) zwei Sekunden oder mehr.", "overlap": "überlappend",
+           "months": ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]},
+    "fr": {"summary": "Résumé", "topics": "Sujets", "actions": "Actions à mener", "keyquotes": "Citations clés", "highlights": "Moments forts", "nohighlights": "Rien n’a été mis en avant. Sélectionnez du texte dans la transcription et choisissez Mettre en avant.", "aisummary": "Rédigé par un modèle de langage sur cet ordinateur. Vérifiez-le avant de le partager.", "aihighlight": "proposé par le modèle de langage", "speaker": "locuteur", "speakers": "locuteurs", "participants": "Participants : ", "footer": "Créé avec Local Transcriber  ·  page ",
+           "attendees": "Participants", "decisions": "Décisions et actions", "nomarks": "Aucune ligne n’a été marquée. Marquez une ligne dans la transcription pour qu’elle apparaisse ici.",
+           "record": "Compte rendu", "minutes": "Compte rendu de réunion", "edited1": "{n} ligne modifiée sur {m}", "editedN": "{n} lignes modifiées sur {m}",
+           "original": "original : ", "edited": "modifié :  ",
+           "cleannote": "Version nettoyée : les hésitations comme « euh » ont été supprimées. Ce n’est pas une transcription littérale.", "pausenote": "Les pauses sont indiquées : (.) environ une demi-seconde, (..) environ une seconde, (...) deux secondes ou plus.", "overlap": "chevauchement",
+           "months": ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]},
+    "es": {"summary": "Resumen", "topics": "Temas", "actions": "Tareas", "keyquotes": "Citas clave", "highlights": "Destacados", "nohighlights": "No se destacó nada. Selecciona texto en la transcripción y elige Destacar.", "aisummary": "Escrito por un modelo de lenguaje en este ordenador. Revísalo antes de compartirlo.", "aihighlight": "sugerido por el modelo de lenguaje", "speaker": "hablante", "speakers": "hablantes", "participants": "Participantes: ", "footer": "Creado con Local Transcriber  ·  página ",
+           "attendees": "Asistentes", "decisions": "Decisiones y tareas", "nomarks": "No se marcó ninguna línea. Marca una línea en la transcripción para que aparezca aquí.",
+           "record": "Acta", "minutes": "Acta de la reunión", "edited1": "{n} línea editada de {m}", "editedN": "{n} líneas editadas de {m}",
+           "original": "original: ", "edited": "editado:  ",
+           "cleannote": "Copia editada: se quitaron las muletillas como «eh». No es una transcripción literal.", "pausenote": "Las pausas se marcan: (.) medio segundo aproximado, (..) un segundo aproximado, (...) dos segundos o más.", "overlap": "solapado",
+           "months": ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"]},
+}
+
+
+def _tr(lang: str | None) -> dict:
+    return _L.get((lang or "en")[:2], _L["en"])
+
+
+def _long_date(d, lang: str | None) -> str:
+    L = _tr(lang)
+    m = L["months"][d.month - 1]
+    code = (lang or "en")[:2]
+    if code == "de":
+        return f"{d.day}. {m} {d.year}"
+    if code == "fr":
+        return f"{d.day} {m} {d.year}"
+    if code == "es":
+        return f"{d.day} de {m} de {d.year}"
+    return f"{d.day:02d} {m} {d.year}"
+
+
+# ---- Transcript style (applied when exporting; the stored transcript is never changed) -------------------------
+_FILLERS = {
+    "de": ["äh", "ähm", "öh", "öhm", "hm", "hmm"],
+    "en": ["uh", "um", "uhm", "er", "erm", "hm", "hmm"],
+    "fr": ["euh", "heu", "hum", "hmm"],
+    "es": ["eh", "em", "mmm", "hmm"],
+}
+
+
+def _with_pauses(seg: dict) -> str:
+    """Text rebuilt from the word timings with (.) (..) (...) where the speaker paused. Edited lines keep their text."""
+    words = seg.get("words") or []
+    if len(words) < 2 or seg.get("orig") or seg.get("edited"):
+        return seg["text"]
+    out = [words[0]["word"]]
+    for prev, w in zip(words, words[1:]):
+        gap = w["start"] - prev["end"]
+        mark = "(...)" if gap >= 2.0 else "(..)" if gap >= 1.0 else "(.)" if gap >= 0.5 else ""
+        out.append((" " + mark if mark else "") + w["word"])
+    return "".join(out).strip()
+
+
+def _drop_fillers(text: str, language: str | None) -> str:
+    import re
+
+    words = _FILLERS.get((language or "")[:2])
+    if not words:
+        return text
+    pat = re.compile(r"(?<![\w'’-])(?:" + "|".join(map(re.escape, words)) + r")(?![\w'’-])[,.…]*\s*", re.IGNORECASE)
+    starts = bool(pat.match(text.lstrip()))
+    out = pat.sub("", text)
+    out = re.sub(r"\s+([,.!?;:])", r"\1", re.sub(r"\s{2,}", " ", out)).strip()
+    if starts and out:
+        out = out[0].upper() + out[1:]
+    return out
+
+
+def apply_style(segs, options: dict | None = None, language: str | None = None):
+    """Verbatim (default) leaves the text alone; `style: clean` drops hesitations; `pauseMarks` adds (.) (..) (...)."""
+    o = options or {}
+    clean, pauses = o.get("style") == "clean", bool(o.get("pauseMarks"))
+    if not clean and not pauses:
+        return segs
+    out = []
+    for s in segs:
+        text = _with_pauses(s) if pauses else s["text"]
+        if clean:
+            text = _drop_fillers(text, language)
+        if clean and not text:
+            continue
+        out.append({**s, "text": text})
+    return out
+
+
+def style_note(options: dict | None, lang: str | None) -> str:
+    o = options or {}
+    L = _tr(lang)
+    return " ".join(x for x in (L["cleannote"] if o.get("style") == "clean" else "", L["pausenote"] if o.get("pauseMarks") else "") if x)
+
+
+def _flag(seg: dict, lang: str | None, options: dict | None = None) -> str:
+    """` [fr, overlap]`: the line's own language (only when it differs from the recording's) and overlapping speech."""
+    parts = []
+    own = seg.get("lang")
+    if own and own != (options or {}).get("fileLanguage"):
+        parts.append(own)
+    if seg.get("overlap"):
+        parts.append(_tr(lang)["overlap"])
+    return f" [{', '.join(parts)}]" if parts else ""
+
+
+def _trans_txt(seg: dict, options: dict | None) -> str:
+    """English translation, on its own line under the text (left out when the user turned translations off)."""
+    return f"\n    → {seg['translation']}" if seg.get("translation") and (options or {}).get("translations", True) else ""
+
+
+def to_txt(segs, names=None, options=None):
+    names = names or {}
+    o = options or {}
+    stamp = o.get("timestamps", True)
+    note = style_note(o, o.get("lang"))
+    body = "\n".join((f"[{_ts(s['start'])[:8]}] " if stamp else "") + f"{_name(s, names)}{_flag(s, o.get('lang'), o)}: {s['text']}" + _trans_txt(s, o) for s in segs) + "\n"
+    return (note + "\n\n" if note else "") + body
+
+
+def _opt(options: dict | None, key: str, default):
+    v = (options or {}).get(key)
+    return default if v is None else v
+
+
+def _wrap(tokens: list[str], max_chars: int, max_lines: int, first_prefix: int = 0) -> list[str] | None:
+    """Break words into at most max_lines lines of at most max_chars; None if they do not fit.
+    Two lines are balanced so the second is not a stub. A single word longer than max_chars stays whole."""
+    def width(ws: list[str], pre: int) -> int:
+        return pre + len(" ".join(ws))
+
+    if width(tokens, first_prefix) <= max_chars or max_lines <= 1:
+        return [" ".join(tokens)] if width(tokens, first_prefix) <= max_chars or len(tokens) == 1 else None
+    best = None
+    for k in range(1, len(tokens)):
+        w1, w2 = width(tokens[:k], first_prefix), width(tokens[k:], 0)
+        if w1 > max_chars and k > 1:
+            break
+        if w2 > max_chars and k < len(tokens) - 1 and w1 <= max_chars:
+            continue
+        if max(w1, w2) <= max_chars and (best is None or max(w1, w2) < best[0]):
+            best = (max(w1, w2), k)
+    if best is None:
+        return None
+    return [" ".join(tokens[: best[1]]), " ".join(tokens[best[1]:])]
+
+
+def _cues(segs, names, options, inline_speaker: bool):
+    """Subtitle cues as (start, end, lines). Built from words when present, else one cue per segment."""
+    max_chars = max(10, int(_opt(options, "maxChars", 42)))
+    max_lines = max(1, int(_opt(options, "maxLines", 2)))
+    show = bool(_opt(options, "speakerNames", True))
+    offset = float(_opt(options, "offsetSeconds", 0))
+    max_dur, min_dur = 7.0, 1.0
+    raw: list[tuple[float, float, list[str], str | None]] = []  # start, end, lines, speaker label for first cue
+    for seg in segs:
+        label = _name(seg, names) if show else None
+        words = [w for w in (seg.get("words") or []) if str(w.get("word", "")).strip()]
+        if not words:
+            raw.append((seg["start"], seg["end"], seg["text"].split("\n"), label))
+            continue
+        i, first = 0, True
+        while i < len(words):
+            pre = len(label) + 2 if (first and label and inline_speaker) else 0
+            j, lines = i + 1, None
+            lines = _wrap([words[i]["word"].strip()], max_chars, max_lines, pre)
+            while j < len(words) and words[j]["end"] - words[i]["start"] <= max_dur:
+                trial = _wrap([w["word"].strip() for w in words[i:j + 1]], max_chars, max_lines, pre)
+                if trial is None:
+                    break
+                lines, j = trial, j + 1
+            chunk = words[i:j]
+            raw.append((chunk[0]["start"], chunk[-1]["end"], lines or [chunk[0]["word"].strip()], label if first else None))
+            first, i = False, j
+    out = []
+    for n, (st, en, lines, who) in enumerate(raw):
+        nxt = raw[n + 1][0] if n + 1 < len(raw) else None
+        if en - st < min_dur:
+            en = st + min_dur if nxt is None else max(en, min(st + min_dur, nxt))
+        st, en = st + offset, en + offset
+        if en <= 0:
+            continue
+        st = max(0.0, st)
+        if who and inline_speaker:
+            lines = [f"{who}: {lines[0]}"] + lines[1:]
+        out.append((st, max(en, st + 0.001), lines, who))
+    return out
+
+
+def to_srt(segs, names=None, options=None):
+    names = names or {}
+    return "\n".join(
+        f"{i}\n{_ts(st)} --> {_ts(en)}\n" + "\n".join(lines) + "\n"
+        for i, (st, en, lines, _) in enumerate(_cues(segs, names, options, True), 1)
+    )
+
+
+def to_vtt(segs, names=None, options=None):
+    names = names or {}
+    body = "\n".join(
+        f"{_ts(st, '.')} --> {_ts(en, '.')}\n" + (f"<v {who}>" if who else "") + "\n".join(lines) + "\n"
+        for st, en, lines, who in _cues(segs, names, options, False)
+    )
+    return "WEBVTT\n\n" + body
+
+
+def _clock(sec: float) -> str:
+    t = int(sec)
+    h, m, s = t // 3600, t % 3600 // 60, t % 60
+    return f"{h}:{m:02d}:{s:02d}" if h else f"{m}:{s:02d}"
+
+
+def to_chapters(segs, names=None, options=None):
+    """YouTube/podcast chapter list, one 'm:ss Title' per line. YouTube needs the first chapter at 0:00."""
+    chaps = [(max(0.0, s["start"]), str(s["chapter"]).strip()) for s in segs if str(s.get("chapter") or "").strip()]
+    if not chaps:
+        return ""
+    if int(chaps[0][0]) != 0:
+        chaps.insert(0, (0.0, "Intro"))
+    return "\n".join(f"{_clock(t)} {title}" for t, title in chaps) + "\n"
+
+
+def _rate(fps) -> tuple[int, float, bool]:
+    """(timebase, real frames per second, fractional?) for a frame rate: 29.97 counts 30 frames a "second" but runs at 30000/1001."""
+    fps = float(fps) or 25.0
+    base = max(1, round(fps))
+    frac = abs(fps - base) > 0.001 and base in (24, 30, 60)
+    return base, (base * 1000 / 1001 if frac else float(base)), frac
+
+
+def _drop_per_minute(base: int) -> int:
+    """Frame numbers skipped at the start of every minute but each tenth in drop-frame timecode (2 for 29.97, 4 for 59.94)."""
+    return 2 if base == 30 else 4
+
+
+def _timecode(sec: float, fps, start_frames: int, drop: bool = False) -> str:
+    base, real, _ = _rate(fps)
+    n = round(max(0.0, sec) * real) + start_frames
+    if drop:
+        d = _drop_per_minute(base)
+        tens, rest = divmod(n, base * 600 - 9 * d)
+        n += 9 * d * tens + (d * ((rest - d) // (base * 60 - d)) if rest > d else 0)
+    f = n % base
+    t = n // base
+    return f"{t // 3600:02d}:{t % 3600 // 60:02d}:{t % 60:02d}{';' if drop else ':'}{f:02d}"
+
+
+def _tc_frames(tc: str, fps, drop: bool = False) -> int:
+    base, _, _ = _rate(fps)
+    try:
+        h, m, s, f = (int(x) for x in tc.replace(";", ":").split(":"))
+    except ValueError:
+        h, m, s, f = 1, 0, 0, 0
+    n = ((h * 60 + m) * 60 + s) * base + f
+    if drop:
+        minutes = h * 60 + m
+        n -= _drop_per_minute(base) * (minutes - minutes // 10)
+    return n
+
+
+def to_edl(segs, names=None, options=None, title="Transcript"):
+    """DaVinci Resolve marker EDL (CMX3600 events with Resolve marker comments). Handles 23.976/29.97/59.94 and drop-frame."""
+    names = names or {}
+    fps = float(_opt(options, "fps", 25)) or 25.0
+    drop = bool(_opt(options, "dropFrame", False)) and _rate(fps)[2] and _rate(fps)[0] in (30, 60)
+    start = _tc_frames(str(_opt(options, "startTimecode", "01:00:00:00")), fps, drop)
+    offset = float(_opt(options, "offsetSeconds", 0))
+    real = _rate(fps)[1]
+    marks: list[tuple[float, str]] = [(s["start"], str(s["chapter"]).strip()) for s in segs if str(s.get("chapter") or "").strip()]
+    if not marks:
+        prev = None
+        for s in segs:
+            if s["speaker"] != prev:
+                who = _name(s, names)
+                marks.append((s["start"], f"{who}: {' '.join(s['text'].split()[:6])}"))
+            prev = s["speaker"]
+    clean = lambda t: " ".join(t.replace("|", "/").split())[:80]
+    lines = [f"TITLE: {clean(title)}", "FCM: DROP FRAME" if drop else "FCM: NON-DROP FRAME", ""]
+    for n, (t, name) in enumerate(marks, 1):
+        a = _timecode(t + offset, fps, start, drop)
+        b = _timecode(t + offset + 1 / real, fps, start, drop)
+        lines.append(f"{n:03d}  001      V     C        {a} {b} {a} {b}")
+        lines.append(f" |C:ResolveColorBlue |M:{clean(name)} |D:1")
+        lines.append("")
+    return "\n".join(lines)
+
+
+def to_md(segs, names=None, options=None):
+    names = names or {}
+    o = options or {}
+    stamp = o.get("timestamps", True)
+    note = style_note(o, o.get("lang"))
+    body = "\n\n".join(f"**{_name(s, names)}**{_flag(s, o.get('lang'), o)}" + (f" _{_ts(s['start'])[:8]}_" if stamp else "") + f"\n{s['text']}" + (f"\n\n> {s['translation']}" if s.get("translation") and o.get("translations", True) else "") for s in segs) + "\n"
+    return (f"_{note}_\n\n" if note else "") + body
+
+
+def to_json(segs, names=None, meta=None):
+    names = names or {}
+    return json.dumps(
+        {"meta": meta or {}, "speakers": names,
+         "segments": [{**s, "speaker_name": _name(s, names)} for s in segs]},
+        ensure_ascii=False, indent=2,
+    )
+
+
+def to_csv(segs, names=None):
+    """Spreadsheet-friendly: seconds for sorting, h:mm:ss for reading. BOM-less UTF-8, CRLF per RFC 4180."""
+    names = names or {}
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(["start_seconds", "end_seconds", "start", "end", "speaker", "text", "overlap", "language", "translation"])
+    for s in segs:
+        w.writerow([f"{s['start']:.2f}", f"{s['end']:.2f}", _ts(s["start"])[:8], _ts(s["end"])[:8], _name(s, names), s["text"], "yes" if s.get("overlap") else "", s.get("lang", ""), s.get("translation", "")])
+    return buf.getvalue()
+
+
+# Speaker colours, in the same order as the app (bright for rules and bars, darker for text so it stays readable).
+_BRIGHT = ["ff5f8a", "ff9a52", "a87bff", "4fb3ff", "2fc9a0", "f2b134", "e46bd6", "8a8fb0"]
+_DARK = ["c2285c", "b85a14", "6a45e8", "1d6fb5", "12806a", "9a6b00", "a3329a", "5b6078"]
+_INK, _MUTED, _SERIF, _SANS = "2a2040", "6b6085", "Georgia", "Helvetica Neue"
+
+
+def _font(run, name, size=None, bold=None, color=None, italic=None):
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    from docx.shared import Pt, RGBColor
+
+    run.font.name = name
+    rpr = run._element.get_or_add_rPr()
+    fonts = rpr.find(qn("w:rFonts"))
+    if fonts is None:
+        fonts = OxmlElement("w:rFonts")
+        rpr.append(fonts)
+    for attr in ("w:ascii", "w:hAnsi", "w:cs", "w:eastAsia"):
+        fonts.set(qn(attr), name)
+    if size:
+        run.font.size = Pt(size)
+    if bold is not None:
+        run.bold = bold
+    if italic is not None:
+        run.italic = italic
+    if color:
+        run.font.color.rgb = RGBColor.from_string(color.upper())
+
+
+def _border(paragraph, side, color, size=18, space=8):
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+
+    ppr = paragraph._p.get_or_add_pPr()
+    borders = ppr.find(qn("w:pBdr"))
+    if borders is None:
+        borders = OxmlElement("w:pBdr")
+        ppr.append(borders)
+    el = OxmlElement(f"w:{side}")
+    for k, v in (("val", "single"), ("sz", str(size)), ("space", str(space)), ("color", color)):
+        el.set(qn(f"w:{k}"), v)
+    borders.append(el)
+
+
+def _shade(paragraph, fill):
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+
+    ppr = paragraph._p.get_or_add_pPr()
+    shd = OxmlElement("w:shd")
+    for k, v in (("val", "clear"), ("color", "auto"), ("fill", fill)):
+        shd.set(qn(f"w:{k}"), v)
+    ppr.append(shd)
+
+
+def _page_number_footer(section, lang=None):
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+
+    p = section.footer.paragraphs[0]
+    p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    r = p.add_run(_tr(lang)["footer"])
+    _font(r, _SANS, 8.5, color=_MUTED)
+    r2 = p.add_run()
+    _font(r2, _SANS, 8.5, color=_MUTED)
+    for kind, text in (("begin", None), (None, " PAGE "), ("end", None)):
+        if kind:
+            el = OxmlElement("w:fldChar")
+            el.set(qn("w:fldCharType"), kind)
+        else:
+            el = OxmlElement("w:instrText")
+            el.set(qn("xml:space"), "preserve")
+            el.text = text
+        r2._r.append(el)
+
+
+def to_docx(segs, names=None, title="Transcript", lang=None, options=None) -> bytes:
+    """A designed Word page: title block, who-talked bars, a coloured rule per speaker, chapter bands, page footer."""
+    from datetime import date
+
+    from docx import Document
+    from docx.shared import Cm, Pt
+
+    names = names or {}
+    # speaker order (and so colour) follows the app: the order of the names given, then order of appearance
+    order = list(names.keys())
+    for sg in segs:
+        if sg["speaker"] not in order:
+            order.append(sg["speaker"])
+    idx = {sp: i % len(_BRIGHT) for i, sp in enumerate(order)}
+    talk = {}
+    for sg in segs:
+        talk[sg["speaker"]] = talk.get(sg["speaker"], 0.0) + max(0.0, sg["end"] - sg["start"])
+    total = sum(talk.values()) or 1.0
+    present = [sp for sp in order if sp in talk]
+
+    doc = Document()
+    sec = doc.sections[0]
+    sec.left_margin = sec.right_margin = Cm(2.4)
+    sec.top_margin, sec.bottom_margin = Cm(2.2), Cm(2.0)
+    normal = doc.styles["Normal"]
+    normal.font.name = _SERIF
+    normal.font.size = Pt(11.5)
+    _page_number_footer(sec, lang)
+
+    # title block
+    p = doc.add_paragraph()
+    p.paragraph_format.space_after = Pt(2)
+    _font(p.add_run(title), _SERIF, 28, True, _INK)
+    p = doc.add_paragraph()
+    p.paragraph_format.space_after = Pt(14)
+    _border(p, "bottom", _BRIGHT[0], 18, 10)
+    _font(p.add_run(_long_date(date.today(), lang)), _SANS, 10, color=_MUTED)
+    _font(p.add_run(f"   ·   {len(present)} {_tr(lang)['speaker' if len(present) == 1 else 'speakers']}"), _SANS, 10, color=_MUTED)
+
+    # who talked: a coloured block bar per speaker
+    p = doc.add_paragraph()
+    p.paragraph_format.space_after = Pt(2)
+    _font(p.add_run(_tr(lang)["participants"] + ", ".join(_name({"speaker": sp}, names) for sp in present)), _SANS, 9, color=_MUTED)
+    for sp in present:
+        share = talk[sp] / total
+        p = doc.add_paragraph()
+        p.paragraph_format.space_after = Pt(1)
+        p.paragraph_format.left_indent = Cm(0.1)
+        _font(p.add_run("● "), _SANS, 10, color=_BRIGHT[idx[sp]])
+        _font(p.add_run(_name({"speaker": sp}, names).ljust(1)), _SANS, 10.5, True, _DARK[idx[sp]])
+        _font(p.add_run("   " + "█" * max(1, round(share * 24))), _SANS, 9, color=_BRIGHT[idx[sp]])
+        _font(p.add_run(f"  {round(share * 100)}%"), _SANS, 9.5, color=_MUTED)
+    note = style_note(options, lang)
+    if note:
+        p = doc.add_paragraph()
+        _font(p.add_run(note), _SANS, 8.5, color=_MUTED, italic=True)
+    doc.add_paragraph().paragraph_format.space_after = Pt(6)
+    stamp = (options or {}).get("timestamps", True)
+
+    # the conversation
+    for sg in segs:
+        sp = sg["speaker"]
+        if sg.get("chapter"):
+            c = doc.add_paragraph()
+            c.paragraph_format.space_before = Pt(16)
+            c.paragraph_format.space_after = Pt(6)
+            c.paragraph_format.keep_with_next = True
+            _shade(c, "F1ECFB")
+            _font(c.add_run(f"  {_ts(sg['start'])[:8]}   " if stamp else "  "), _SANS, 9, color=_MUTED)
+            _font(c.add_run(sg["chapter"]), _SANS, 13, True, _INK)
+        head = doc.add_paragraph()
+        head.paragraph_format.space_before = Pt(9)
+        head.paragraph_format.space_after = Pt(1)
+        head.paragraph_format.left_indent = Cm(0.45)
+        head.paragraph_format.keep_with_next = True
+        _border(head, "left", _BRIGHT[idx[sp]], 24, 8)
+        _font(head.add_run(_name(sg, names)), _SANS, 11, True, _DARK[idx[sp]])
+        _font(head.add_run((f"   {_ts(sg['start'])[:8]}" if stamp else "") + _flag(sg, lang, options)), _SANS, 8.5, color=_MUTED)
+        body = doc.add_paragraph()
+        body.paragraph_format.left_indent = Cm(0.45)
+        body.paragraph_format.space_after = Pt(4)
+        body.paragraph_format.line_spacing = 1.35
+        _border(body, "left", _BRIGHT[idx[sp]], 24, 8)
+        _font(body.add_run(sg["text"]), _SERIF, 11.5, color=_INK)
+        if sg.get("translation") and (options or {}).get("translations", True):
+            tr = doc.add_paragraph()
+            tr.paragraph_format.left_indent = Cm(0.45)
+            tr.paragraph_format.space_after = Pt(2)
+            _font(tr.add_run("→ " + sg["translation"]), _SERIF, 10.5, color=_MUTED, italic=True)
+
+    out = io.BytesIO()
+    doc.save(out)
+    return out.getvalue()
+
+
+# ---- Extra formats -------------------------------------------------------------------------------------------
+
+def _redaction_map(segs, names) -> dict[str, str]:
+    """Speaker id -> P01, P02… in order of first appearance."""
+    order: list[str] = []
+    for s in segs:
+        if s["speaker"] not in order:
+            order.append(s["speaker"])
+    return {sp: f"P{i + 1:02d}" for i, sp in enumerate(order)}
+
+
+def to_redacted(segs, names=None, options=None):
+    """Plain text with every speaker name replaced by P01, P02… and any name the user typed removed from the text."""
+    names = names or {}
+    codes = _redaction_map(segs, names)
+    real = sorted({n for n in names.values() if n and n.strip()}, key=len, reverse=True)
+
+    def scrub(t: str) -> str:
+        import re
+        for n in real:
+            t = re.sub(re.escape(n), "[name]", t, flags=re.IGNORECASE)
+        return t
+
+    stamp = (options or {}).get("timestamps", True)
+    return "\n".join((f"[{_ts(s['start'])[:8]}] " if stamp else "") + f"{codes[s['speaker']]}: {scrub(s['text'])}" for s in segs) + "\n"
+
+
+def quote_list(segs, highlights=None):
+    """Everything worth quoting, in the order it occurs: each highlight, plus each marked line that holds no highlight of its own.
+    Entries are {start, end, text, speaker, reason, ai}."""
+    hl = [h for h in (highlights or []) if h.get("text")]
+    out = [{"start": h["start"], "end": h["end"], "text": h["text"], "speaker": h.get("speaker", ""), "reason": h.get("reason") or "", "ai": bool(h.get("ai"))} for h in hl]
+    for s in segs:
+        if s.get("marked") and not any(min(h["end"], s["end"]) > max(h["start"], s["start"]) for h in hl):
+            out.append({"start": s["start"], "end": s["end"], "text": s["text"], "speaker": s["speaker"], "reason": "", "ai": False})
+    return sorted(out, key=lambda q: q["start"])
+
+
+def to_quotes(segs, names=None, highlights=None):
+    """The highlights and the marked lines, as quotes with speaker and time."""
+    names = names or {}
+    quotes = quote_list(segs, highlights)
+    return "\n\n".join(f"“{q['text']}”\n— {names.get(q['speaker'], q['speaker'])}, {_clock(q['start'])}" for q in quotes) + ("\n" if quotes else "")
+
+
+def to_highlights_docx(segs, names=None, highlights=None, title=None, lang=None) -> bytes:
+    """Word document with the highlights as a list of quotes, each with speaker, time and (for suggestions) the reason."""
+    from docx import Document
+    from docx.shared import Pt
+
+    names = names or {}
+    L = _tr(lang)
+    doc = Document()
+    doc.add_heading(title or L["highlights"], 0)
+    quotes = quote_list(segs, highlights)
+    if not quotes:
+        doc.add_paragraph(L["nohighlights"])
+    for q in quotes:
+        p = doc.add_paragraph()
+        p.add_run(f"“{q['text']}”").italic = True
+        who = doc.add_paragraph()
+        r = who.add_run(f"— {names.get(q['speaker'], q['speaker'])}, {_clock(q['start'])}" + (f"  ·  {q['reason']}" if q["reason"] else ""))
+        r.font.size = Pt(9)
+    buf = io.BytesIO()
+    doc.save(buf)
+    return buf.getvalue()
+
+
+def to_changes(segs, names=None, options=None):
+    """Original (as heard by the model) versus edited text, for every line the user changed."""
+    names = names or {}
+    L = _tr((options or {}).get("lang"))
+    out = []
+    for s in segs:
+        o = s.get("orig")
+        if not o or o.get("text") == s["text"]:
+            continue
+        out.append(f"[{_ts(s['start'])[:8]}] {_name(s, names)}\n  - {L['original']}{o['text']}\n  + {L['edited']}{s['text']}")
+    n = len(out)
+    head = L["edited1" if n == 1 else "editedN"].format(n=n, m=len(segs)) + "\n\n"
+    return head + "\n\n".join(out) + ("\n" if out else "")
+
+
+def to_combined_csv(items):
+    """items: [{"name": project name, "segments": [...], "speakers": {...}}] → one spreadsheet across projects."""
+    buf = io.StringIO()
+    w = csv.writer(buf)
+    w.writerow(["project", "start_seconds", "end_seconds", "start", "end", "speaker", "text"])
+    for it in items:
+        names = it.get("speakers") or {}
+        for s in it["segments"]:
+            w.writerow([it["name"], f"{s['start']:.2f}", f"{s['end']:.2f}", _ts(s["start"])[:8], _ts(s["end"])[:8], _name(s, names), s["text"]])
+    return buf.getvalue()
+
+
+def to_minutes(segs, names=None, title=None, lang=None, summary=None, highlights=None) -> bytes:
+    """Word document laid out as minutes: attendees, decisions and action items (lines the user marked), then the record."""
+    from docx import Document
+    from docx.shared import Pt
+
+    names = names or {}
+    L = _tr(lang)
+    doc = Document()
+    doc.add_heading(title or L["minutes"], 0)
+    people = []
+    for s in segs:
+        n = _name(s, names)
+        if n not in people:
+            people.append(n)
+    doc.add_heading(L["attendees"], 2)
+    doc.add_paragraph(", ".join(people) or "—")
+    summary = summary or {}
+    if summary.get("summary"):
+        doc.add_heading(L["summary"], 2)
+        doc.add_paragraph(summary["summary"])
+        note = doc.add_paragraph(L["aisummary"])
+        note.runs[0].italic = True
+        note.runs[0].font.size = Pt(9)
+    if summary.get("topics"):
+        doc.add_heading(L["topics"], 2)
+        for t in summary["topics"]:
+            doc.add_paragraph(f"{_clock(t['start'])}  {t['title']}", style="List Bullet")
+    marked = [s for s in segs if s.get("marked")]
+    decisions = summary.get("decisions") or []
+    doc.add_heading(L["decisions"], 2)
+    if marked or decisions:
+        for s in marked:
+            doc.add_paragraph(f"{s['text']} ({_name(s, names)}, {_clock(s['start'])})", style="List Bullet")
+        for d in decisions:
+            doc.add_paragraph(d, style="List Bullet")
+    else:
+        doc.add_paragraph(L["nomarks"])
+    if summary.get("actions"):
+        doc.add_heading(L["actions"], 2)
+        for a in summary["actions"]:
+            doc.add_paragraph(a["text"] + (f" ({a['owner']})" if a.get("owner") else ""), style="List Bullet")
+    quotes = quote_list([], highlights)
+    if quotes:
+        doc.add_heading(L["keyquotes"], 2)
+        for q in quotes:
+            doc.add_paragraph(f"“{q['text']}” — {names.get(q['speaker'], q['speaker'])}, {_clock(q['start'])}", style="List Bullet")
+    doc.add_heading(L["record"], 2)
+    for s in segs:
+        if s.get("chapter"):
+            doc.add_heading(s["chapter"], 3)
+        p = doc.add_paragraph()
+        r = p.add_run(f"{_name(s, names)}  {_clock(s['start'])}  ")
+        r.bold = True
+        r.font.size = Pt(9)
+        p.add_run(s["text"])
+    buf = io.BytesIO()
+    doc.save(buf)
+    return buf.getvalue()

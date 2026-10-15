@@ -1,0 +1,59 @@
+{
+  "source": "test-interview-german-two-voices.m4a",
+  "language": "de",
+  "duration": 45.1860625,
+  "speakers": {
+    "SPEAKER_00": "Speaker 1",
+    "SPEAKER_01": "Speaker 2"
+  },
+  "segments": [
+    {
+      "start": 0,
+      "end": 5.84,
+      "speaker": "SPEAKER_01",
+      "text": "Herzlich Willkommen zum Interview. Heute sprechen wir über das Projekt, das vor drei Jahren begann."
+    },
+    {
+      "start": 6.62,
+      "end": 12.46,
+      "speaker": "SPEAKER_00",
+      "text": "Danke für die Einladung. Ich freue mich sehr, dass wir heute über unsere Arbeit sprechen können."
+    },
+    {
+      "start": 13.28,
+      "end": 16.66,
+      "speaker": "SPEAKER_01",
+      "text": "Wie kam es eigentlich dazu? Was war der Ausgangspunkt?"
+    },
+    {
+      "start": 17.54,
+      "end": 23.68,
+      "speaker": "SPEAKER_00",
+      "text": "Eigentlich war es ein Zufall. Wir haben im Sommer angefangen, ohne zu wissen, wohin es führt."
+    },
+    {
+      "start": 24.5,
+      "end": 28.12,
+      "speaker": "SPEAKER_01",
+      "text": "Und welche Fachbegriffe sollten unsere Hörerinnen und Hörer kennen?"
+    },
+    {
+      "start": 28.12,
+      "end": 36.8,
+      "speaker": "SPEAKER_00",
+      "text": "Wichtig sind vor allem Fachbegriffe wie Sprechererkennung, Zeitstempel und Transkript. Damit lässt sich alles schnell wiederfinden."
+    },
+    {
+      "start": 37.64,
+      "end": 41.06,
+      "speaker": "SPEAKER_01",
+      "text": "Das klingt sehr praktisch. Vielen Dank für das Gespräch."
+    },
+    {
+      "start": 41.56,
+      "end": 44.24,
+      "speaker": "SPEAKER_00",
+      "text": "Sehr gerne. Es hat mir wirklich Spaß gemacht."
+    }
+  ]
+}
