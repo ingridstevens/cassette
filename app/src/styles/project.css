@@ -422,3 +422,5 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .pv-dock .pv-now { max-width: 130px; }
 .pv-dock .pv-clock { width: 72px; }
 .pv-dock { column-gap: 12px; }
+/* when the drawer is open the strip is no longer centred in a fixed-height card, so give it breathing room above */
+.pv-dock:has(.pv-drawer:not([hidden])) { padding-top: 22px; }
