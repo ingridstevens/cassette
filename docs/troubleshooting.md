@@ -64,7 +64,19 @@ recovered. If **Saving** was on, the previous backup file next to the recording 
 
 ## Windows and Linux
 
-These are not tested yet. Please report what you find.
+These are not tested yet. Please report what you find. What to expect, and what to try:
+
+- **`setup.ps1` is "not digitally signed" or "running scripts is disabled":** run `powershell -ExecutionPolicy Bypass -File .\setup.ps1`.
+- **`uv`, `node` or `npm` "is not recognized" right after `winget install`:** close PowerShell and open a new window; the new window sees the new programs.
+- **`node` is too old:** the app needs Node.js 22.12 or newer. `winget upgrade OpenJS.NodeJS.LTS`, then open a new window.
+- **`npm ci` or `uv sync` stops with "path too long" or "access denied":** keep the folder short (`C:\lt`, not deep inside OneDrive or Documents) and
+  pause real-time scanning for that folder in Windows Security while it installs. OneDrive-synced folders cause trouble with thousands of small files.
+- **`uv sync --extra llm` fails with "CMake" or "Microsoft Visual C++ 14.0 or greater is required":** llama.cpp has to be compiled.
+  Install the build tools (`winget install Microsoft.VisualStudio.2022.BuildTools --override "--wait --passive --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"`,
+  several GB) and run it again. If you do not need highlights and summaries, skip the extra: everything else works without it.
+- **Not enough space:** the install is several GB (Python packages including PyTorch, then Electron), plus the models. Plan for 8 GB free before you start.
+- **It is very slow:** without an NVIDIA card the words are written on the processor. Choose the *Tiny*, *Base* or *Small* size
+  ([Which model size?](models.md)), turn on *Skip silence*, and close other programs.
 
 ## The computer warns that the app is from an unidentified developer
 Builds are not signed yet. On macOS, right-click the app, choose **Open**, then **Open** again (or allow it under
@@ -77,7 +89,7 @@ and send its form (**Agree and access repository**). If it still says **Form not
 
 ## Suggest highlights or Write a summary doesn't work
 - **"The language model is not downloaded yet":** open the Highlights tab and press **Download the language model**, or use Settings, Storage and models. It needs one online download.
-- **The tab says the language model is not part of this version:** the build you run doesn't include it (on Windows and Linux it needs llama.cpp, which is not tested yet). Highlighting by hand still works.
+- **The tab says the language model is not part of this version:** the build you run doesn't include it (on Windows and Linux it needs llama.cpp, an opt-in install: `uv sync --extra llm` in the `engine` folder, see [Windows and Linux](#windows-and-linux)). Highlighting by hand still works.
 - **It found nothing, or the summary is very short:** small models struggle with very short recordings. Try a bigger one in Settings, Storage and models.
 - **It stops with an error:** the message is shown in the tab and the details are in the activity log (Settings, Privacy). A computer with little memory may not be able to load the larger model; use the small one.
 
