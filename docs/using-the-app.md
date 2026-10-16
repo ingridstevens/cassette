@@ -177,37 +177,32 @@ were found, which models ran, how long each step took, whether a backup file was
 
 Open with the **Settings** row, or `⌘,` / `Ctrl+,`.
 
-![Settings, Performance](screenshots/17-settings-performance.jpg)
+Settings has two groups of pages and a search box. **Jobs:** Overview, Transcription, Speakers, Summaries and translation. **App:**
+Saving and export, Text and language, Privacy, Advanced. **About** is at the bottom of the list. Press Enter in the search box to open
+the first match.
 
-- **Performance:** *Automatic* uses your graphics chip for speaker detection when there is one (an Apple chip, or an
-  NVIDIA card); *CPU only* is the slower, most compatible choice. On a Mac with an Apple chip a second choice, **Which engine writes the
-  words down?**, lets the words be written on the graphics chip too (several times faster) once you download the **Apple GPU version** of
-  your model size there; see [Which model size?](models.md). On Windows and Linux the words are meant to use an NVIDIA card when one is
-  usable (not tested yet). The panel says what is used now.
-![Settings, Storage and models](screenshots/18-settings-storage.jpg)
-
-- **Storage and models:** where the models are stored, free disk space, each model with its size, download and
-  delete. Deleting a model is safe; the app asks you to download it again when needed. The models folder looks
-  busy (one folder per model plus a shared `blobs` folder); that is the standard Hugging Face layout and nothing
-  is duplicated. Speaker detection is three small models shown as one row. Use **Delete** rather than removing
-  files by hand. While a model is being deleted its button says **Deleting…**. The speaker detection row shows
-  whether your Hugging Face token is saved, with **Open token page** when it isn't. You can also import a models folder
-  someone else downloaded (see [Getting started](getting-started.md)).
-- **Saving:** optionally save a backup file (`name.transcript.json`) next to each recording after transcribing. Your
-  audio is never changed or moved.
-- **Display:** two looks with the same layout and controls, differing only in colour: *Fairytale sunset* (soft peach,
-  rose and lilac) and *Clean* (flat, black and white with one accent). **Light or dark** works with both: *Match my
-  computer* (the default, follows your system as it switches), *Light* or *Dark*. **Contrast** has *Standard* and
-  *High contrast* (stronger colours and heavier borders), also in both looks. Speaker colours stay clearly different from
-  each other in every combination. Finished steps (the ticks while transcribing and in setup) use a quiet grey in every
-  look, so the step that is running stands out. Settings saved before the two looks carry over: the first two old stops
-  become *Fairytale sunset*, the last two become *Clean*.
-- **Language:** the language of the app itself: *Match my computer* (the default), English, Deutsch, Français or Español. Word,
-  minutes and other exports follow the app language for the words the app writes itself (headings, dates, footer). The translations
-  are machine-assisted and not yet reviewed by native speakers; where they read oddly, the English text is the reference. The
-  language of a recording is separate (see Options).
-- **Privacy:** what stays on your computer, your saved token (only the last 4 characters are shown; **Open token
-  page** next to **Add a token** opens Hugging Face's Read-token page), and the activity log. See [Privacy and offline use](privacy-and-offline.md).
+- **Overview:** can I transcribe? One line per job (transcription, speakers, summaries) with its state in words and one button. It also
+  has **Use a models folder…** for models someone else downloaded (see [Getting started](getting-started.md)).
+- **Transcription:** pick an **engine** (Whisper; Parakeet and Moonshine where they can run), then a model. Every model row shows its size,
+  its state (*In use*, *Downloaded*, *Not downloaded*) and **Use**, **Download** or **Delete**. Choosing an engine only changes the list; the model
+  in use changes only when you press **Use** (there is an Undo). Deleting the model in use offers **Delete and use** another downloaded model.
+  The **language of recordings** block follows the model in use: Whisper can find the language by itself; Parakeet cannot (it uses a Whisper model, or
+  you choose); Moonshine has one model per language. Quick picks (*Faster*, *In the middle*, *Fewer mistakes*) choose a Whisper size.
+- **Speakers:** what speaker detection does and the four guided steps (Hugging Face account, a Read token named *Local Transcriber*, two short forms, the
+  download), the same as on the first screen. Once it is set up you can switch it off for new projects, or delete it.
+- **Summaries and translation:** the language model for highlights and summaries, and the translation model, each with **Use** and **Delete**.
+- **Saving and export:** optionally save a backup file (`name.transcript.json`) next to each recording after transcribing. Transcribing the same
+  recording again replaces that file. Your audio is never changed or moved.
+- **Text and language:** **Text size** (four sizes, scales the whole app), the language of the app (*Match my computer*, English, Deutsch, Français or
+  Español; the translations are machine-assisted and not yet reviewed), the **look** (*Fairytale sunset* or *Clean*, same layout, only the colours differ),
+  **Light or dark**, **Contrast** (*Standard* or *High contrast*: stronger colours and heavier borders) and the keyboard shortcuts. Speaker colours stay
+  clearly different from each other in every combination. Settings saved before the two looks carry over: the first two old stops become *Fairytale
+  sunset*, the last two become *Clean*. The language of a recording is separate (see Options).
+- **Privacy:** what stays on your computer, a table of every network call, a table of what is stored where (with **Show** buttons), your saved token (only the
+  last 4 characters are shown), and the activity log. See [Privacy and offline use](privacy-and-offline.md).
+- **Advanced:** closed groups, nothing needs changing. *Processor*: *Automatic* uses your graphics chip when there is one; *Processor only* is slower and most
+  compatible. On a Mac with an Apple chip you can also download the **Apple GPU** versions of Whisper (see [Which model size?](models.md)). *Language
+  checker*, the *Models folder* (path, free space), **Copy diagnostics**, the activity log and **Reset all settings**.
 
 ## The status pill
 

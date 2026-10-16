@@ -32,7 +32,7 @@ Translations into English are done by the local speech model, and translations i
 Inside the app's data folder (Settings → Privacy → *Open*, or Settings → Saving → *Show app folder*):
 
 - **Projects:** names, transcripts, speaker names and your edits (`projects.json`).
-- **Models:** the downloaded models (Settings → Storage and models shows the exact path and size).
+- **Models:** the downloaded models (Settings → Advanced → Models folder shows the exact path and size; Settings → Privacy lists where everything is stored).
 - **Hugging Face token:** encrypted with your operating system's secure storage. Only the last 4 characters are
   ever shown in the app.
 - **Marks, highlights and summaries:** the Mark flag, your highlights (with the text of each) and any summary are saved with your project. The minutes, quote list, highlight clips, original-vs-edited and
@@ -47,7 +47,7 @@ or moved.
 
 - **Remove a project:** the **×** on the project in the sidebar removes it and its transcript from the app. It
   does not touch your recording or any backup file next to it.
-- **Remove models:** Settings → Storage and models → Delete.
+- **Remove models:** Settings → Transcription (or Summaries and translation) → Delete.
 - **Remove the token:** Settings → Privacy → Remove.
 - **Everything:** quit the app and delete its data folder.
 

@@ -14,8 +14,9 @@ approximate downloads (Windows shows slightly smaller numbers; see [file sizes](
 
 ## Models for each job
 
-Settings, **Models for each job**, lets each job use its own model: writing the words down, finding out which language is spoken, and highlights and summaries.
-Language detection defaults to **tiny** (a few letters of output don't need a big model); if tiny isn't downloaded, the transcription model is used instead.
+Three different models do three jobs. In Settings, **Transcription** turns speech into text (Whisper, Parakeet or Moonshine: pick an engine, then press **Use** on a downloaded model). **Speakers** sets up speaker detection. **Summaries and translation** chooses the language model for highlights and summaries, and the translation model.
+The model that only finds the language defaults to **tiny** (a few letters of output don't need a big model); change it under Settings, Advanced, Language checker. If tiny isn't downloaded, the transcription model is used instead.
+Every model has **Use** and **Delete** buttons. Deleting the one in use offers to switch to another downloaded model at the same time.
 
 ## Language model (highlights and summaries)
 
@@ -25,7 +26,7 @@ and is a one-time download of 1 to 4.3 GB, depending on which one you pick. See 
 ## Apple GPU versions (Apple Silicon Macs)
 
 On a Mac with an Apple chip, each size also has an **Apple GPU version** that writes the words down on the graphics chip. It is a separate
-download of about the same size (Settings, Performance), not gated, no account. Download the one for the size you use. With **Automatic** the
+download of about the same size (Settings, Advanced, Apple GPU models), not gated, no account. Download the one for the size you use. With **Automatic** the
 app then uses it by itself, and falls back to the CPU engine when it isn't downloaded, when you chose *Always the CPU*, or when a project
 has **Skip silence** on (that feature isn't available on the graphics chip).
 
@@ -40,7 +41,7 @@ it for each size here.
 
 ## Other speech engines (Apple Silicon Macs)
 
-Besides Whisper, Settings, Storage and models can offer two more engines. Both run on the Apple graphics chip, both are fast, and
+Besides Whisper, Settings, Transcription can offer two more engines (the Parakeet and Moonshine choices). Both run on the Apple graphics chip, both are fast, and
 neither can tell which language is spoken or translate by itself: if you have a Whisper model downloaded (the smallest one is enough)
 the app uses it for those two jobs, otherwise you choose the language yourself.
 
@@ -53,11 +54,11 @@ Only Moonshine's *streaming* models are offered: those are MIT-licensed in every
 languages than English are non-commercial and are left out.
 
 If the first seconds of a recording are in a language the model you picked is weak at, the app stops before doing any work and
-suggests a better model (see the language list under Settings, Storage and models: "Reliable in N of M languages").
+suggests a better model (see the language list under Settings, Transcription: "Reliable in N of M languages").
 
 ## Translation into other languages
 
 Whisper can only translate into English. The **translation model Hy-MT2 1.8B** (Tencent, Apache-2.0, about 1 GB, from Hugging Face)
 translates lines into 38 languages, including Arabic, Persian, Russian, Turkish, Hebrew, Hindi, Urdu and Ukrainian (not Swahili, Hausa,
-Amharic or Yoruba). Download it under Settings, Storage and models, then pick the language under *Translate into* in a project's options.
+Amharic or Yoruba). Download it under Settings, Summaries and translation, then pick the language under *Translate into* in a project's options.
 It is a small model: read the translations as help, not as final text.

@@ -1,7 +1,7 @@
 import type { Api } from "../electron/preload";
 import { t } from "./i18n";
 
-declare global { interface Window { api: Api } }
+declare global { interface Window { api: Api } const __APP_VERSION__: string }
 
 export interface Word { start: number; end: number; word: string; speaker: string; prob?: number; /** The user confirmed this word is right (review mode), so it is no longer marked as unsure. */ checked?: boolean }
 export interface Segment { start: number; end: number; speaker: string; text: string; words: Word[]; edited?: boolean; /** Translation of a line in another language (English unless `translationLang` says otherwise). */ translation?: string; translationLang?: string; marked?: boolean; overlap?: boolean; /** Language of this line when it differs from the recording (set by hand). */ lang?: string; chapter?: string; orig?: { text: string; words: Word[] } }
@@ -11,7 +11,7 @@ export interface Highlight { id: string; start: number; end: number; text: strin
 export interface Summary { summary: string; topics: { start: number; title: string }[]; decisions: string[]; actions: { text: string; owner: string | null }[]; model?: string; at?: number }
 export interface Result { language: string; duration: number; speakers: string[]; segments: Segment[]; highlights?: Highlight[]; summary?: Summary }
 export interface Options {
-  model: string; language: string; numSpeakers: string; vad: boolean; prompt: string; noDiarize: boolean; device: string; autosave: boolean; /** Mixed languages: undefined = automatic, true = always per speaker turn, false = off. */ multilingual?: boolean; /** Add an English translation under lines in other languages (undefined = on when the app is in English). */ translate?: boolean; /** Language code to translate lines into (undefined = English). Languages other than English need the translation model. */ translateTo?: string; /** Which speech model only finds the language: a size id, "same" (use the transcription model) or undefined (Tiny). */ detectModel?: string; /** Ask the speech model to write hesitations (um, äh) down. */ verbatim?: boolean; /** Speech engine: "auto" (default) uses the Apple GPU when it can, "faster" always uses the CPU engine. */ whisperEngine?: "auto" | "faster"; minSpeakers?: string; maxSpeakers?: string; /** The look: "sunset" (Fairytale sunset, the default) or "clean". Older saved settings used lookLevel 0–3 (and boring), which lookOf still reads. */ look?: "sunset" | "clean"; /** High contrast: stronger colours and heavier borders, in either look. */ contrast?: "standard" | "high"; lookLevel?: number; boring?: boolean; /** Light or dark: "system" (the default) follows the computer. */ colorScheme?: "system" | "light" | "dark"; /** Language of the app itself: "system" (match the computer, the default) or a language id. */ appLanguage?: "system" | "en" | "de" | "fr" | "es";
+  model: string; language: string; numSpeakers: string; vad: boolean; prompt: string; noDiarize: boolean; device: string; autosave: boolean; /** Mixed languages: undefined = automatic, true = always per speaker turn, false = off. */ multilingual?: boolean; /** Add an English translation under lines in other languages (undefined = on when the app is in English). */ translate?: boolean; /** Language code to translate lines into (undefined = English). Languages other than English need the translation model. */ translateTo?: string; /** Which speech model only finds the language: a size id, "same" (use the transcription model) or undefined (Tiny). */ detectModel?: string; /** Ask the speech model to write hesitations (um, äh) down. */ verbatim?: boolean; /** Speech engine: "auto" (default) uses the Apple GPU when it can, "faster" always uses the CPU engine. */ whisperEngine?: "auto" | "faster"; minSpeakers?: string; maxSpeakers?: string; /** The look: "sunset" (Fairytale sunset, the default) or "clean". Older saved settings used lookLevel 0–3 (and boring), which lookOf still reads. */ look?: "sunset" | "clean"; /** High contrast: stronger colours and heavier borders, in either look. */ contrast?: "standard" | "high"; lookLevel?: number; boring?: boolean; /** Light or dark: "system" (the default) follows the computer. */ colorScheme?: "system" | "light" | "dark"; /** Language of the app itself: "system" (match the computer, the default) or a language id. */ appLanguage?: "system" | "en" | "de" | "fr" | "es"; /** Zoom of the whole app (1 = normal). */ textSize?: number;
 }
 /** A language model the app offers for highlights and summaries. `label` is a model name; `like` is English text the app translates. */
 export interface LlmModel { id: string; label: string; like: string; languages: string[]; license: string }
@@ -147,7 +147,7 @@ export const LOOKS = [
   { id: "clean", name: "Clean", caption: "Flat and quiet: black, white and one accent." },
 ] as const;
 export type LookId = (typeof LOOKS)[number]["id"];
-type LookOpts = { look?: LookId; contrast?: "standard" | "high"; lookLevel?: number; boring?: boolean; colorScheme?: "system" | "light" | "dark" };
+type LookOpts = { look?: LookId; contrast?: "standard" | "high"; lookLevel?: number; boring?: boolean; colorScheme?: "system" | "light" | "dark"; textSize?: number };
 /** The chosen look. Settings saved before the two looks (lookLevel 0–3, or boring) map to sunset for 0–1 and Clean for 2–3. */
 export const lookOf = (o: LookOpts): LookId => o.look === "clean" || o.look === "sunset" ? o.look : (o.lookLevel ?? (o.boring ? 2 : 0)) >= 2 ? "clean" : "sunset";
 /** Dark when chosen, or when "system" and the computer is in dark mode. */
@@ -158,6 +158,7 @@ export const applyLook = (o: LookOpts) => {
   el.dataset.look = look;
   el.dataset.mode = dark ? "dark" : "light";
   el.dataset.contrast = high ? "high" : "standard";
+  document.body.style.zoom = o.textSize && o.textSize !== 1 ? String(o.textSize) : "";
   const p = PALETTES[look];
   PALETTE.splice(0, PALETTE.length, ...(high ? (dark ? p.highDark : p.highLight) : (dark ? p.dark : p.light)));
 };

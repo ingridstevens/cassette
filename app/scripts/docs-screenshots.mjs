@@ -84,6 +84,6 @@ await step("search and replace", async () => { await p.getByPlaceholder(/Find in
 await step("settings", async () => {
   await p.getByRole("button", { name: /^Settings/ }).first().click(); await p.waitForTimeout(600);
   const nav = async (n, file) => { await p.getByRole("button", { name: n }).first().click(); await p.waitForTimeout(500); await snap(file); };
-  await nav("Performance", "17-settings-performance"); await nav("Storage and models", "18-settings-storage"); await nav("Privacy", "19-settings-privacy");
+  await nav("Advanced", "17-settings-performance"); await nav("Transcription", "18-settings-storage"); await nav("Privacy", "19-settings-privacy");
 });
 await browser.close();

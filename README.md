@@ -190,7 +190,7 @@ Face hub in offline mode. Your token is stored encrypted with Electron `safeStor
 
 - Only tested on macOS (Apple silicon). Windows and Linux builds are set up in CI, but that workflow has not been run yet, and there is no installer to download.
 - On Windows and Linux, highlights and summaries are an opt-in install (`uv sync --extra llm`) because llama.cpp must be compiled.
-- Whisper runs on the CPU on a Mac unless you download the Apple GPU version of a model size (Settings → Performance);
+- Whisper runs on the CPU on a Mac unless you download the Apple GPU version of a model size (Settings → Advanced → Apple GPU models);
   large models on the CPU are slow. On Windows and Linux it is meant to use an NVIDIA GPU, which has never been tried.
   Use `small` or `turbo` for speed.
 - Language is detected once per file by default. For recordings with several languages the app checks each speaker and

@@ -57,7 +57,7 @@ choice is remembered. Your transcript itself is never changed.
 
 ## The app's language in exports
 
-The words the app writes itself follow the language you chose under Settings, Language: headings in the Word document and the
+The words the app writes itself follow the language you chose under Settings, Text and language: headings in the Word document and the
 minutes ("Attendees", "Decisions and action items", …), the footer, the long date, "speakers", the notes about clean copies and pause marks,
 and the labels in the original-vs-edited file. Speaker names, the text, and file names are never translated.
 

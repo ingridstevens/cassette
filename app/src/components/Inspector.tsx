@@ -153,7 +153,7 @@ function OptionsTab({ project, visible, canTranscribe, onAskAgain, onPatch, onOp
           <p>{suggestion.model ? t("{model} is already downloaded and usually gives much better results here. It takes longer.", { model: t(modelName(suggestion.model)) }) : t("A larger model usually gives much better results here. It takes longer and has to be downloaded once.")}</p>
           {suggestion.model
             ? <button type="button" className="btn small" onClick={() => set({ model: suggestion.model! })}>{t("Use {model}", { model: t(modelName(suggestion.model)) })}</button>
-            : <button type="button" className="btn small" onClick={() => onOpenSettings?.("Storage and models")}>{t("Download in Settings")}</button>}
+            : <button type="button" className="btn small" onClick={() => onOpenSettings?.("Transcription")}>{t("Download in Settings")}</button>}
         </div>
       )}
       <OptionRows eff={eff} set={set} status={status} models={models} found={found} speakers={liveSpeakers(project).length} onOpenSettings={onOpenSettings} />
