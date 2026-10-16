@@ -39,7 +39,7 @@ export function runEngine(
     stderr = (stderr + text).slice(-4000);
     for (const line of text.split(/[\r\n]+/)) {
       const t = line.trim();
-      if (t && !/\d+%\|/.test(t)) onEvent({ type: "log", level: "stderr", message: t.slice(0, 400) });
+      if (t && !/\d+%\|/.test(t) && !/^Thread 0x[0-9a-f]+:/.test(t)) onEvent({ type: "log", level: "stderr", message: t.slice(0, 400) });
     }
   });
   return new Promise((resolve) => {

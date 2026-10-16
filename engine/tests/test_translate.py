@@ -27,3 +27,21 @@ def test_catalog_entry_is_complete_and_names_cover_the_model_card():
     spec = LLM_MODELS[TRANSLATION_MODEL]
     assert spec["mlx"] and spec["gguf"][1].endswith(".gguf") and set(spec["bytes"]) == {"mlx", "gguf"}
     assert len(NAMES) == 38 and NAMES["fa"] == "Persian"
+
+
+def test_long_lines_are_translated_in_sentence_pieces():
+    from engine.translate import pieces
+
+    text = "Erster Satz. " * 30 + "Frage? Ende!"
+    ps = pieces(text, 100)
+    assert len(ps) > 3 and all(len(p) <= 100 for p in ps) and " ".join(ps) == text.strip()
+    assert pieces("Kurz.", 100) == ["Kurz."] and pieces("   ") == []
+    seen = []
+
+    class Rec:
+        def translate(self, t, language):
+            seen.append(t)
+            return t.upper()
+
+    translate_segments([{"text": text, "lang": "fr"}], "en", "de", Rec())
+    assert len(seen) == len(pieces(text)) > 1 and all(len(p) <= 240 for p in seen)

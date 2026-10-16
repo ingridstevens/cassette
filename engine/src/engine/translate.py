@@ -11,6 +11,20 @@ NAMES = {
 }
 
 
+def pieces(text: str, limit: int = 240) -> list[str]:
+    """`text` cut into sentences, joined again into pieces of at most about `limit` characters. A small model drops or invents sentences in a long
+    paragraph, so a line is translated piece by piece."""
+    import re
+
+    out: list[str] = []
+    for s in re.split(r"(?<=[.!?؟。！？])\s+", text.strip()):
+        if out and len(out[-1]) + 1 + len(s) <= limit:
+            out[-1] += " " + s
+        else:
+            out.append(s)
+    return [p for p in out if p]
+
+
 def translate_segments(segments: list[dict], target: str, default_language: str, llm: LocalLLM, on_progress=None) -> int:
     """Adds `translation` to every segment not already in `target`. Returns how many were translated."""
     name = NAMES[target]
@@ -18,7 +32,7 @@ def translate_segments(segments: list[dict], target: str, default_language: str,
     for n, seg in enumerate(todo):
         if on_progress:
             on_progress(n / max(len(todo), 1))
-        seg["translation"] = llm.translate(seg["text"], name)
+        seg["translation"] = " ".join(llm.translate(p, name) for p in pieces(seg["text"]))
         seg["translationLang"] = target
     return len(todo)
 

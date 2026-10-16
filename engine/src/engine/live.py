@@ -8,6 +8,7 @@ import re
 import sys
 
 SAMPLE_RATE = 16000
+SILENCE_RMS = 0.002  # a buffer quieter than this holds no speech; Whisper invents text ("Copyright WDR 2021") on silence
 
 
 def _norm(word: str) -> str:
@@ -40,6 +41,11 @@ class LiveTranscriber:
         self.pending = 0
         if len(self.audio) < self.sr // 2:
             return [], []
+        if float(self._np.sqrt((self.audio ** 2).mean())) < SILENCE_RMS:  # nothing but silence waiting: skip it, and do not keep it
+            self.base += len(self.audio) / self.sr
+            self.audio = self.audio[:0]
+            self.previous = []
+            return [], []
         words = [{**w, "start": w["start"] + self.base, "end": w["end"] + self.base} for w in self.transcribe(self.audio, self.language)]
         words = [w for w in words if w["start"] >= self.confirmed_end - 0.05]  # what is already final stays final
         if final:
@@ -65,7 +71,7 @@ def run(model, sr_in: int, language: str | None, step_seconds: float, stream, em
     import numpy as np
 
     def transcribe(audio, lang):
-        segments, _info = model.transcribe(audio, language=lang, word_timestamps=True, vad_filter=False, condition_on_previous_text=False)
+        segments, _info = model.transcribe(audio, language=lang, word_timestamps=True, vad_filter=True, condition_on_previous_text=False)  # (models without a voice filter ignore it)
         return [{"start": w.start, "end": w.end, "word": w.word, "prob": round(w.probability, 3)} for s in segments for w in s.words or []]
 
     live = LiveTranscriber(transcribe, language)

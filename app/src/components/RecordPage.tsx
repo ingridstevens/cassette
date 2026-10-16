@@ -23,7 +23,7 @@ export default function RecordPage({ opts, blocker, onSaved, onBack }: Props) {
 
   const begin = () => { void rec.start({ model: opts.model, language: opts.language, whisperEngine: opts.whisperEngine, device: opts.device }, device || undefined); };
   const finish = async () => { const r = await rec.stop(); if (r) onSaved(r); };
-  const denied = rec.error === "denied";
+  const denied = rec.error === "denied", silent = rec.error === "silent";
 
   return (
     <div className="rec-page">
@@ -52,7 +52,9 @@ export default function RecordPage({ opts, blocker, onSaved, onBack }: Props) {
         )}
         <p className="note rec-using">{t("Using {model}. Language: {language}.", { model: modelName(opts.model), language: opts.language === "auto" ? t("detected automatically") : langName(opts.language) })}{blocker && " " + blocker}</p>
         {denied && <p className="alert warn" role="alert">{t("The microphone is blocked. Allow it for this app in your computer's privacy settings, then try again.")}</p>}
-        {rec.error && !denied && <p className="alert err" role="alert">{rec.error}</p>}
+        {silent && <p className="alert warn" role="alert">{t("Nothing was heard, so nothing was saved. Check that the right microphone is chosen and not muted, then try again.")}</p>}
+        {rec.error && !denied && !silent && <p className="alert err" role="alert">{rec.error}</p>}
+        {on && rec.state === "recording" && rec.seconds >= 6 && !rec.heard && <p className="alert warn" role="status">{t("No sound from the microphone yet. Is it muted, or is another one selected?")}</p>}
         {rec.fit && on && <p className="alert warn" role="status">{t("This sounds like {language}, and {model} is weak at it. After you stop you can switch to a better model before the full transcript is made.", { language: langName(rec.fit.language), model: modelName(rec.fit.model) })}</p>}
         {on && !rec.ready && <p className="note" role="status">{t("Getting the speech model ready. Keep talking, nothing is lost.")}</p>}
       </div>
