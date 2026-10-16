@@ -8,7 +8,7 @@ import { langName } from "../languages";
 import { FILE_MANAGER, ModelStatus, Options, PALETTE, Project, baseName, bytes, defaultName, displayName, fmt } from "../types";
 import "../styles/project.css";
 
-export type Tab = "speakers" | "highlights" | "options" | "info";
+export type Tab = "speakers" | "highlights" | "ask" | "options" | "info";
 export interface Moved { from: string; to: string; idx: number }
 
 const SMALL_MODELS = ["tiny", "base", "small"];
@@ -47,14 +47,14 @@ interface Props {
   project: Project; tab: Tab; onTab(t: Tab): void; visible: boolean;
   moved: Moved | null; onMoveAll(): void; onUndo(): void;
   canTranscribe: boolean; onAskAgain(): void; onPatch(p: Partial<Project>): void; onOpenSettings?(section?: string): void; models: Models;
-  /** The Highlights tab (built by the project view, which owns the language-model jobs). */
-  highlightsPanel?: ReactNode;
+  /** The Highlights and Ask tabs (built by the project view, which owns the language-model jobs). */
+  highlightsPanel?: ReactNode; askPanel?: ReactNode;
 }
 
-export default function Inspector({ project, tab, onTab, visible, moved, onMoveAll, onUndo, canTranscribe, onAskAgain, onPatch, onOpenSettings, models, highlightsPanel }: Props) {
+export default function Inspector({ project, tab, onTab, visible, moved, onMoveAll, onUndo, canTranscribe, onAskAgain, onPatch, onOpenSettings, models, highlightsPanel, askPanel }: Props) {
   const t = useT();
-  const ids = { speakers: useId(), highlights: useId(), options: useId(), info: useId() };
-  const tabs: [Tab, string][] = [["speakers", "Speakers"], ["highlights", "Highlights"], ["options", "Options"], ["info", "Info"]];
+  const ids = { speakers: useId(), highlights: useId(), ask: useId(), options: useId(), info: useId() };
+  const tabs: [Tab, string][] = [["speakers", "Speakers"], ["highlights", "Highlights"], ["ask", "Ask"], ["options", "Options"], ["info", "Info"]];
   const move = (e: React.KeyboardEvent, i: number) => {
     const n = e.key === "ArrowRight" ? (i + 1) % tabs.length : e.key === "ArrowLeft" ? (i + tabs.length - 1) % tabs.length : -1;
     if (n < 0) return;
@@ -71,6 +71,7 @@ export default function Inspector({ project, tab, onTab, visible, moved, onMoveA
       <div className="pv-tab" id={ids[tab]} role="tabpanel" aria-labelledby={ids[tab] + "-tab"}>
         {tab === "speakers" && <Speakers project={project} moved={moved} onMoveAll={onMoveAll} onUndo={onUndo} onPatch={onPatch} />}
         {tab === "highlights" && highlightsPanel}
+        {tab === "ask" && askPanel}
         {tab === "options" && <OptionsTab project={project} visible={visible} canTranscribe={canTranscribe} onAskAgain={onAskAgain} onPatch={onPatch} onOpenSettings={onOpenSettings} models={models} />}
         {tab === "info" && <Info project={project} />}
       </div>

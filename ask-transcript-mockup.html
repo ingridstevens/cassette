@@ -1,0 +1,199 @@
+<title>Ask this transcript</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<style>
+/* Layout: the project view as it is today (transcript left, inspector right), with a new "Ask" tab in the inspector. */
+:root {
+  --ink: #2a2040; --ink2: #5f5479; --ink3: #6a5f87;
+  --surface: #ffffff; --line: rgba(70, 45, 120, .14); --tint: #462d78;
+  --rose: #de4a7d; --violet: #7c5cff; --ok: #0f7d59;
+  --sun-btn: linear-gradient(120deg, #f4b69e 0%, #ee98b8 55%, #b8aaee 100%);
+  --on-sun: #2a2040; --chip: #efe7fb; --hl: #ffe9a8;
+  --page: #f8eef2;
+  --dawn: radial-gradient(900px 620px at 4% -8%, #fbe6dc 0%, transparent 62%), radial-gradient(760px 600px at 100% 0%, #ece4fb 0%, transparent 58%), #f8eef2;
+  --font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --font-read: ui-serif, "New York", Georgia, serif;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --ink: #f2edfb; --ink2: #c6bcdc; --ink3: #9d93b8; --surface: #2a2338; --line: rgba(215, 200, 255, .14); --tint: #d9ccff;
+  --rose: #ff6b9a; --violet: #9d85ff; --ok: #6fe0b2; --chip: #3a3052; --hl: #5a4a1e; --page: #17131f;
+  --dawn: radial-gradient(900px 620px at 4% -8%, #3a2030 0%, transparent 62%), radial-gradient(760px 600px at 100% 0%, #2a2346 0%, transparent 58%), #17131f; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --ink: #f2edfb; --ink2: #c6bcdc; --ink3: #9d93b8; --surface: #2a2338; --line: rgba(215, 200, 255, .14); --tint: #d9ccff;
+  --rose: #ff6b9a; --violet: #9d85ff; --ok: #6fe0b2; --chip: #3a3052; --hl: #5a4a1e; --page: #17131f;
+  --dawn: radial-gradient(900px 620px at 4% -8%, #3a2030 0%, transparent 62%), radial-gradient(760px 600px at 100% 0%, #2a2346 0%, transparent 58%), #17131f; color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--dawn); background-attachment: fixed; color: var(--ink); font: 14px/1.45 var(--font-ui); padding-inline: max(16px, env(safe-area-inset-left, 0px)) max(16px, env(safe-area-inset-right, 0px)); padding-block: 20px 40px; }
+.wrap { max-width: 1240px; margin: 0 auto; display: grid; gap: 16px; }
+.note { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; justify-content: space-between; color: var(--ink2); font-size: 13px; }
+.note b { color: var(--ink); }
+.states { display: flex; gap: 6px; }
+.states button { font: inherit; font-size: 12.5px; padding: 5px 12px; border-radius: 999px; border: 0; background: var(--chip); color: var(--ink); cursor: pointer; }
+.states button[aria-pressed="true"] { background: var(--sun-btn); color: var(--on-sun); font-weight: 650; }
+:focus-visible { outline: 2px solid var(--violet); outline-offset: 2px; }
+
+.app { display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 0; background: color-mix(in srgb, var(--surface) 55%, transparent); border-radius: 18px; box-shadow: 0 1px 2px rgba(60, 30, 100, .08), 0 30px 60px -36px rgba(60, 30, 100, .45); overflow: hidden; min-height: 720px; }
+@media (max-width: 900px) { .app { grid-template-columns: 1fr; } .main { display: none; } }
+
+/* transcript side */
+.main { padding: 22px 28px; border-right: 1px solid var(--line); display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.main h1 { margin: 0; font-size: 18px; }
+.main .sub { color: var(--ink2); font-size: 13px; }
+.line { display: grid; grid-template-columns: 54px 1fr; gap: 12px; padding: 10px 12px; border-radius: 12px; transition: background .2s; }
+.line .t { color: var(--ink3); font-size: 12px; font-variant-numeric: tabular-nums; padding-top: 3px; }
+.line .who { font-weight: 650; font-size: 13px; }
+.line p { margin: 2px 0 0; font-family: var(--font-read); font-size: 15.5px; line-height: 1.55; }
+.line.cited { background: var(--hl); }
+.line.dim { opacity: .55; }
+
+/* inspector side */
+.insp { display: flex; flex-direction: column; min-width: 0; padding: 14px 16px 16px; gap: 12px; }
+.tabs { display: flex; gap: 2px; padding: 3px; border-radius: 999px; background: rgba(70, 45, 120, .08); }
+.tabs span { flex: 1; text-align: center; padding: 6px 4px; border-radius: 999px; font-size: 13px; color: var(--ink2); }
+.tabs span.on { background: var(--surface); color: var(--ink); font-weight: 650; box-shadow: 0 1px 3px rgba(60, 30, 100, .18); }
+.scope { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink2); }
+.scope .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); flex: none; }
+.scope button { margin-left: auto; font: inherit; font-size: 12px; background: none; border: 0; color: var(--ink2); text-decoration: underline; cursor: pointer; padding: 2px 4px; }
+
+.thread { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; padding: 2px 2px 8px; min-height: 0; }
+.q { align-self: flex-end; max-width: 86%; background: var(--sun-btn); color: var(--on-sun); padding: 8px 14px; border-radius: 16px 16px 4px 16px; font-weight: 550; }
+.a { background: var(--surface); border-radius: 16px 16px 16px 4px; padding: 14px 16px; box-shadow: 0 1px 2px rgba(60, 30, 100, .08); display: grid; gap: 10px; }
+.a p { margin: 0; }
+.a ul { margin: 0; padding-left: 18px; display: grid; gap: 4px; }
+.cites { display: flex; flex-wrap: wrap; gap: 6px; }
+.cite { font: inherit; font-size: 12px; display: inline-flex; gap: 6px; align-items: center; border: 0; border-radius: 999px; padding: 3px 10px 3px 8px; background: var(--chip); color: var(--ink); cursor: pointer; font-variant-numeric: tabular-nums; }
+.cite:hover, .cite[aria-pressed="true"] { background: var(--sun-btn); color: var(--on-sun); }
+.cite svg { width: 11px; height: 11px; fill: currentColor; }
+.meta { display: flex; align-items: center; gap: 10px; font-size: 11.5px; color: var(--ink3); border-top: 1px solid var(--line); padding-top: 8px; }
+.meta button { font: inherit; font-size: 11.5px; background: none; border: 0; color: var(--ink2); cursor: pointer; text-decoration: underline; padding: 0; }
+.meta .sp { margin-left: auto; }
+.empty { display: grid; gap: 14px; padding-top: 6px; }
+.empty h2 { margin: 0; font-family: var(--font-read); font-weight: 500; font-size: 24px; line-height: 1.2; text-wrap: balance; }
+.empty p { margin: 0; color: var(--ink2); }
+.sugg { display: grid; gap: 8px; }
+.sugg button { font: inherit; text-align: left; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 14px; color: var(--ink); cursor: pointer; display: flex; justify-content: space-between; gap: 10px; }
+.sugg button:hover { border-color: var(--violet); }
+.sugg button i { font-style: normal; color: var(--ink3); font-size: 12px; white-space: nowrap; }
+.think { display: flex; gap: 10px; align-items: center; color: var(--ink2); font-size: 13px; }
+.bar { height: 5px; flex: 1; border-radius: 3px; background: var(--chip); overflow: hidden; }
+.bar i { display: block; height: 100%; width: 42%; background: var(--sun-btn); border-radius: 3px; }
+
+.ask { display: flex; gap: 8px; align-items: flex-end; background: var(--surface); border-radius: 18px; padding: 8px 8px 8px 16px; box-shadow: inset 0 0 0 1px var(--line); }
+.ask textarea { flex: 1; font: inherit; border: 0; background: transparent; color: var(--ink); resize: none; padding: 6px 0; min-height: 36px; max-height: 120px; }
+.ask textarea:focus { outline: none; }
+.ask:focus-within { box-shadow: inset 0 0 0 2px var(--violet); }
+.send { border: 0; border-radius: 999px; width: 36px; height: 36px; background: var(--sun-btn); color: var(--on-sun); cursor: pointer; display: grid; place-items: center; flex: none; }
+.send svg { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+.foot { font-size: 11.5px; color: var(--ink3); text-align: center; }
+
+.nope { display: grid; gap: 8px; background: color-mix(in srgb, var(--rose) 10%, var(--surface)); border-radius: 14px; padding: 14px 16px; }
+.nope b { font-size: 13px; }
+.nope p { margin: 0; color: var(--ink2); font-size: 13px; }
+.nope .row { display: flex; gap: 8px; flex-wrap: wrap; }
+.btn { font: inherit; font-size: 13px; border: 0; border-radius: 999px; padding: 6px 14px; background: var(--sun-btn); color: var(--on-sun); font-weight: 650; cursor: pointer; }
+.btn.q2 { background: var(--chip); color: var(--ink); font-weight: 500; }
+[hidden] { display: none !important; }
+</style>
+
+<div class="wrap">
+  <div class="note">
+    <span><b>Mock-up:</b> a new <b>Ask</b> tab in the inspector. Click the states, the suggestion buttons and the timestamp chips.</span>
+    <div class="states" role="group" aria-label="Mock-up state">
+      <button type="button" data-s="empty" aria-pressed="true">First open</button>
+      <button type="button" data-s="thinking" aria-pressed="false">Thinking</button>
+      <button type="button" data-s="answer" aria-pressed="false">Answered</button>
+      <button type="button" data-s="setup" aria-pressed="false">No model yet</button>
+    </div>
+  </div>
+
+  <div class="app">
+    <section class="main" aria-label="Transcript (example)">
+      <div><h1>Feedback 1st month</h1><div class="sub">English · 42:18 · 3 speakers</div></div>
+      <div id="lines">
+        <div class="line" data-id="1"><span class="t">00:41</span><div><div class="who">Maria</div><p>So the first month, honestly, the onboarding was the part that felt the slowest. I waited two days for my laptop.</p></div></div>
+        <div class="line" data-id="2"><span class="t">01:12</span><div><div class="who">Jonas</div><p>That's on us. We'll move the hardware order to the day the offer is signed, not the first day.</p></div></div>
+        <div class="line" data-id="3"><span class="t">06:03</span><div><div class="who">Maria</div><p>What I'd like next is a clearer plan for the second month. Who do I shadow, and on which projects?</p></div></div>
+        <div class="line" data-id="4"><span class="t">06:40</span><div><div class="who">Jonas</div><p>I'll send you a shadowing schedule by Friday, and we'll pair you with Priya on the billing work.</p></div></div>
+        <div class="line" data-id="5"><span class="t">14:27</span><div><div class="who">Priya</div><p>One concern: the docs for the billing service are out of date. Maria will hit that on day one.</p></div></div>
+        <div class="line" data-id="6"><span class="t">14:55</span><div><div class="who">Jonas</div><p>Good flag. Priya, can you list the pages that are wrong? Maria can fix them as her first task.</p></div></div>
+      </div>
+    </section>
+
+    <aside class="insp" aria-label="Inspector">
+      <div class="tabs" aria-hidden="true"><span>Speakers</span><span>Highlights</span><span class="on">Ask</span><span>Options</span><span>Info</span></div>
+      <div class="scope"><span class="dot"></span><span>Answers come only from this transcript, on this computer.</span><button type="button" id="clear" hidden>Clear chat</button></div>
+
+      <div class="thread" id="thread" aria-live="polite">
+        <div class="empty" id="v-empty">
+          <h2>What do you want to know about this recording?</h2>
+          <p>Ask in your own words. Every answer points to the lines it came from, so you can check it.</p>
+          <div class="sugg">
+            <button type="button" data-ask="What did Jonas promise to do?">What did Jonas promise to do? <i>action items</i></button>
+            <button type="button" data-ask="What concerns did people raise?">What concerns did people raise? <i>topics</i></button>
+            <button type="button" data-ask="What does Maria say about onboarding?">What does Maria say about onboarding? <i>by speaker</i></button>
+            <button type="button" data-ask="What was decided, and what is still open?">What was decided, and what is still open? <i>decisions</i></button>
+          </div>
+        </div>
+
+        <div id="v-conv" hidden>
+          <div style="display:grid;gap:14px">
+            <div class="q">What did Jonas promise to do?</div>
+            <div class="think" id="v-think" hidden><span>Reading the transcript…</span><div class="bar"><i></i></div><button type="button" class="btn q2">Stop</button></div>
+            <div class="a" id="v-answer" hidden>
+              <p>Jonas made two commitments to Maria:</p>
+              <ul>
+                <li>Move the hardware order to the day the offer is signed.</li>
+                <li>Send a shadowing schedule by Friday, with Priya on the billing work.</li>
+              </ul>
+              <p>He also asked Priya to list the outdated billing docs so Maria can fix them first.</p>
+              <div class="cites" role="group" aria-label="Sources">
+                <button type="button" class="cite" data-line="2"><svg viewBox="0 0 10 10"><path d="M2 1l7 4-7 4z"/></svg>01:12 Jonas</button>
+                <button type="button" class="cite" data-line="4"><svg viewBox="0 0 10 10"><path d="M2 1l7 4-7 4z"/></svg>06:40 Jonas</button>
+                <button type="button" class="cite" data-line="6"><svg viewBox="0 0 10 10"><path d="M2 1l7 4-7 4z"/></svg>14:55 Jonas</button>
+              </div>
+              <div class="meta"><span>3 of 212 lines used</span><span class="sp"></span><button type="button">Copy</button><button type="button">Add to Highlights</button></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="nope" id="v-setup" hidden>
+          <b>Asking needs a language model</b>
+          <p>It runs on this computer and nothing is sent anywhere. The one you picked for Highlights (about 2.1 GB) can be used here too.</p>
+          <div class="row"><button type="button" class="btn">Download it</button><button type="button" class="btn q2">Choose another</button></div>
+        </div>
+      </div>
+
+      <div class="ask">
+        <label for="q" hidden>Ask about this transcript</label>
+        <textarea id="q" rows="1" placeholder="Ask about this transcript…"></textarea>
+        <button type="button" class="send" aria-label="Ask"><svg viewBox="0 0 24 24"><path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+      </div>
+      <div class="foot">Can be wrong. Check the lines it points to.</div>
+    </aside>
+  </div>
+</div>
+
+<script>
+const $ = (s) => document.querySelector(s);
+const lines = [...document.querySelectorAll(".line")];
+function cite(ids) { lines.forEach((l) => { const on = ids.includes(l.dataset.id); l.classList.toggle("cited", on); l.classList.toggle("dim", ids.length && !on); }); }
+function state(s) {
+  document.querySelectorAll(".states button").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.s === s)));
+  $("#v-empty").hidden = s !== "empty";
+  $("#v-conv").hidden = !(s === "thinking" || s === "answer");
+  $("#v-think").hidden = s !== "thinking";
+  $("#v-answer").hidden = s !== "answer";
+  $("#v-setup").hidden = s !== "setup";
+  $("#clear").hidden = s === "empty" || s === "setup";
+  document.querySelectorAll(".cite").forEach((c) => c.setAttribute("aria-pressed", "false"));
+  cite(s === "answer" ? ["2", "4", "6"] : []);
+}
+document.querySelectorAll(".states button").forEach((b) => b.addEventListener("click", () => state(b.dataset.s)));
+document.querySelectorAll(".sugg button").forEach((b) => b.addEventListener("click", () => { state("thinking"); setTimeout(() => state("answer"), 1400); }));
+document.querySelectorAll(".cite").forEach((c) => c.addEventListener("click", () => {
+  document.querySelectorAll(".cite").forEach((x) => x.setAttribute("aria-pressed", String(x === c)));
+  cite([c.dataset.line]);
+  document.querySelector('.line[data-id="' + c.dataset.line + '"]').scrollIntoView({ block: "nearest", behavior: "smooth" });
+}));
+$("#clear").addEventListener("click", () => state("empty"));
+</script>

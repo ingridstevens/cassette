@@ -207,3 +207,19 @@ def test_retired_language_models_are_listed_only_for_people_who_have_them(tmp_pa
     snap.mkdir(parents=True)
     (snap / "model.safetensors").write_bytes(b"x")
     assert "small" in ids()
+
+
+def test_ask_picks_lines_and_drops_unshown_sources():
+    from engine.ask import ask, select_lines
+
+    llm = Fake('{"answer": "Anna writes the announcement.", "lines": [2, 7, "x", 2]}')
+    out = ask(SEGS, NAMES, "Who writes the announcement?", llm)
+    assert out == {"text": "Anna writes the announcement.", "sources": [2], "used": 3, "total": 3}
+    assert "Anna: We moved the launch" in llm.prompts[0]
+
+    many = [seg(i * 10, f"filler talk number {i} about nothing") for i in range(400)] + [seg(5000, "The budget for the garden is nine thousand euros.", "B")]
+    picked = select_lines(many, NAMES, "What is the garden budget?")
+    assert 400 in picked and len(picked) < 100
+
+    prose = ask(SEGS, NAMES, "anything?", Fake("I would say no."))
+    assert prose["text"] == "I would say no." and prose["sources"] == []

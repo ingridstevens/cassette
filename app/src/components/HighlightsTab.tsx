@@ -5,7 +5,7 @@ import { setLlm, useLlm } from "./llmChoice";
 import { useModels } from "./useModels";
 import "../styles/project.css";
 
-export type LlmJob = { kind: "highlights" | "summarize"; fraction: number | null; message: string };
+export type LlmJob = { kind: "highlights" | "summarize" | "ask"; fraction: number | null; message: string };
 const FORMAT_KEY = "clipFormat";
 const chosenFormat = () => { try { const f = localStorage.getItem(FORMAT_KEY); return f === "wav" || f === "m4a" ? f : "mp3"; } catch { return "mp3"; } };
 

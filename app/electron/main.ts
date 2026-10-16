@@ -92,9 +92,9 @@ app.whenReady().then(() => {
     const r = await runEngine(randomUUID(), a, baseEnv(), () => {}) as EngineEvent | null;
     return r?.type === "done" ? { ok: true, text: String(r.text ?? "") } : { ok: false, error: String(r?.message ?? "The translation failed.").slice(0, 300) };
   });
-  // The local language model: "highlights" (suggest quotable passages) or "summarize". The renderer picks the job id so it can cancel with `cancel`.
-  ipcMain.handle("llm-run", async (_e, kind: unknown, payload: { segments: unknown[]; speakers: Record<string, string>; language: string }, o: { jobId?: unknown; clientId?: unknown; model?: unknown; count?: unknown }) => {
-    if (kind !== "highlights" && kind !== "summarize") return { type: "error", message: "Unknown job" };
+  // The local language model: "highlights" (suggest quotable passages), "summarize", or "ask" (answer a question, `payload.question`, about the transcript). The renderer picks the job id so it can cancel with `cancel`.
+  ipcMain.handle("llm-run", async (_e, kind: unknown, payload: { segments: unknown[]; speakers: Record<string, string>; language: string; question?: string; history?: { q: string; a: string }[] }, o: { jobId?: unknown; clientId?: unknown; model?: unknown; count?: unknown }) => {
+    if (kind !== "highlights" && kind !== "summarize" && kind !== "ask") return { type: "error", message: "Unknown job" };
     const jobId = typeof o?.jobId === "string" && o.jobId.length <= 80 ? o.jobId : randomUUID();
     const tmp = path.join(os.tmpdir(), `transcript-${randomUUID()}.json`);
     fs.writeFileSync(tmp, JSON.stringify(payload));

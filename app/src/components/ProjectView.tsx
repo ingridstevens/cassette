@@ -8,6 +8,7 @@ import "../styles/project.css";
 import ExportMenu from "./ExportMenu";
 import { langName } from "../languages";
 import { STYLED } from "./ExportMenu";
+import AskTab, { AskItem } from "./AskTab";
 import HighlightsTab, { LlmJob } from "./HighlightsTab";
 import Inspector, { Moved, Tab, globalOpts, liveSpeakers } from "./Inspector";
 import { Models } from "./useModels";
@@ -135,6 +136,35 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
       patchResult((x) => ({ ...x, highlights: withSuggestions(x.highlights ?? [], found) }));
       if (!found.length) flash(t("Nothing stood out. Try the better model, or highlight by hand."));
     } else patchResult((x) => ({ ...x, summary: { ...(r.summary as import("../types").Summary), model, at: Date.now() } }));
+  };
+  // ---- questions about this transcript (same language model, same one-job-at-a-time slot)
+  const [askThread, setAskThread] = useState<AskItem[]>([]);
+  const askSeq = useRef(0);
+  const askStopped = useRef(false);
+  const runAsk = async (question: string, model: string) => {
+    if (!result || llmJob) return;
+    const id = ++askSeq.current;
+    const jobId = `llm-${project.id}-${Date.now()}`;
+    llmId.current = jobId; askStopped.current = false;
+    const history = askThread.filter((x) => x.answer).map((x) => ({ q: x.q, a: x.answer!.text }));
+    setAskThread((th) => [...th, { id, q: question }]); setLlmError(""); setLlmJob({ kind: "ask", fraction: null, message: "" });
+    const body = { language: result.language, speakers: Object.fromEntries(result.speakers.map((s) => [s, displayName(s, result.speakers, names)])), question, history,
+      segments: result.segments.map(({ start, end, speaker, text }) => ({ start, end, speaker, text, words: [] })) };
+    const r = await window.api.runLlm("ask", body, { jobId, clientId: project.id, model }).catch((e: unknown) => ({ type: "error", message: String(e) } as { type: string; message?: string; cancelled?: boolean; answer?: unknown }));
+    setLlmJob(null);
+    if (r?.cancelled || askStopped.current) { setAskThread((th) => th.filter((x) => x.id !== id)); return; }
+    const answer = r?.type === "done" ? (r.answer as AskItem["answer"]) : undefined;
+    setAskThread((th) => th.map((x) => (x.id !== id ? x : answer?.text ? { ...x, answer } : { ...x, error: t("The language model could not finish: {reason}", { reason: String(r?.message || "").slice(0, 240) }) })));
+  };
+  const showLine = (i: number) => {
+    const seg = result?.segments[i];
+    if (!seg) return;
+    document.querySelectorAll("[data-cited]").forEach((el) => el.removeAttribute("data-cited"));
+    const el = document.querySelector(`.pview:not([hidden]) [data-turn="${i}"]`);
+    el?.scrollIntoView({ block: "center", behavior: "smooth" });
+    el?.setAttribute("data-cited", ""); // an attribute, not a class: React rewrites the line's class as playback moves
+    window.setTimeout(() => el?.removeAttribute("data-cited"), 6000);
+    player.current?.seek(seg.start);
   };
   const highlights = result?.highlights ?? [];
   const keptHighlights = highlights.filter((h) => !h.suggested);
@@ -338,7 +368,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
       </div></div>
     ) : (
       <div className="pv-center"><div className="pv-stack">
-        <div><h2 className="pv-big">{t("Transcribing…")}</h2><p className="pv-lead">{t("You can open other projects while this runs.")}</p></div>
+        <div><h2 className="pv-big">{t("Transcribing…")}</h2><p className="pv-lead">{t("You can open other projects while this runs.")}</p>{startInfo.est && <p className="pv-lead">{t("Estimated time: {time}", { time: spanText(t, startInfo.est) })}</p>}</div>
         <div className="card pv-stages">
           {list.map(({ k, i }, n) => (
             <div key={k} className="pv-stage" aria-current={i === cur ? "step" : undefined}>
@@ -573,6 +603,8 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
 
       <Inspector project={project} tab={tab} onTab={setTab} visible={visible} moved={moved} onMoveAll={moveAll} onUndo={undo}
         canTranscribe={canTranscribe} onAskAgain={again} onPatch={onPatch} onOpenSettings={onOpenSettings} models={models}
+        askPanel={<AskTab project={project} visible={visible} thread={askThread} job={llmJob} onAsk={runAsk}
+          onStop={() => { askStopped.current = true; void window.api.cancel(llmId.current); }} onClear={() => setAskThread([])} onShow={showLine} />}
         highlightsPanel={<HighlightsTab project={project} visible={visible} job={llmJob} error={llmError}
           onSuggest={(m) => runLlm("highlights", m)} onSummarize={(m) => runLlm("summarize", m)} onStop={() => { void window.api.cancel(llmId.current); }}
           onKeep={(id) => patchResult((x) => ({ ...x, highlights: (x.highlights ?? []).map((h) => (h.id === id ? { ...h, suggested: undefined } : h)) }))}
