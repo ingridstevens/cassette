@@ -18,10 +18,12 @@ export interface LlmModel { id: string; label: string; like: string; languages: 
 export interface ModelStatus {
   whisper: Record<string, boolean>; diarization: boolean; dir?: string;
   sizes?: { whisper: Record<string, number>; diarization: number };
+  /** Apple Silicon only: true when the Parakeet speech engine can run here (it is then also listed in `whisper`). */
+  parakeetAvailable?: boolean;
   /** Apple Silicon only: the Apple GPU (MLX) versions of the models. */
   mlxAvailable?: boolean; mlx?: Record<string, boolean>; mlxSizes?: Record<string, number>;
   /** Which languages each Whisper size is reliable for: the size order and the smallest reasonable size per language code. */
-  fit?: { order: string[]; floor: Record<string, string> };
+  fit?: { order: string[]; floor: Record<string, string>; /** Models that know a fixed list of languages (Parakeet): the codes. */ engines?: Record<string, string[]> };
   /** The local language model (highlights and summaries). `available` is false when this build of the engine cannot run it. */
   llm?: { available: boolean; backend?: "mlx" | "gguf"; default?: string; catalog?: LlmModel[]; /** The translation model(s): shown under Translation, never offered for highlights. */ translation?: LlmModel[]; models?: Record<string, boolean>; bytes?: Record<string, number> };
 }

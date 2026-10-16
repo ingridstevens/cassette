@@ -19,6 +19,8 @@ MLX_MODELS = {
     "large-v3-turbo": "mlx-community/whisper-large-v3-turbo",
     "large-v3": "mlx-community/whisper-large-v3-mlx",
 }
+# Other speech engines, listed beside the Whisper sizes. Apple Silicon Macs only (MLX); each is one model.
+PARAKEET_MODELS = {"parakeet-v3": "mlx-community/parakeet-tdt-0.6b-v3"}
 DIARIZATION_REPOS = ["pyannote/speaker-diarization-3.1", "pyannote/segmentation-3.0", "pyannote/wespeaker-voxceleb-resnet34-LM"]
 LANGUAGES = ["de", "en", "fr", "es"]  # the four the app is tuned and tested for; pinned first in the picker
 # Every language code Whisper understands (the same list faster-whisper ships; a test keeps them in sync).
@@ -49,6 +51,17 @@ def mlx_available() -> bool:
     from .asr_mlx import available
 
     return available()
+
+
+def parakeet_available() -> bool:
+    from .asr_parakeet import available
+
+    return available()
+
+
+def _speech_repos() -> dict[str, str]:
+    """Every speech model this computer can run: the Whisper sizes, plus Parakeet where it is installed."""
+    return {**WHISPER_MODELS, **(PARAKEET_MODELS if parakeet_available() else {})}
 
 
 def _llm_cached(name: str) -> bool:
@@ -89,10 +102,11 @@ def status() -> dict:
         "mlxSizes": {n: _size(r) for n, r in MLX_MODELS.items()} if mlx else {},
         "dir": str(models_dir()),
         "sizes": {
-            "whisper": {n: _size(r) for n, r in WHISPER_MODELS.items()},
+            "whisper": {n: _size(r) for n, r in _speech_repos().items()},
             "diarization": sum(_size(r) for r in DIARIZATION_REPOS),
         },
-        "whisper": {name: _cached(repo) for name, repo in WHISPER_MODELS.items()},
+        "whisper": {name: _cached(repo) for name, repo in _speech_repos().items()},
+        "parakeetAvailable": parakeet_available(),
         "diarization": all(_cached(r) for r in DIARIZATION_REPOS),
     }
 
@@ -134,7 +148,9 @@ def _fetch(repo: str, token: str | None, label: str, allow_patterns: list[str] |
 def download_whisper(name: str) -> None:
     from .protocol import log
 
-    repo = WHISPER_MODELS[name]
+    if name in PARAKEET_MODELS and not parakeet_available():
+        raise RuntimeError("Parakeet needs a Mac with an Apple chip.")
+    repo = _speech_repos()[name]
     log(f"Downloading {repo} from huggingface.co into {models_dir()}")
     _fetch(repo, None, name)
     log(f"Finished {repo}. It is stored locally and works offline from now on.")
@@ -179,7 +195,7 @@ def delete(kind: str, name: str | None = None) -> None:
 
         shutil.rmtree(models_dir() / ("models--" + repo_for(name)[0].replace("/", "--")), ignore_errors=True)
         return
-    repos = [MLX_MODELS[name]] if kind == "mlx" else [WHISPER_MODELS[name]] if kind == "whisper" else DIARIZATION_REPOS
+    repos = [MLX_MODELS[name]] if kind == "mlx" else [{**WHISPER_MODELS, **PARAKEET_MODELS}[name]] if kind == "whisper" else DIARIZATION_REPOS
     for r in repos:
         shutil.rmtree(models_dir() / ("models--" + r.replace("/", "--")), ignore_errors=True)
 
@@ -192,7 +208,7 @@ def import_folder(src: Path) -> list[str]:
 
     src = Path(src)
     root = src if any(src.glob("models--*")) else src / "models"
-    known = list(WHISPER_MODELS.values()) + DIARIZATION_REPOS
+    known = list(WHISPER_MODELS.values()) + list(PARAKEET_MODELS.values()) + DIARIZATION_REPOS
     done: list[str] = []
     for repo in known:
         d = root / ("models--" + repo.replace("/", "--"))

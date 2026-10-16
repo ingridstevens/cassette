@@ -8,7 +8,7 @@ export type Engine = "mlx" | "faster";
 export interface Calib { whisper: Record<string, number>; diar: Record<string, number> }
 
 /** Cost of each Whisper size relative to "small" (roughly by parameter count; turbo's decoder is much smaller). */
-export const REL: Record<string, number> = { tiny: 0.16, base: 0.3, small: 1, medium: 3.2, "large-v3-turbo": 2, "large-v3": 6.4 };
+export const REL: Record<string, number> = { tiny: 0.16, base: 0.3, small: 1, medium: 3.2, "large-v3-turbo": 2, "large-v3": 6.4, "parakeet-v3": 0.9 };
 const SMALL_RATE: Record<Engine, number> = { faster: 3.9, mlx: 16 };
 const DIAR_RATE: Record<"gpu" | "cpu", number> = { gpu: 8, cpu: 3 };
 const KEY = "speed-calibration";
@@ -48,5 +48,6 @@ export function estimate(a: { duration: number; model: string; engine: Engine; s
 
 /** Which engine will do the words: the Apple GPU one only when it is there, downloaded for this size, allowed, and skip-silence is off. */
 export function engineFor(model: string, o: { whisperEngine?: string; device?: string; vad?: boolean }, status: { mlxAvailable?: boolean; mlx?: Record<string, boolean> } | null): Engine {
+  if (model === "parakeet-v3") return "mlx"; // always on the Apple GPU
   return status?.mlxAvailable && status.mlx?.[model] && o.whisperEngine !== "faster" && o.device !== "cpu" && !o.vad ? "mlx" : "faster";
 }

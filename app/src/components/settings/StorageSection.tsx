@@ -2,12 +2,12 @@ import { useEffect, useRef, useState } from "react";
 import { FILE_MANAGER, ModelStatus, Options, bytes } from "../../types";
 import { HF_TOKEN_PAGE, MODEL_BYTES, Models } from "../useModels";
 import { useT } from "../../i18n";
-import { WHISPER_MODELS } from "../modelInfo";
+import { ENGINE_MODELS, WHISPER_MODELS, isEngineModel } from "../modelInfo";
 import { setLlm, useLlm } from "../llmChoice";
 import Dialog, { useReturnFocus } from "./Dialog";
 
 /** Model ids with their display texts (English, translated when shown). */
-const sizeInfo = (t: ReturnType<typeof useT>): [string, string, string, string][] => WHISPER_MODELS.map((m) => [m.id, m.id === "large-v3-turbo" || m.id === "large-v3" ? m.name : t(m.name), t(m.like), m.tag ? t(m.tag) : ""]);
+const sizeInfo = (t: ReturnType<typeof useT>): [string, string, string, string][] => [...WHISPER_MODELS, ...ENGINE_MODELS].map((m) => [m.id, m.id === "large-v3-turbo" || m.id === "large-v3" || isEngineModel(m.id) ? m.name : t(m.name), t(m.like), "tag" in m && m.tag ? t(m.tag) : ""]);
 /** Language names for the model table; the keys are the codes the engine sends. */
 const LANGUAGE_NAMES: Record<string, string> = { en: "English", de: "German", fr: "French", es: "Spanish" };
 const gb = (n: number) => bytes(n).replace(".0 GB", " GB");
@@ -19,7 +19,7 @@ type Ask = { name: string; label: string; size: number; inUse: boolean };
 
 export default function StorageSection({ opts, status, models, onGoTo }: Props) {
   const t = useT();
-  const SIZES = sizeInfo(t);
+  const SIZES = sizeInfo(t).filter(([n]) => !isEngineModel(n) || (!!status && n in status.whisper)); // an engine that cannot run here is not listed
   const [dir, setDir] = useState("");
   const [free, setFree] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
@@ -46,11 +46,14 @@ export default function StorageSection({ opts, status, models, onGoTo }: Props) 
   /** "Reliable in 52 of 99 languages": how many languages this size is expected to handle well (our estimate, see engine/fit.py). */
   const reliable = (n: string) => {
     if (!floor) return "";
+    const own = floor.engines?.[n];
+    if (own) return t("Reliable in {count} of {total} languages", { count: own.length, total: Object.keys(floor.floor).length });
     const at = floor.order.indexOf(n), all = Object.values(floor.floor);
     return t("Reliable in {count} of {total} languages", { count: all.filter((f) => floor.order.indexOf(f) <= at).length, total: all.length });
   };
   /** The Apple GPU copy of a size is a detail of that size's row, not a separate list. */
   const AppleGpu = ({ n, label }: { n: string; label: string }) => {
+    if (isEngineModel(n)) return <span className="note">{t("Always on the Apple GPU")}</span>;
     const id = `mlx-${n}`, got = !!status?.mlx?.[n], size = status?.mlxSizes?.[n] || MODEL_BYTES[n], going = models.busy === `download ${id}`;
     return got ? (
       <span className="st-gpu"><span className="st-state ok">{t("Ready")}</span>

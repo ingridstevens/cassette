@@ -13,11 +13,14 @@ _SMALL = "en de fr es it pt nl ca sv da no nn pl ru tr id ms ja zh yue ko vi cs 
 _MEDIUM = "ar fa hi ur bn ta te mr gu pa kn ml ne th he fi lt lv et sr bs mk sq hy ka az kk uz tg tt mn ps sd si km lo my be eu cy is af fo lb oc br".split()
 # every other language Whisper knows (for example Amharic, Hausa, Swahili, Yoruba, Shona, Somali) needs the largest model
 
+ENGINE_LANGUAGES = {"parakeet-v3": set("bg hr cs da nl en et fi fr de el hu it lv lt mt pl pt ro sk sl es sv ru uk".split())}  # kept in step with asr_parakeet.LANGUAGES by a test
 FLOOR: dict[str, str] = {lang: "tiny" if lang == "en" else "small" if lang in _SMALL else "medium" if lang in _MEDIUM else "large-v3" for lang in WHISPER_LANGUAGES}
 
 
 def fit(model: str, language: str) -> str:
     """"good" (at or above the floor), "weak" (one step below), or "poor" (further below). Unknown models and languages count as good: no warning on a guess."""
+    if model in ENGINE_LANGUAGES:  # a model that knows a fixed list of languages: fine inside it, unusable outside it
+        return "good" if language in ENGINE_LANGUAGES[model] else "poor"
     floor = FLOOR.get(language)
     if model not in RANK or floor is None:
         return "good"
@@ -35,4 +38,4 @@ def suggest(model: str, language: str, have: dict[str, bool] | None = None) -> s
 
 def table() -> dict:
     """What the app needs to explain fit without hardcoding it: the size order and every language's floor."""
-    return {"order": ORDER, "floor": FLOOR}
+    return {"order": ORDER, "floor": FLOOR, "engines": {m: sorted(langs) for m, langs in ENGINE_LANGUAGES.items()}}
