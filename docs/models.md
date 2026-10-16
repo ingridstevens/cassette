@@ -47,7 +47,7 @@ the app uses it for those two jobs, otherwise you choose the language yourself.
 | Engine | Download | Languages | Use it when |
 | --- | --- | --- | --- |
 | **Parakeet v3** (NVIDIA, CC-BY-4.0) | about 2.5 GB, from Hugging Face | 25 European languages: German, English, French, Spanish, Italian, Dutch, Polish, Russian, Ukrainian and more. **Not** Arabic or Persian. | You record in European languages and want speed. In our test it matched Whisper on the German and English sample interviews and wrote 58 seconds of audio in about 4 seconds. |
-| **Moonshine** (Moonshine AI, MIT) | 32 MB to 270 MB per language, from **download.moonshine.ai**, not Hugging Face | One model per language: English, German, Spanish, Arabic, Japanese, Vietnamese, Chinese, Tagalog | You want small and quick, or live drafts. It gives a time per sentence, so word times (and where a speaker change falls inside a sentence) are estimates. |
+| **Moonshine** (Moonshine AI, MIT; needs macOS 15 or newer) | 32 MB to 270 MB per language, from **download.moonshine.ai**, not Hugging Face | One model per language: English, German, Spanish, Arabic, Japanese, Vietnamese, Chinese, Tagalog | You want small and quick, or live drafts. It gives a time per sentence, so word times (and where a speaker change falls inside a sentence) are estimates. |
 
 Only Moonshine's *streaming* models are offered: those are MIT-licensed in every language. Its older non-streaming models for other
 languages than English are non-commercial and are left out.
