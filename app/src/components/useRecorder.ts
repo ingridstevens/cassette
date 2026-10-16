@@ -11,6 +11,7 @@ export function useRecorder() {
   const [error, setError] = useState("");
   const [seconds, setSeconds] = useState(0);          // how much audio the engine has heard
   const [level, setLevel] = useState(0);              // 0..1, for the meter
+  const [heard, setHeard] = useState(false);         // any sound at all since the recording started
   const [confirmed, setConfirmed] = useState("");     // words that will not change
   const [tentative, setTentative] = useState("");     // the latest guess, may still change
   const [fit, setFit] = useState<FitAsk | null>(null);
@@ -35,7 +36,7 @@ export function useRecorder() {
   useEffect(() => () => stopMic.current(), []);
 
   const start = useCallback(async (opts: Record<string, unknown>, deviceId?: string) => {
-    setError(""); setConfirmed(""); setTentative(""); setSeconds(0); setFit(null); setReady(false); setState("starting");
+    setError(""); setConfirmed(""); setTentative(""); setSeconds(0); setFit(null); setReady(false); setHeard(false); setState("starting");
     const r = await window.api.liveStart(opts);
     if (!r.ok || !r.jobId) { setState("idle"); setError(r.error === "denied" ? "denied" : r.error ?? "The recording could not start."); return false; }
     job.current = r.jobId;
@@ -50,6 +51,7 @@ export function useRecorder() {
         let peak = 0;
         for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i])); pcm[i] = v < 0 ? v * 32768 : v * 32767; peak = Math.max(peak, Math.abs(v)); }
         setLevel(peak);
+        if (peak > 0.003) setHeard(true);
         window.api.liveAudio(job.current, new Uint8Array(pcm.buffer));
       };
       src.connect(node); node.connect(ctx.destination); // the node writes silence; it must be connected to run
@@ -75,5 +77,5 @@ export function useRecorder() {
     return { path: r.path, seconds: r.seconds ?? 0, name: r.name ?? "Recording" };
   }, []);
 
-  return { state, ready, error, seconds, level, confirmed, tentative, fit, devices, start, stop };
+  return { state, ready, error, seconds, level, heard, confirmed, tentative, fit, devices, start, stop };
 }

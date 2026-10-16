@@ -15,7 +15,7 @@ function wavHeader(bytes: number): Buffer {
 const two = (n: number) => String(n).padStart(2, "0");
 const stamp = (d = new Date()) => `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())} ${two(d.getHours())}.${two(d.getMinutes())}`;
 
-interface Session { jobId: string; pcm: fs.WriteStream; pcmPath: string; bytes: number; name: string; done: Promise<unknown> }
+interface Session { jobId: string; pcm: fs.WriteStream; pcmPath: string; bytes: number; peak: number; name: string; done: Promise<unknown> }
 let current: Session | null = null;
 
 /** Live recording: the window sends 16 kHz mono 16-bit microphone audio; this feeds it to the engine's `live` command
@@ -34,7 +34,7 @@ export function registerLive(send: (channel: string, payload: unknown) => void, 
     const lang = typeof o?.language === "string" && /^[a-z]{2,3}$|^auto$/.test(o.language) ? o.language : "auto";
     const a = ["live", "--model", model, "--language", lang, ...(o?.whisperEngine === "faster" ? ["--backend", "faster"] : []), ...(o?.device === "cpu" ? ["--device", "cpu"] : [])];
     const done = runEngine(jobId, a, env(), (e: EngineEvent) => send("engine-event", { jobId, source: "live", ...e })).then((r) => { if (r?.type === "error") send("engine-event", { jobId, source: "live", ...r }); });
-    current = { jobId, pcm: fs.createWriteStream(pcmPath), pcmPath, bytes: 0, name: base, done };
+    current = { jobId, pcm: fs.createWriteStream(pcmPath), pcmPath, bytes: 0, peak: 0, name: base, done };
     return { ok: true, jobId };
   });
 
@@ -42,6 +42,7 @@ export function registerLive(send: (channel: string, payload: unknown) => void, 
     if (!current || jobId !== current.jobId || !(data instanceof Uint8Array)) return;
     current.pcm.write(data);
     current.bytes += data.byteLength;
+    for (let i = 0; i + 1 < data.byteLength; i += 2) { const v = Math.abs(((data[i] | (data[i + 1] << 8)) << 16) >> 16); if (v > current.peak) current.peak = v; }
     writeToJob(current.jobId, data);
   });
 
@@ -60,6 +61,7 @@ export function registerLive(send: (channel: string, payload: unknown) => void, 
       fs.rmSync(s.pcmPath, { force: true });
     } catch (err) { return { ok: false, error: String(err).slice(0, 200) }; }
     await Promise.race([s.done, new Promise((r) => setTimeout(r, 15000))]); // let the last words reach the window
+    if (s.peak < 100) { fs.rmSync(wav, { force: true }); return { ok: false, error: "silent" }; } // about -50 dB: the microphone gave nothing, so there is nothing to transcribe
     return { ok: true, path: wav, seconds: s.bytes / (RATE * 2), name: s.name };
   });
 }

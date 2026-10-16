@@ -24,6 +24,10 @@ def w(start, end, word):
 
 
 def secs(n):
+    return np.full(int(16000 * n), 0.05, dtype=np.float32)  # not silence: silence is skipped
+
+
+def silence(n):
     return np.zeros(int(16000 * n), dtype=np.float32)
 
 
@@ -56,7 +60,7 @@ def test_old_audio_is_dropped_after_it_is_confirmed():
 
 
 def test_run_reads_a_stream_and_ends_with_a_final_step():
-    pcm = (np.zeros(16000 * 6, dtype="<i2")).tobytes()
+    pcm = (np.full(16000 * 6, 1500, dtype="<i2")).tobytes()
     seen = []
 
     class Model:
@@ -67,3 +71,12 @@ def test_run_reads_a_stream_and_ends_with_a_final_step():
 
     run(Model(), 16000, "en", 2.0, io.BytesIO(pcm), lambda c, t, s: seen.append((c, t, s)))
     assert seen[-1][2] == 6.0 and any(c for c, _t, _s in seen)  # the last step flushes, so "hi" is confirmed
+
+
+def test_silence_is_not_transcribed_and_is_not_kept():
+    t = LiveTranscriber(fake([[w(0, 1, " Copyright")]]))
+    t.feed(silence(5))
+    assert t.step() == ([], []) and t.transcribe.calls == [] and len(t.audio) == 0 and t.base == 5.0
+    t.feed(0.1 * np.random.default_rng(1).normal(size=16000 * 2).astype(np.float32))
+    t.step()
+    assert t.transcribe.calls  # sound is transcribed again

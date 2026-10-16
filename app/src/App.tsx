@@ -60,7 +60,7 @@ export default function App() {
     if (e.type === "log") addLog(e.level === "stderr" ? "stderr" : e.level === "error" ? "error" : "info", e.message);
     else if (e.type === "progress") setLive((p) => ({ label, fraction: e.fraction, message: e.message, since: p && p.label === label ? p.since : Date.now() }));
     else if (e.type === "error") { setLive(null); addLog("error", e.cancelled ? "Cancelled" : e.message); }
-    else if (e.type === "done" && e.jobId !== undefined) setLive(null);
+    else if ((e.type === "done" || e.type === "fit") && e.jobId !== undefined) setLive(null);
     else if (e.type === "started") addLog("info", "Started transcription");
   }), [addLog]);
 
