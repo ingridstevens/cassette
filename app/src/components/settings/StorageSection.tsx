@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from "react";
 import { FILE_MANAGER, ModelStatus, Options, bytes } from "../../types";
 import { HF_TOKEN_PAGE, MODEL_BYTES, Models } from "../useModels";
 import { useT } from "../../i18n";
-import { ENGINE_MODELS, WHISPER_MODELS, isEngineModel } from "../modelInfo";
+import { ENGINE_MODELS, WHISPER_MODELS, isEngineModel, moonshineName } from "../modelInfo";
+import { langName } from "../../languages";
 import { setLlm, useLlm } from "../llmChoice";
 import Dialog, { useReturnFocus } from "./Dialog";
 
@@ -166,6 +167,40 @@ export default function StorageSection({ opts, status, models, onGoTo }: Props) 
         </section>
         {total > 0 && <p className="st-total">{spk > 0 && have.length > 0 ? t("Downloaded in total: {total}. Transcription {whisper}, speaker detection {speakers}.", { total: bytes(total), whisper: bytes(total - spk), speakers: bytes(spk) }) : t("Downloaded in total: {total}.", { total: bytes(total) })}</p>}
       </div>
+
+      {!!status?.moonshine?.available && (
+        <div className="card st-card">
+          <h2>{t("Moonshine models")}</h2>
+          <p className="st-lead">{t("Small, very fast speech models, one per language. They are downloaded from Moonshine's own server ({host}), not from Hugging Face, and they are free to use (MIT license). They give a time for each sentence, so word times are estimates.", { host: status.moonshine.source })}</p>
+          <table className="st-table">
+            <thead><tr><th scope="col">{t("Language")}</th><th scope="col">{t("On disk")}</th><th scope="col" className="act"><span className="st-sr">{t("Action")}</span></th></tr></thead>
+            <tbody>
+              {status.moonshine.catalog.map(({ id: n, name, language, bytes: size }) => {
+                const has = !!status.whisper[n], sz = gb(size), label = moonshineName(n);
+                const lowDisk = free != null && free < needed(n, size), running = models.busy === `download ${n}`, deleting = models.busy === `delete ${n}`;
+                return (
+                  <tr key={n}>
+                    <td><b>{langName(language) || name}</b>{has && opts.model === n && <span className="badge">{t("In use")}</span>}</td>
+                    <td>{has ? gb(sizes?.whisper[n] ?? size) : t("≈ {size}", { size: sz })}</td>
+                    <td className="act">
+                      {has ? (
+                        <button type="button" className="btn small danger" disabled={busy} aria-label={t("Delete the {label} model, {size}", { label, size: sz })}
+                          onClick={() => { back.remember(); setAsk({ name: n, label, size, inUse: opts.model === n }); }}>{deleting ? t("Deleting…") : t("Delete")}</button>
+                      ) : (
+                        <>
+                          {lowDisk && <span className="note">{t("Needs {size} free", { size: gb(needed(n, size)) })}</span>}
+                          <button type="button" className="btn small" disabled={busy || lowDisk} aria-label={t("Download the {label} model, {size}", { label, size: sz })}
+                            onClick={() => void models.run("download", n, size)}>{running ? t("Downloading…") + dlProgress : t("Download")}</button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {llm?.available && (
         <div className="card st-card">

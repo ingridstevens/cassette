@@ -24,6 +24,7 @@ imprecise; the upstream repositories are authoritative. Transitive dependencies 
 | mlx, mlx-metal (Apple Silicon Macs only) | 0.32.4 | MIT | https://github.com/ml-explore/mlx |
 | mlx-whisper (Apple Silicon Macs only) | 0.4.3 | MIT | https://github.com/ml-explore/mlx-examples |
 | mlx-lm (Apple Silicon Macs only) | 0.29.1 | MIT | https://github.com/ml-explore/mlx-lm |
+| moonshine-voice (Apple Silicon Macs only) | 0.1.5 | MIT | https://github.com/moonshine-ai/moonshine |
 | parakeet-mlx (Apple Silicon Macs only) | 0.5.3 | Apache-2.0 (per upstream README; PyPI metadata has no licence field) | https://github.com/senstella/parakeet-mlx |
 | transformers (pulled in by mlx-lm) | 4.57.6 | Apache-2.0 | https://github.com/huggingface/transformers |
 | llama-cpp-python (Windows and Linux; Intel Macs; not installed or tested on this Mac) | >=0.3 | MIT (per upstream; not read from installed metadata) | https://github.com/abetlen/llama-cpp-python |
@@ -114,3 +115,4 @@ except huggingface.co.
 |---|---|---|
 | Parakeet TDT 0.6B v3 (MLX conversion) | CC-BY-4.0: credit NVIDIA when you redistribute or publish results that depend on it | https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3, https://huggingface.co/mlx-community/parakeet-tdt-0.6b-v3 |
 | Hy-MT2 1.8B (MLX 4-bit and GGUF) | Apache-2.0 | https://huggingface.co/tencent/Hy-MT2-1.8B-GGUF, https://huggingface.co/mlx-community/Hy-MT2-1.8B-4bit |
+| Moonshine streaming models (one per language) | MIT (the legacy non-streaming non-English models are non-commercial and not offered) | https://github.com/moonshine-ai/moonshine/blob/main/LICENSE |

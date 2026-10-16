@@ -20,6 +20,8 @@ export interface ModelStatus {
   sizes?: { whisper: Record<string, number>; diarization: number };
   /** Apple Silicon only: true when the Parakeet speech engine can run here (it is then also listed in `whisper`). */
   parakeetAvailable?: boolean;
+  /** Moonshine speech models (one language each). They are downloaded from Moonshine's own server, not Hugging Face. */
+  moonshine?: { available: boolean; source: string; license: string; catalog: { id: string; language: string; name: string; bytes: number }[] };
   /** Apple Silicon only: the Apple GPU (MLX) versions of the models. */
   mlxAvailable?: boolean; mlx?: Record<string, boolean>; mlxSizes?: Record<string, number>;
   /** Which languages each Whisper size is reliable for: the size order and the smallest reasonable size per language code. */

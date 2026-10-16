@@ -1,3 +1,4 @@
+import { langName } from "../languages";
 /** One list of transcription models, so every screen calls a model the same thing. */
 export const WHISPER_MODELS: { id: string; name: string; tag?: "Fast" | "Balanced" | "Most accurate"; like: string }[] = [
   { id: "tiny", name: "Tiny", like: "Fastest, rough" },
@@ -14,4 +15,7 @@ export const ENGINE_MODELS: { id: string; name: string; tag?: "Fast" | "Balanced
 export const isEngineModel = (id: string) => ENGINE_MODELS.some((m) => m.id === id);
 /** The three sizes the start sheet offers first. */
 export const RECOMMENDED = WHISPER_MODELS.filter((m) => m.tag);
-export const modelName = (id: string) => WHISPER_MODELS.find((m) => m.id === id)?.name ?? ENGINE_MODELS.find((m) => m.id === id)?.name ?? id;
+export const isMoonshine = (id: string) => id.startsWith("moonshine-");
+/** "Moonshine · German": one model per language, named from the language code in its id. */
+export const moonshineName = (id: string) => `Moonshine · ${langName(id.slice("moonshine-".length))}`;
+export const modelName = (id: string) => isMoonshine(id) ? moonshineName(id) :  WHISPER_MODELS.find((m) => m.id === id)?.name ?? ENGINE_MODELS.find((m) => m.id === id)?.name ?? id;

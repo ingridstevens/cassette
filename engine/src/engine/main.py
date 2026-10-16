@@ -162,6 +162,10 @@ def cmd_models(a) -> None:
             models.download_mlx(a.name[4:])
         elif a.name.startswith("llm-"):
             models.download_llm(a.name[4:])
+        elif a.name.startswith("moonshine-"):
+            from .asr_moonshine import download
+
+            download(a.name)
         else:
             models.download_whisper(a.name)
         emit("done", **models.status())
@@ -172,7 +176,7 @@ def cmd_models(a) -> None:
     elif a.action == "check":
         emit("done", **models.check_access(a.token or os.environ.get("HF_TOKEN", "")))
     elif a.action == "delete":
-        kind = "diarization" if a.name == "diarization" else "mlx" if a.name.startswith("mlx-") else "llm" if a.name.startswith("llm-") else "whisper"
+        kind = "diarization" if a.name == "diarization" else "mlx" if a.name.startswith("mlx-") else "llm" if a.name.startswith("llm-") else "moonshine" if a.name.startswith("moonshine-") else "whisper"
         models.delete(kind, a.name[4:] if kind in ("mlx", "llm") else a.name)
         emit("done", **models.status())
 

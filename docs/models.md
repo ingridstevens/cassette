@@ -32,3 +32,27 @@ few recordings, not a benchmark.
 Tips: for recordings with several languages use at least *medium* if you can (small models are weak outside English); pick the language yourself when you know it (it is more reliable than auto-detect); add unusual names and terms
 under Options, vocabulary; change the size any time in Settings. Speed depends on your computer; I have not measured
 it for each size here.
+
+## Other speech engines (Apple Silicon Macs)
+
+Besides Whisper, Settings, Storage and models can offer two more engines. Both run on the Apple graphics chip, both are fast, and
+neither can tell which language is spoken or translate by itself: if you have a Whisper model downloaded (the smallest one is enough)
+the app uses it for those two jobs, otherwise you choose the language yourself.
+
+| Engine | Download | Languages | Use it when |
+| --- | --- | --- | --- |
+| **Parakeet v3** (NVIDIA, CC-BY-4.0) | about 2.5 GB, from Hugging Face | 25 European languages: German, English, French, Spanish, Italian, Dutch, Polish, Russian, Ukrainian and more. **Not** Arabic or Persian. | You record in European languages and want speed. In our test it matched Whisper on the German and English sample interviews and wrote 58 seconds of audio in about 4 seconds. |
+| **Moonshine** (Moonshine AI, MIT) | 32 MB to 270 MB per language, from **download.moonshine.ai**, not Hugging Face | One model per language: English, German, Spanish, Arabic, Japanese, Vietnamese, Chinese, Tagalog | You want small and quick, or live drafts. It gives a time per sentence, so word times (and where a speaker change falls inside a sentence) are estimates. |
+
+Only Moonshine's *streaming* models are offered: those are MIT-licensed in every language. Its older non-streaming models for other
+languages than English are non-commercial and are left out.
+
+If the first seconds of a recording are in a language the model you picked is weak at, the app stops before doing any work and
+suggests a better model (see the language list under Settings, Storage and models: "Reliable in N of M languages").
+
+## Translation into other languages
+
+Whisper can only translate into English. The **translation model Hy-MT2 1.8B** (Tencent, Apache-2.0, about 1 GB, from Hugging Face)
+translates lines into 38 languages, including Arabic, Persian, Russian, Turkish, Hebrew, Hindi, Urdu and Ukrainian (not Swahili, Hausa,
+Amharic or Yoruba). Download it under Settings, Storage and models, then pick the language under *Translate into* in a project's options.
+It is a small model: read the translations as help, not as final text.

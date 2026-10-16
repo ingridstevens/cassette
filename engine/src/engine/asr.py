@@ -97,6 +97,17 @@ def load_model(model_name: str, device: str, backend: str = "faster", vad: bool 
 
     from .models import PARAKEET_MODELS
 
+    if model_name.startswith("moonshine-"):
+        from .asr_moonshine import MoonshineModel, available, cached, catalog
+
+        if not available() or model_name not in catalog():
+            raise RuntimeError("This Moonshine model is not available on this computer.")
+        if not cached(model_name):
+            raise RuntimeError("This Moonshine model is not downloaded yet. Download it in Settings, Storage and models.")
+        progress("transcribe", 0.0, f"Loading {model_name}")
+        log(f"Speech model {model_name} loaded (Moonshine, offline)")
+        return MoonshineModel(model_name, helper=_whisper_helper(device)), "cpu", "int8"
+
     if model_name in PARAKEET_MODELS:
         from huggingface_hub import snapshot_download
 

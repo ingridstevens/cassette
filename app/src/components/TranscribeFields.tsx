@@ -2,7 +2,7 @@ import { currentLang, useT } from "../i18n";
 import { MAIN_LANGS, TRANSLATE_LANGS, WHISPER_LANGS, langName } from "../languages";
 import { ModelStatus, Options } from "../types";
 import SpeakerCountField from "./SpeakerCountField";
-import { ENGINE_MODELS, RECOMMENDED, WHISPER_MODELS, modelName } from "./modelInfo";
+import { ENGINE_MODELS, RECOMMENDED, WHISPER_MODELS, modelName, moonshineName } from "./modelInfo";
 import { Models, modelSize } from "./useModels";
 import "../styles/project.css";
 
@@ -69,7 +69,8 @@ export function LanguageField({ eff, set, found, bare }: Section) {
 export function ModelField({ eff, set, status, models, timeOf, onOpenSettings, bare }: Section) {
   const t = useT();
   const engines = ENGINE_MODELS.filter((m) => !!status && m.id in status.whisper); // only where that engine can run
-  const base = [...RECOMMENDED, ...engines];
+  const moon = (status?.moonshine?.catalog ?? []).filter((m) => status?.whisper[m.id]).map((m) => ({ id: m.id, name: moonshineName(m.id), like: "Very fast. This one language only" })); // only the ones already downloaded
+  const base: { id: string; name: string; tag?: string; like: string }[] = [...RECOMMENDED, ...engines, ...moon];
   const list = base.some((m) => m.id === eff.model) ? base : [...base, WHISPER_MODELS.find((m) => m.id === eff.model) ?? { id: eff.model, name: eff.model, like: "" }];
   const dlPct = models.dl?.fraction != null ? ` ${Math.round(models.dl.fraction * 100)}%` : "";
   return (

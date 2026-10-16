@@ -19,6 +19,8 @@ FLOOR: dict[str, str] = {lang: "tiny" if lang == "en" else "small" if lang in _S
 
 def fit(model: str, language: str) -> str:
     """"good" (at or above the floor), "weak" (one step below), or "poor" (further below). Unknown models and languages count as good: no warning on a guess."""
+    if model.startswith("moonshine-"):  # one language per model: the language in its name
+        return "good" if language == model[len("moonshine-"):] else "poor"
     if model in ENGINE_LANGUAGES:  # a model that knows a fixed list of languages: fine inside it, unusable outside it
         return "good" if language in ENGINE_LANGUAGES[model] else "poor"
     floor = FLOOR.get(language)

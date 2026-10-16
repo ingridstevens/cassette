@@ -64,6 +64,12 @@ def _speech_repos() -> dict[str, str]:
     return {**WHISPER_MODELS, **(PARAKEET_MODELS if parakeet_available() else {})}
 
 
+def moonshine_catalog() -> dict:
+    from .asr_moonshine import catalog
+
+    return catalog()
+
+
 def _llm_cached(name: str) -> bool:
     """The language model counts as downloaded when its weights file is in the models folder (a GGUF repo holds many sizes of the same model)."""
     from .llm import repo_for
@@ -90,6 +96,27 @@ def llm_status() -> dict:
             "models": have, "bytes": {n: m["bytes"][be] for n, m in LLM_MODELS.items()}}
 
 
+def _moonshine_cached(model_id: str) -> bool:
+    from .asr_moonshine import cached
+
+    return cached(model_id)
+
+
+def moonshine_sizes() -> dict[str, int]:
+    from .asr_moonshine import size_on_disk
+
+    return {n: size_on_disk(n) for n in moonshine_catalog() if _moonshine_cached(n)}
+
+
+def moonshine_status() -> dict:
+    """The Moonshine models this computer can run, with sizes. They come from Moonshine's own server, not Hugging Face."""
+    from .asr_moonshine import SOURCE
+
+    cat = moonshine_catalog()
+    return {"available": bool(cat), "source": SOURCE, "license": "MIT",
+            "catalog": [{"id": n, "language": s["language"], "name": s["name"], "bytes": s["bytes"]} for n, s in cat.items()]}
+
+
 def status() -> dict:
     from .fit import table
 
@@ -101,11 +128,12 @@ def status() -> dict:
         "mlx": {name: _cached(repo) for name, repo in MLX_MODELS.items()} if mlx else {},
         "mlxSizes": {n: _size(r) for n, r in MLX_MODELS.items()} if mlx else {},
         "dir": str(models_dir()),
+        "moonshine": moonshine_status(),
         "sizes": {
-            "whisper": {n: _size(r) for n, r in _speech_repos().items()},
+            "whisper": {**{n: _size(r) for n, r in _speech_repos().items()}, **moonshine_sizes()},
             "diarization": sum(_size(r) for r in DIARIZATION_REPOS),
         },
-        "whisper": {name: _cached(repo) for name, repo in _speech_repos().items()},
+        "whisper": {**{name: _cached(repo) for name, repo in _speech_repos().items()}, **{n: True for n in moonshine_catalog() if _moonshine_cached(n)}},
         "parakeetAvailable": parakeet_available(),
         "diarization": all(_cached(r) for r in DIARIZATION_REPOS),
     }
@@ -189,6 +217,11 @@ def download_llm(name: str) -> None:
 
 def delete(kind: str, name: str | None = None) -> None:
     import shutil
+
+    if kind == "moonshine":
+        from .asr_moonshine import delete as delete_moonshine
+
+        return delete_moonshine(name)
 
     if kind == "llm":
         from .llm import repo_for
