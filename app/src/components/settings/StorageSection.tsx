@@ -203,6 +203,41 @@ export default function StorageSection({ opts, status, models, onGoTo }: Props) 
         </div>
       )}
 
+      {!!llm?.available && !!llm.translation?.length && (
+        <div className="card st-card">
+          <h2>{t("Translation model")}</h2>
+          <p className="st-lead">{t("Translates lines into another language, such as German or Arabic. Without it the app can only translate into English. It runs on this computer.")}</p>
+          <table className="st-table">
+            <thead><tr><th scope="col">{t("Model")}</th><th scope="col">{t("What it's like")}</th><th scope="col">{t("On disk")}</th><th scope="col" className="act"><span className="st-sr">{t("Action")}</span></th></tr></thead>
+            <tbody>
+              {llm.translation.map(({ id: n, label, like, license }) => {
+                const has = !!llm.models?.[n], size = llm.bytes?.[n] ?? 0, sz = gb(size), id = `llm-${n}`;
+                const lowDisk = free != null && free < needed(id, size), running = models.busy === `download ${id}`, deleting = models.busy === `delete ${id}`;
+                return (
+                  <tr key={n}>
+                    <td><b>{label}</b><span className="badge">{t("Recommended")}</span></td>
+                    <td>{t(like)}<small>{t("License: {name}", { name: license })}</small></td>
+                    <td>{has ? sz : t("≈ {size}", { size: sz })}</td>
+                    <td className="act">
+                      {has ? (
+                        <button type="button" className="btn small danger" disabled={busy} aria-label={t("Delete the {label} model, {size}", { label, size: sz })}
+                          onClick={() => { back.remember(); setAsk({ name: id, label, size, inUse: false }); }}>{deleting ? t("Deleting…") : t("Delete")}</button>
+                      ) : (
+                        <>
+                          {lowDisk && <span className="note">{t("Needs {size} free", { size: gb(needed(id, size)) })}</span>}
+                          <button type="button" className="btn small" disabled={busy || lowDisk} aria-label={t("Download the {label} model, {size}", { label, size: sz })}
+                            onClick={() => void models.run("download", id, size)}>{running ? t("Downloading…") + dlProgress : t("Download")}</button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       <div className="card st-card">
         <h2>{t("Where the models are stored")}</h2>
         <p className="st-lead">{t("Models live only on this computer and are downloaded once. You choose which size to use under Options in a project. Deleting a model is safe: the app asks to download it again when it's needed.")}</p>

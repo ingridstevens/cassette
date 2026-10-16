@@ -261,7 +261,7 @@ export default function Transcript({ result, names, time, onSeek, onReassign, on
           )}
           {translatingIndex === i && <p className="pv-trans" role="status">{t("Translating…")}</p>}
           {seg.translation && editing !== i && (
-            <p className="pv-trans" lang="en" aria-label={t("English translation")}><span className="pv-flag pv-lang" aria-hidden="true">EN</span> {seg.translation}</p>
+            <p className="pv-trans" lang={seg.translationLang ?? "en"} aria-label={seg.translationLang && seg.translationLang !== "en" ? t("Translation") : t("English translation")}><span className="pv-flag pv-lang" aria-hidden="true">{(seg.translationLang ?? "en").toUpperCase()}</span> {seg.translation}</p>
           )}
           {seg.edited && editing !== i && (
             <div className="pv-edited"><span>{t("Edited")}</span><button type="button" className="link-btn" onClick={() => onRevert(i)} aria-label={t("Put the line at {time} back to what the model heard", { time: fmt(seg.start) })}>{t("Put back what the model heard")}</button></div>

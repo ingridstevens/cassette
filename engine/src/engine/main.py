@@ -77,17 +77,33 @@ def cmd_transcribe(a) -> None:
     segments = group_segments(assign_speakers(words, turns))
     speakers = sorted({s["speaker"] for s in segments})
     translated = 0
-    if a.translate:
+    target = getattr(a, "translate_to", None) or ("en" if a.translate else None)
+    from .llm import TRANSLATION_MODEL
+    from .models import _llm_cached
+
+    if target and (_llm_cached(TRANSLATION_MODEL) or target != "en"):
+        # The translation model is used whenever it is downloaded; Whisper can only translate into English
+        from .llm import LocalLLM
+        from .translate import translate_segments
+
+        if not _llm_cached(TRANSLATION_MODEL):
+            raise RuntimeError("Translating into this language needs the translation model. Download it in Settings, Storage and models.")
+        progress("translate", 0.0, "Loading the translation model")
+        translator = LocalLLM(TRANSLATION_MODEL)
+        translated = translate_segments(segments, target, lang, translator, lambda f: progress("translate", f, "Translating"))
+        log(f"Translated {translated} line(s) into {target} with the translation model")
+    elif target:
         for seg in segments:
             if (seg.get("lang") or lang) != "en":
                 progress("translate", translated / max(len(segments), 1), "Translating to English")
                 seg["translation"] = translate_clip(model, data, sr, seg["start"], seg["end"], offset, seg.get("lang") or lang)
+                seg["translationLang"] = "en"
                 translated += 1
         log(f"Translated {translated} line(s) to English")
     log(f"Done: {len(segments)} segments, speakers: {chr(44).join(speakers)}")
     meta = {
         "model": a.model, "device": asr_info.get("device"), "speakerDevice": speaker_info.get("device"),
-        "secondsSpeakers": seconds_speakers, "languages": asr_info.get("languages"), "mixed": mixed, "translated": translated, "secondsTranscribe": seconds_transcribe, "languageProb": asr_info.get("languageProb"),
+        "secondsSpeakers": seconds_speakers, "languages": asr_info.get("languages"), "mixed": mixed, "translated": translated, "translateTo": target, "secondsTranscribe": seconds_transcribe, "languageProb": asr_info.get("languageProb"),
     }
     emit("done", language=lang, duration=duration + offset, speakers=speakers, segments=segments, meta=meta)
 
@@ -259,6 +275,7 @@ def build_parser() -> argparse.ArgumentParser:
                    help="auto: check each speaker's language and switch to per-speaker detection when several are found")
     t.add_argument("--verbatim", action="store_true", help="nudge Whisper to write hesitations (um, äh) down instead of leaving them out")
     t.add_argument("--translate", action="store_true", help="add an English translation to lines in other languages")
+    t.add_argument("--translate-to", help="add a translation into this language code to lines in other languages (English also works without the translation model)")
     t.add_argument("--accept-fit", action="store_true", help="do not stop to suggest a better model when this one is weak for the language heard at the start")
     t.set_defaults(fn=cmd_transcribe)
 

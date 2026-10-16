@@ -132,7 +132,7 @@ app.whenReady().then(() => {
     const range = opts.numSpeakers === "range";
     if (range) { a.push("--min-speakers", String(opts.minSpeakers ?? "2"), "--max-speakers", String(opts.maxSpeakers ?? "4")); }
     if (opts.language === "auto") a.push("--mixed-languages", opts.multilingual === true ? "on" : opts.multilingual === false ? "off" : "auto");
-    if (opts.translate) a.push("--translate");
+    if (opts.translate) a.push(typeof opts.translateTo === "string" && /^[a-zA-Z-]{2,8}$/.test(opts.translateTo) && opts.translateTo !== "en" ? "--translate-to" : "--translate", ...(typeof opts.translateTo === "string" && /^[a-zA-Z-]{2,8}$/.test(opts.translateTo) && opts.translateTo !== "en" ? [opts.translateTo] : []));
     if (opts.whisperEngine === "faster") a.push("--backend", "faster");
     if (opts.verbatim) a.push("--verbatim");
     for (const k of ["numSpeakers", "start", "end"] as const) {

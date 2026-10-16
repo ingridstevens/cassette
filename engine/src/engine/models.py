@@ -70,9 +70,10 @@ def llm_status() -> dict:
     if be is None:
         return {"available": False}
     have = {n: _llm_cached(n) for n in LLM_MODELS}
-    catalog = [{"id": n, "label": m["label"], "like": m["like"], "languages": m["languages"], "license": m["license"]}
-               for n, m in LLM_MODELS.items() if have[n] or not m.get("retired")]
-    return {"available": True, "backend": be, "default": DEFAULT_LLM, "catalog": catalog,
+    row = lambda n, m: {"id": n, "label": m["label"], "like": m["like"], "languages": m["languages"], "license": m["license"]}  # noqa: E731
+    catalog = [row(n, m) for n, m in LLM_MODELS.items() if m.get("kind") != "translate" and (have[n] or not m.get("retired"))]
+    translation = [row(n, m) for n, m in LLM_MODELS.items() if m.get("kind") == "translate"]
+    return {"available": True, "backend": be, "default": DEFAULT_LLM, "catalog": catalog, "translation": translation,
             "models": have, "bytes": {n: m["bytes"][be] for n, m in LLM_MODELS.items()}}
 
 
