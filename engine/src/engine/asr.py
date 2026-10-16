@@ -81,9 +81,47 @@ def pick_backend(pref: str, model_name: str, device: str, vad: bool) -> str:
     return "mlx" if cached and device != "cpu" and not vad else "faster"
 
 
+def _whisper_helper(device: str):
+    """The smallest downloaded Whisper size, for the things Parakeet cannot do (finding the language, translating). None when there is none."""
+    from . import models
+
+    for name in ("tiny", "base", "small", "medium", "large-v3-turbo", "large-v3"):
+        if models._cached(models.WHISPER_MODELS[name]):
+            return load_model(name, device, "faster")[0]
+    return None
+
+
 def load_model(model_name: str, device: str, backend: str = "faster", vad: bool = False):
-    """Load a downloaded Whisper model (offline). Returns (model, device, compute type)."""
+    """Load a downloaded speech model (offline). Returns (model, device, compute type)."""
     import sys
+
+    from .models import PARAKEET_MODELS
+
+    if model_name.startswith("moonshine-"):
+        from .asr_moonshine import MoonshineModel, available, cached, catalog
+
+        if not available() or model_name not in catalog():
+            raise RuntimeError("This Moonshine model is not available on this computer.")
+        if not cached(model_name):
+            raise RuntimeError("This Moonshine model is not downloaded yet. Download it in Settings, Storage and models.")
+        progress("transcribe", 0.0, f"Loading {model_name}")
+        log(f"Speech model {model_name} loaded (Moonshine, offline)")
+        return MoonshineModel(model_name, helper=_whisper_helper(device)), "cpu", "int8"
+
+    if model_name in PARAKEET_MODELS:
+        from huggingface_hub import snapshot_download
+
+        from .asr_parakeet import ParakeetModel, available
+        from .models import models_dir
+
+        if not available():
+            raise RuntimeError("Parakeet needs a Mac with an Apple chip.")
+        progress("transcribe", 0.0, f"Loading {model_name} on the Apple GPU")
+        path = snapshot_download(PARAKEET_MODELS[model_name], cache_dir=models_dir(), local_files_only=True)
+        log(f"Speech model {model_name} loaded from {path} (Apple GPU engine, MLX, offline)")
+        if vad:
+            log("“Skip silence” is not available with Parakeet and is ignored")
+        return ParakeetModel(path, helper=_whisper_helper(device)), "mps", "bfloat16"
 
     use = pick_backend(backend, model_name, device, vad) if backend != "faster" else "faster"
     if use == "mlx":

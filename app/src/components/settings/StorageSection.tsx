@@ -2,12 +2,13 @@ import { useEffect, useRef, useState } from "react";
 import { FILE_MANAGER, ModelStatus, Options, bytes } from "../../types";
 import { HF_TOKEN_PAGE, MODEL_BYTES, Models } from "../useModels";
 import { useT } from "../../i18n";
-import { WHISPER_MODELS } from "../modelInfo";
+import { ENGINE_MODELS, WHISPER_MODELS, isEngineModel, moonshineName } from "../modelInfo";
+import { langName } from "../../languages";
 import { setLlm, useLlm } from "../llmChoice";
 import Dialog, { useReturnFocus } from "./Dialog";
 
 /** Model ids with their display texts (English, translated when shown). */
-const sizeInfo = (t: ReturnType<typeof useT>): [string, string, string, string][] => WHISPER_MODELS.map((m) => [m.id, m.id === "large-v3-turbo" || m.id === "large-v3" ? m.name : t(m.name), t(m.like), m.tag ? t(m.tag) : ""]);
+const sizeInfo = (t: ReturnType<typeof useT>): [string, string, string, string][] => [...WHISPER_MODELS, ...ENGINE_MODELS].map((m) => [m.id, m.id === "large-v3-turbo" || m.id === "large-v3" || isEngineModel(m.id) ? m.name : t(m.name), t(m.like), "tag" in m && m.tag ? t(m.tag) : ""]);
 /** Language names for the model table; the keys are the codes the engine sends. */
 const LANGUAGE_NAMES: Record<string, string> = { en: "English", de: "German", fr: "French", es: "Spanish" };
 const gb = (n: number) => bytes(n).replace(".0 GB", " GB");
@@ -19,7 +20,7 @@ type Ask = { name: string; label: string; size: number; inUse: boolean };
 
 export default function StorageSection({ opts, status, models, onGoTo }: Props) {
   const t = useT();
-  const SIZES = sizeInfo(t);
+  const SIZES = sizeInfo(t).filter(([n]) => !isEngineModel(n) || (!!status && n in status.whisper)); // an engine that cannot run here is not listed
   const [dir, setDir] = useState("");
   const [free, setFree] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
@@ -46,11 +47,14 @@ export default function StorageSection({ opts, status, models, onGoTo }: Props) 
   /** "Reliable in 52 of 99 languages": how many languages this size is expected to handle well (our estimate, see engine/fit.py). */
   const reliable = (n: string) => {
     if (!floor) return "";
+    const own = floor.engines?.[n];
+    if (own) return t("Reliable in {count} of {total} languages", { count: own.length, total: Object.keys(floor.floor).length });
     const at = floor.order.indexOf(n), all = Object.values(floor.floor);
     return t("Reliable in {count} of {total} languages", { count: all.filter((f) => floor.order.indexOf(f) <= at).length, total: all.length });
   };
   /** The Apple GPU copy of a size is a detail of that size's row, not a separate list. */
   const AppleGpu = ({ n, label }: { n: string; label: string }) => {
+    if (isEngineModel(n)) return <span className="note">{t("Always on the Apple GPU")}</span>;
     const id = `mlx-${n}`, got = !!status?.mlx?.[n], size = status?.mlxSizes?.[n] || MODEL_BYTES[n], going = models.busy === `download ${id}`;
     return got ? (
       <span className="st-gpu"><span className="st-state ok">{t("Ready")}</span>
@@ -164,6 +168,40 @@ export default function StorageSection({ opts, status, models, onGoTo }: Props) 
         {total > 0 && <p className="st-total">{spk > 0 && have.length > 0 ? t("Downloaded in total: {total}. Transcription {whisper}, speaker detection {speakers}.", { total: bytes(total), whisper: bytes(total - spk), speakers: bytes(spk) }) : t("Downloaded in total: {total}.", { total: bytes(total) })}</p>}
       </div>
 
+      {!!status?.moonshine?.available && (
+        <div className="card st-card">
+          <h2>{t("Moonshine models")}</h2>
+          <p className="st-lead">{t("Small, very fast speech models, one per language. They are downloaded from Moonshine's own server ({host}), not from Hugging Face, and they are free to use (MIT license). They give a time for each sentence, so word times are estimates.", { host: status.moonshine.source })}</p>
+          <table className="st-table">
+            <thead><tr><th scope="col">{t("Language")}</th><th scope="col">{t("On disk")}</th><th scope="col" className="act"><span className="st-sr">{t("Action")}</span></th></tr></thead>
+            <tbody>
+              {status.moonshine.catalog.map(({ id: n, name, language, bytes: size }) => {
+                const has = !!status.whisper[n], sz = gb(size), label = moonshineName(n);
+                const lowDisk = free != null && free < needed(n, size), running = models.busy === `download ${n}`, deleting = models.busy === `delete ${n}`;
+                return (
+                  <tr key={n}>
+                    <td><b>{langName(language) || name}</b>{has && opts.model === n && <span className="badge">{t("In use")}</span>}</td>
+                    <td>{has ? gb(sizes?.whisper[n] ?? size) : t("≈ {size}", { size: sz })}</td>
+                    <td className="act">
+                      {has ? (
+                        <button type="button" className="btn small danger" disabled={busy} aria-label={t("Delete the {label} model, {size}", { label, size: sz })}
+                          onClick={() => { back.remember(); setAsk({ name: n, label, size, inUse: opts.model === n }); }}>{deleting ? t("Deleting…") : t("Delete")}</button>
+                      ) : (
+                        <>
+                          {lowDisk && <span className="note">{t("Needs {size} free", { size: gb(needed(n, size)) })}</span>}
+                          <button type="button" className="btn small" disabled={busy || lowDisk} aria-label={t("Download the {label} model, {size}", { label, size: sz })}
+                            onClick={() => void models.run("download", n, size)}>{running ? t("Downloading…") + dlProgress : t("Download")}</button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {llm?.available && (
         <div className="card st-card">
           <h2>{t("Language model")}</h2>
@@ -192,6 +230,41 @@ export default function StorageSection({ opts, status, models, onGoTo }: Props) 
                           {lowDisk && <span className="note">{t("Needs {size} free", { size: gb(needed(id, size)) })}</span>}
                           <button type="button" className="btn small" disabled={busy || lowDisk} aria-label={t("Download the {label} model, {size}", { label, size: sz })}
                             onClick={async () => { if (await models.run("download", id, size)) setLlm(n); }}>{running ? t("Downloading…") + dlProgress : t("Download")}</button>
+                        </>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {!!llm?.available && !!llm.translation?.length && (
+        <div className="card st-card">
+          <h2>{t("Translation model")}</h2>
+          <p className="st-lead">{t("Translates lines into another language, such as German or Arabic. Without it the app can only translate into English. It runs on this computer.")}</p>
+          <table className="st-table">
+            <thead><tr><th scope="col">{t("Model")}</th><th scope="col">{t("What it's like")}</th><th scope="col">{t("On disk")}</th><th scope="col" className="act"><span className="st-sr">{t("Action")}</span></th></tr></thead>
+            <tbody>
+              {llm.translation.map(({ id: n, label, like, license }) => {
+                const has = !!llm.models?.[n], size = llm.bytes?.[n] ?? 0, sz = gb(size), id = `llm-${n}`;
+                const lowDisk = free != null && free < needed(id, size), running = models.busy === `download ${id}`, deleting = models.busy === `delete ${id}`;
+                return (
+                  <tr key={n}>
+                    <td><b>{label}</b><span className="badge">{t("Recommended")}</span></td>
+                    <td>{t(like)}<small>{t("License: {name}", { name: license })}</small></td>
+                    <td>{has ? sz : t("≈ {size}", { size: sz })}</td>
+                    <td className="act">
+                      {has ? (
+                        <button type="button" className="btn small danger" disabled={busy} aria-label={t("Delete the {label} model, {size}", { label, size: sz })}
+                          onClick={() => { back.remember(); setAsk({ name: id, label, size, inUse: false }); }}>{deleting ? t("Deleting…") : t("Delete")}</button>
+                      ) : (
+                        <>
+                          {lowDisk && <span className="note">{t("Needs {size} free", { size: gb(needed(id, size)) })}</span>}
+                          <button type="button" className="btn small" disabled={busy || lowDisk} aria-label={t("Download the {label} model, {size}", { label, size: sz })}
+                            onClick={() => void models.run("download", id, size)}>{running ? t("Downloading…") + dlProgress : t("Download")}</button>
                         </>
                       )}
                     </td>

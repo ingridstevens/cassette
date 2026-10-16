@@ -2,6 +2,7 @@ import { DragEvent, useCallback, useEffect, useRef, useState } from "react";
 import Activity, { Live, LogLine } from "./components/Activity";
 import ProjectSidebar from "./components/ProjectSidebar";
 import ProjectView from "./components/ProjectView";
+import RecordPage from "./components/RecordPage";
 import SettingsPage from "./components/SettingsPage";
 import Setup from "./components/Setup";
 import { useModels } from "./components/useModels";
@@ -30,7 +31,7 @@ export default function App() {
   const [dragging, setDragging] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [stopSignal, setStopSignal] = useState(0);
-  const [page, setPage] = useState<"main" | "settings">("main");
+  const [page, setPage] = useState<"main" | "settings" | "record">("main");
   const [dismissed, setDismissed] = useState(false);
   const [addError, setAddError] = useState("");
   const [lines, setLines] = useState<LogLine[]>([]);
@@ -59,7 +60,7 @@ export default function App() {
     if (e.type === "log") addLog(e.level === "stderr" ? "stderr" : e.level === "error" ? "error" : "info", e.message);
     else if (e.type === "progress") setLive((p) => ({ label, fraction: e.fraction, message: e.message, since: p && p.label === label ? p.since : Date.now() }));
     else if (e.type === "error") { setLive(null); addLog("error", e.cancelled ? "Cancelled" : e.message); }
-    else if (e.type === "done" && e.jobId !== undefined) setLive(null);
+    else if ((e.type === "done" || e.type === "fit") && e.jobId !== undefined) setLive(null);
     else if (e.type === "started") addLog("info", "Started transcription");
   }), [addLog]);
 
@@ -97,13 +98,14 @@ export default function App() {
     <>
       <div className={"shell" + (dragging ? " dragging" : "")} hidden={page === "settings"} onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={(e) => { if (e.currentTarget === e.target) setDragging(false); }} onDrop={onDrop}>
         <ProjectSidebar projects={P.projects} activeId={P.activeId} progress={P.progress} blocker={blocker}
-          onSelect={(id) => { P.setActiveId(id); setPage("main"); }} onAdd={pick} onRemove={P.remove} onRename={P.rename} onTranscribeAll={P.transcribeAll} doneCount={P.projects.filter((p) => p.result).length} onExportAll={() => window.api.exportTranscript({ projects: P.projects.filter((p) => p.result).map((p) => ({ name: p.name, segments: p.result!.segments.map(({ words: _w, orig: _o, ...s }) => s), speakers: Object.fromEntries(p.result!.speakers.map((s) => [s, displayName(s, p.result!.speakers, p.names)])) })) }, "combined-csv", "all-projects")} onOpenSettings={() => openSettings()} playingId={playingId}
+          onSelect={(id) => { P.setActiveId(id); setPage("main"); }} onAdd={pick} onRecord={() => setPage("record")} onRemove={P.remove} onRename={P.rename} onTranscribeAll={P.transcribeAll} doneCount={P.projects.filter((p) => p.result).length} onExportAll={() => window.api.exportTranscript({ projects: P.projects.filter((p) => p.result).map((p) => ({ name: p.name, segments: p.result!.segments.map(({ words: _w, orig: _o, ...s }) => s), speakers: Object.fromEntries(p.result!.speakers.map((s) => [s, displayName(s, p.result!.speakers, p.names)])) })) }, "combined-csv", "all-projects")} onOpenSettings={() => openSettings()} playingId={playingId}
           activity={<Activity lines={lines} live={live} setupNeeded={!!blocker} onClear={() => setLines([])} />} />
         <section className="main">
           <div className="main-body">
-            <Setup opts={opts} set={setOpts} status={status} models={models} compact={!noProjects || dismissed} onContinue={() => setDismissed(true)} onOpenSettings={() => openSettings("Storage and models")} />
+            {page === "record" && <RecordPage opts={opts} blocker={blocker} onBack={() => setPage("main")} onSaved={(r) => { setAddError(P.addAndTranscribe([r.path])); setPage("main"); }} />}
+            {page !== "record" && <Setup opts={opts} set={setOpts} status={status} models={models} compact={!noProjects || dismissed} onContinue={() => setDismissed(true)} onOpenSettings={() => openSettings("Storage and models")} />}
 
-            {noProjects && setupDone && (
+            {page !== "record" && noProjects && setupDone && (
               <div className="empty-wrap">
                 <div className={"dropzone card" + (dragging ? " over" : "")}>
                   <div className="orb"><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H9l-4 3.5V14H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" /><path d="M19 9h1a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1v3.5L15 18h-3" /></svg></div>
@@ -115,7 +117,7 @@ export default function App() {
                 </div>
               </div>
             )}
-            {noProjects && !setupDone && dismissed && (
+            {page !== "record" && noProjects && !setupDone && dismissed && (
               <div className="empty-wrap">
                 <div className="dropzone card">
                   <div className="orb"><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H9l-4 3.5V14H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" /><path d="M19 9h1a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1v3.5L15 18h-3" /></svg></div>

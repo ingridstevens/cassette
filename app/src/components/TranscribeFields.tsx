@@ -1,8 +1,8 @@
 import { currentLang, useT } from "../i18n";
-import { MAIN_LANGS, WHISPER_LANGS, langName } from "../languages";
+import { MAIN_LANGS, TRANSLATE_LANGS, WHISPER_LANGS, langName } from "../languages";
 import { ModelStatus, Options } from "../types";
 import SpeakerCountField from "./SpeakerCountField";
-import { RECOMMENDED, WHISPER_MODELS, modelName } from "./modelInfo";
+import { ENGINE_MODELS, RECOMMENDED, WHISPER_MODELS, modelName, moonshineName } from "./modelInfo";
 import { Models, modelSize } from "./useModels";
 import "../styles/project.css";
 
@@ -68,7 +68,10 @@ export function LanguageField({ eff, set, found, bare }: Section) {
 
 export function ModelField({ eff, set, status, models, timeOf, onOpenSettings, bare }: Section) {
   const t = useT();
-  const list = RECOMMENDED.some((m) => m.id === eff.model) ? RECOMMENDED : [...RECOMMENDED, WHISPER_MODELS.find((m) => m.id === eff.model) ?? { id: eff.model, name: eff.model, like: "" }];
+  const engines = ENGINE_MODELS.filter((m) => !!status && m.id in status.whisper); // only where that engine can run
+  const moon = (status?.moonshine?.catalog ?? []).filter((m) => status?.whisper[m.id]).map((m) => ({ id: m.id, name: moonshineName(m.id), like: "Very fast. This one language only" })); // only the ones already downloaded
+  const base: { id: string; name: string; tag?: string; like: string }[] = [...RECOMMENDED, ...engines, ...moon];
+  const list = base.some((m) => m.id === eff.model) ? base : [...base, WHISPER_MODELS.find((m) => m.id === eff.model) ?? { id: eff.model, name: eff.model, like: "" }];
   const dlPct = models.dl?.fraction != null ? ` ${Math.round(models.dl.fraction * 100)}%` : "";
   return (
     <fieldset className="pv-radios">
@@ -108,13 +111,23 @@ export function TranscriptOnlyField({ eff, set }: Section) {
   );
 }
 
-export function ExtrasField({ eff, set, advanced }: Section) {
+export function ExtrasField({ eff, set, advanced, status, onOpenSettings }: Section) {
   const t = useT();
   const translate = eff.translate ?? currentLang() === "en";
+  const model = status?.llm?.translation?.[0], have = !!model && !!status?.llm?.models?.[model.id];
+  const target = have ? eff.translateTo ?? "en" : "en";
   return (
     <>
       <label className="pv-check"><input type="checkbox" checked={translate} onChange={(e) => set({ translate: e.target.checked }, true)} />
-        <span><b>{t("English translation")}</b><small>{t("Adds an English translation under lines in other languages.")}</small></span></label>
+        <span><b>{target === "en" ? t("English translation") : t("Translation")}</b><small>{t("Adds a translation under lines in other languages.")}</small></span></label>
+      {translate && (
+        <label className="field pv-target"><span>{t("Translate into")}</span>
+          <select className="input" value={target} disabled={!have} onChange={(e) => set({ translateTo: e.target.value }, true)}>
+            {(have ? TRANSLATE_LANGS : ["en"]).map((c) => ({ c, n: langName(c) })).sort((a, b) => (a.c === "en" ? -1 : b.c === "en" ? 1 : a.n.localeCompare(b.n))).map(({ c, n }) => <option key={c} value={c}>{n}</option>)}
+          </select>
+          {!have && model && <small>{t("Other languages need the translation model.")} <button type="button" className="linkish" onClick={() => onOpenSettings?.("Storage and models")}>{t("Open Settings, Storage and models")}</button></small>}
+        </label>
+      )}
       <label className="pv-check"><input type="checkbox" checked={!!eff.verbatim} onChange={(e) => set({ verbatim: e.target.checked }, true)} />
         <span><b>{t("Write hesitations down")}</b><small>{t("Keeps “um” and “äh”. A nudge, not a guarantee.")}</small></span></label>
       {advanced && <label className="pv-check"><input type="checkbox" checked={!!eff.vad} onChange={(e) => set({ vad: e.target.checked })} />

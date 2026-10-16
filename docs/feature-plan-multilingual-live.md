@@ -39,6 +39,8 @@ Words appear in the transcript while a file is still being transcribed, instead 
 ### F6. Live recording with live transcription — **Decided: mic only, speakers after stop**
 Pick a microphone, record, see a draft transcript (chunked Whisper/Moonshine, roughly 1–3 s delay, recent words may be rewritten). On stop the audio is saved as a project, speaker detection runs on the saved file, and the draft is replaced by the full result. No system-audio capture in v1.
 
+Built: a Record page (sidebar button). The window captures the microphone at 16 kHz and sends it to a long-running `engine live` process over stdin; the same audio is written to disk and becomes a WAV project on stop, which is then transcribed normally (speakers, final words, language-fit card). Live words use "two runs agree" confirmation (`engine/live.py`): black = confirmed, grey = may change. Not yet tried with a real microphone or real models.
+
 ## Order of work
 
 1. F5 streaming partial events (foundation for F6; smallest visible win).

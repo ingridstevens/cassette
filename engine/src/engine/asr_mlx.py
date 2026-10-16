@@ -20,11 +20,11 @@ CHUNK_SECONDS = 30.0   # Whisper's own window
 SEARCH_SECONDS = 5.0   # a piece ends at the quietest moment in the last few seconds of its window, so words are not cut in half
 
 
-def chunk_bounds(audio) -> list[tuple[int, int]]:
+def chunk_bounds(audio, seconds: float = CHUNK_SECONDS, search: float = SEARCH_SECONDS) -> list[tuple[int, int]]:
     """(start, end) sample positions of the pieces `audio` (16 kHz mono) is transcribed in. Short audio is one piece."""
     import numpy as np
 
-    n, win, back, frame = len(audio), int(CHUNK_SECONDS * SAMPLE_RATE), int(SEARCH_SECONDS * SAMPLE_RATE), int(0.05 * SAMPLE_RATE)
+    n, win, back, frame = len(audio), int(seconds * SAMPLE_RATE), int(search * SAMPLE_RATE), int(0.05 * SAMPLE_RATE)
     if n <= win + back:
         return [(0, n)]
     out, lo = [], 0
