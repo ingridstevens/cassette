@@ -15,3 +15,9 @@ def progress(stage: str, fraction: float | None = None, message: str = "", **ext
 
 def log(message: str, level: str = "info") -> None:
     emit("log", level=level, message=message)
+
+
+def partial(segments: list[dict]) -> None:
+    """Lines that were just written down, before the run is finished, so the app can show the transcript growing.
+    Speakers are known here (speaker detection runs first). The final `done` event replaces all of them."""
+    emit("partial", segments=segments)

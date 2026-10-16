@@ -11,7 +11,7 @@ export interface Highlight { id: string; start: number; end: number; text: strin
 export interface Summary { summary: string; topics: { start: number; title: string }[]; decisions: string[]; actions: { text: string; owner: string | null }[]; model?: string; at?: number }
 export interface Result { language: string; duration: number; speakers: string[]; segments: Segment[]; highlights?: Highlight[]; summary?: Summary }
 export interface Options {
-  model: string; language: string; numSpeakers: string; vad: boolean; prompt: string; noDiarize: boolean; device: string; autosave: boolean; /** Mixed languages: undefined = automatic, true = always per speaker turn, false = off. */ multilingual?: boolean; /** Add an English translation under lines in other languages (undefined = on when the app is in English). */ translate?: boolean; /** Ask the speech model to write hesitations (um, äh) down. */ verbatim?: boolean; /** Speech engine: "auto" (default) uses the Apple GPU when it can, "faster" always uses the CPU engine. */ whisperEngine?: "auto" | "faster"; minSpeakers?: string; maxSpeakers?: string; /** The look: "sunset" (Fairytale sunset, the default) or "clean". Older saved settings used lookLevel 0–3 (and boring), which lookOf still reads. */ look?: "sunset" | "clean"; /** High contrast: stronger colours and heavier borders, in either look. */ contrast?: "standard" | "high"; lookLevel?: number; boring?: boolean; /** Light or dark: "system" (the default) follows the computer. */ colorScheme?: "system" | "light" | "dark"; /** Language of the app itself: "system" (match the computer, the default) or a language id. */ appLanguage?: "system" | "en" | "de" | "fr" | "es";
+  model: string; language: string; numSpeakers: string; vad: boolean; prompt: string; noDiarize: boolean; device: string; autosave: boolean; /** Mixed languages: undefined = automatic, true = always per speaker turn, false = off. */ multilingual?: boolean; /** Add an English translation under lines in other languages (undefined = on when the app is in English). */ translate?: boolean; /** Which speech model only finds the language: a size id, "same" (use the transcription model) or undefined (Tiny). */ detectModel?: string; /** Ask the speech model to write hesitations (um, äh) down. */ verbatim?: boolean; /** Speech engine: "auto" (default) uses the Apple GPU when it can, "faster" always uses the CPU engine. */ whisperEngine?: "auto" | "faster"; minSpeakers?: string; maxSpeakers?: string; /** The look: "sunset" (Fairytale sunset, the default) or "clean". Older saved settings used lookLevel 0–3 (and boring), which lookOf still reads. */ look?: "sunset" | "clean"; /** High contrast: stronger colours and heavier borders, in either look. */ contrast?: "standard" | "high"; lookLevel?: number; boring?: boolean; /** Light or dark: "system" (the default) follows the computer. */ colorScheme?: "system" | "light" | "dark"; /** Language of the app itself: "system" (match the computer, the default) or a language id. */ appLanguage?: "system" | "en" | "de" | "fr" | "es";
 }
 /** A language model the app offers for highlights and summaries. `label` is a model name; `like` is English text the app translates. */
 export interface LlmModel { id: string; label: string; like: string; languages: string[]; license: string }
@@ -20,6 +20,8 @@ export interface ModelStatus {
   sizes?: { whisper: Record<string, number>; diarization: number };
   /** Apple Silicon only: the Apple GPU (MLX) versions of the models. */
   mlxAvailable?: boolean; mlx?: Record<string, boolean>; mlxSizes?: Record<string, number>;
+  /** Which languages each Whisper size is reliable for: the size order and the smallest reasonable size per language code. */
+  fit?: { order: string[]; floor: Record<string, string> };
   /** The local language model (highlights and summaries). `available` is false when this build of the engine cannot run it. */
   llm?: { available: boolean; backend?: "mlx" | "gguf"; default?: string; catalog?: LlmModel[]; models?: Record<string, boolean>; bytes?: Record<string, number> };
 }
@@ -76,11 +78,17 @@ export interface Project {
   meta?: RunMeta;
   /** A run that redoes only part of an existing transcript (a line or a selection): the transcript stays on screen. Not saved. */
   partial?: boolean;
+  /** Set when the engine stopped to suggest a better model for the language it heard. */
+  fitAsk?: FitAsk;
   /** The transcript covers only the first minutes, run to check the settings before the whole recording. */
   trial?: boolean;
   /** The transcript this one replaced (one step back, so "Replace" can be undone). */
   previous?: { result: Result; names: Record<string, string>; meta?: RunMeta };
 }
+/** A line written down while the run is still going. Speakers are already known; the finished transcript replaces all of these. */
+export interface DraftLine { start: number; end: number; speaker: string; text: string; lang?: string }
+/** The model chosen for a recording is weak for the language heard at its start; the engine stopped before doing any work and the app asks what to do. Not saved. */
+export interface FitAsk { language: string; probability: number; model: string; level: "weak" | "poor"; suggested: string; have: Record<string, boolean> }
 export interface JobProgress { stage: string; fraction: number | null; message: string }
 export const MEDIA_EXT = /\.(mp3|wav|m4a|flac|ogg|opus|aac|mp4|mov|mkv|webm)$/i;
 export const baseName = (p: string) => p.split(/[\\/]/).pop() ?? p;

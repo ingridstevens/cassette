@@ -12,6 +12,11 @@ approximate downloads (Windows shows slightly smaller numbers; see [file sizes](
 | large-v3-turbo | about 1.6 GB | Near the best quality, faster than large-v3. |
 | large-v3 | about 3 GB | Best quality, slowest. |
 
+## Models for each job
+
+Settings, **Models for each job**, lets each job use its own model: writing the words down, finding out which language is spoken, and highlights and summaries.
+Language detection defaults to **tiny** (a few letters of output don't need a big model); if tiny isn't downloaded, the transcription model is used instead.
+
 ## Language model (highlights and summaries)
 
 Suggesting highlights and writing summaries uses a separate, small language model, not one of the sizes above. It runs on this computer

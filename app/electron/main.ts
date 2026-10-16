@@ -127,6 +127,7 @@ app.whenReady().then(() => {
     const range = opts.numSpeakers === "range";
     if (range) { a.push("--min-speakers", String(opts.minSpeakers ?? "2"), "--max-speakers", String(opts.maxSpeakers ?? "4")); }
     if (opts.language === "auto") a.push("--mixed-languages", opts.multilingual === true ? "on" : opts.multilingual === false ? "off" : "auto");
+    if (typeof opts.detectModel === "string" && /^[a-z0-9-]{1,20}$/.test(opts.detectModel)) a.push("--detect-model", opts.detectModel);
     if (opts.translate) a.push("--translate");
     if (opts.whisperEngine === "faster") a.push("--backend", "faster");
     if (opts.verbatim) a.push("--verbatim");
@@ -138,6 +139,7 @@ app.whenReady().then(() => {
     if (opts.vad) a.push("--vad");
     if (opts.prompt) a.push("--prompt", String(opts.prompt));
     if (opts.noDiarize) a.push("--no-diarize");
+    if (opts.acceptFit) a.push("--accept-fit");
     send("engine-event", { jobId, type: "started", clientId: opts.clientId });
     runEngine(jobId, a, baseEnv(), (e) => send("engine-event", { jobId, ...e })).then((r) => { if (r?.type === "error") send("engine-event", { jobId, ...r }); });
     return jobId;

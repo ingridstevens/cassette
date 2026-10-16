@@ -5,13 +5,14 @@ import { Models } from "./useModels";
 import DisplaySection from "./settings/DisplaySection";
 import LanguageSection from "./settings/LanguageSection";
 import PerformanceSection from "./settings/PerformanceSection";
+import RolesSection from "./settings/RolesSection";
 import PrivacySection from "./settings/PrivacySection";
 import SavingSection from "./settings/SavingSection";
 import StorageSection from "./settings/StorageSection";
 import "../styles/settings.css";
 
 interface Props { opts: Options; set(o: Options): void; status: ModelStatus | null; models: Models; onBack(): void; initialSection?: string }
-export const SETTINGS_SECTIONS = ["Storage and models", "Language", "Display", "Saving", "Privacy", "Performance"] as const;
+export const SETTINGS_SECTIONS = ["Storage and models", "Models for each job", "Language", "Display", "Saving", "Privacy", "Performance"] as const;
 const SECTIONS = SETTINGS_SECTIONS;
 type Section = (typeof SECTIONS)[number];
 
@@ -35,8 +36,9 @@ export default function SettingsPage({ opts, set, status, models, onBack, initia
         <header className="tool"><div className="titles"><h1>{t(section)}</h1></div></header>
         <div className="st-scroll">
           <div className={"st-col" + (section === "Storage and models" ? " wide" : "")}>
-            {section === "Performance" && <PerformanceSection opts={opts} set={set} status={status} models={models} />}
+            {section === "Performance" && <PerformanceSection opts={opts} set={set} status={status} models={models} onGoTo={(s) => (SECTIONS as readonly string[]).includes(s) && setSection(s as Section)} />}
             {section === "Storage and models" && <StorageSection opts={opts} status={status} models={models} onGoTo={(s) => (SECTIONS as readonly string[]).includes(s) && setSection(s as Section)} />}
+            {section === "Models for each job" && <RolesSection opts={opts} set={set} status={status} />}
             {section === "Saving" && <SavingSection opts={opts} set={set} />}
             {section === "Display" && <DisplaySection opts={opts} set={set} />}
             {section === "Language" && <LanguageSection opts={opts} set={set} />}

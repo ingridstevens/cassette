@@ -4,11 +4,11 @@ import { useT } from "../../i18n";
 import { MODEL_BYTES, Models } from "../useModels";
 
 type Paths = Awaited<ReturnType<typeof window.api.paths>>;
-interface Props { opts: Options; set(o: Options): void; status: ModelStatus | null; models: Models }
+interface Props { opts: Options; set(o: Options): void; status: ModelStatus | null; models: Models; onGoTo?(section: string): void }
 
 const SIZES: [string, string][] = [["tiny", "Tiny"], ["base", "Base"], ["small", "Small"], ["medium", "Medium"], ["large-v3-turbo", "Large v3 turbo"], ["large-v3", "Large v3"]];
 
-export default function PerformanceSection({ opts, set, status, models }: Props) {
+export default function PerformanceSection({ opts, set, status, onGoTo }: Props) {
   const t = useT();
   const [sys, setSys] = useState<Paths["system"] | null>(null);
   useEffect(() => { window.api.paths().then((p) => setSys(p.system)); }, []);
@@ -27,7 +27,6 @@ export default function PerformanceSection({ opts, set, status, models }: Props)
   const note = !mlx ? t("The transcription engine can't use the graphics chip on this computer, so writing the words down runs on the CPU.")
     : haveMlx && engine === "auto" && device !== "cpu" ? t("Writing the words down uses the Apple GPU for the selected model. “Skip silence” isn't available there, so a project with it turned on uses the CPU.")
     : t("Writing the words down uses the CPU. Download the Apple GPU version of the selected model below, and keep this on Automatic, to use the graphics chip.");
-  const busy = models.busy;
   return (
     <>
       <div className="card st-card">
@@ -57,27 +56,7 @@ export default function PerformanceSection({ opts, set, status, models }: Props)
             <label className="choice"><input type="radio" name="engine" checked={engine === "faster"} onChange={() => set({ ...opts, whisperEngine: "faster" })} />
               <span><b>{t("Always the CPU")}</b><small>{t("Slower, but the most tested path. Try it if the Apple GPU version ever gives odd results.")}</small></span></label>
           </fieldset>
-          <h3 className="st-sub">{t("Apple GPU versions of the models")}</h3>
-          <p className="note">{t("Each size you want on the graphics chip needs its own download, in addition to the normal model. They are not gated and need no account.")}</p>
-          <ul className="st-mlx">
-            {SIZES.map(([n, label]) => {
-              const have = !!status?.mlx?.[n];
-              const size = status?.mlxSizes?.[n] || MODEL_BYTES[n];
-              const going = busy === `download mlx-${n}`;
-              return (
-                <li key={n}>
-                  <span className="grow"><b>{t(label)}</b>{n === opts.model && <span className="badge">{t("Selected")}</span>} <small>{have ? t("Downloaded · {size}", { size: bytes(size) }) : t("About {size}", { size: bytes(size) })}</small></span>
-                  {going ? (
-                    <><span className="note">{models.dl?.fraction != null ? `${Math.round(models.dl.fraction * 100)}%` : t("Starting…")}</span><button type="button" className="btn quiet small" onClick={models.cancel}>{t("Cancel")}</button></>
-                  ) : have ? (
-                    <button type="button" className="btn quiet small danger" disabled={!!busy} aria-label={t("Delete the Apple GPU version of {label}", { label: t(label) })} onClick={() => void models.run("delete", `mlx-${n}`)}>{t("Delete")}</button>
-                  ) : (
-                    <button type="button" className="btn small" disabled={!!busy} aria-label={t("Download the Apple GPU version of {label}", { label: t(label) })} onClick={() => void models.run("download", `mlx-${n}`)}>{t("Download")}</button>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+          <p className="note">{t("The Apple GPU version of each size is downloaded under Storage and models, next to the normal one.")} <button type="button" className="linkish" onClick={() => onGoTo?.("Storage and models")}>{t("Open Storage and models")}</button></p>
         </div>
       )}
     </>

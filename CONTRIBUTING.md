@@ -34,6 +34,12 @@ cd app && npx tsc --noEmit && npm run build
 5. Cancelling a job kills the process; the engine holds no state between runs.
 6. Add new event types in `protocol.py` and handle them in `electron/engine-client.ts`.
 
+## Personas
+
+Ten simulated users in [`docs/personas/`](docs/personas/README.md) vote on proposed features and test the app
+(`/persona-vote` in Claude Code). Before a larger change, run a vote or check their veto conditions; see
+[Testing with personas](docs/testing.md).
+
 ## Style
 
 - System fonts only: no web fonts, no CDNs, no remote URLs in HTML/CSS/JS (the production CSP blocks them).
