@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en" data-look="sunset" data-mode="light" data-contrast="normal">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Two looks mockup</title>
+<style>
+/* Mockup only: static HTML, system fonts, no network. Two looks x light/dark.
+   Look "sunset" = current fairytale sunset. Look "clean" = the VC-pitch look. */
+:root {
+  --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
+  --font-read: ui-serif, "New York", Georgia, serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, monospace;
+}
+/* ---------- fairytale sunset ---------- */
+html[data-look="sunset"][data-mode="light"] {
+  --ink:#2b1c3b; --ink2:#593f7a; --ink3:#66498a; --line:rgba(70,45,110,.14);
+  --card:rgba(255,255,255,.94); --page:#f8edf1; --accent:#bf3f6c; --accent-ink:#2a2040;
+  --btn:linear-gradient(120deg,#eab29a,#d98aa9 55%,#a08cdc); --on-btn:#2b1c3b;
+  --bg:radial-gradient(900px 620px at 4% -8%,#f5d9cf,transparent 62%),radial-gradient(760px 600px at 100% 0%,#e0d6f4,transparent 58%),radial-gradient(900px 700px at 78% 112%,#cfdff3,transparent 62%),radial-gradient(700px 520px at 0% 100%,#f1cfdc,transparent 62%),#f6edf0;
+  --s1:#c8456f; --s2:#d08a3e; --s3:#7f64c9; --wave:#c9b9e6; --r:18px; --rs:12px;
+  --read:var(--font-read); --head-w:700; --track:0; --label-tt:none; --label-ff:var(--font-ui); --shadow:0 1px 2px rgba(70,45,120,.06),0 22px 44px -28px rgba(70,45,120,.35);
+}
+html[data-look="sunset"][data-mode="dark"] {
+  --ink:#f2edfb; --ink2:#cbbde6; --ink3:#a493c4; --line:rgba(215,200,255,.14);
+  --card:rgba(34,28,45,.95); --page:#171220; --accent:#e5729a; --accent-ink:#f2edfb;
+  --btn:linear-gradient(120deg,#eab29a,#d98aa9 55%,#a08cdc); --on-btn:#2b1c3b;
+  --bg:radial-gradient(900px 620px at 4% -8%,#37202f,transparent 62%),radial-gradient(760px 600px at 100% 0%,#272048,transparent 58%),radial-gradient(900px 700px at 78% 112%,#17294a,transparent 62%),radial-gradient(700px 520px at 0% 100%,#341b2b,transparent 62%),#140f1d;
+  --s1:#e5729a; --s2:#e8a566; --s3:#a58bff; --wave:#5b5175; --r:18px; --rs:12px;
+  --read:var(--font-read); --head-w:700; --track:0; --label-tt:none; --label-ff:var(--font-ui); --shadow:0 1px 2px rgba(0,0,0,.4),0 22px 44px -26px rgba(0,0,0,.8);
+}
+/* ---------- Clean (VC pitch) ---------- */
+html[data-look="clean"][data-mode="light"] {
+  --ink:#0b0b0f; --ink2:#4a4a55; --ink3:#6b6b78; --line:#e6e6ea;
+  --card:#fff; --page:#fafafa; --accent:#4f46e5; --accent-ink:#4f46e5;
+  --btn:#0b0b0f; --on-btn:#fff; --bg:#fafafa;
+  --s1:#4f46e5; --s2:#0b0b0f; --s3:#16a34a; --wave:#c9c9d1; --r:18px; --rs:12px;
+  --read:var(--font-read); --head-w:700; --track:0; --label-tt:none; --label-ff:var(--font-ui); --shadow:0 1px 2px rgba(0,0,0,.08),0 22px 44px -28px rgba(0,0,0,.35);
+}
+html[data-look="clean"][data-mode="dark"] {
+  --ink:#f5f2f4; --ink2:#b3aab0; --ink3:#948a91; --line:#2b242a;
+  --card:#141014; --page:#0c090c; --accent:#e5386d; --accent-ink:#e5386d;
+  --btn:#b3204f; --on-btn:#fff; --bg:#0c090c;
+  --s1:#e5386d; --s2:#f5f2f4; --s3:#7c8cff; --wave:#3b3239; --r:18px; --rs:12px;
+  --read:var(--font-read); --head-w:700; --track:0; --label-tt:none; --label-ff:var(--font-ui); --shadow:0 1px 2px rgba(0,0,0,.08),0 22px 44px -28px rgba(0,0,0,.35);
+}
+
+/* ---------- High contrast: same layout, stronger colours (any look, light or dark) ---------- */
+html[data-contrast="high"][data-mode="light"] { --ink:#000; --ink2:#111; --ink3:#222; --line:#000; --card:#fff; --wave:#6b6b6b; --bg:#fff; --page:#fff; }
+html[data-contrast="high"][data-mode="dark"] { --ink:#fff; --ink2:#fff; --ink3:#e6e6e6; --line:#fff; --card:#000; --wave:#9a9a9a; --bg:#000; --page:#000; }
+html[data-contrast="high"][data-look="sunset"][data-mode="light"] { --accent:#a3174f; --btn:#a3174f; --on-btn:#fff; --s1:#b0124a; --s2:#9a4a00; --s3:#4b2bb8; }
+html[data-contrast="high"][data-look="sunset"][data-mode="dark"] { --accent:#ff8fb3; --btn:#ffd0e0; --on-btn:#000; --s1:#ff8fb3; --s2:#ffc27a; --s3:#c9b8ff; }
+html[data-contrast="high"][data-look="clean"][data-mode="light"] { --accent:#2a1fc4; --btn:#000; --on-btn:#fff; --s1:#2a1fc4; --s2:#000; --s3:#0b6b2c; }
+html[data-contrast="high"][data-look="clean"][data-mode="dark"] { --accent:#ff6a96; --btn:#ffb3c8; --on-btn:#000; --s1:#ff6a96; --s2:#fff; --s3:#a8b4ff; }
+html[data-contrast="high"] .card, html[data-contrast="high"] .pill, html[data-contrast="high"] .status { border:2px solid var(--line); box-shadow:none; }
+html[data-contrast="high"] .proj.on { border:2px solid var(--line); box-shadow:none; }
+html[data-contrast="high"] .note, html[data-contrast="high"] .hint, html[data-contrast="high"] .sub, html[data-contrast="high"] .proj small { color:var(--ink); }
+html[data-contrast="high"] .unsure { text-decoration:underline solid 2px; text-underline-offset:4px; }
+html[data-contrast="high"] .win { font-weight:500; }
+
+* { box-sizing:border-box; }
+body { margin:0; background:#888; font-family:var(--font-ui); }
+.switcher { position:fixed; z-index:9; bottom:10px; left:50%; transform:translateX(-50%); display:flex; gap:6px; background:#000c; padding:6px; border-radius:10px; font:12px var(--font-ui); }
+.switcher[hidden] { display:none; }
+.switcher button { all:unset; cursor:pointer; color:#fff; padding:5px 10px; border-radius:6px; }
+.switcher button[aria-pressed="true"] { background:#fff; color:#000; }
+.switcher i { width:1px; background:#fff4; }
+.win { width:1440px; height:900px; margin:0 auto; display:flex; background:var(--bg); color:var(--ink); font-size:14px; line-height:1.45; -webkit-font-smoothing:antialiased; overflow:hidden; letter-spacing:var(--track); }
+h1,h2,h3,p { margin:0; }
+.label { font-family:var(--label-ff); text-transform:var(--label-tt); font-size:12px; color:var(--ink3); }
+.card { background:var(--card); border-radius:var(--r); box-shadow:var(--shadow); }
+
+/* sidebar */
+.side { width:248px; padding:20px 12px 16px; border-right:1px solid var(--line); display:flex; flex-direction:column; gap:12px; }
+.side { background:color-mix(in srgb,var(--card) 25%,transparent); }
+.add { all:unset; cursor:pointer; text-align:center; padding:12px; font-weight:600; background:var(--btn); color:var(--on-btn); border-radius:calc(var(--r) + 8px); margin-top:30px; }
+.proj { padding:10px 12px; border-radius:var(--rs); }
+.proj.on { background:var(--card); box-shadow:var(--shadow); }
+.proj b { display:block; font-weight:var(--head-w); }
+.proj small { color:var(--ink2); font-size:12px; }
+.grow { flex:1; }
+.status { border:1px solid var(--line); border-radius:var(--r); padding:8px 12px; font-size:13px; display:flex; gap:8px; align-items:center; }
+.dot { width:8px; height:8px; border-radius:50%; background:#16a34a; display:inline-block; }
+html[data-look="clean"][data-mode="dark"] .dot { background:var(--accent); box-shadow:0 0 8px var(--accent); }
+
+/* main */
+.main { flex:1; display:flex; flex-direction:column; padding:22px 28px 22px; min-width:0; }
+.head { display:flex; align-items:center; gap:12px; }
+.head h1 { font-size:20px; font-weight:var(--head-w); }
+.head .sub { color:var(--ink2); font-size:13px; }
+.pill { border:1px solid var(--line); background:var(--card); color:var(--ink); padding:8px 14px; border-radius:calc(var(--r) + 8px); font-weight:600; font-size:13px; }
+.pill.primary { background:var(--btn); color:var(--on-btn); border-color:transparent; }
+
+/* pitch metrics strip: Series A only */
+.metrics { display:none; margin:20px 0 4px; border:1px solid var(--line); border-radius:var(--r); background:var(--card); }
+.metrics div { padding:14px 18px; border-right:1px solid var(--line); }
+.metrics div:last-child { border:0; }
+.metrics strong { display:block; font-size:30px; font-weight:600; letter-spacing:-.04em; font-variant-numeric:tabular-nums; margin-top:2px; }
+.metrics em { font-style:normal; color:var(--s3); font:600 12px var(--font-mono); margin-left:6px; letter-spacing:0; white-space:nowrap; }
+html[data-look="clean"][data-mode="dark"] .metrics em { color:var(--accent); }
+
+.transcript { flex:1; padding:22px 8px; overflow:hidden; }
+.turn { margin-bottom:22px; }
+.turn { display:block; margin-left:28px; }
+.who { display:flex; gap:8px; align-items:center; font-weight:600; }
+.who .c { width:9px; height:9px; border-radius:50%; background:var(--c); }
+.who time { color:var(--ink3); font-weight:400; font-size:12.5px; font-variant-numeric:tabular-nums; }
+.turn p { font-family:var(--read); font-size:19px; line-height:1.5; }
+.unsure { text-decoration:underline dotted; text-underline-offset:4px; }
+.turn.now p { }
+
+/* player */
+.player { padding:14px 18px; display:flex; align-items:center; gap:18px; }
+.play { width:48px; height:48px; border-radius:50%; background:var(--btn); color:var(--on-btn); display:grid; place-items:center; font-size:16px; }
+.time { font:13px var(--font-ui); color:var(--ink2); font-variant-numeric:tabular-nums; min-width:90px; }
+.wave { flex:1; height:40px; display:flex; align-items:center; gap:3px; }
+.wave i { flex:1; background:var(--wave); border-radius:2px; }
+.wave i.p { background:var(--accent); }
+.hint { font-size:12px; color:var(--ink2); margin-top:8px; }
+
+/* inspector */
+.insp { width:332px; border-left:1px solid var(--line); padding:16px; display:flex; flex-direction:column; gap:12px; }
+.insp { background:color-mix(in srgb,var(--card) 20%,transparent); }
+.tabs { display:flex; background:color-mix(in srgb,var(--ink) 6%,transparent); border-radius:var(--r); padding:4px; font-weight:600; font-size:13px; }
+.tabs span { flex:1; text-align:center; padding:6px; border-radius:calc(var(--r) - 4px); color:var(--ink2); }
+.tabs .on { background:var(--card); color:var(--ink); }
+.spk { padding:14px 16px; }
+.spk .r { display:flex; justify-content:space-between; align-items:baseline; }
+.spk b { display:flex; gap:8px; align-items:center; font-size:15px; }
+.bar { height:6px; background:color-mix(in srgb,var(--ink) 8%,transparent); border-radius:6px; margin:10px 0 8px; overflow:hidden; }
+.bar i { display:block; height:100%; background:var(--c); border-radius:6px; }
+.spk .big { display:none; }
+.sc { padding:2px; }
+.note { font-size:12.5px; color:var(--ink2); }
+</style>
+</head>
+<body>
+<div class="switcher" role="group" aria-label="Mockup controls">
+  <button data-look="sunset" aria-pressed="true">Fairytale sunset</button>
+  <button data-look="clean" aria-pressed="false">Clean</button>
+  <i></i>
+  <button data-mode="light" aria-pressed="true">Light</button>
+  <button data-mode="dark" aria-pressed="false">Dark</button>
+  <i></i>
+  <button data-contrast="normal" aria-pressed="true">Standard</button>
+  <button data-contrast="high" aria-pressed="false">High contrast</button>
+</div>
+
+<div class="win">
+  <aside class="side">
+    <button class="add">＋ Add recordings</button>
+    <span class="label">Projects</span>
+    <div class="proj on"><b>Interview 2026</b><small>German · 0:24 · 3 speakers</small></div>
+    <div class="proj"><b>Podcast episode 12</b><small>Not transcribed yet</small></div>
+    <div class="grow"></div>
+    <div class="status"><span class="dot"></span> Ready · works offline</div>
+    <p class="note">🔒 Everything stays on this computer</p>
+    <div class="proj"><b>Settings</b><small>For all projects</small></div>
+  </aside>
+
+  <main class="main">
+    <div class="head">
+      <div class="grow"><h1>Interview 2026</h1><span class="sub">German · 0:24 · 3 speakers</span></div>
+      <span class="pill">Review 8 unsure words</span>
+      <span class="pill">Find in transcript (⌘F)</span>
+      <span class="pill">Replace</span>
+      <span class="pill primary">Export</span>
+    </div>
+
+
+    <section class="transcript">
+      <div class="turn" style="--c:var(--s1)"><div class="who"><span class="c"></span>Anna <time>0:00</time></div><p>Hallo zusammen und willkommen <span class="unsure">zum</span> Interview.</p></div>
+      <div class="turn now" style="--c:var(--s2)"><div class="who"><span class="c"></span>Ben <time>0:03</time></div><p>Danke für die Einladung, <span class="unsure">ich</span> freue mich sehr.</p></div>
+      <div class="turn" style="--c:var(--s3)"><div class="who"><span class="c"></span>Carla <time>0:07</time></div><p>Ich habe vorab <span class="unsure">ein paar</span> Fragen vorbereitet.</p></div>
+      <div class="turn" style="--c:var(--s1)"><div class="who"><span class="c"></span>Anna <time>0:11</time></div><p>Dann fangen wir direkt <span class="unsure">mit</span> der ersten an.</p></div>
+      <div class="turn" style="--c:var(--s2)"><div class="who"><span class="c"></span>Ben <time>0:15</time></div><p>Gerne. Das Projekt begann <span class="unsure">vor</span> drei Jahren.</p></div>
+    </section>
+
+    <div class="card player">
+      <div class="play">▶</div>
+      <div class="time">0:03 / 0:24<br><span class="label">1×</span></div>
+      <div class="wave" id="wave"></div>
+    </div>
+    <p class="hint">Drag the waveform to save a clip · Space or K plays · J / L skip 10 s · Double-click a word to fix it</p>
+  </main>
+
+  <aside class="insp">
+    <div class="tabs"><span class="on">Speakers</span><span>Highlights</span><span>Options</span><span>Info</span></div>
+    <p class="note">Click a name to rename it. Wrong speaker on a line? Click the name above that line to move it to someone else.</p>
+    <div class="card spk" style="--c:var(--s2)"><div class="r"><b><span class="dot" style="background:var(--c)"></span>Ben</b><span class="label">2 turns</span></div><div class="bar"><i style="width:36%"></i></div><span class="note">36% of the talking</span><span class="note" style="display:none"></span></div>
+    <div class="card spk" style="--c:var(--s1)"><div class="r"><b><span class="dot" style="background:var(--c)"></span>Anna</b><span class="label">2 turns</span></div><div class="bar"><i style="width:33%"></i></div><span class="note">33% of the talking</span></div>
+    <div class="card spk" style="--c:var(--s3)"><div class="r"><b><span class="dot" style="background:var(--c)"></span>Carla</b><span class="label">2 turns</span></div><div class="bar"><i style="width:31%"></i></div><span class="note">31% of the talking</span></div>
+  </aside>
+</div>
+
+<script>
+// waveform bars, deterministic; first 16% are "played"
+const w = document.getElementById("wave");
+for (let i = 0; i < 70; i++) {
+  const h = 6 + Math.abs(Math.sin(i * 1.7) * Math.cos(i * .43)) * 34;
+  const b = document.createElement("i");
+  b.style.height = h + "px"; if (i < 11) b.className = "p"; w.appendChild(b);
+}
+const root = document.documentElement;
+document.querySelectorAll(".switcher button").forEach((b) => b.addEventListener("click", () => {
+  const k = b.dataset.look ? "look" : b.dataset.mode ? "mode" : "contrast", v = b.dataset.look || b.dataset.mode || b.dataset.contrast;
+  root.dataset[k] = v;
+  document.querySelectorAll(`.switcher button[data-${k}]`).forEach((x) => x.setAttribute("aria-pressed", String(x === b)));
+}));
+const q = new URLSearchParams(location.search);
+if (q.has('shot')) document.querySelector('.switcher').hidden = true;
+for (const k of ["look", "mode", "contrast"]) if (q.get(k)) document.querySelector(`.switcher button[data-${k}="${q.get(k)}"]`)?.click();
+</script>
+</body>
+</html>

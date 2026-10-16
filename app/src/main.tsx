@@ -4,7 +4,6 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { setLanguage } from "./i18n";
 import { applyLook } from "./types";
 import "./styles/base.css";
-import "./styles/classic.css";
 import "./styles/themes.css";
 
 if (import.meta.env.DEV && !(window as { api?: unknown }).api) await import("./dev-mock");
