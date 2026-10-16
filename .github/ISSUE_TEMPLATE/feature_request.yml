@@ -1,0 +1,41 @@
+name: Feature request
+description: Suggest something new. Personas will vote on it, and so can you.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: job
+    attributes:
+      label: What are you trying to do?
+      description: Describe the task, not the button. Who are you and what are you working on?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: What would help?
+    validations:
+      required: true
+  - type: dropdown
+    id: persona
+    attributes:
+      label: Which persona is this closest to?
+      description: See docs/personas/README.md. Pick the nearest one, or "None of them" if you are someone else.
+      options:
+        - Mara (journalist)
+        - Jonas (researcher)
+        - Priya (meeting minutes)
+        - Theo (podcaster)
+        - Lucía (languages)
+        - Sam (setup person)
+        - Hana (keyboard and screen reader)
+        - Dr. Okafor (confidentiality)
+        - Walt (older computer, long recordings)
+        - Dev (developer)
+        - None of them
+    validations:
+      required: true
+  - type: textarea
+    id: cost
+    attributes:
+      label: Does it need anything new?
+      description: A download, a network call, an account, a slower default? Say so if you know.

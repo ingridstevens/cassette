@@ -19,6 +19,7 @@ your own computer. German, English, French and Spanish are the best tested; abou
 | Know what stays on your computer and what goes online | [Privacy and offline use](privacy-and-offline.md), [Confidentiality](confidentiality.md) |
 | Fix something that isn't working | [Troubleshooting](troubleshooting.md) |
 | Change the code | [Development](development.md) (also see [CONTRIBUTING](../CONTRIBUTING.md)) |
+| See who the app is for, or vote on features and test as those users | [Personas](personas/README.md), [Votes](votes/README.md), [Testing with personas](testing.md) |
 
 Try it without recording anything: two short sample interviews are in [`samples/`](samples/) (an English one
 with two clearly different voices, and a German one). Screenshots of the app are in [`screenshots/`](screenshots/) and used throughout; the [tour](tour.md) shows them in order.
