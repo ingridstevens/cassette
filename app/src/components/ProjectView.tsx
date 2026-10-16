@@ -320,7 +320,7 @@ export default function ProjectView({ project, progress, blocker, waiting, visib
       </div></div>
     ) : (
       <div className="pv-center"><div className="pv-stack">
-        <div><h2 className="pv-big">{t("Transcribing…")}</h2><p className="pv-lead">{t("You can open other projects while this runs.")}</p></div>
+        <div><h2 className="pv-big">{t("Transcribing…")}</h2><p className="pv-lead">{t("You can open other projects while this runs.")}</p>{startInfo.est && <p className="pv-lead">{t("Estimated time: {time}", { time: spanText(t, startInfo.est) })}</p>}</div>
         <div className="card pv-stages">
           {list.map(({ k, i }, n) => (
             <div key={k} className="pv-stage" aria-current={i === cur ? "step" : undefined}>

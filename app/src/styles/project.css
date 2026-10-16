@@ -144,7 +144,9 @@
 .pv-tool button, .pv-tool input, .pv-tool .search, .pv-tool a { -webkit-app-region: no-drag; }
 .pv-tool .titles { flex: 1 1 160px; min-width: 160px; }
 .pv-tool .titles h1, .pv-tool .titles .sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.pview .search { flex: 0 1 250px; min-width: 150px; width: auto; }
+.pview .search { flex: 0 1 300px; min-width: 230px; width: auto; }
+.pview .search input { min-width: 110px; } /* the typed word always stays readable; the match count gives way first */
+.pview .search .pv-hits { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 
 /* player never overflows: the actions wrap onto their own row when the window is narrow */
 .pv-dock { flex-wrap: wrap; row-gap: 6px; }
@@ -164,7 +166,7 @@
   .pview .pv-tool .search input { width: 100%; height: 100%; padding: 0 0 0 34px; color: transparent; cursor: pointer; }
   .pview .pv-tool .search input::placeholder { color: transparent; }
   .pview .pv-tool .search .pv-hits { display: none; }
-  .pview .pv-tool .search:focus-within { flex: none; width: 230px; }
+  .pview .pv-tool .search:focus-within { flex: none; width: 300px; }
   .pview .pv-tool .search:focus-within input { color: var(--ink); cursor: text; }
   .pview .pv-tool .search:focus-within input::placeholder { color: var(--ink2); }
   .pview .pv-tool:has(.search:focus-within) .titles { min-width: 0; flex-basis: 0; }
