@@ -71,6 +71,8 @@ export interface Project {
   /** The transcript this one replaced (one step back, so "Replace" can be undone). */
   previous?: { result: Result; names: Record<string, string>; meta?: RunMeta };
 }
+/** A line written down while the run is still going. Speakers are already known; the finished transcript replaces all of these. */
+export interface DraftLine { start: number; end: number; speaker: string; text: string; lang?: string }
 export interface JobProgress { stage: string; fraction: number | null; message: string }
 export const MEDIA_EXT = /\.(mp3|wav|m4a|flac|ogg|opus|aac|mp4|mov|mkv|webm)$/i;
 export const baseName = (p: string) => p.split(/[\\/]/).pop() ?? p;

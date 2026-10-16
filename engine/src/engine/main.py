@@ -10,7 +10,7 @@ from pathlib import Path
 
 from . import export as ex
 from .models import WHISPER_LANGUAGES
-from .protocol import emit, log, progress
+from .protocol import emit, log, partial, progress
 
 
 def cmd_transcribe(a) -> None:
@@ -52,13 +52,17 @@ def cmd_transcribe(a) -> None:
                 mixed = is_mixed(found)
                 log("Checked the language of each speaker: " + (", ".join(f"{k} {v:.0f}s" for k, v in found.items()) or "no confident result")
                     + (" · several languages found, switching to per-speaker detection" if mixed else " · one language, normal mode"))
+
+        def on_words(got: list[dict]) -> None:  # the transcript grows on screen while the run goes on
+            partial([{k: v for k, v in s.items() if k != "words"} for s in group_segments(assign_speakers(got, turns))])
+
         if mixed:
             log("Detecting the language separately for each speaker turn")
-            words, lang, asr_info = transcribe_turns(model, data, sr, turns, a.vad, a.prompt, offset, a.verbatim)
+            words, lang, asr_info = transcribe_turns(model, data, sr, turns, a.vad, a.prompt, offset, a.verbatim, on_words)
             asr_info["device"] = dev
         else:
             words, lang, asr_info = transcribe(data, a.model, None if a.language == "auto" else a.language,
-                                               a.device, a.vad, a.prompt, offset, duration, a.mixed_languages == "on" and not turns, loaded, a.verbatim)
+                                               a.device, a.vad, a.prompt, offset, duration, a.mixed_languages == "on" and not turns, loaded, a.verbatim, on_words)
         seconds_transcribe = round(time.time() - t0, 1)
     progress("merge", None, "Assigning speakers")
     segments = group_segments(assign_speakers(words, turns))

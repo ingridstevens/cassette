@@ -58,7 +58,11 @@ function fake() {
     const jobId = "job" + Math.random().toString(36).slice(2, 7); emit({ jobId, type: "started", clientId: o.clientId });
     (async () => {
       for (const [stage, ms] of [["decode", 500], ["diarize", 900], ["transcribe", 1200], ["merge", 300]] as const) {
-        for (let i = 1; i <= 4; i++) { emit({ jobId, type: "progress", stage, fraction: i / 4, message: "" }); await wait(ms / 4); }
+        for (let i = 1; i <= 4; i++) {
+          emit({ jobId, type: "progress", stage, fraction: i / 4, message: "" });
+          if (stage === "transcribe") emit({ jobId, type: "partial", segments: fake().segments.slice((i - 1) * 2, i * 2).map(({ words: _w, ...s }) => s) });
+          await wait(ms / 4);
+        }
       }
       emit({ jobId, type: "done", ...fake() });
     })();

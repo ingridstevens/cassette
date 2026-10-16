@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { recordSpeed } from "./estimate";
 import { currentLang, t } from "./i18n";
-import { JobProgress, MEDIA_EXT, Options, Project, Result, RunMeta, Segment, baseName, displayName, stripExt } from "./types";
+import { DraftLine, JobProgress, MEDIA_EXT, Options, Project, Result, RunMeta, Segment, baseName, displayName, stripExt } from "./types";
 
 type Range = [number, number] | null;
 const persisted = (p: Project) => ({ id: p.id, path: p.path, name: p.name, addedAt: p.addedAt, result: p.result, names: p.names, opts: p.opts, meta: p.meta, trial: p.trial, previous: p.previous });
@@ -20,6 +20,7 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [progress, setProgress] = useState<Record<string, JobProgress>>({});
+  const [drafts, setDrafts] = useState<Record<string, DraftLine[]>>({});
   const [loaded, setLoaded] = useState(false);
   const optsRef = useRef(opts); optsRef.current = opts;
   const logRef = useRef(log); logRef.current = log;
@@ -103,14 +104,18 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     const job = jobs.current.get(e.jobId);
     if (!job) return;
     const { pid, range, line, trial } = job;
-    if (e.type === "progress") setProgress((m) => ({ ...m, [pid]: { stage: e.stage, fraction: e.fraction, message: e.message } }));
+    const dropDraft = () => setDrafts((m) => { const { [pid]: _, ...rest } = m; return rest; });
+    if (e.type === "partial") { if (!range) setDrafts((m) => ({ ...m, [pid]: [...(m[pid] ?? []), ...(e.segments as DraftLine[])] })); }  // a redo of one part keeps the transcript on screen instead
+    else if (e.type === "progress") setProgress((m) => ({ ...m, [pid]: { stage: e.stage, fraction: e.fraction, message: e.message } }));
     else if (e.type === "error") {
       jobs.current.delete(e.jobId);
+      dropDraft();
       setProgress((m) => { const { [pid]: _, ...rest } = m; return rest; });
       const had = projectsRef.current.find((p) => p.id === pid)?.result;
       patch(pid, e.cancelled ? { status: had ? "done" : "idle", partial: undefined } : { status: "error", error: String(e.message), partial: undefined });
     } else if (e.type === "done") {
       jobs.current.delete(e.jobId);
+      dropDraft();
       setProgress((m) => { const { [pid]: _, ...rest } = m; return rest; });
       const r: Result = { language: e.language, duration: e.duration, speakers: e.speakers, segments: e.segments };
       const meta: RunMeta = { ...(e.meta ?? {}), finishedAt: Date.now() };
@@ -132,6 +137,6 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     }
   }), [patch]);
 
-  return { projects, activeId, setActiveId, progress, add, remove, rename: (id: string, name: string) => patch(id, { name }), patch, transcribe, cancel,
+  return { projects, activeId, setActiveId, progress, drafts, add, remove, rename: (id: string, name: string) => patch(id, { name }), patch, transcribe, cancel,
     transcribeAll: () => projectsRef.current.filter((p) => p.status === "idle" || p.status === "error").forEach((p) => transcribe(p.id)) };
 }

@@ -129,7 +129,7 @@ export default function App() {
             {addError && !noProjects && <p className="alert err main-err" role="alert">{addError}</p>}
 
             {P.projects.map((p) => (
-              <ProjectView key={p.id} project={p} progress={P.progress[p.id]} blocker={blocker} visible={page === "main" && p.id === P.activeId}
+              <ProjectView key={p.id} project={p} progress={P.progress[p.id]} draft={P.drafts[p.id]} blocker={blocker} visible={page === "main" && p.id === P.activeId}
                 waiting={queue.findIndex((q) => q.id === p.id)}
                 nowPlayingId={playingId} stopSignal={stopSignal} onOpenSettings={openSettings} models={models}
                 onPlayingChange={(pl) => setPlayingId((cur) => (pl ? p.id : cur === p.id ? null : cur))}
