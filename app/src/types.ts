@@ -20,6 +20,8 @@ export interface ModelStatus {
   sizes?: { whisper: Record<string, number>; diarization: number };
   /** Apple Silicon only: the Apple GPU (MLX) versions of the models. */
   mlxAvailable?: boolean; mlx?: Record<string, boolean>; mlxSizes?: Record<string, number>;
+  /** Which languages each Whisper size is reliable for: the size order and the smallest reasonable size per language code. */
+  fit?: { order: string[]; floor: Record<string, string> };
   /** The local language model (highlights and summaries). `available` is false when this build of the engine cannot run it. */
   llm?: { available: boolean; backend?: "mlx" | "gguf"; default?: string; catalog?: LlmModel[]; models?: Record<string, boolean>; bytes?: Record<string, number> };
 }

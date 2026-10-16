@@ -41,6 +41,27 @@ export default function StorageSection({ opts, status, models, onGoTo }: Props) 
   const close = () => { setAsk(null); back.restore(); };
   const confirm = () => { if (ask) models.run("delete", ask.name); close(); };
 
+  const apple = !!status?.mlxAvailable;
+  const floor = status?.fit;
+  /** "Reliable in 52 of 99 languages": how many languages this size is expected to handle well (our estimate, see engine/fit.py). */
+  const reliable = (n: string) => {
+    if (!floor) return "";
+    const at = floor.order.indexOf(n), all = Object.values(floor.floor);
+    return t("Reliable in {count} of {total} languages", { count: all.filter((f) => floor.order.indexOf(f) <= at).length, total: all.length });
+  };
+  /** The Apple GPU copy of a size is a detail of that size's row, not a separate list. */
+  const AppleGpu = ({ n, label }: { n: string; label: string }) => {
+    const id = `mlx-${n}`, got = !!status?.mlx?.[n], size = status?.mlxSizes?.[n] || MODEL_BYTES[n], going = models.busy === `download ${id}`;
+    return got ? (
+      <span className="st-gpu"><span className="st-state ok">{t("Ready")}</span>
+        <button type="button" className="btn quiet small danger" disabled={busy} aria-label={t("Delete the Apple GPU version of {label}", { label })} onClick={() => void models.run("delete", id)}>{t("Delete")}</button></span>
+    ) : going ? (
+      <span className="st-gpu"><span className="note">{dlPct != null ? `${dlPct}%` : t("Starting…")}</span><button type="button" className="btn quiet small" onClick={models.cancel}>{t("Cancel")}</button></span>
+    ) : (
+      <button type="button" className="btn small" disabled={busy} aria-label={t("Download the Apple GPU version of {label}", { label })} onClick={() => void models.run("download", id)}>{t("Download")} · {gb(size)}</button>
+    );
+  };
+
   const have = SIZES.filter(([n]) => status?.whisper[n]).map(([n]) => sizes?.whisper[n] ?? 0);
   const spk = status?.diarization ? sizes?.diarization ?? 0 : 0;
   const total = have.reduce((a, b) => a + b, 0) + spk;
@@ -55,9 +76,9 @@ export default function StorageSection({ opts, status, models, onGoTo }: Props) 
     <>
       <div className="card st-card">
         <h2>{t("Transcription models")}</h2>
-        <p className="st-lead">{t("Bigger models are more accurate and slower. “Small” is a good balance for most recordings.")}</p>
+        <p className="st-lead">{t("Bigger models are more accurate and slower. “Small” is a good balance for most recordings.")}{apple && " " + t("On a Mac with an Apple chip each size can also run on the graphics chip, which is several times faster. That is a separate download.")}</p>
         <table className="st-table">
-          <thead><tr><th scope="col">{t("Size")}</th><th scope="col">{t("What it's like")}</th><th scope="col">{t("On disk")}</th><th scope="col" className="act"><span className="st-sr">{t("Action")}</span></th></tr></thead>
+          <thead><tr><th scope="col">{t("Size")}</th><th scope="col">{t("What it's like")}</th><th scope="col">{t("On disk")}</th>{apple && <th scope="col">{t("Apple GPU version")}</th>}<th scope="col" className="act"><span className="st-sr">{t("Action")}</span></th></tr></thead>
           <tbody>
             {SIZES.map(([n, label, like, tag]) => {
               const has = !!status?.whisper[n];
@@ -69,8 +90,9 @@ export default function StorageSection({ opts, status, models, onGoTo }: Props) 
               return (
                 <tr key={n}>
                   <td><b>{label}</b>{tag && <span className="badge">{tag}</span>}{inUse && <span className="badge">{t("In use")}</span>}</td>
-                  <td>{like}</td>
+                  <td>{like}{reliable(n) && <small>{reliable(n)}</small>}</td>
                   <td>{has ? sz : t("≈ {size}", { size: sz })}</td>
+                  {apple && <td><AppleGpu n={n} label={label} /></td>}
                   <td className="act">
                     {has ? (
                       <button type="button" className="btn small danger" disabled={busy} aria-label={t("Delete the {label} model, {size}", { label, size: sz })}

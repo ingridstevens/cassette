@@ -35,7 +35,7 @@ export default function SettingsPage({ opts, set, status, models, onBack, initia
         <header className="tool"><div className="titles"><h1>{t(section)}</h1></div></header>
         <div className="st-scroll">
           <div className={"st-col" + (section === "Storage and models" ? " wide" : "")}>
-            {section === "Performance" && <PerformanceSection opts={opts} set={set} status={status} models={models} />}
+            {section === "Performance" && <PerformanceSection opts={opts} set={set} status={status} models={models} onGoTo={(s) => (SECTIONS as readonly string[]).includes(s) && setSection(s as Section)} />}
             {section === "Storage and models" && <StorageSection opts={opts} status={status} models={models} onGoTo={(s) => (SECTIONS as readonly string[]).includes(s) && setSection(s as Section)} />}
             {section === "Saving" && <SavingSection opts={opts} set={set} />}
             {section === "Display" && <DisplaySection opts={opts} set={set} />}
