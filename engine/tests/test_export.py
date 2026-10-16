@@ -456,6 +456,7 @@ def test_mlx_wrapper_returns_faster_whisper_shaped_results(monkeypatch):
     monkeypatch.setattr(m, "detect_language", lambda audio, **k: ("de", 0.93, [("de", 0.93)]))
     segs, info = m.transcribe(np.zeros(16000, dtype="float32"), language=None, word_timestamps=True, vad_filter=True,
                               initial_prompt="Müller", condition_on_previous_text=False, multilingual=True, task="translate")
+    segs = list(segs)  # lazy now, like faster-whisper's: pieces are written down as they are read
     assert info.language == "de" and info.language_probability == 0.93
     assert segs[0].words[0].word == " Hallo" and segs[0].words[0].probability == 0.8 and segs[0].end == 1.0
     assert calls["language"] == "de" and calls["task"] == "translate" and calls["initial_prompt"] == "Müller"

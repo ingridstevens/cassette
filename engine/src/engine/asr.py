@@ -34,10 +34,12 @@ def build_prompt(user_prompt: str | None, verbatim: bool, language: str | None) 
 
 
 def transcribe(audio, model_name: str, language: str | None, device: str, vad: bool,
-               prompt: str | None, offset: float, duration: float, multilingual: bool = False, loaded=None, verbatim: bool = False):
+               prompt: str | None, offset: float, duration: float, multilingual: bool = False, loaded=None, verbatim: bool = False,
+               on_words=None):
     """Returns (words, detected_language, info). Word times are shifted by `offset`.
     `info` = {"device": whisper device used, "languageProb": detection confidence 0..1}.
-    `loaded` is a (model, device, compute) tuple from load_model(), to avoid loading twice."""
+    `loaded` is a (model, device, compute) tuple from load_model(), to avoid loading twice.
+    `on_words(words)` is called with each segment's words as soon as the segment is written down."""
     model, dev, _compute = loaded or load_model(model_name, device)
     t0 = time.time()
     if verbatim and not language:  # the sample must be in the right language, so find it first
@@ -52,8 +54,10 @@ def transcribe(audio, model_name: str, language: str | None, device: str, vad: b
         + (" · re-detected for every chunk" if multilingual and not language else ""))
     words = []
     for seg in segments:
-        for w in seg.words or []:
-            words.append({"start": w.start + offset, "end": w.end + offset, "word": w.word, "prob": round(w.probability, 3)})
+        got = [{"start": w.start + offset, "end": w.end + offset, "word": w.word, "prob": round(w.probability, 3)} for w in seg.words or []]
+        words.extend(got)
+        if got and on_words:
+            on_words(got)
         progress("transcribe", min(seg.end / max(duration, 0.1), 1.0))
     log(f"Transcribed {len(words)} words in {time.time() - t0:.1f}s ({duration / max(time.time() - t0, 0.1):.1f}× realtime)")
     return words, info.language, {"device": dev, "languageProb": round(float(info.language_probability), 3)}
@@ -109,11 +113,47 @@ def load_model(model_name: str, device: str, backend: str = "faster", vad: bool 
     return WhisperModel(path, device=dev, compute_type=compute), dev, compute
 
 
+FIT_SECONDS = 30.0     # the start of the recording used to find its language (one pass, about a second)
+FIT_CONFIDENCE = 0.6   # below this the language is a guess (music, silence, noise), so nothing is said about the model
+
+
+def check_fit(model, audio, sr: int, model_name: str, have: dict[str, bool] | None = None) -> dict | None:
+    """Is `model_name` weak for the language heard at the start of `audio`? Returns what the app needs to ask the user
+    ({language, probability, model, level: "weak" | "poor", suggested}), or None when the model is fine, the language is unclear, or no better model exists."""
+    from .fit import fit, suggest
+
+    lang, prob, _all = model.detect_language(audio[: int(FIT_SECONDS * sr)])
+    if prob < FIT_CONFIDENCE:
+        return None
+    level = fit(model_name, lang)
+    better = suggest(model_name, lang, have)
+    if level == "good" or better is None:
+        return None
+    log(f"Language heard at the start: {lang} ({prob:.0%}). “{model_name}” is {level} for it; “{better}” would do better.")
+    return {"language": lang, "probability": round(float(prob), 3), "model": model_name, "level": level, "suggested": better,
+            "have": {m: bool(v) for m, v in (have or {}).items()}}
+
+
 MIN_TURN = 0.35   # seconds: shorter speaker turns are skipped; Whisper invents words ("Thank you.") on slivers of audio
 TURN_PAD = 0.15   # seconds of context added on each side of a turn
 
 
-def transcribe_turns(model, audio, sr: int, turns, vad: bool, prompt: str | None, offset: float, verbatim: bool = False):
+def load_detector(detect_name: str, model_name: str, device: str, model):
+    """The model that identifies languages: a small Whisper size on the CPU engine, so a big transcription model is not
+    spent on a few letters of output. Returns `model` itself when "same" is chosen, the size matches, or that size is not downloaded."""
+    from . import models
+
+    if detect_name in ("same", model_name) or detect_name not in models.WHISPER_MODELS:
+        return model
+    if not models._cached(models.WHISPER_MODELS[detect_name]):
+        log(f"Language detection: {detect_name} is not downloaded, using {model_name} instead")
+        return model
+    detector = load_model(detect_name, device, "faster")[0]
+    log(f"Language detection uses {detect_name}")
+    return detector
+
+
+def transcribe_turns(model, audio, sr: int, turns, vad: bool, prompt: str | None, offset: float, verbatim: bool = False, on_words=None, detector=None):
     """Mixed-language recordings: transcribe every speaker turn on its own, detecting its language each time.
     `turns` are (start, end, speaker) in file time; `audio` starts at `offset`.
     Returns (words, dominant_language, {"languageProb": ..., "languages": {code: seconds}}). Every word carries `lang`."""
@@ -124,17 +164,21 @@ def transcribe_turns(model, audio, sr: int, turns, vad: bool, prompt: str | None
     for n, (a, b, _spk) in enumerate(todo):
         lo, hi = max(0.0, a - offset - TURN_PAD), min(total, b - offset + TURN_PAD)
         clip = audio[int(lo * sr): int(hi * sr)]
-        lang = model.detect_language(clip)[0] if verbatim else None
+        lang = (detector or model).detect_language(clip)[0] if verbatim else None
         segments, info = model.transcribe(clip, language=lang, word_timestamps=True, vad_filter=vad,
                                           initial_prompt=build_prompt(prompt, verbatim, lang), condition_on_previous_text=False)
         got = 0
+        turn_words = []
         for seg in segments:
             for w in seg.words or []:
                 ws, we = w.start + lo + offset, w.end + lo + offset
                 if we < a or ws > b:  # context padding only: belongs to the neighbouring turn
                     continue
                 words.append({"start": ws, "end": we, "word": w.word, "prob": round(w.probability, 3), "lang": info.language})
+                turn_words.append(words[-1])
                 got += 1
+        if turn_words and on_words:
+            on_words(turn_words)
         if got:
             seconds[info.language] = seconds.get(info.language, 0.0) + (b - a)
             probs.append(float(info.language_probability))

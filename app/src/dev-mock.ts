@@ -54,11 +54,18 @@ function fake() {
   saveProjects: async (d: unknown) => { try { localStorage.setItem("mock-projects", JSON.stringify(d)); } catch { /* quota */ } return true; },
   saveSidecar: async (p: string) => ({ ok: true, path: p + ".transcript.json" }),
   pathForFile: (f: File) => "/Users/demo/" + f.name,
-  transcribe: async function (o: { clientId?: string }) {
+  transcribe: async function (o: { clientId?: string; acceptFit?: boolean; model?: string }) {
     const jobId = "job" + Math.random().toString(36).slice(2, 7); emit({ jobId, type: "started", clientId: o.clientId });
     (async () => {
-      for (const [stage, ms] of [["decode", 500], ["diarize", 900], ["transcribe", 1200], ["merge", 300]] as const) {
-        for (let i = 1; i <= 4; i++) { emit({ jobId, type: "progress", stage, fraction: i / 4, message: "" }); await wait(ms / 4); }
+      if (location.search.includes("fit") && !(o as { acceptFit?: boolean }).acceptFit && ["tiny", "base", "small"].includes((o as { model?: string }).model ?? "")) {
+        await wait(600); emit({ jobId, type: "fit", language: "fa", probability: 0.93, model: (o as { model: string }).model, level: "weak", suggested: "medium", have: { ...st.whisper } }); return;
+      }
+      for (const [stage, ms] of [["decode", 500], ["diarize", 900], ["transcribe", location.search.includes("slow") ? 12000 : 1200], ["merge", 300]] as const) {
+        for (let i = 1; i <= 4; i++) {
+          emit({ jobId, type: "progress", stage, fraction: i / 4, message: "" });
+          if (stage === "transcribe") emit({ jobId, type: "partial", segments: fake().segments.slice((i - 1) * 2, i * 2).map(({ words: _w, ...s }) => s) });
+          await wait(ms / 4);
+        }
       }
       emit({ jobId, type: "done", ...fake() });
     })();
@@ -69,7 +76,7 @@ function fake() {
   importModels: async () => { await wait(400); return { type: "done", imported: ["pyannote/speaker-diarization-3.1"] }; },
   models: async (action: string, name?: string) => {
     if (action === "check") { await wait(300); return { type: "done", valid: true, kind: "read", username: "demo-user", repos: { "pyannote/speaker-diarization-3.1": true, "pyannote/segmentation-3.0": !location.search.includes("denied"), "pyannote/wespeaker-voxceleb-resnet34-LM": true } }; }
-    if (action === "status") return { llm: { available: !location.search.includes("nollm"), backend: "mlx", default: "qwen3-4b", catalog: llmCatalog.filter((m) => llmSt[m.id] || !m.retired).map(({ bytes: _b, retired: _r, ...m }) => m), models: llmSt, bytes: Object.fromEntries(llmCatalog.map((m) => [m.id, m.bytes])) }, mlxAvailable: true, mlx: mlxSt, mlxSizes: { tiny: 74e6, base: 144e6, small: 481e6, medium: 1525e6, "large-v3-turbo": 1614e6, "large-v3": 3084e6 }, ...st, dir: "/Users/demo/Library/Application Support/Local Transcriber/models", sizes };
+    if (action === "status") return { fit: { order: ["tiny", "base", "small", "medium", "large-v3-turbo", "large-v3"], floor: { en: "tiny", de: "small", fr: "small", es: "small", fa: "medium", ar: "medium", hi: "medium", sw: "large-v3", am: "large-v3", ha: "large-v3" } }, llm: { available: !location.search.includes("nollm"), backend: "mlx", default: "qwen3-4b", catalog: llmCatalog.filter((m) => llmSt[m.id] || !m.retired).map(({ bytes: _b, retired: _r, ...m }) => m), models: llmSt, bytes: Object.fromEntries(llmCatalog.map((m) => [m.id, m.bytes])) }, mlxAvailable: true, mlx: mlxSt, mlxSizes: { tiny: 74e6, base: 144e6, small: 481e6, medium: 1525e6, "large-v3-turbo": 1614e6, "large-v3": 3084e6 }, ...st, dir: "/Users/demo/Library/Application Support/Local Transcriber/models", sizes };
     if (action === "download") {
       stopDl = false;
       for (let i = 1; i <= 20; i++) {

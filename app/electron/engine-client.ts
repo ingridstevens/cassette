@@ -2,7 +2,7 @@ import { ChildProcess, spawn } from "node:child_process";
 import path from "node:path";
 import { app } from "electron";
 
-export type EngineEvent = { type: "progress" | "done" | "error" | "log"; [k: string]: unknown };
+export type EngineEvent = { type: "progress" | "partial" | "fit" | "done" | "error" | "log"; [k: string]: unknown };
 
 /** Dev: run the Python project via uv. Packaged: run the PyInstaller binary from resources. */
 function engineCommand(): { cmd: string; args: string[] } {
@@ -30,7 +30,7 @@ export function runEngine(
       const line = buf.slice(0, i).trim();
       buf = buf.slice(i + 1);
       if (!line.startsWith("{")) continue;
-      try { const e = JSON.parse(line) as EngineEvent; if (e.type !== "progress") last = e; onEvent(e); } catch { /* ignore non-JSON noise */ }
+      try { const e = JSON.parse(line) as EngineEvent; if (e.type !== "progress" && e.type !== "partial") last = e; onEvent(e); } catch { /* ignore non-JSON noise */ }
     }
   });
   child.stderr.on("data", (c) => {

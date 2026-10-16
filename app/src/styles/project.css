@@ -425,6 +425,17 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 /* when the drawer is open the strip is no longer centred in a fixed-height card, so give it breathing room above */
 .pv-dock:has(.pv-drawer:not([hidden])) { padding-top: 22px; }
 
+.pv-draft { padding: 14px 22px 8px; border-radius: 22px; text-align: left; }
+.pv-draft h3 { margin: 0 0 6px; font-size: 13px; font-weight: 600; color: var(--ink2); }
+.pv-draft-lines { max-height: 240px; overflow-y: auto; font-size: 14px; line-height: 1.5; }
+.pv-draft-lines p { margin: 0 0 8px; }
+.pv-draft-who { font-weight: 600; }
+.pv-draft-time { color: var(--ink2); font-size: 12px; font-variant-numeric: tabular-nums; margin-right: 4px; }
+
+.pv-fit { padding: 22px 26px; border-radius: 26px; text-align: left; }
+.pv-fit h2 { margin: 0 0 8px; font-size: 20px; }
+.pv-fit p { margin: 0 0 14px; color: var(--ink2); }
+
 /* Find with no hits: say why, and offer the closest words in the transcript. */
 .pv-nohit { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 24px 10px; font-size: 13px; line-height: 1.5; opacity: .85; }
 .pv-nohit-sug { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
