@@ -85,6 +85,10 @@ highlights as **Key quotes**, then the full record. The summary is marked in the
 2. Press **Replace** next to the box. A bar opens under the toolbar.
 3. Type the replacement and press **Replace in this line** (the line you are on; `Enter` does the same) or **Replace all**.
 
-Capital letters are ignored when looking for matches, and the replacement is inserted exactly as you typed it. Every changed line shows **Edited** with
+Capital letters and accents are ignored when looking for matches (so `lucia` finds `Lucía`), and the replacement is inserted exactly as you typed it. Every changed line shows **Edited** with
 **Put back what the model heard**, so a replacement can be undone line by line, and the changed text is what exports use. If your replacement has a different
 number of words than the original, the words in that line are spread evenly over the line's time, exactly as with any other edit.
+
+Two switches under the toolbar, **Match case** and **Whole word**, narrow the search (with Whole word on, `projekt` does not match `Projekte`). They apply to Replace too. **Replace all** first lists every line it would change, with the old text struck through and the new text beside it, and marks lines where an unsure word is affected; press **Replace all** again to confirm, or **Back**.
+
+The whole text you type has to appear in the transcript: `deutsche` does not match a line that only says `Deutsch`. When nothing matches, a line under the toolbar says so and offers the closest words in the transcript (for example `Deutsch (3)`); click one to search for it.

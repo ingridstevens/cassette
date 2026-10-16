@@ -30,7 +30,9 @@ Input: a path to a proposals file (see `docs/votes/README.md`), or proposals pas
    Scores: 0 harmful, 1 bad, 2 unwelcome, 3 neutral or nice to have, 4 valuable, 5 would choose the app for it. Set `veto: true` (and score 0) only when the feature meets a veto condition in the persona file, and quote that condition in `veto_reason`.
 4. Parse the JSON. If an agent returned something unparseable or skipped a feature, re-ask that agent once; if it still fails, mark its cells `n/a` and say so.
 5. Compute for each feature: mean score (ignore `n/a`), spread (max minus min), and the list of vetoes.
-6. Write `docs/votes/YYYY-MM-DD-<topic>.md` with these sections in this order: a one-line caveat that the votes are simulated, **Vetoes**, **Ranking** (mean, spread), **Contested** (spread of 3 or more), a **per-persona table** (rows are features, columns are personas), **Notes**. Notes should mention relevant blind spots (for example Dev under-weights non-technical users) and any feature only one persona scored above 3.
+6. Write `docs/votes/YYYY-MM-DD-<topic>.md` with these sections in this order: a one-line caveat that the votes are simulated, **Vetoes**, **Ranking** (mean, spread), **Contested** (spread of 3 or more), a **per-persona table** (rows are features, columns are personas), **Recommendations**, **Notes**.
+
+   **Recommendations is required, and every vote must end in one.** Group the personas' reasons (the "biggest thing I would change") into a numbered list of concrete changes, ordered by how many personas asked and how cheap the change is. Name who asked for each, mark what to do first, and say what you would not do and why. Before you write it, read the code involved and add a short "Check against the code" paragraph: personas guess, so say where a persona's claim about current behaviour is wrong. A vote with no recommendation is incomplete. Notes should mention relevant blind spots (for example Dev under-weights non-technical users) and any feature only one persona scored above 3.
 7. Reply with the vetoes, the top three, and the contested features, and the file path. Do not decide for the user.
 
 ## Test mode
