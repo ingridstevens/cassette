@@ -4,7 +4,7 @@
 
 - Your recordings and transcripts **stay on your computer**. There is no account, no cloud copy and no usage
   tracking.
-- The app goes online **only to download models** (and to check your Hugging Face token while you set up speaker
+- The app goes online **only to download models** (from Hugging Face, and Moonshine models from Moonshine's own server) (and to check your Hugging Face token while you set up speaker
   detection). After that it works offline.
 
 Settings → Privacy says the same in the app, and lets you see or remove your saved token:
@@ -18,12 +18,14 @@ Settings → Privacy says the same in the app, and lets you see or remove your s
 | Downloading a transcription model | huggingface.co | Fetches the model files once. |
 | Setting up speaker detection | huggingface.co | Checks your token (and learns your username, to show your profile address) and fetches the speaker models once. The model pages' own forms, which you send in your browser, share your Hugging Face email and username with the model's makers (pyannote). |
 | Downloading the language model (for highlights and summaries) | huggingface.co | Fetches the model files once. No account or token needed. |
+| Downloading Parakeet, or the translation model | huggingface.co | Fetches the model files once. No account or token needed. |
+| Downloading a Moonshine model | **download.moonshine.ai** (Moonshine's own server, not Hugging Face) | Fetches that language's model files once, by the moonshine-voice package, with a checksum check. Nothing about you or your recordings is sent. |
 | Transcribing, exporting, everything else | nothing | Runs fully offline (the engine is started with offline mode on). |
 
-Hugging Face may serve files from its own content hosts; the app does not contact anything else. Links you click
+Hugging Face may serve files from its own content hosts, and Moonshine downloads come from download.moonshine.ai; the app does not contact anything else. Links you click
 in the setup steps open in your normal browser, and only huggingface.co links are allowed.
 
-Translations (to English) and mixed-language detection are done by the same local speech model; nothing is sent anywhere. Suggested highlights and summaries are written by a language model on your computer, which runs with offline mode on like the speech model. Your transcript is never sent to a service.
+Translations into English are done by the local speech model, and translations into other languages by the local translation model (Hy-MT2); mixed-language detection uses the speech model too. Nothing is sent anywhere. Suggested highlights and summaries are written by a language model on your computer, which runs with offline mode on like the speech model. Your transcript is never sent to a service.
 
 ## What is stored, and where
 

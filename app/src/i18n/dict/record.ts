@@ -1,0 +1,32 @@
+export default {
+  de: {
+    "Record": "Aufnehmen", "Start recording": "Aufnahme starten", "Stop and save": "Stoppen und speichern", "Saving…": "Wird gespeichert …",
+    "Speak and watch the words appear. When you stop, the recording is saved and transcribed again properly, with speakers. Nothing leaves this computer.": "Sprich und sieh zu, wie die Wörter erscheinen. Wenn du stoppst, wird die Aufnahme gespeichert und noch einmal richtig transkribiert, mit Sprechern. Nichts verlässt diesen Computer.",
+    "Recording time": "Aufnahmedauer", "Microphone level": "Mikrofonpegel", "Microphone": "Mikrofon", "Default microphone": "Standardmikrofon", "Microphone {n}": "Mikrofon {n}",
+    "Using {model}. Language: {language}.": "Verwendet {model}. Sprache: {language}.", "detected automatically": "automatisch erkannt",
+    "The microphone is blocked. Allow it for this app in your computer's privacy settings, then try again.": "Das Mikrofon ist gesperrt. Erlaube es für diese App in den Datenschutzeinstellungen deines Computers und versuche es dann erneut.",
+    "This sounds like {language}, and {model} is weak at it. After you stop you can switch to a better model before the full transcript is made.": "Das klingt nach {language}, und {model} ist darin schwach. Nach dem Stopp kannst du zu einem besseren Modell wechseln, bevor das vollständige Transkript erstellt wird.",
+    "Getting the speech model ready. Keep talking, nothing is lost.": "Das Sprachmodell wird vorbereitet. Sprich weiter, es geht nichts verloren.",
+    "Live transcript": "Live-Transkript", "Grey words may still change. This is a draft: the saved recording is transcribed again with speakers.": "Graue Wörter können sich noch ändern. Das ist ein Entwurf: Die gespeicherte Aufnahme wird noch einmal mit Sprechern transkribiert.",
+  },
+  fr: {
+    "Record": "Enregistrer", "Start recording": "Démarrer l’enregistrement", "Stop and save": "Arrêter et enregistrer", "Saving…": "Enregistrement…",
+    "Speak and watch the words appear. When you stop, the recording is saved and transcribed again properly, with speakers. Nothing leaves this computer.": "Parlez et regardez les mots apparaître. Quand vous arrêtez, l’enregistrement est sauvegardé et retranscrit correctement, avec les locuteurs. Rien ne quitte cet ordinateur.",
+    "Recording time": "Durée d’enregistrement", "Microphone level": "Niveau du micro", "Microphone": "Microphone", "Default microphone": "Microphone par défaut", "Microphone {n}": "Microphone {n}",
+    "Using {model}. Language: {language}.": "Modèle : {model}. Langue : {language}.", "detected automatically": "détectée automatiquement",
+    "The microphone is blocked. Allow it for this app in your computer's privacy settings, then try again.": "Le micro est bloqué. Autorisez-le pour cette application dans les réglages de confidentialité de votre ordinateur, puis réessayez.",
+    "This sounds like {language}, and {model} is weak at it. After you stop you can switch to a better model before the full transcript is made.": "Cela ressemble à du {language}, et {model} y est faible. Après l’arrêt, vous pourrez passer à un meilleur modèle avant la transcription complète.",
+    "Getting the speech model ready. Keep talking, nothing is lost.": "Préparation du modèle vocal. Continuez à parler, rien n’est perdu.",
+    "Live transcript": "Transcription en direct", "Grey words may still change. This is a draft: the saved recording is transcribed again with speakers.": "Les mots en gris peuvent encore changer. C’est un brouillon : l’enregistrement sauvegardé est retranscrit avec les locuteurs.",
+  },
+  es: {
+    "Record": "Grabar", "Start recording": "Empezar a grabar", "Stop and save": "Parar y guardar", "Saving…": "Guardando…",
+    "Speak and watch the words appear. When you stop, the recording is saved and transcribed again properly, with speakers. Nothing leaves this computer.": "Habla y mira cómo aparecen las palabras. Al parar, la grabación se guarda y se transcribe de nuevo correctamente, con hablantes. Nada sale de este ordenador.",
+    "Recording time": "Tiempo de grabación", "Microphone level": "Nivel del micrófono", "Microphone": "Micrófono", "Default microphone": "Micrófono predeterminado", "Microphone {n}": "Micrófono {n}",
+    "Using {model}. Language: {language}.": "Usando {model}. Idioma: {language}.", "detected automatically": "detectado automáticamente",
+    "The microphone is blocked. Allow it for this app in your computer's privacy settings, then try again.": "El micrófono está bloqueado. Permítelo para esta aplicación en los ajustes de privacidad del ordenador y vuelve a intentarlo.",
+    "This sounds like {language}, and {model} is weak at it. After you stop you can switch to a better model before the full transcript is made.": "Suena a {language}, y {model} es flaco en eso. Al parar podrás cambiar a un modelo mejor antes de crear la transcripción completa.",
+    "Getting the speech model ready. Keep talking, nothing is lost.": "Preparando el modelo de voz. Sigue hablando, no se pierde nada.",
+    "Live transcript": "Transcripción en directo", "Grey words may still change. This is a draft: the saved recording is transcribed again with speakers.": "Las palabras en gris aún pueden cambiar. Es un borrador: la grabación guardada se transcribe de nuevo con hablantes.",
+  },
+};

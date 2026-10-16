@@ -5,6 +5,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { BrowserWindow, app, dialog, ipcMain, powerMonitor, safeStorage, session, shell } from "electron";
 import { EngineEvent, cancelJob, runEngine } from "./engine-client";
+import { registerLive } from "./live";
 
 const AUDIO_EXT = new Set([".mp3", ".wav", ".m4a", ".flac", ".ogg", ".opus", ".aac", ".mp4", ".mov", ".mkv", ".webm"]);
 
@@ -27,7 +28,10 @@ function createWindow() {
   // Hardening: the window never navigates away from the app, and no web permission is granted except writing to the
   // clipboard, which the Copy buttons need. Reading the clipboard stays refused.
   win.webContents.on("will-navigate", (e, url) => { if (!url.startsWith(appUrl)) e.preventDefault(); });
-  session.defaultSession.setPermissionRequestHandler((_wc, perm, cb) => cb(perm === "clipboard-sanitized-write"));
+  // The microphone is allowed only as audio-only capture (the Record page); the camera and everything else stay refused.
+  const micOnly = (perm: string, details?: { mediaTypes?: string[] }) => perm === "media" && !!details?.mediaTypes?.length && details.mediaTypes.every((m) => m === "audio");
+  session.defaultSession.setPermissionRequestHandler((_wc, perm, cb, details) => cb(perm === "clipboard-sanitized-write" || micOnly(perm, details as { mediaTypes?: string[] })));
+  session.defaultSession.setPermissionCheckHandler((_wc, perm, _origin, details) => perm === "clipboard-sanitized-write" || (perm === "media" && (details as { mediaType?: string }).mediaType === "audio"));
   // A renderer that crashes (often out of memory) or fails to load leaves a blank white window: log why and reload, but not in a loop.
   let reloads: number[] = [];
   const reload = () => {
@@ -66,6 +70,7 @@ function readToken(): string {
 app.whenReady().then(() => {
   // In development the Dock shows Electron's own icon; show ours instead. Packaged builds get it from resources/icon.icns.
   if (process.platform === "darwin" && process.env.VITE_DEV_SERVER_URL) app.dock?.setIcon(path.join(__dirname, "..", "resources", "icon.png"));
+  registerLive(send, baseEnv);
   ipcMain.on("renderer-error", (_e, message: unknown) => logLine("renderer", String(message).slice(0, 4000)));
   // Returns the raw bytes of an audio/video file so the renderer can build a Blob URL (no custom protocol needed).
   /** A recording path from the renderer must be a string, an audio/video extension and an existing regular file. */
@@ -128,7 +133,7 @@ app.whenReady().then(() => {
     if (range) { a.push("--min-speakers", String(opts.minSpeakers ?? "2"), "--max-speakers", String(opts.maxSpeakers ?? "4")); }
     if (opts.language === "auto") a.push("--mixed-languages", opts.multilingual === true ? "on" : opts.multilingual === false ? "off" : "auto");
     if (typeof opts.detectModel === "string" && /^[a-z0-9-]{1,20}$/.test(opts.detectModel)) a.push("--detect-model", opts.detectModel);
-    if (opts.translate) a.push("--translate");
+    if (opts.translate) a.push(typeof opts.translateTo === "string" && /^[a-zA-Z-]{2,8}$/.test(opts.translateTo) && opts.translateTo !== "en" ? "--translate-to" : "--translate", ...(typeof opts.translateTo === "string" && /^[a-zA-Z-]{2,8}$/.test(opts.translateTo) && opts.translateTo !== "en" ? [opts.translateTo] : []));
     if (opts.whisperEngine === "faster") a.push("--backend", "faster");
     if (opts.verbatim) a.push("--verbatim");
     for (const k of ["numSpeakers", "start", "end"] as const) {

@@ -6,7 +6,7 @@ import { bytes } from "../types";
 export const modelSize = (name: string) => `≈ ${bytes(MODEL_BYTES[name] ?? 5e8)}`;
 
 /** Approximate download sizes, used to warn before filling the disk. */
-export const MODEL_BYTES: Record<string, number> = { tiny: 75e6, base: 145e6, small: 480e6, medium: 1.5e9, "large-v3-turbo": 1.6e9, "large-v3": 3e9, diarization: 60e6, "llm-small": 1.2e9, "llm-best": 4.8e9 };
+export const MODEL_BYTES: Record<string, number> = { tiny: 75e6, base: 145e6, small: 480e6, medium: 1.5e9, "large-v3-turbo": 1.6e9, "large-v3": 3e9, "parakeet-v3": 2.51e9, diarization: 60e6, "llm-small": 1.2e9, "llm-best": 4.8e9 };
 
 export type ModelErrorKind = "offline" | "space" | "denied" | "other";
 export interface Access { valid: boolean; kind: string | null; /** The Hugging Face username the token belongs to. */ username: string | null; repos: Record<string, boolean> }

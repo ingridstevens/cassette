@@ -172,7 +172,7 @@ function OptionRows({ eff, set, status, models, found, speakers, onOpenSettings 
   const range = eff.numSpeakers === "range";
   const n = Number(eff.numSpeakers);
   const translate = eff.translate ?? currentLang() === "en";
-  const extras = [translate && t("English translation"), eff.verbatim && t("Write hesitations down"), eff.vad && t("Skip silence")].filter(Boolean).join(", ");
+  const extras = [translate && (eff.translateTo && eff.translateTo !== "en" ? t("Translation into {language}", { language: langName(eff.translateTo) }) : t("English translation")), eff.verbatim && t("Write hesitations down"), eff.vad && t("Skip silence")].filter(Boolean).join(", ");
   const tag = WHISPER_MODELS.find((m) => m.id === eff.model)?.tag;
   const fields = { eff, set, status, models, found, onOpenSettings, advanced: true, bare: true };
   const rows: [RowKey, string, string, string, ReactNode][] = [

@@ -48,6 +48,16 @@ LLM_MODELS = {
         "bytes": {"mlx": 4_284_346_255, "gguf": 4_683_074_240},
     },
 }
+# A translation model is not offered for highlights and summaries ("kind": "translate"); it is chosen under Translation instead.
+# Hy-MT2 (Tencent, Apache-2.0) covers 38 languages including Arabic, Persian, Russian, Turkish, Hebrew, Hindi, Urdu and Ukrainian, but
+# not Swahili, Hausa, Amharic or Yoruba. It has no system prompt: the instruction goes in the user message (see LocalLLM.translate).
+LLM_MODELS["hy-mt2-1.8b"] = {
+    "kind": "translate", "label": "Hy-MT2 1.8B", "like": "Translates between 38 languages, including Arabic and Persian",
+    "languages": ["en", "de", "fr", "es", "ar", "fa", "ru", "tr"], "license": "Apache-2.0",
+    "mlx": "mlx-community/Hy-MT2-1.8B-4bit", "gguf": ("tencent/Hy-MT2-1.8B-GGUF", "Hy-MT2-1.8B-Q4_K_M.gguf"),
+    "bytes": {"mlx": 1_017_500_000, "gguf": 1_133_080_448},
+}
+TRANSLATION_MODEL = "hy-mt2-1.8b"
 DEFAULT_LLM = "qwen3-4b"
 LANGUAGE_NAMES = {"en": "English", "de": "German", "fr": "French", "es": "Spanish"}
 
@@ -76,6 +86,29 @@ def patterns_for(name: str, be: str | None = None) -> list[str] | None:
     return [fname] if fname else None
 
 
+def load_mlx(path: Path):
+    """(model, tokenizer) for an MLX model folder. Some newer models name a tokenizer class the installed `transformers` does not know yet
+    (Hy-MT2 says "TokenizersBackend"); for those the tokenizer is built straight from tokenizer.json and the end-of-turn token is set by hand."""
+    from mlx_lm import load
+
+    try:
+        return load(str(path))
+    except ValueError as exc:
+        if "Tokenizer class" not in str(exc):
+            raise
+    from mlx_lm.tokenizer_utils import TokenizerWrapper
+    from mlx_lm.utils import load_model
+    from transformers import PreTrainedTokenizerFast
+
+    cfg = json.loads((path / "tokenizer_config.json").read_text())
+    tok = PreTrainedTokenizerFast(tokenizer_file=str(path / "tokenizer.json"), **{k: cfg[k] for k in ("bos_token", "eos_token", "pad_token") if k in cfg})
+    template = path / "chat_template.jinja"
+    if template.exists():
+        tok.chat_template = template.read_text()
+    model, _config = load_model(path)
+    return model, TokenizerWrapper(tok, eos_token_ids={tok.eos_token_id} if tok.eos_token_id is not None else None)
+
+
 class LocalLLM:
     """One loaded model. `chat` returns the model's answer to a system + user message."""
 
@@ -96,13 +129,27 @@ class LocalLLM:
         except Exception as exc:  # noqa: BLE001
             raise RuntimeError("The language model is not downloaded yet. Download it first.") from exc
         if self.backend == "mlx":
-            from mlx_lm import load
-
-            self._model, self._tok = load(str(path))
+            self._model, self._tok = load_mlx(path)
         else:
             from llama_cpp import Llama
 
             self._llama = Llama(model_path=str(path / fname), n_ctx=8192, n_gpu_layers=-1, verbose=False)
+
+    def translate(self, text: str, language: str, max_tokens: int | None = None) -> str:
+        """`text` translated into `language` (its English name, e.g. "German"). Settings are the ones Tencent recommends for Hy-MT2."""
+        user = f"Translate the following text into {language}. Note that you should only output the translated result without any additional explanation:\n\n{text}"
+        limit = max_tokens or min(1024, 64 + 4 * len(text))
+        messages = [{"role": "user", "content": user}]
+        if self.backend == "mlx":
+            from mlx_lm import generate
+            from mlx_lm.sample_utils import make_logits_processors, make_sampler
+
+            prompt = self._tok.apply_chat_template(messages, add_generation_prompt=True, tokenize=False)
+            out = generate(self._model, self._tok, prompt=prompt, max_tokens=limit, sampler=make_sampler(temp=0.7, top_p=0.6, top_k=20),
+                           logits_processors=make_logits_processors(repetition_penalty=1.05), verbose=False)
+        else:
+            out = self._llama.create_chat_completion(messages=messages, max_tokens=limit, temperature=0.7, top_p=0.6, top_k=20, repeat_penalty=1.05)["choices"][0]["message"]["content"] or ""
+        return re.split(r"<｜hy_[^>]*｜>", out)[0].strip()  # a stop marker the model sometimes writes before it carries on
 
     def chat(self, system: str, user: str, max_tokens: int = 700, temperature: float = 0.2) -> str:
         if self.thinks:  # the soft switch Qwen3 and SmolLM3 understand; the MLX template is also told directly below

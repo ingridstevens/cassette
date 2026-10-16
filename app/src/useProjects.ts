@@ -66,6 +66,13 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
       : t("“{name}” isn't audio or video. Supported: mp3, wav, m4a, flac, ogg, opus, aac, mp4, mov, mkv, webm.", { name });
   }, []);
 
+  /** Add recordings and start transcribing each one as soon as it is in the list (the Record page uses this after saving). */
+  const autoStart = useRef(new Set<string>());
+  const addAndTranscribe = useCallback((paths: string[]) => { paths.forEach((p) => autoStart.current.add(p)); return add(paths); }, [add]);
+  useEffect(() => {
+    for (const p of projects) if (autoStart.current.has(p.path) && p.status === "idle" && !p.result) { autoStart.current.delete(p.path); transcribe(p.id); }
+  });
+
   const jobOf = (pid: string) => [...jobs.current.entries()].find(([, v]) => v.pid === pid)?.[0];
 
   const remove = useCallback((id: string) => {
@@ -144,6 +151,6 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     }
   }), [patch]);
 
-  return { projects, activeId, setActiveId, progress, drafts, add, remove, rename: (id: string, name: string) => patch(id, { name }), patch, transcribe, cancel,
+  return { projects, activeId, setActiveId, progress, drafts, add, addAndTranscribe, remove, rename: (id: string, name: string) => patch(id, { name }), patch, transcribe, cancel,
     transcribeAll: () => projectsRef.current.filter((p) => p.status === "idle" || p.status === "error").forEach((p) => transcribe(p.id)) };
 }
