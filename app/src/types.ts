@@ -11,8 +11,7 @@ export interface Highlight { id: string; start: number; end: number; text: strin
 export interface Summary { summary: string; topics: { start: number; title: string }[]; decisions: string[]; actions: { text: string; owner: string | null }[]; model?: string; at?: number }
 export interface Result { language: string; duration: number; speakers: string[]; segments: Segment[]; highlights?: Highlight[]; summary?: Summary }
 export interface Options {
-
-  model: string; language: string; numSpeakers: string; vad: boolean; prompt: string; noDiarize: boolean; device: string; autosave: boolean; /** Mixed languages: undefined = automatic, true = always per speaker turn, false = off. */ multilingual?: boolean; /** Add an English translation under lines in other languages (undefined = on when the app is in English). */ translate?: boolean; /** Which speech model only finds the language: a size id, "same" (use the transcription model) or undefined (Tiny). */ detectModel?: string; /** Language code to translate lines into (undefined = English). Languages other than English need the translation model. */ translateTo?: string; /** Ask the speech model to write hesitations (um, äh) down. */ verbatim?: boolean; /** Speech engine: "auto" (default) uses the Apple GPU when it can, "faster" always uses the CPU engine. */ whisperEngine?: "auto" | "faster"; minSpeakers?: string; maxSpeakers?: string; /** 0 fairytale sunset … 3 boring corporate */ lookLevel?: number; boring?: boolean; /** Light or dark: "system" (the default) follows the computer. */ colorScheme?: "system" | "light" | "dark"; /** Language of the app itself: "system" (match the computer, the default) or a language id. */ appLanguage?: "system" | "en" | "de" | "fr" | "es"; /** Zoom of the whole app (1 = normal). */ textSize?: number; /** Stronger text and borders. */ highContrast?: boolean;
+  model: string; language: string; numSpeakers: string; vad: boolean; prompt: string; noDiarize: boolean; device: string; autosave: boolean; /** Mixed languages: undefined = automatic, true = always per speaker turn, false = off. */ multilingual?: boolean; /** Add an English translation under lines in other languages (undefined = on when the app is in English). */ translate?: boolean; /** Language code to translate lines into (undefined = English). Languages other than English need the translation model. */ translateTo?: string; /** Which speech model only finds the language: a size id, "same" (use the transcription model) or undefined (Tiny). */ detectModel?: string; /** Ask the speech model to write hesitations (um, äh) down. */ verbatim?: boolean; /** Speech engine: "auto" (default) uses the Apple GPU when it can, "faster" always uses the CPU engine. */ whisperEngine?: "auto" | "faster"; minSpeakers?: string; maxSpeakers?: string; /** The look: "sunset" (Fairytale sunset, the default) or "clean". Older saved settings used lookLevel 0–3 (and boring), which lookOf still reads. */ look?: "sunset" | "clean"; /** High contrast: stronger colours and heavier borders, in either look. */ contrast?: "standard" | "high"; lookLevel?: number; boring?: boolean; /** Light or dark: "system" (the default) follows the computer. */ colorScheme?: "system" | "light" | "dark"; /** Language of the app itself: "system" (match the computer, the default) or a language id. */ appLanguage?: "system" | "en" | "de" | "fr" | "es"; /** Zoom of the whole app (1 = normal). */ textSize?: number;
 }
 /** A language model the app offers for highlights and summaries. `label` is a model name; `like` is English text the app translates. */
 export interface LlmModel { id: string; label: string; like: string; languages: string[]; license: string }
@@ -43,13 +42,23 @@ export function formatBytes(n: number, base: 1000 | 1024): string {
 /** File sizes as this operating system would show them, so our numbers match Finder, Explorer or Files. */
 export const bytes = (n: number) => formatBytes(n, SIZE_BASE);
 
-const SUNSET_PALETTE = ["#ff5f8a", "#ff9a52", "#a87bff", "#4fb3ff", "#2fc9a0", "#f2b134", "#e46bd6", "#8a8fb0"];
-/** Plain office colours for the boring looks: still clearly different from each other, nothing pastel. */
-const OFFICE_PALETTE = ["#1f4e79", "#c55a11", "#7f7f7f", "#bf9000", "#2e75b6", "#548235", "#7030a0", "#a50021"];
-/** The office colours, lightened so they read on a dark background. */
-const OFFICE_DARK = ["#6fa8dc", "#f4a261", "#b0b0b0", "#e9c46a", "#7cb7f0", "#8fc36b", "#b48ae0", "#f07090"];
+/** Speaker colours per look and mode. Eight each, all clearly different from each other and none black or white (so no speaker looks like body text or the button). */
+const PALETTES = {
+  sunset: {
+    light: ["#c8456f", "#d08a3e", "#7f64c9", "#2f8fd0", "#1f9d7a", "#c9a227", "#b84fb0", "#7a7f9e"],
+    dark: ["#e5729a", "#e8a566", "#a58bff", "#5fb6f2", "#3fd0a8", "#e9c46a", "#e480d6", "#9ea3c0"],
+    highLight: ["#a3174f", "#9a4a00", "#4b2bb8", "#0b5c9a", "#0b6347", "#7a5b00", "#8a1f80", "#444a66"],
+    highDark: ["#ff8fb3", "#ffc27a", "#c9b8ff", "#8fd0ff", "#7ff0c8", "#ffe08a", "#ffa8ee", "#cfd3ea"],
+  },
+  clean: {
+    light: ["#4f46e5", "#c2410c", "#15803d", "#0e7490", "#a21caf", "#a16207", "#be123c", "#52525b"],
+    dark: ["#e5386d", "#f0a45e", "#7c8cff", "#34d399", "#22d3ee", "#c084fc", "#facc15", "#a1a1aa"],
+    highLight: ["#2a1fc4", "#9a3412", "#0b6b2c", "#0b5c75", "#7e1291", "#7a4a00", "#9f0f3a", "#3f3f46"],
+    highDark: ["#ff6a96", "#ffc27a", "#a8b4ff", "#6ee7b7", "#67e8f9", "#e0b4ff", "#fde047", "#d4d4d8"],
+  },
+} as const;
 /** Speaker colours. Mutated in place by applyLook so every component that imports it picks up the current look. */
-export const PALETTE: string[] = [...SUNSET_PALETTE];
+export const PALETTE: string[] = [...PALETTES.sunset.light];
 export const fmt = (s: number) => {
   const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = Math.floor(s % 60);
   return (h ? `${h}:${String(m).padStart(2, "0")}` : String(m)) + `:${String(sec).padStart(2, "0")}`;
@@ -132,26 +141,26 @@ export const DEFAULT_EXPORT_OPTS: ExportOpts = { maxChars: 42, maxLines: 2, spea
 /** Default chapter title for a line: its first five words. */
 export const chapterDefault = (text: string) => text.split(/\s+/).filter(Boolean).slice(0, 5).join(" ");
 
-/** Look levels: 0 fairytale sunset (default), 1 cloudy tuesday, 2 open-plan office. Applied as data-level on <html>. */
+/** The two looks. They share every layout, shape and font: only colours differ. */
 export const LOOKS = [
-  { name: "Fairytale sunset", caption: "Everything glows. This is the intended experience." },
-  { name: "Cloudy Tuesday", caption: "The glow has been politely asked to leave." },
-  { name: "Open-plan office", caption: "We have aligned on blue." },
+  { id: "sunset", name: "Fairytale sunset", caption: "Soft peach, rose and lilac. Warm and calm." },
+  { id: "clean", name: "Clean", caption: "Flat and quiet: black, white and one accent." },
 ] as const;
-/** Saved settings from older versions may still say 3 (the retired “boring corporate” look): that is now the open-plan office. */
-export const lookLevelOf = (o: { lookLevel?: number; boring?: boolean }) => Math.min(2, Math.max(0, o.lookLevel ?? (o.boring ? 2 : 0)));
-type LookOpts = { lookLevel?: number; boring?: boolean; colorScheme?: "system" | "light" | "dark"; textSize?: number; highContrast?: boolean };
+export type LookId = (typeof LOOKS)[number]["id"];
+type LookOpts = { look?: LookId; contrast?: "standard" | "high"; lookLevel?: number; boring?: boolean; colorScheme?: "system" | "light" | "dark"; textSize?: number };
+/** The chosen look. Settings saved before the two looks (lookLevel 0–3, or boring) map to sunset for 0–1 and Clean for 2–3. */
+export const lookOf = (o: LookOpts): LookId => o.look === "clean" || o.look === "sunset" ? o.look : (o.lookLevel ?? (o.boring ? 2 : 0)) >= 2 ? "clean" : "sunset";
 /** Dark when chosen, or when "system" and the computer is in dark mode. */
 export const isDark = (o: LookOpts) => o.colorScheme === "dark" || (o.colorScheme !== "light" && window.matchMedia?.("(prefers-color-scheme: dark)").matches);
-/** Sets the look (data-level) and light or dark (data-mode) on <html>, and picks speaker colours that read well on it. */
+/** Sets the look (data-look), light or dark (data-mode) and contrast (data-contrast) on <html>, and picks speaker colours that read well on it. */
 export const applyLook = (o: LookOpts) => {
-  const level = lookLevelOf(o), dark = isDark(o), el = document.documentElement;
-  el.dataset.level = String(level);
+  const look = lookOf(o), dark = isDark(o), high = o.contrast === "high", el = document.documentElement;
+  el.dataset.look = look;
   el.dataset.mode = dark ? "dark" : "light";
-  el.dataset.contrast = o.highContrast ? "more" : "normal";
+  el.dataset.contrast = high ? "high" : "standard";
   document.body.style.zoom = o.textSize && o.textSize !== 1 ? String(o.textSize) : "";
-  const palette = level >= 2 ? (dark ? OFFICE_DARK : OFFICE_PALETTE) : SUNSET_PALETTE;
-  PALETTE.splice(0, PALETTE.length, ...palette);
+  const p = PALETTES[look];
+  PALETTE.splice(0, PALETTE.length, ...(high ? (dark ? p.highDark : p.highLight) : (dark ? p.dark : p.light)));
 };
 
 const joinText = (words: Word[]) => words.map((w) => w.word).join("").trim();

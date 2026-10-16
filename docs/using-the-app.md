@@ -193,9 +193,11 @@ the first match.
 - **Summaries and translation:** the language model for highlights and summaries, and the translation model, each with **Use** and **Delete**.
 - **Saving and export:** optionally save a backup file (`name.transcript.json`) next to each recording after transcribing. Transcribing the same
   recording again replaces that file. Your audio is never changed or moved.
-- **Text and language:** **Text size** (four sizes, scales the whole app), **High contrast**, the language of the app (*Match my computer*, English,
-  Deutsch, Français or Español; the translations are machine-assisted and not yet reviewed), **Light or dark**, the **colour mood** (*Fairytale sunset*,
-  *Cloudy Tuesday*, *Open-plan office*), and the keyboard shortcuts. The language of a recording is separate (see Options).
+- **Text and language:** **Text size** (four sizes, scales the whole app), the language of the app (*Match my computer*, English, Deutsch, Français or
+  Español; the translations are machine-assisted and not yet reviewed), the **look** (*Fairytale sunset* or *Clean*, same layout, only the colours differ),
+  **Light or dark**, **Contrast** (*Standard* or *High contrast*: stronger colours and heavier borders) and the keyboard shortcuts. Speaker colours stay
+  clearly different from each other in every combination. Settings saved before the two looks carry over: the first two old stops become *Fairytale
+  sunset*, the last two become *Clean*. The language of a recording is separate (see Options).
 - **Privacy:** what stays on your computer, a table of every network call, a table of what is stored where (with **Show** buttons), your saved token (only the
   last 4 characters are shown), and the activity log. See [Privacy and offline use](privacy-and-offline.md).
 - **Advanced:** closed groups, nothing needs changing. *Processor*: *Automatic* uses your graphics chip when there is one; *Processor only* is slower and most

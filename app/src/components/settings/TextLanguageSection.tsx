@@ -1,13 +1,13 @@
 import { LANGS, LangPref, systemLang } from "../../i18n";
 import { useT } from "../../i18n";
-import { LOOKS, MOD_KEY, lookLevelOf } from "../../types";
-import { Block, SectionProps, SwitchRow } from "./shared";
+import { LOOKS, MOD_KEY, lookOf } from "../../types";
+import { Block, SectionProps } from "./shared";
 
 const SIZES: [number, string][] = [[1, "Normal"], [1.15, "Large"], [1.3, "Extra large"], [1.5, "Largest"]];
 
 export default function TextLanguageSection({ opts, set }: SectionProps) {
   const t = useT();
-  const size = opts.textSize ?? 1, level = Math.min(lookLevelOf(opts), 2), scheme = opts.colorScheme ?? "system";
+  const size = opts.textSize ?? 1, look = lookOf(opts), scheme = opts.colorScheme ?? "system", contrast = opts.contrast === "high" ? "high" : "standard";
   const pref: LangPref = opts.appLanguage ?? "system";
   const name = (id: string) => LANGS.find((l) => l.id === id)?.label ?? id;
   const keys: [string, string][] = [
@@ -26,7 +26,6 @@ export default function TextLanguageSection({ opts, set }: SectionProps) {
             </label>
           ))}
         </fieldset>
-        <SwitchRow id="tx-hc" title={t("High contrast")} help={t("Black text on white, white text on black, and thicker borders.")} on={!!opts.highContrast} onChange={(v) => set({ ...opts, highContrast: v || undefined })} />
       </Block>
       <Block id="tx-lang" title={t("Language of the app")}>
         <div className="f7">
@@ -39,14 +38,24 @@ export default function TextLanguageSection({ opts, set }: SectionProps) {
         <p className="note">{t("Translations are machine-assisted and have not been reviewed by native speakers yet. If something reads oddly, the English text is the reference.")}</p>
       </Block>
       <Block id="tx-look" title={t("Appearance")}>
+        <fieldset className="look-tiles st-fieldset"><legend className="st-sr">{t("Choose a look")}</legend>
+          {LOOKS.map((l) => (
+            <label key={l.id} className={"look-tile" + (look === l.id ? " on" : "")} data-preview={l.id}>
+              <input type="radio" name="look" checked={look === l.id} onChange={() => set({ ...opts, look: l.id, lookLevel: undefined, boring: undefined })} />
+              <span className="look-swatch" aria-hidden><i /><i /><i /></span>
+              <b>{t(l.name)}</b>
+              <small>{t(l.caption)}</small>
+            </label>
+          ))}
+        </fieldset>
         <fieldset className="choices row st-fieldset"><legend>{t("Light or dark")}</legend>
           {([["system", t("Match my computer")], ["light", t("Light")], ["dark", t("Dark")]] as const).map(([id, label]) => (
             <label key={id} className={"choice" + (scheme === id ? " on" : "")}><input type="radio" name="scheme" checked={scheme === id} onChange={() => set({ ...opts, colorScheme: id })} /><span><b>{label}</b></span></label>
           ))}
         </fieldset>
-        <fieldset className="choices st-fieldset"><legend>{t("Colour mood")}</legend>
-          {LOOKS.slice(0, 3).map((m, i) => (
-            <label key={m.name} className={"choice" + (level === i ? " on" : "")}><input type="radio" name="mood" checked={level === i} onChange={() => set({ ...opts, lookLevel: i, boring: undefined })} /><span><b>{t(m.name)}</b><small>{t(m.caption)}</small></span></label>
+        <fieldset className="choices row st-fieldset"><legend>{t("Contrast")}</legend>
+          {([["standard", t("Standard")], ["high", t("High contrast")]] as const).map(([id, label]) => (
+            <label key={id} className={"choice" + (contrast === id ? " on" : "")}><input type="radio" name="contrast" checked={contrast === id} onChange={() => set({ ...opts, contrast: id })} /><span><b>{label}</b><small>{id === "high" ? t("Stronger colours and heavier borders, in either look.") : ""}</small></span></label>
           ))}
         </fieldset>
       </Block>

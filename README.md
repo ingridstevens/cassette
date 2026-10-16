@@ -43,6 +43,20 @@ And also:
 
 ![The Export menu](docs/screenshots/13-export-menu.jpg)
 
+## What your computer needs
+
+| | Minimum | Comfortable |
+| --- | --- | --- |
+| Memory | 4 GB (use the *Tiny* or *Base* model size) | 8 GB or more (*Small*), 16 GB for *Medium* and *Large* |
+| Free disk | 8 GB | 20 GB (models are 0.1 to 3 GB each) |
+| Processor | Any 64-bit processor from the last 8 years; more cores means faster | 4 or more cores |
+| Graphics card | Not needed | Apple silicon or NVIDIA speeds things up |
+| Internet | For the install and the model downloads, once | |
+
+No speed table yet: nobody has timed the app on a low-end Windows laptop. Without a graphics card, expect transcription to
+take longer than the recording on the *Small* size and much longer on larger ones; the app shows an estimate before
+you press Start.
+
 ## Quick start
 
 There is no installer yet, so you run Local Transcriber from this repository. It takes about 10 minutes, most of it
@@ -77,8 +91,27 @@ Next time, only step 4 (from the `app` folder).
 
 ### Windows
 
-Not tried yet: the steps should work, but nobody has run the app on Windows so far. Please
-[open an issue](https://github.com/ingridstevens/local-transcriber/issues) if something goes wrong. In PowerShell:
+Not tried yet: nobody has run the app on Windows so far. Please
+[open an issue](https://github.com/ingridstevens/local-transcriber/issues) if something goes wrong.
+
+**Easiest:** download this repository (the green *Code* button, then *Download ZIP*, and unzip it), open the folder in
+PowerShell and run the setup script. It checks your memory and disk space, installs Node.js and uv with `winget` if they are missing,
+and installs the app:
+
+```powershell
+.\setup.ps1
+# if PowerShell refuses to run it:
+powershell -ExecutionPolicy Bypass -File .\setup.ps1
+```
+
+Then, every time you want to use the app:
+
+```powershell
+cd app
+npm run dev
+```
+
+**By hand**, in PowerShell:
 
 ```powershell
 # 1. The tools (skip any you already have)
@@ -97,8 +130,13 @@ cd ..\app; npm ci
 npm run dev
 ```
 
+Highlights and summaries are **not** part of this install on Windows: they need llama.cpp, which has to be compiled
+from source (it needs Visual Studio Build Tools). Transcripts, speakers and every export work without it. To add it:
+`.\setup.ps1 -Llm`, or `uv sync --extra llm` in the `engine` folder. See [Troubleshooting](docs/troubleshooting.md#windows-and-linux).
+
 Next time, only step 4 (from the `app` folder). Transcription runs on the CPU on Windows unless you have an NVIDIA
-graphics card, so start with the *Small* model size.
+graphics card, so start with the *Small* model size. Windows may show a blue "Windows protected your PC" box the first
+time a program from this app starts: choose *More info*, then *Run anyway*.
 
 ### First run
 
@@ -150,7 +188,8 @@ Face hub in offline mode. Your token is stored encrypted with Electron `safeStor
 
 ## Honest limits
 
-- Only tested on macOS (Apple silicon). Windows and Linux builds are set up in CI, but that workflow has not been run yet.
+- Only tested on macOS (Apple silicon). Windows and Linux builds are set up in CI, but that workflow has not been run yet, and there is no installer to download.
+- On Windows and Linux, highlights and summaries are an opt-in install (`uv sync --extra llm`) because llama.cpp must be compiled.
 - Whisper runs on the CPU on a Mac unless you download the Apple GPU version of a model size (Settings → Advanced → Apple GPU models);
   large models on the CPU are slow. On Windows and Linux it is meant to use an NVIDIA GPU, which has never been tried.
   Use `small` or `turbo` for speed.

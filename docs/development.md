@@ -63,8 +63,9 @@ Inference runs with offline mode on (`HF_HUB_OFFLINE=1`); only `models download`
   System fonts only; no web fonts or CDNs, so the app stays offline. Colours go through tokens so every look works
   in light and dark: `--surface` (cards, inputs), `--tint` and `--tint-k` (borders and inset rings), `--page` (an opaque
   page colour for sticky bars), `--done` / `--on-done` (finished steps), `--on-sun` (text on the main buttons), and
-  `--violet-ink`, `--err-ink`, `--warn-ink`, `--ok-ink` for coloured text. `classic.css` holds the four looks
-  (`<html data-level="0..3">`), `themes.css` dark mode (`<html data-mode="dark">`, set by `applyLook` in `types.ts`).
+  `--violet-ink`, `--err-ink`, `--warn-ink`, `--ok-ink` for coloured text. `themes.css` holds dark mode, the second
+  look (*Clean*) and high contrast (`<html data-mode="dark" data-look="clean" data-contrast="high">`, set by `applyLook` in
+  `types.ts`). The two looks change colour tokens only: no layout, shape or font differs between them.
   Avoid fixed colours in new CSS; if you need one, add a token and its dark value.
 - `app/resources/`: the app icon (`icon.icns`, `icon.ico`, `icon.png`), used by electron-builder and as the Dock
   icon in development. The drawings are in `resources/icon-src/` (`cassette.svg` for 64 px and up, `cassette-small.svg`

@@ -63,7 +63,6 @@
 /* setup */
 /* setup opened from a recording: its own page over the main column, scrolling on its own */
 .setup-overlay { position: absolute; inset: 0; z-index: 40; overflow: auto; background: var(--dawn); padding-top: 28px; outline: none; }
-html:is([data-level="1"], [data-level="2"], [data-level="3"]) .setup-overlay { background: var(--page); }
 .setup-overlay-head { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
 .setup-overlay-head .btn { margin-left: -12px; }
 .setup-overlay .setup-page h1 { font-size: 34px; }
@@ -210,7 +209,7 @@ details.detail[open] > summary { margin-bottom: 4px; }
 
 /* something is playing: an animated mark on its project, and a Pause control that follows you to any screen */
 .eq { display: inline-flex; align-items: flex-end; gap: 2px; height: 14px; width: 16px; flex: none; margin-left: auto; align-self: center; }
-.eq i { display: block; width: 3px; border-radius: 2px; background: #e8467c; height: 100%; transform-origin: bottom; animation: eq-bounce 0.9s ease-in-out infinite; }
+.eq i { display: block; width: 3px; border-radius: 2px; background: var(--hot); height: 100%; transform-origin: bottom; animation: eq-bounce 0.9s ease-in-out infinite; }
 .eq i:nth-child(2) { animation-delay: -0.3s; background: #a87bff; }
 .eq i:nth-child(3) { animation-delay: -0.6s; background: #f08a3c; }
 @keyframes eq-bounce { 0%, 100% { transform: scaleY(.3); } 50% { transform: scaleY(1); } }

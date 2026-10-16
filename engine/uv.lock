@@ -598,13 +598,17 @@ dependencies = [
     { name = "faster-whisper" },
     { name = "huggingface-hub" },
     { name = "imageio-ffmpeg" },
-    { name = "llama-cpp-python", marker = "platform_machine != 'arm64' or sys_platform != 'darwin'" },
     { name = "mlx-lm", marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
     { name = "mlx-whisper", marker = "platform_machine == 'arm64' and sys_platform == 'darwin'" },
     { name = "pyannote-audio" },
     { name = "python-docx" },
     { name = "torch" },
     { name = "torchaudio" },
+]
+
+[package.optional-dependencies]
+llm = [
+    { name = "llama-cpp-python", marker = "platform_machine != 'arm64' or sys_platform != 'darwin'" },
 ]
 
 [package.dev-dependencies]
@@ -618,7 +622,7 @@ requires-dist = [
     { name = "faster-whisper", specifier = ">=1.0.3" },
     { name = "huggingface-hub", specifier = ">=0.23,<1.0" },
     { name = "imageio-ffmpeg", specifier = ">=0.5" },
-    { name = "llama-cpp-python", marker = "platform_machine != 'arm64' or sys_platform != 'darwin'", specifier = ">=0.3" },
+    { name = "llama-cpp-python", marker = "(platform_machine != 'arm64' and extra == 'llm') or (sys_platform != 'darwin' and extra == 'llm')", specifier = ">=0.3" },
     { name = "mlx-lm", marker = "platform_machine == 'arm64' and sys_platform == 'darwin'", specifier = ">=0.20" },
     { name = "mlx-whisper", marker = "platform_machine == 'arm64' and sys_platform == 'darwin'", specifier = ">=0.4" },
     { name = "pyannote-audio", specifier = ">=3.3,<4" },
@@ -626,6 +630,7 @@ requires-dist = [
     { name = "torch", specifier = ">=2.2,<2.9" },
     { name = "torchaudio", specifier = ">=2.2,<2.9" },
 ]
+provides-extras = ["llm"]
 
 [package.metadata.requires-dev]
 dev = [

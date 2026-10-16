@@ -9,7 +9,7 @@ import { useModels } from "./components/useModels";
 import "./styles/shell.css";
 import { setLanguage, t, useT } from "./i18n";
 import { setLlm } from "./components/llmChoice";
-import { IS_MAC, ModelStatus, Options, applyLook, displayName, lookLevelOf } from "./types";
+import { IS_MAC, ModelStatus, Options, applyLook, displayName } from "./types";
 import { useProjects } from "./useProjects";
 
 const DEFAULTS: Options = { model: "small", language: "auto", numSpeakers: "", vad: false, prompt: "", noDiarize: false, device: "auto", autosave: true };

@@ -69,7 +69,14 @@ function readToken(): string {
 
 app.whenReady().then(() => {
   // In development the Dock shows Electron's own icon; show ours instead. Packaged builds get it from resources/icon.icns.
-  if (process.platform === "darwin" && process.env.VITE_DEV_SERVER_URL) app.dock?.setIcon(path.join(__dirname, "..", "resources", "icon.png"));
+  const devIcon = path.join(__dirname, "..", "resources", "icon.png");
+  if (process.platform === "darwin" && process.env.VITE_DEV_SERVER_URL) app.dock?.setIcon(devIcon);
+  // The About window: our name, version and icon, also in development (where it would otherwise say "Electron").
+  // Packaged builds take the icon from the app bundle, so iconPath is only set when the PNG is there.
+  app.setAboutPanelOptions({
+    applicationName: "Local Transcriber", applicationVersion: app.getVersion(), version: app.getVersion(),
+    copyright: "Public domain (The Unlicense)", ...(fs.existsSync(devIcon) ? { iconPath: devIcon } : {}),
+  });
   registerLive(send, baseEnv);
   ipcMain.on("renderer-error", (_e, message: unknown) => logLine("renderer", String(message).slice(0, 4000)));
   // Returns the raw bytes of an audio/video file so the renderer can build a Blob URL (no custom protocol needed).
@@ -92,9 +99,9 @@ app.whenReady().then(() => {
     const r = await runEngine(randomUUID(), a, baseEnv(), () => {}) as EngineEvent | null;
     return r?.type === "done" ? { ok: true, text: String(r.text ?? "") } : { ok: false, error: String(r?.message ?? "The translation failed.").slice(0, 300) };
   });
-  // The local language model: "highlights" (suggest quotable passages) or "summarize". The renderer picks the job id so it can cancel with `cancel`.
-  ipcMain.handle("llm-run", async (_e, kind: unknown, payload: { segments: unknown[]; speakers: Record<string, string>; language: string }, o: { jobId?: unknown; clientId?: unknown; model?: unknown; count?: unknown }) => {
-    if (kind !== "highlights" && kind !== "summarize") return { type: "error", message: "Unknown job" };
+  // The local language model: "highlights" (suggest quotable passages), "summarize", or "ask" (answer a question, `payload.question`, about the transcript). The renderer picks the job id so it can cancel with `cancel`.
+  ipcMain.handle("llm-run", async (_e, kind: unknown, payload: { segments: unknown[]; speakers: Record<string, string>; language: string; question?: string; history?: { q: string; a: string }[] }, o: { jobId?: unknown; clientId?: unknown; model?: unknown; count?: unknown }) => {
+    if (kind !== "highlights" && kind !== "summarize" && kind !== "ask") return { type: "error", message: "Unknown job" };
     const jobId = typeof o?.jobId === "string" && o.jobId.length <= 80 ? o.jobId : randomUUID();
     const tmp = path.join(os.tmpdir(), `transcript-${randomUUID()}.json`);
     fs.writeFileSync(tmp, JSON.stringify(payload));

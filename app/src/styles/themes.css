@@ -1,24 +1,25 @@
-/* Dark mode. Loaded after classic.css so these win over the looks.
-   <html data-mode="light|dark">: dark redefines the tokens for every look (0–3). */
+/* Looks and modes. The two looks (Fairytale sunset, Clean) have identical layout, shapes, fonts and components: they differ only in the colour tokens below.
+   <html data-look="sunset|clean" data-mode="light|dark" data-contrast="standard|high">. Light sunset is the :root default in base.css. */
 
-/* ---- dark: fairytale sunset (level 0) and the token base for every look ---- */
+/* ---- dark: fairytale sunset (and the token base for every dark look) ---- */
 html[data-mode="dark"] {
   color-scheme: dark;
-  --ink: #f2edfb; --ink2: #c6bcdc; --ink3: #9d93b8;
+  --ink: #f2edfb; --ink2: #cbbde6; --ink3: #a493c4;
   --line: rgba(215, 200, 255, .14);
-  --surface: #2a2338; --paper: rgba(38, 32, 52, .92); --page: #1d1726;
+  --surface: #2a2338; --paper: rgba(34, 28, 45, .95); --page: #171220;
   /* text on the pastel gradient buttons stays dark in dark mode */
-  --on-sun: #2a2040;
+  --on-sun: #2b1c3b;
   --tint: #d9ccff; --tint-k: #fff;
-  --rose: #ff6b9a; --violet: #9d85ff; --ok: #2fb37f; --danger: #ff7aa2;
+  --rose: #e5729a; --violet: #a58bff; --ok: #2fb37f; --danger: #ff7aa2;
+  --hot: #e5729a; --hot-d: #e5729a; --focus: #a58bff; --focus-soft: rgba(165, 139, 255, .25);
   --violet-ink: #c3b4ff; --err-ink: #ff9fbd; --warn-ink: #ffc68f; --ok-ink: #6fe0b2;
-  --wave: #5b5175; --wave-progress: #ff6b9a;
+  --wave: #5b5175; --wave-progress: #e5729a;
   --dawn:
-    radial-gradient(900px 620px at 4% -8%, #3a2030 0%, transparent 62%),
-    radial-gradient(760px 600px at 100% 0%, #2a2346 0%, transparent 58%),
-    radial-gradient(900px 700px at 78% 112%, #1b2a44 0%, transparent 62%),
-    radial-gradient(700px 520px at 0% 100%, #3a1c2c 0%, transparent 62%),
-    #17131f;
+    radial-gradient(900px 620px at 4% -8%, #37202f 0%, transparent 62%),
+    radial-gradient(760px 600px at 100% 0%, #272048 0%, transparent 58%),
+    radial-gradient(900px 700px at 78% 112%, #17294a 0%, transparent 62%),
+    radial-gradient(700px 520px at 0% 100%, #341b2b 0%, transparent 62%),
+    #140f1d;
 }
 html[data-mode="dark"] .scrim { background: rgba(0, 0, 0, .55); }
 html[data-mode="dark"] .toast { background: #f2edfb; color: #17131f; }
@@ -33,49 +34,77 @@ html[data-mode="dark"] .setup-slim.info .mark { background: var(--violet); color
 html[data-mode="dark"] .setup-slim .btn.quiet { color: var(--warn-ink); }
 html[data-mode="dark"] .setup-slim.info .btn.quiet { color: var(--ink2); }
 html[data-mode="dark"] .alert.err { color: var(--err-ink); }
-/* the light-mode violet focus ring is too faint on dark surfaces; levels 2 and 3 use their own accent */
-html[data-mode="dark"]:not([data-level="2"], [data-level="3"]) :is(a, button, [tabindex], input[type="radio"], input[type="checkbox"], .mood input[type="range"]):focus-visible { outline-color: var(--violet); }
-html[data-mode="dark"]:not([data-level="2"], [data-level="3"]) :is(input, select, textarea):not([type="radio"], [type="checkbox"], [type="range"]):focus-visible { box-shadow: inset 0 0 0 2px var(--violet), 0 0 0 4px color-mix(in srgb, var(--violet) 25%, transparent); }
-html[data-mode="dark"]:not([data-level="2"], [data-level="3"]) .share-radio:has(input:focus-visible) { outline-color: var(--violet); }
 html[data-mode="dark"] select.input { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c6bcdc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
 
-/* ---- dark: cloudy tuesday (level 1) ---- */
-/* buttons and badges keep the deeper pink so white text on them stays readable */
-html[data-mode="dark"][data-level="1"] { --dawn: #1d1620; --page: #1d1620; --accent-solid: #e0588a; --sun: #e0588a; --sun-btn: #c73566; --wave-progress: #e0588a; --on-sun: #fff; }
-html[data-mode="dark"][data-level="1"] body { background: #1d1620; }
-
-/* ---- dark: open-plan office and boring corporate (levels 2 and 3) ---- */
-html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) {
-  --ink: #f5f5f7; --ink2: #c7c7cc; --ink3: #98989d;
-  --line: rgba(255, 255, 255, .12); --paper: #1c1c1e; --surface: #2c2c2e;
-  --tint: #fff; --tint-k: #fff;
-  --dawn: #111113; --page: #111113; --accent-solid: #3d8bff; --wave: #48484a;
-  --violet-ink: #8ab8ff; --ok: #30d158;
+/* ---- Clean, light: flat off-white, black primary button, one indigo accent ---- */
+html[data-look="clean"] {
+  --ink: #0b0b0f; --ink2: #4a4a55; --ink3: #6b6b78;
+  --line: #e6e6ea; --paper: #fff; --surface: #fff;
+  --dawn: #fafafa; --page: #fafafa;
+  --sun: #4f46e5; --sun-btn: #0b0b0f; --on-sun: #fff;
+  --rose: #4f46e5; --violet: #4f46e5; --amber: #c2410c; --ok: #15803d; --danger: #b91c1c;
+  --violet-ink: #4338ca; --tint: #0b0b0f; --tint-k: #000;
+  --hot: #4f46e5; --hot-d: #4f46e5; --focus: #4f46e5; --focus-soft: rgba(79, 70, 229, .2);
+  --wave: #c9c9d1; --wave-progress: #4f46e5;
 }
-html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) body { background: #111113; }
-/* white text needs a deeper blue than the one used for links and outlines */
-html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) .btn.sun { background: #0a64d8; }
-/* the current word: white on the bright link blue is too faint */
-html[data-mode="dark"][data-level="2"] .pv-w.cur { background: #0a64d8; }
-html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) .side { background: #1c1c1e; }
-html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) :is(.inspector, .pv-inspector) { background: #18181a; }
-html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) :is(.card, .dialog) { background: #1c1c1e; }
-html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) :is(.badge, .pv-edited span, .use, .pv-flag) { background: #3a3a3c; color: #f5f5f7; }
-html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) :is(.nav.on, .prow .nav.on) { background: rgba(255, 255, 255, .1); }
-html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) .tabs { background: rgba(255, 255, 255, .08); }
-html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) .switch { background: #48484a; }
-html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) .switch[aria-checked="true"] { background: var(--accent-solid); }
-html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) .btn[disabled] { background: rgba(255, 255, 255, .06); color: #8e8e93; }
-html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) .setup-banner { background: #3a2f12; }
-html[data-mode="dark"]:is([data-level="2"], [data-level="3"]) .mood input[type="range"] { background: linear-gradient(90deg, #48484a, var(--accent-solid)); }
-html[data-mode="dark"][data-level="3"] { --page: #0d0d0d; --accent-solid: #7aa7e0; --wave-progress: #7aa7e0; }
-html[data-mode="dark"][data-level="3"] body { background: #0d0d0d; }
-html[data-mode="dark"][data-level="3"] .btn.sun { background: #2f5d94; }
-html[data-mode="dark"][data-level="3"] .pv-w.cur { background: #2f5d94; }
-html[data-mode="dark"][data-level="3"] .side { background: #161616; }
-html[data-mode="dark"][data-level="3"] :is(.inspector, .pv-inspector) { background: #121212; }
-html[data-mode="dark"][data-level="3"] .pv-turn.now { background: #1d2430; }
+/* Clean: neutral shadows and tints instead of the sunset's pink and lilac glows */
+html[data-look="clean"] .btn.sun { box-shadow: none; }
+html[data-look="clean"] .card { box-shadow: 0 1px 2px rgba(0, 0, 0, .05), 0 22px 44px -28px rgba(0, 0, 0, .3); }
+html[data-look="clean"] .nav.on { box-shadow: 0 1px 2px rgba(0, 0, 0, .06); }
+html[data-look="clean"] .pv-turn.now { box-shadow: 0 1px 2px rgba(0, 0, 0, .05), 0 16px 34px -22px rgba(0, 0, 0, .3); }
+html[data-look="clean"] .tabs { background: rgba(0, 0, 0, .06); }
+html[data-look="clean"] .switch { background: #c9c9d1; }
+html[data-look="clean"] .switch[aria-checked="true"] { background: var(--ink); box-shadow: none; }
+html[data-look="clean"] .minibar { background: rgba(0, 0, 0, .1); }
+html[data-look="clean"] .btn[disabled] { background: rgba(0, 0, 0, .05); }
+html[data-look="clean"] .menu button:hover, html[data-look="clean"] .menu button:focus-visible { background: rgba(79, 70, 229, .1); }
+html[data-look="clean"] .choice:has(input:checked) { box-shadow: inset 0 0 0 2px var(--hot), 0 0 0 5px rgba(79, 70, 229, .14); }
+html[data-look="clean"] .st.run { box-shadow: 0 0 0 4px rgba(79, 70, 229, .18); }
+html[data-look="clean"] .pv-w:hover { background: rgba(79, 70, 229, .1); }
+html[data-look="clean"] .scrim { background: rgba(11, 11, 15, .4); }
+html[data-look="clean"] .orb { box-shadow: none; }
 
-/* High contrast (Settings, Text and language): stronger text and borders in every look */
-html[data-contrast="more"] { --ink2: var(--ink); --ink3: var(--ink); --line: color-mix(in srgb, var(--ink) 55%, transparent); }
-html[data-contrast="more"] .card, html[data-contrast="more"] .st-acc { box-shadow: 0 0 0 2px var(--ink); }
+/* ---- Clean, dark: near-black, one burgundy-magenta accent ---- */
+html[data-look="clean"][data-mode="dark"] {
+  --ink: #f5f2f4; --ink2: #b3aab0; --ink3: #948a91;
+  --line: #2b242a; --paper: #141014; --surface: #1c161c;
+  --dawn: #0c090c; --page: #0c090c;
+  --sun: #e5386d; --sun-btn: #b3204f; --on-sun: #fff;
+  --rose: #e5386d; --violet: #e5386d; --amber: #f0a45e; --ok: #34d399; --danger: #ff7a9c;
+  --violet-ink: #ff7aa2; --tint: #f5f2f4; --tint-k: #fff;
+  --hot: #e5386d; --hot-d: #e5386d; --focus: #ff6a96; --focus-soft: rgba(255, 106, 150, .25);
+  --wave: #3b3239; --wave-progress: #e5386d;
+}
+html[data-look="clean"][data-mode="dark"] .toast button { color: #b3204f; }
+html[data-look="clean"][data-mode="dark"] .tabs { background: rgba(255, 255, 255, .07); }
+html[data-look="clean"][data-mode="dark"] .switch { background: #3b3239; }
+html[data-look="clean"][data-mode="dark"] .switch[aria-checked="true"] { background: #b3204f; }
+html[data-look="clean"][data-mode="dark"] .minibar { background: rgba(255, 255, 255, .12); }
+html[data-look="clean"][data-mode="dark"] .menu button:hover, html[data-look="clean"][data-mode="dark"] .menu button:focus-visible { background: rgba(229, 56, 109, .16); }
+html[data-look="clean"][data-mode="dark"] .choice:has(input:checked) { box-shadow: inset 0 0 0 2px var(--hot), 0 0 0 5px rgba(229, 56, 109, .2); }
+html[data-look="clean"][data-mode="dark"] .st.run { box-shadow: 0 0 0 4px rgba(229, 56, 109, .25); }
+html[data-look="clean"][data-mode="dark"] .pv-w:hover { background: rgba(229, 56, 109, .16); }
+
+/* ---- High contrast: same layout, stronger colours, heavier borders. Works with both looks, light or dark. ---- */
+html[data-contrast="high"] { --ink: #000; --ink2: #111; --ink3: #222; --line: #000; --paper: #fff; --surface: #fff; --dawn: #fff; --page: #fff; --wave: #6b6b78; --tint: #000; --tint-k: #000; --done: #111; }
+html[data-contrast="high"][data-mode="dark"] { --ink: #fff; --ink2: #fff; --ink3: #e6e6e6; --line: #fff; --paper: #000; --surface: #000; --dawn: #000; --page: #000; --wave: #9a9aa5; --tint: #fff; --tint-k: #fff; --done: #fff; }
+html[data-contrast="high"][data-look="sunset"] { --hot: #a3174f; --hot-d: #a3174f; --rose: #a3174f; --violet: #4b2bb8; --amber: #9a4a00; --sun: #a3174f; --sun-btn: #a3174f; --on-sun: #fff; --wave-progress: #a3174f; --focus: #4b2bb8; }
+html[data-contrast="high"][data-look="sunset"][data-mode="dark"] { --hot: #ff8fb3; --hot-d: #ff8fb3; --rose: #ff8fb3; --violet: #c9b8ff; --amber: #ffc27a; --sun: #ffb3c8; --sun-btn: #ffd0e0; --on-sun: #000; --wave-progress: #ff8fb3; --focus: #c9b8ff; }
+html[data-contrast="high"][data-look="clean"] { --hot: #2a1fc4; --hot-d: #2a1fc4; --rose: #2a1fc4; --violet: #2a1fc4; --amber: #9a3412; --sun: #2a1fc4; --sun-btn: #000; --on-sun: #fff; --wave-progress: #2a1fc4; --focus: #2a1fc4; }
+html[data-contrast="high"][data-look="clean"][data-mode="dark"] { --hot: #ff6a96; --hot-d: #ff6a96; --rose: #ff6a96; --violet: #ff6a96; --amber: #ffc27a; --sun: #ff6a96; --sun-btn: #ffb3c8; --on-sun: #000; --wave-progress: #ff6a96; --focus: #ff6a96; }
+html[data-contrast="high"] body, html[data-contrast="high"] .win { background: var(--dawn); }
+html[data-contrast="high"] .card, html[data-contrast="high"] .dialog, html[data-contrast="high"] .menu, html[data-contrast="high"] .pv-dock, html[data-contrast="high"] .btn, html[data-contrast="high"] .pill, html[data-contrast="high"] .search, html[data-contrast="high"] .input, html[data-contrast="high"] .choice { box-shadow: none; border: 2px solid var(--ink); }
+html[data-contrast="high"] .btn.sun { border-color: transparent; }
+html[data-contrast="high"] .btn[disabled] { background: transparent; border-color: var(--ink3); }
+html[data-contrast="high"] .nav.on { box-shadow: none; border: 2px solid var(--ink); }
+html[data-contrast="high"] .side, html[data-contrast="high"] .inspector { background: var(--paper); border-color: var(--ink); }
+html[data-contrast="high"] .tabs { background: transparent; box-shadow: inset 0 0 0 2px var(--ink); }
+html[data-contrast="high"] .tabs button.on, html[data-contrast="high"] .tabs button[aria-selected="true"] { background: var(--ink); color: var(--paper); box-shadow: none; }
+html[data-contrast="high"] .switch { background: var(--ink3); }
+html[data-contrast="high"] .switch[aria-checked="true"] { background: var(--sun-btn); box-shadow: inset 0 0 0 2px var(--ink); }
+html[data-contrast="high"] .choice:has(input:checked) { box-shadow: inset 0 0 0 2px var(--hot); }
+html[data-contrast="high"] .pv-w.weak { text-decoration: underline solid 2px var(--ink); }
+html[data-contrast="high"] .pv-turn.now { background: transparent; box-shadow: none; }
+html[data-contrast="high"] .nav small, html[data-contrast="high"] .tool .sub, html[data-contrast="high"] .note, html[data-contrast="high"] .pv-hint { color: var(--ink); }
+html[data-contrast="high"] a:focus-visible, html[data-contrast="high"] button:focus-visible, html[data-contrast="high"] [tabindex]:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+html[data-contrast="high"] .scrim { background: rgba(0, 0, 0, .7); }

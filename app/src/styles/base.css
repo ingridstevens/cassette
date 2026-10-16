@@ -1,20 +1,24 @@
 :root {
-  --ink: #2a2040; --ink2: #5f5479; --ink3: #6a5f87;
-  --line: rgba(70, 45, 120, .12);
-  --paper: rgba(255, 255, 255, .9);
-  --rose: #de4a7d; --amber: #f08a3c; --violet: #7c5cff; --teal: #1fa6a0; --ok: #0f7d59; --danger: #b32550;
-  --sun: linear-gradient(120deg, #f59c7c 0%, #e66b95 55%, #a384ea 100%);
-  --sun-btn: linear-gradient(120deg, #f4b69e 0%, #ee98b8 55%, #b8aaee 100%);
+  /* Fairytale sunset, light. Looks differ only in these colour tokens (see themes.css for dark, Clean and high contrast). */
+  --ink: #2b1c3b; --ink2: #593f7a; --ink3: #66498a;
+  --line: rgba(70, 45, 110, .14);
+  --paper: rgba(255, 255, 255, .94);
+  --rose: #bf3f6c; --amber: #d08a3e; --violet: #7f64c9; --teal: #1fa6a0; --ok: #0f7d59; --danger: #b32550;
+  --sun: linear-gradient(120deg, #e8a68c 0%, #d0759c 55%, #8f7ad4 100%);
+  --sun-btn: linear-gradient(120deg, #eab29a 0%, #d98aa9 55%, #a08cdc 100%);
   --dawn:
-    radial-gradient(900px 620px at 4% -8%, #fadccf 0%, transparent 62%),
-    radial-gradient(760px 600px at 100% 0%, #e6ddf8 0%, transparent 58%),
-    radial-gradient(900px 700px at 78% 112%, #d0e2f6 0%, transparent 62%),
-    radial-gradient(700px 520px at 0% 100%, #f8d0df 0%, transparent 62%),
-    #f9eef1;
-  /* surfaces and tints that dark mode and the colour themes redefine (styles/themes.css) */
-  --surface: #fff; --tint: #462d78; --tint-k: #000; --on-sun: #2a2040;
+    radial-gradient(900px 620px at 4% -8%, #f5d9cf 0%, transparent 62%),
+    radial-gradient(760px 600px at 100% 0%, #e0d6f4 0%, transparent 58%),
+    radial-gradient(900px 700px at 78% 112%, #cfdff3 0%, transparent 62%),
+    radial-gradient(700px 520px at 0% 100%, #f1cfdc 0%, transparent 62%),
+    #f6edf0;
+  /* surfaces and tints that dark mode, Clean and high contrast redefine (styles/themes.css) */
+  --surface: #fff; --tint: #462d78; --tint-k: #000; --on-sun: #2b1c3b;
   /* an opaque page colour, for bars that stick over scrolling content */
-  --page: #fbeef2;
+  --page: #f8edf1;
+  /* the look's accent: current line, found word, selected choice, focus ring, waveform progress */
+  --hot: #c8456f; --hot-d: #b8395f; --accent-solid: var(--hot); --focus: #6a45e8; --focus-soft: rgba(106, 69, 232, .2);
+  --wave: #c9b9e6; --wave-progress: var(--hot);
   /* finished steps: quiet, in the look's own secondary ink, so only the running step stands out. Green stays for "all good" states. */
   --done: var(--ink2); --on-done: var(--surface);
   --violet-ink: #5a3fd6; --err-ink: #8e1c40; --warn-ink: #6a3500; --ok-ink: #0b6347;
@@ -28,10 +32,10 @@
 .lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
 
 /* keyboard focus: always visible */
-a:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 2px solid #6a45e8; outline-offset: 2px; }
+a:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 /* form fields: one clean ring that replaces the field's own border instead of stacking on it */
-input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; box-shadow: inset 0 0 0 2px #6a45e8, 0 0 0 4px rgba(106, 69, 232, .2); }
-input[type="radio"]:focus-visible, input[type="checkbox"]:focus-visible { box-shadow: none; outline: 2px solid #6a45e8; outline-offset: 2px; }
+input:focus-visible, select:focus-visible, textarea:focus-visible { outline: none; box-shadow: inset 0 0 0 2px var(--focus), 0 0 0 4px var(--focus-soft); }
+input[type="radio"]:focus-visible, input[type="checkbox"]:focus-visible { box-shadow: none; outline: 2px solid var(--focus); outline-offset: 2px; }
 select.input, .input { appearance: none; -webkit-appearance: none; }
 select.input { padding-right: 34px; background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%235f5479' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 10px center / 16px; }
 
@@ -89,8 +93,8 @@ textarea.input { height: 64px; padding-top: 9px; resize: none; align-items: flex
 .switch[aria-checked="true"] { background: var(--sun-btn); box-shadow: inset 0 0 0 1px rgba(160, 60, 110, .35); }
 .switch[aria-checked="true"]::after { left: 21px; }
 .choice { display: flex; gap: 14px; align-items: flex-start; padding: 14px 16px; border-radius: 16px; background: color-mix(in srgb, var(--surface) 72%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tint) 16%, transparent); cursor: pointer; }
-.choice:has(input:checked) { background: var(--surface); box-shadow: inset 0 0 0 2px #e8467c, 0 0 0 5px rgba(255, 95, 158, .14); }
-.choice input { width: 20px; height: 20px; accent-color: #d63a74; margin: 2px 0 0; flex: none; }
+.choice:has(input:checked) { background: var(--surface); box-shadow: inset 0 0 0 2px var(--hot), 0 0 0 5px rgba(255, 95, 158, .14); }
+.choice input { width: 20px; height: 20px; accent-color: var(--hot-d); margin: 2px 0 0; flex: none; }
 .choice b { font-size: 15px; font-weight: 650; display: flex; gap: 10px; align-items: center; }
 .choice small { display: block; color: var(--ink2); font-size: 13.5px; margin-top: 2px; }
 .badge { font-size: 12px; font-weight: 650; color: var(--on-sun); background: var(--sun-btn); padding: 2px 10px; border-radius: 999px; }

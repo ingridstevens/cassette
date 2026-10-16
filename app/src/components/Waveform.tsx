@@ -76,7 +76,7 @@ const Waveform = forwardRef<WaveformHandle, Props>(({ path, result, onTime, onSe
   useEffect(() => {
     const apply = () => ws.current?.setOptions(waveColors());
     const mo = new MutationObserver(apply);
-    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-level", "data-mode"] });
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-look", "data-mode", "data-contrast"] });
     return () => mo.disconnect();
   }, []);
 

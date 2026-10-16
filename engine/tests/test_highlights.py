@@ -2,6 +2,7 @@
 import io
 import json
 import subprocess
+from pathlib import Path
 
 from engine.highlights import find_highlights, locate
 from engine.llm import chunk_lines, extract_json
@@ -191,7 +192,7 @@ def test_export_clips_one_file_per_clip(tmp_path):
     for fmt in ("wav", "mp3", "m4a"):
         out = tmp_path / fmt
         paths = export_clips(str(src), str(out), clips, fmt)
-        assert [p.rsplit("/", 1)[1] for p in paths] == [f"01 - Anna Ben - 0m02s.{fmt}", f"02 - 0m07s.{fmt}"]
+        assert [Path(p).name for p in paths] == [f"01 - Anna Ben - 0m02s.{fmt}", f"02 - 0m07s.{fmt}"]
         info = subprocess.run([ffmpeg_exe(), "-i", paths[0]], capture_output=True, text=True).stderr
         assert "Duration: 00:00:02.6" in info or "Duration: 00:00:02.7" in info or "Duration: 00:00:02.5" in info  # 2 s plus 0.3 s of room on each side
 
@@ -207,3 +208,19 @@ def test_retired_language_models_are_listed_only_for_people_who_have_them(tmp_pa
     snap.mkdir(parents=True)
     (snap / "model.safetensors").write_bytes(b"x")
     assert "small" in ids()
+
+
+def test_ask_picks_lines_and_drops_unshown_sources():
+    from engine.ask import ask, select_lines
+
+    llm = Fake('{"answer": "Anna writes the announcement.", "lines": [2, 7, "x", 2]}')
+    out = ask(SEGS, NAMES, "Who writes the announcement?", llm)
+    assert out == {"text": "Anna writes the announcement.", "sources": [2], "used": 3, "total": 3}
+    assert "Anna: We moved the launch" in llm.prompts[0]
+
+    many = [seg(i * 10, f"filler talk number {i} about nothing") for i in range(400)] + [seg(5000, "The budget for the garden is nine thousand euros.", "B")]
+    picked = select_lines(many, NAMES, "What is the garden budget?")
+    assert 400 in picked and len(picked) < 100
+
+    prose = ask(SEGS, NAMES, "anything?", Fake("I would say no."))
+    assert prose["text"] == "I would say no." and prose["sources"] == []
