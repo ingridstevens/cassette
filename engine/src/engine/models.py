@@ -1,5 +1,6 @@
 """Model locations + downloads. All models live under ENGINE_MODELS_DIR; runtime is offline."""
 import os
+import sys
 from pathlib import Path
 
 WHISPER_MODELS = {
@@ -248,7 +249,8 @@ def import_folder(src: Path) -> list[str]:
         snaps = d / "snapshots"
         if not snaps.is_dir() or not any(any(s.iterdir()) for s in snaps.iterdir() if s.is_dir()):
             continue
-        shutil.copytree(d, models_dir() / d.name, symlinks=True, dirs_exist_ok=True)
+        # Keep the cache's symlinks (one copy of each blob) except on Windows, where creating them needs a privilege most accounts lack.
+        shutil.copytree(d, models_dir() / d.name, symlinks=sys.platform != "win32", dirs_exist_ok=True)
         done.append(repo)
     if not done:
         raise RuntimeError("That folder has no models this app can use. Pick the folder that contains the “models--…” folders.")
