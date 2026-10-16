@@ -54,9 +54,12 @@ function fake() {
   saveProjects: async (d: unknown) => { try { localStorage.setItem("mock-projects", JSON.stringify(d)); } catch { /* quota */ } return true; },
   saveSidecar: async (p: string) => ({ ok: true, path: p + ".transcript.json" }),
   pathForFile: (f: File) => "/Users/demo/" + f.name,
-  transcribe: async function (o: { clientId?: string }) {
+  transcribe: async function (o: { clientId?: string; acceptFit?: boolean; model?: string }) {
     const jobId = "job" + Math.random().toString(36).slice(2, 7); emit({ jobId, type: "started", clientId: o.clientId });
     (async () => {
+      if (location.search.includes("fit") && !(o as { acceptFit?: boolean }).acceptFit && ["tiny", "base", "small"].includes((o as { model?: string }).model ?? "")) {
+        await wait(600); emit({ jobId, type: "fit", language: "fa", probability: 0.93, model: (o as { model: string }).model, level: "weak", suggested: "medium", have: { ...st.whisper } }); return;
+      }
       for (const [stage, ms] of [["decode", 500], ["diarize", 900], ["transcribe", location.search.includes("slow") ? 12000 : 1200], ["merge", 300]] as const) {
         for (let i = 1; i <= 4; i++) {
           emit({ jobId, type: "progress", stage, fraction: i / 4, message: "" });

@@ -68,6 +68,8 @@ export interface Project {
   meta?: RunMeta;
   /** A run that redoes only part of an existing transcript (a line or a selection): the transcript stays on screen. Not saved. */
   partial?: boolean;
+  /** Set when the engine stopped to suggest a better model for the language it heard. */
+  fitAsk?: FitAsk;
   /** The transcript covers only the first minutes, run to check the settings before the whole recording. */
   trial?: boolean;
   /** The transcript this one replaced (one step back, so "Replace" can be undone). */
@@ -75,6 +77,8 @@ export interface Project {
 }
 /** A line written down while the run is still going. Speakers are already known; the finished transcript replaces all of these. */
 export interface DraftLine { start: number; end: number; speaker: string; text: string; lang?: string }
+/** The model chosen for a recording is weak for the language heard at its start; the engine stopped before doing any work and the app asks what to do. Not saved. */
+export interface FitAsk { language: string; probability: number; model: string; level: "weak" | "poor"; suggested: string; have: Record<string, boolean> }
 export interface JobProgress { stage: string; fraction: number | null; message: string }
 export const MEDIA_EXT = /\.(mp3|wav|m4a|flac|ogg|opus|aac|mp4|mov|mkv|webm)$/i;
 export const baseName = (p: string) => p.split(/[\\/]/).pop() ?? p;

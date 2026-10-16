@@ -20,3 +20,19 @@ def test_suggestion_prefers_what_is_downloaded_then_the_smallest_good_one():
     assert suggest("small", "fa") == "medium"
     assert suggest("small", "fa", {"large-v3-turbo": True}) == "large-v3-turbo"
     assert suggest("medium", "sw") == "large-v3"
+
+
+def test_check_fit_asks_only_when_the_language_is_clear_and_the_model_weak():
+    from engine.asr import check_fit
+
+    class M:
+        def __init__(self, lang, prob): self.r = (lang, prob, [])
+        def detect_language(self, audio): return self.r
+
+    import numpy as np
+    audio = np.zeros(16000 * 40, dtype=np.float32)
+    ask = check_fit(M("fa", 0.93), audio, 16000, "small", {"small": True, "medium": False})
+    assert ask["level"] == "weak" and ask["suggested"] == "medium" and ask["language"] == "fa"
+    assert check_fit(M("fa", 0.4), audio, 16000, "small") is None      # a guess: say nothing
+    assert check_fit(M("de", 0.99), audio, 16000, "small") is None     # small is fine for German
+    assert check_fit(M("fa", 0.9), audio, 16000, "large-v3") is None   # nothing better to suggest

@@ -133,7 +133,7 @@ export default function App() {
                 waiting={queue.findIndex((q) => q.id === p.id)}
                 nowPlayingId={playingId} stopSignal={stopSignal} onOpenSettings={openSettings} models={models}
                 onPlayingChange={(pl) => setPlayingId((cur) => (pl ? p.id : cur === p.id ? null : cur))}
-                onTranscribe={(rg, line, trial) => P.transcribe(p.id, rg, line, trial)}
+                onTranscribe={(rg, line, trial, acceptFit) => P.transcribe(p.id, rg, line, trial, acceptFit)}
                 othersWaiting={P.projects.filter((x) => x.id !== p.id && !x.result && x.status === "idle").length}
                 onApplyToOthers={(o) => P.projects.filter((x) => x.id !== p.id && !x.result && x.status === "idle").forEach((x) => P.patch(x.id, { opts: { ...x.opts, ...o } }))}
                 onRemember={(o) => setOpts({ ...opts, ...o })} onCancel={() => P.cancel(p.id)} onPatch={(patch) => P.patch(p.id, patch)} />

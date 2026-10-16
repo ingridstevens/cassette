@@ -113,6 +113,27 @@ def load_model(model_name: str, device: str, backend: str = "faster", vad: bool 
     return WhisperModel(path, device=dev, compute_type=compute), dev, compute
 
 
+FIT_SECONDS = 30.0     # the start of the recording used to find its language (one pass, about a second)
+FIT_CONFIDENCE = 0.6   # below this the language is a guess (music, silence, noise), so nothing is said about the model
+
+
+def check_fit(model, audio, sr: int, model_name: str, have: dict[str, bool] | None = None) -> dict | None:
+    """Is `model_name` weak for the language heard at the start of `audio`? Returns what the app needs to ask the user
+    ({language, probability, model, level: "weak" | "poor", suggested}), or None when the model is fine, the language is unclear, or no better model exists."""
+    from .fit import fit, suggest
+
+    lang, prob, _all = model.detect_language(audio[: int(FIT_SECONDS * sr)])
+    if prob < FIT_CONFIDENCE:
+        return None
+    level = fit(model_name, lang)
+    better = suggest(model_name, lang, have)
+    if level == "good" or better is None:
+        return None
+    log(f"Language heard at the start: {lang} ({prob:.0%}). “{model_name}” is {level} for it; “{better}” would do better.")
+    return {"language": lang, "probability": round(float(prob), 3), "model": model_name, "level": level, "suggested": better,
+            "have": {m: bool(v) for m, v in (have or {}).items()}}
+
+
 MIN_TURN = 0.35   # seconds: shorter speaker turns are skipped; Whisper invents words ("Thank you.") on slivers of audio
 TURN_PAD = 0.15   # seconds of context added on each side of a turn
 

@@ -2,7 +2,7 @@ import { ChildProcess, spawn } from "node:child_process";
 import path from "node:path";
 import { app } from "electron";
 
-export type EngineEvent = { type: "progress" | "partial" | "done" | "error" | "log"; [k: string]: unknown };
+export type EngineEvent = { type: "progress" | "partial" | "fit" | "done" | "error" | "log"; [k: string]: unknown };
 
 /** Dev: run the Python project via uv. Packaged: run the PyInstaller binary from resources. */
 function engineCommand(): { cmd: string; args: string[] } {

@@ -31,6 +31,8 @@ After language detection in the first seconds, compare the detected language wit
 - File jobs: pause before transcribing and show a card: "Farsi detected. *small* is weak here. Download *medium* (1.5 GB)?" with **Download and continue** / **Continue anyway** / **Cancel**.
 - Live mode: never pause (audio is flowing); show the same suggestion as a banner, and offer to re-transcribe the saved audio with the better model after stop.
 
+Built for file jobs (live mode still to do): the engine loads the model, detects the language on the first 30 s and, only when it is at least 60% sure and the model is below that language's floor (`engine/fit.py`), emits a `fit` event and exits before speaker detection. The app shows a card; any choice starts the run again (`--accept-fit` for "continue anyway"). It only runs when the language is set to automatic. A mixed-language recording is judged by its first 30 s only.
+
 ### F5. Streaming transcript into the field — **Decided: ships first**
 Words appear in the transcript while a file is still being transcribed, instead of after the whole job. Engine emits `partial` events per finished segment (new type in `protocol.py`, handled in `electron/engine-client.ts`). Speaker labels arrive when diarization finishes; until then lines are unlabeled and visibly draft.
 

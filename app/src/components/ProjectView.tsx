@@ -1,5 +1,6 @@
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "../i18n";
+import FitCard from "./FitCard";
 import ReviewBar from "./ReviewBar";
 import StartSheet, { TRIAL_SECONDS, spanText, useStartEstimate } from "./StartSheet";
 import { acceptWord, addHighlight, fixWord, highlightOf, unsureWords, withSuggestions, ExportOpts, Options, DraftLine, JobProgress, MOD_KEY, PALETTE, Project, Result, baseName, displayName, fmt, joinWithPrevious, retext, revertLine, splitSegment } from "../types";
@@ -19,7 +20,7 @@ const STAGE_ORDER = ["decode", "diarize", "transcribe", "merge"];
 interface Props {
   project: Project; progress?: JobProgress; draft?: DraftLine[]; blocker: string; waiting: number; visible: boolean;
   nowPlayingId?: string | null; stopSignal?: number; onPlayingChange?(playing: boolean): void; onOpenSettings?(section?: string): void; models: Models;
-  onTranscribe(range: [number, number] | null, line?: { language: string; speaker: string }, trial?: boolean): void; onCancel(): void; onPatch(p: Partial<Project>): void;
+  onTranscribe(range: [number, number] | null, line?: { language: string; speaker: string }, trial?: boolean, acceptFit?: boolean): void; onCancel(): void; onPatch(p: Partial<Project>): void;
   othersWaiting?: number; onApplyToOthers?(o: Partial<Options>): void; onRemember?(o: Partial<Options>): void;
 }
 
@@ -292,6 +293,10 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
     </div>
   );
 
+  const fitCard = project.fitAsk && (
+    <FitCard ask={project.fitAsk} models={models} onDismiss={() => onPatch({ fitAsk: undefined })} onContinue={() => onTranscribe(null, undefined, undefined, true)}
+      onUse={(model) => { onPatch({ opts: { ...project.opts, model } }); onTranscribe(null); }} />
+  );
   let body: ReactNode;
   if (busy) {
     const cur = project.status === "queued" ? -1 : Math.max(0, STAGE_ORDER.indexOf(stage ?? "decode"));
@@ -338,7 +343,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
       </div></div>
     );
   } else if (!result) {
-    body = failed ? <div className="pv-center"><div className="pv-stack">{errorCard}</div></div> : (
+    body = failed ? <div className="pv-center"><div className="pv-stack">{errorCard}</div></div> : fitCard ? <div className="pv-center"><div className="pv-stack">{fitCard}</div></div> : (
       <div className="pv-center"><div className="pv-stack">
         <StartSheet project={project} duration={duration} eff={effOpts} info={startInfo} models={models} set={(p) => onPatch({ opts: { ...project.opts, ...p } })}
           canStart={canTranscribe} blocker={blocker} othersWaiting={othersWaiting}
@@ -350,6 +355,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
     body = (
       <div className="pv-scroll">
         {failed && errorCard}
+        {fitCard}
         {project.previous && !busy && (
           <div className="pv-moved pv-restore" role="status">
             <span>{t("This transcript replaced an earlier one.")}</span>

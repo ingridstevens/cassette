@@ -138,6 +138,7 @@ app.whenReady().then(() => {
     if (opts.vad) a.push("--vad");
     if (opts.prompt) a.push("--prompt", String(opts.prompt));
     if (opts.noDiarize) a.push("--no-diarize");
+    if (opts.acceptFit) a.push("--accept-fit");
     send("engine-event", { jobId, type: "started", clientId: opts.clientId });
     runEngine(jobId, a, baseEnv(), (e) => send("engine-event", { jobId, ...e })).then((r) => { if (r?.type === "error") send("engine-event", { jobId, ...r }); });
     return jobId;

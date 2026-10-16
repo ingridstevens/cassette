@@ -22,6 +22,7 @@ def _fake_engine(monkeypatch):
     words = [{"start": 0.1, "end": 0.5, "word": " Hallo"}]
     monkeypatch.setattr(asr, "transcribe", lambda *a, **k: (words, "de", {"device": "cpu", "languageProb": 0.97}))
     monkeypatch.setattr(asr, "load_model", lambda *a, **k: (object(), "cpu", "int8"))
+    monkeypatch.setattr(asr, "check_fit", lambda *a, **k: None)
     monkeypatch.setattr(asr, "probe_languages", lambda *a, **k: {"de": 9.0})
 
 
@@ -86,3 +87,19 @@ def test_probe_and_is_mixed_thresholds():
     audio = np.zeros(16000 * 20, dtype=np.float32)
     got = probe_languages(model, audio, 16000, [(0, 4, "A"), (5, 8, "B"), (10, 13, "C")], 0.0)
     assert got == {"fr": 4.0, "en": 3.0}  # the 30%-sure detection is ignored
+
+
+def test_transcribe_stops_with_a_fit_event_before_doing_the_slow_work(monkeypatch, capsys):
+    from engine import asr, diarize
+
+    _fake_engine(monkeypatch)
+    monkeypatch.setattr(asr, "check_fit", lambda *a, **k: {"language": "fa", "probability": 0.9, "model": "small", "level": "weak", "suggested": "medium", "have": {}})
+    monkeypatch.setattr(diarize, "diarize", lambda *a, **k: (_ for _ in ()).throw(AssertionError("must not run")))
+    m.cmd_transcribe(_args())
+    events = [json.loads(line) for line in capsys.readouterr().out.splitlines()]
+    assert events[-1]["type"] == "fit" and events[-1]["suggested"] == "medium"
+    assert not any(e["type"] == "done" for e in events)
+    capsys.readouterr()
+    _fake_engine(monkeypatch)  # speaker detection works again
+    m.cmd_transcribe(_args(accept_fit=True))  # "continue anyway" runs the whole job
+    assert _done(capsys)["language"] == "de"
