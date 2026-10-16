@@ -1,5 +1,6 @@
 // Fails if a t("…") string in src has no German, French and Spanish translation, or a dictionary entry has mismatched {placeholders}.
-import { readdirSync, readFileSync, statSync } from "node:fs";
+import { mkdtempSync, readdirSync, readFileSync, statSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { build } from "esbuild";
@@ -12,8 +13,9 @@ for (const f of walk("src")) {
 }
 const dir = "src/i18n/dict";
 const dict = { de: {}, fr: {}, es: {} };
+const tmp = mkdtempSync(join(tmpdir(), "i18n-")); // a real temp folder on every OS (there is no /tmp on Windows)
 for (const f of readdirSync(dir).filter((x) => x.endsWith(".ts"))) {
-  const out = `${process.env.TMPDIR || "/tmp"}/i18n-${f}.mjs`;
+  const out = join(tmp, `${f}.mjs`);
   await build({ entryPoints: [join(dir, f)], outfile: out, bundle: true, format: "esm", logLevel: "silent" });
   const mod = (await import(pathToFileURL(out).href + "?" + Date.now())).default;
   for (const l of ["de", "fr", "es"]) Object.assign(dict[l], mod[l] ?? {});
