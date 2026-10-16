@@ -21,7 +21,7 @@
 .pv-scroll { flex: 1; min-height: 0; overflow-y: auto; padding: 6px 28px 150px 34px; display: flex; flex-direction: column; gap: 2px; }
 .pv-turn { position: relative; display: flex; flex-direction: column; padding: 14px 20px; border-radius: 18px; max-width: 700px; flex: none; }
 .pv-turn.now { background: color-mix(in srgb, var(--surface) 80%, transparent); box-shadow: 0 1px 2px rgba(60, 30, 110, .06), 0 16px 34px -22px rgba(100, 50, 160, .45); }
-.pv-turn.found { box-shadow: 0 0 0 2px #e8467c; }
+.pv-turn.found { box-shadow: 0 0 0 2px var(--hot); }
 .pv-who { display: flex; align-items: center; gap: 6px; }
 .pv-who-btn { display: flex; align-items: center; gap: 8px; border: 0; background: none; font: 650 13px var(--font-ui); color: var(--ink); padding: 3px 8px 3px 4px; border-radius: 999px; cursor: pointer; }
 .pv-who-btn:hover { background: rgba(124, 92, 255, .12); }
@@ -116,7 +116,7 @@
 /* panel feedback: clearer speaker labels, copy-quote action */
 .pv-who-btn { font-size: 14px; }
 .pv-turn { border-left: 3px solid transparent; }
-.pv-turn.now { border-left-color: #e8467c; }
+.pv-turn.now { border-left-color: var(--hot); }
 .pv-copy { margin-left: auto; border: 0; background: none; font: 600 12.5px var(--font-ui); color: var(--ink2); padding: 3px 10px; border-radius: 999px; cursor: pointer; opacity: 0; }
 .pv-turn:hover .pv-copy, .pv-copy:focus-visible { opacity: 1; }
 .pv-copy:hover { background: rgba(124, 92, 255, .12); color: var(--ink); }
@@ -252,8 +252,8 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .pv-radios { margin: 0; padding: 0; border: 0; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .pv-radios legend { padding: 0; margin-bottom: 6px; font-size: 13px; font-weight: 650; color: var(--ink2); }
 .pv-radio, .pv-check { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 14px; background: color-mix(in srgb, var(--surface) 72%, transparent); box-shadow: inset 0 0 0 1px var(--line); cursor: pointer; }
-.pv-radio:has(input:checked), .pv-check:has(input:checked) { background: var(--surface); box-shadow: inset 0 0 0 2px var(--accent-solid, #e8467c); }
-.pv-radio input, .pv-check input { margin-top: 3px; width: 18px; height: 18px; flex: none; accent-color: #d63a74; }
+.pv-radio:has(input:checked), .pv-check:has(input:checked) { background: var(--surface); box-shadow: inset 0 0 0 2px var(--accent-solid, var(--hot)); }
+.pv-radio input, .pv-check input { margin-top: 3px; width: 18px; height: 18px; flex: none; accent-color: var(--hot-d); }
 .pv-radio > span, .pv-check > span { display: flex; flex-direction: column; gap: 3px; min-width: 0; font-size: 14px; }
 .pv-radio small, .pv-check small { color: var(--ink2); font-size: 12.5px; }
 .pv-radio select { margin-top: 4px; height: 36px; max-width: 100%; }
@@ -392,7 +392,7 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .pv-row-body { padding: 0 10px 12px; display: flex; flex-direction: column; gap: 6px; }
 .pv-row-body .pv-radios { gap: 4px; }
 .pv-rows .pv-radio, .pv-rows .pv-check { background: none; box-shadow: none; padding: 8px 10px; border-radius: 10px; }
-.pv-rows .pv-radio:has(input:checked), .pv-rows .pv-check:has(input:checked) { background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--accent-solid, #e8467c); }
+.pv-rows .pv-radio:has(input:checked), .pv-rows .pv-check:has(input:checked) { background: var(--surface); box-shadow: inset 0 0 0 1.5px var(--accent-solid, var(--hot)); }
 .pv-rows .pv-radio .btn.small:not(.quiet) { background: none; box-shadow: none; padding: 0 4px; color: var(--violet-ink); }
 .pv-rows .pv-more { padding: 2px 10px; }
 .pv-rows .field { padding: 2px 10px; }

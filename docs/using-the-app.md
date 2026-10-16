@@ -195,11 +195,13 @@ Open with the **Settings** row, or `⌘,` / `Ctrl+,`.
   someone else downloaded (see [Getting started](getting-started.md)).
 - **Saving:** optionally save a backup file (`name.transcript.json`) next to each recording after transcribing. Your
   audio is never changed or moved.
-- **Display:** a slider from *Fairytale sunset* to *Boring corporate* (four stops). Even the boring looks keep
-  speaker colours that are clearly different from each other. At the last stop an extra card of joke options appears;
-  they do nothing, and it says so. **Light or dark** works with every look: *Match my computer* (the default, follows
-  your system as it switches), *Light* or *Dark*. Finished steps (the ticks while transcribing and in setup) use a quiet
-  grey in every look, so the step that is running stands out.
+- **Display:** two looks with the same layout and controls, differing only in colour: *Fairytale sunset* (soft peach,
+  rose and lilac) and *Clean* (flat, black and white with one accent). **Light or dark** works with both: *Match my
+  computer* (the default, follows your system as it switches), *Light* or *Dark*. **Contrast** has *Standard* and
+  *High contrast* (stronger colours and heavier borders), also in both looks. Speaker colours stay clearly different from
+  each other in every combination. Finished steps (the ticks while transcribing and in setup) use a quiet grey in every
+  look, so the step that is running stands out. Settings saved before the two looks carry over: the first two old stops
+  become *Fairytale sunset*, the last two become *Clean*.
 - **Language:** the language of the app itself: *Match my computer* (the default), English, Deutsch, Français or Español. Word,
   minutes and other exports follow the app language for the words the app writes itself (headings, dates, footer). The translations
   are machine-assisted and not yet reviewed by native speakers; where they read oddly, the English text is the reference. The
