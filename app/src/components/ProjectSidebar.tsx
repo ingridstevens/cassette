@@ -5,7 +5,7 @@ import { IS_MAC, JobProgress, MOD_KEY, Project, fmt } from "../types";
 
 interface Props {
   projects: Project[]; activeId: string | null; progress: Record<string, JobProgress>; blocker: string;
-  onSelect(id: string): void; onAdd(): void; onRemove(id: string): void; onRename(id: string, name: string): void; onTranscribeAll(): void; onExportAll(): void; doneCount: number;
+  onSelect(id: string): void; onAdd(): void; onRecord(): void; onRemove(id: string): void; onRename(id: string, name: string): void; onTranscribeAll(): void; onExportAll(): void; doneCount: number;
   onOpenSettings(): void;
   activity?: React.ReactNode;
   playingId?: string | null;
@@ -13,7 +13,7 @@ interface Props {
 
 const DOT: Record<Project["status"], string> = { idle: "idle", queued: "wait", running: "run", done: "done", error: "err" };
 
-export default function ProjectSidebar({ projects, activeId, progress, blocker, onSelect, onAdd, onRemove, onRename, onTranscribeAll, onExportAll, doneCount, onOpenSettings, activity, playingId }: Props) {
+export default function ProjectSidebar({ projects, activeId, progress, blocker, onSelect, onAdd, onRecord, onRemove, onRename, onTranscribeAll, onExportAll, doneCount, onOpenSettings, activity, playingId }: Props) {
   const t = useT();
   const langName = (c: string) => (c === "de" ? t("German") : c === "en" ? t("English") : c === "fr" ? t("French") : c === "es" ? t("Spanish") : c.toUpperCase());
   const [editing, setEditing] = useState<string | null>(null);
@@ -23,6 +23,9 @@ export default function ProjectSidebar({ projects, activeId, progress, blocker, 
     <nav className="side" aria-label={t("Projects")}>
       <button type="button" className="btn sun add-btn" onClick={onAdd}>
         <svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{t("Add recordings")}
+      </button>
+      <button type="button" className="btn add-btn rec-btn" onClick={onRecord}>
+        <svg className="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" /></svg>{t("Record")}
       </button>
       <div className="group" id="proj-group">{t("Projects")}</div>
       <div className="plist" role="list" aria-labelledby="proj-group">

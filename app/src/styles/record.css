@@ -1,0 +1,15 @@
+.rec-page { max-width: 720px; margin: 0 auto; padding: 24px 20px 40px; display: flex; flex-direction: column; gap: 16px; }
+.rec-head { display: flex; align-items: center; gap: 14px; }
+.rec-head h1 { margin: 0; font-size: 26px; }
+.rec-card, .rec-text { padding: 22px 26px; border-radius: 26px; }
+.rec-lead { margin: 0 0 18px; color: var(--ink2); }
+.rec-controls { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.rec-time { font-size: 22px; font-variant-numeric: tabular-nums; min-width: 64px; }
+.rec-meter { flex: 1; min-width: 120px; height: 8px; border-radius: 8px; background: rgba(120, 90, 180, .18); overflow: hidden; }
+.rec-meter i { display: block; height: 100%; background: var(--sun); border-radius: 8px; transition: width .08s; }
+.btn.rec-stop { background: #c0334d; color: #fff; }
+.rec-device { margin-top: 14px; max-width: 360px; }
+.rec-using { margin: 14px 0 0; }
+.rec-text h2 { margin: 0 0 8px; font-size: 14px; color: var(--ink2); font-weight: 600; }
+.rec-words { margin: 0 0 8px; font-size: 17px; line-height: 1.6; max-height: 340px; overflow-y: auto; white-space: pre-wrap; }
+.rec-tent { color: var(--ink2); opacity: .75; }

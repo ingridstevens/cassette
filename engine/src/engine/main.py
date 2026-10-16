@@ -92,6 +92,32 @@ def cmd_transcribe(a) -> None:
     emit("done", language=lang, duration=duration + offset, speakers=speakers, segments=segments, meta=meta)
 
 
+def cmd_live(a) -> None:
+    """Live transcription of the microphone: raw 16 kHz mono 16-bit audio on stdin, `live` events on stdout until stdin closes."""
+    from . import models
+    from .asr import check_fit, load_model
+    from .live import SAMPLE_RATE, run
+
+    models.use_offline_cache()
+    model, _dev, _compute = load_model(a.model, a.device, a.backend)
+    log("Live transcription is ready. Nothing leaves this computer.")
+    emit("ready")
+
+    def on_first_audio(m, audio) -> None:  # once: is this model weak for what is being said? The final run after stopping asks about it again.
+        if a.language == "auto":
+            have = {n: models._cached(r) for n, r in models.WHISPER_MODELS.items()}
+            ask = check_fit(m, audio, SAMPLE_RATE, a.model, have)
+            if ask:
+                emit("fit", **ask)
+
+    def emit_live(confirmed: list[dict], tentative: list[dict], seconds: float) -> None:
+        emit("live", confirmed=[{"start": w["start"], "end": w["end"], "word": w["word"]} for w in confirmed],
+             tentative="".join(w["word"] for w in tentative), seconds=round(seconds, 1))
+
+    run(model, SAMPLE_RATE, None if a.language == "auto" else a.language, a.step, sys.stdin.buffer, emit_live, on_first_audio)
+    emit("done")
+
+
 def cmd_translate(a) -> None:
     """English translation of one stretch of a recording (for the "Translate to English" action on a line)."""
     from .asr import load_model, translate_clip
@@ -236,6 +262,14 @@ def build_parser() -> argparse.ArgumentParser:
     t.add_argument("--accept-fit", action="store_true", help="do not stop to suggest a better model when this one is weak for the language heard at the start")
     t.set_defaults(fn=cmd_transcribe)
 
+    lv = sub.add_parser("live")
+    lv.add_argument("--model", default="small")
+    lv.add_argument("--language", default="auto", choices=["auto", *WHISPER_LANGUAGES])
+    lv.add_argument("--device", default="auto", choices=["auto", "cpu", "cuda", "mps"])
+    lv.add_argument("--backend", default="auto", choices=["auto", "faster", "mlx"])
+    lv.add_argument("--step", type=float, default=2.0, help="seconds of new audio between updates")
+    lv.set_defaults(fn=cmd_live)
+
     tr = sub.add_parser("translate")
     tr.add_argument("input")
     tr.add_argument("--start", type=float, required=True)
@@ -295,7 +329,7 @@ def configure_hub(cmd: str) -> None:
     os.environ["HF_HUB_CACHE"] = str(models_dir())
     os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"  # unsupported ops fall back to CPU instead of crashing
     os.environ["PYANNOTE_CACHE"] = str(models_dir())  # pyannote loads its sub-models from here, not HF_HUB_CACHE
-    if cmd in ("transcribe", "highlights", "summarize"):  # inference never touches the network
+    if cmd in ("transcribe", "live", "highlights", "summarize"):  # inference never touches the network
         os.environ["HF_HUB_OFFLINE"] = "1"
         os.environ["TRANSFORMERS_OFFLINE"] = "1"
         # pyannote 3.x checkpoints predate torch>=2.6 weights_only loading; they are the official, hash-pinned downloads

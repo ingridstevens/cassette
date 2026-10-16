@@ -71,6 +71,23 @@ function fake() {
     })();
     return jobId;
   },
+  // Live recording: no microphone in a browser tab, so words arrive on a timer and Stop saves nothing real
+  liveStart: async () => {
+    const jobId = "live" + Math.random().toString(36).slice(2, 7);
+    const say = " Guten Tag und willkommen zu unserer Sendung heute sprechen wir über Radio und Sprachen in Berlin".split(" ").slice(1);
+    let i = 0, sec = 0;
+    setTimeout(() => emit({ jobId, source: "live", type: "ready" }), 800);
+    const tick = setInterval(() => {
+      if (i >= say.length) { clearInterval(tick); return; }
+      sec += 2; const w = say.slice(i, i + 2).map((x) => " " + x); i += 2;
+      emit({ jobId, source: "live", type: "live", confirmed: w.map((word) => ({ word, start: 0, end: 0 })), tentative: " " + (say[i] ?? ""), seconds: sec });
+    }, 1500);
+    (window as unknown as { __liveTick?: number }).__liveTick = tick as unknown as number;
+    return { ok: true, jobId };
+  },
+  mockMic: true,
+  liveAudio: () => {},
+  liveStop: async () => { clearInterval((window as unknown as { __liveTick?: number }).__liveTick); return { ok: true, path: "/Users/demo/Recording 2026-10-16 14.05.wav", seconds: 14, name: "Recording 2026-10-16 14.05" }; },
   cancel: async () => {},
   powerState: async () => ({ onBattery: location.search.includes("battery") }),
   importModels: async () => { await wait(400); return { type: "done", imported: ["pyannote/speaker-diarization-3.1"] }; },

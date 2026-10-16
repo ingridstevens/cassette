@@ -22,6 +22,7 @@ export function runEngine(
   const { cmd, args } = engineCommand();
   const child = spawn(cmd, [...args, ...engineArgs], { env: { ...process.env, ...env, PYTHONUNBUFFERED: "1" } });
   jobs.set(jobId, child);
+  child.stdin.on("error", () => { /* the engine ended before the last audio was sent */ });
   let buf = "", last: EngineEvent | null = null, stderr = "";
   child.stdout.on("data", (chunk) => {
     buf += chunk.toString();
@@ -52,4 +53,8 @@ export function runEngine(
   });
 }
 
+/** Send raw bytes to a running job's standard input (the live microphone feed). */
+export function writeToJob(jobId: string, data: Uint8Array): boolean { const s = jobs.get(jobId)?.stdin; return !!s && !s.destroyed && s.write(data); }
+/** Tell a running job its input has ended. It finishes what it has and exits. */
+export function endJobInput(jobId: string) { jobs.get(jobId)?.stdin?.end(); }
 export function cancelJob(jobId: string) { jobs.get(jobId)?.kill(); }
