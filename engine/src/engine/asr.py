@@ -113,7 +113,22 @@ MIN_TURN = 0.35   # seconds: shorter speaker turns are skipped; Whisper invents 
 TURN_PAD = 0.15   # seconds of context added on each side of a turn
 
 
-def transcribe_turns(model, audio, sr: int, turns, vad: bool, prompt: str | None, offset: float, verbatim: bool = False):
+def load_detector(detect_name: str, model_name: str, device: str, model):
+    """The model that identifies languages: a small Whisper size on the CPU engine, so a big transcription model is not
+    spent on a few letters of output. Returns `model` itself when "same" is chosen, the size matches, or that size is not downloaded."""
+    from . import models
+
+    if detect_name in ("same", model_name) or detect_name not in models.WHISPER_MODELS:
+        return model
+    if not models._cached(models.WHISPER_MODELS[detect_name]):
+        log(f"Language detection: {detect_name} is not downloaded, using {model_name} instead")
+        return model
+    detector = load_model(detect_name, device, "faster")[0]
+    log(f"Language detection uses {detect_name}")
+    return detector
+
+
+def transcribe_turns(model, audio, sr: int, turns, vad: bool, prompt: str | None, offset: float, verbatim: bool = False, detector=None):
     """Mixed-language recordings: transcribe every speaker turn on its own, detecting its language each time.
     `turns` are (start, end, speaker) in file time; `audio` starts at `offset`.
     Returns (words, dominant_language, {"languageProb": ..., "languages": {code: seconds}}). Every word carries `lang`."""
@@ -124,7 +139,7 @@ def transcribe_turns(model, audio, sr: int, turns, vad: bool, prompt: str | None
     for n, (a, b, _spk) in enumerate(todo):
         lo, hi = max(0.0, a - offset - TURN_PAD), min(total, b - offset + TURN_PAD)
         clip = audio[int(lo * sr): int(hi * sr)]
-        lang = model.detect_language(clip)[0] if verbatim else None
+        lang = (detector or model).detect_language(clip)[0] if verbatim else None
         segments, info = model.transcribe(clip, language=lang, word_timestamps=True, vad_filter=vad,
                                           initial_prompt=build_prompt(prompt, verbatim, lang), condition_on_previous_text=False)
         got = 0
