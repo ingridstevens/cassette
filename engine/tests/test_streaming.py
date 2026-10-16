@@ -44,7 +44,7 @@ def test_transcribe_sends_partial_lines_with_speakers(monkeypatch, capsys):
 
     monkeypatch.setattr(asr, "transcribe", fake)
     args = types.SimpleNamespace(input="x.wav", mixed_languages="off", translate=False, verbatim=False, backend="faster", start=None, end=None, no_diarize=False, device="auto",
-                                 num_speakers=None, min_speakers=None, max_speakers=None, language="de", vad=False, prompt=None, model="small")
+                                 num_speakers=None, min_speakers=None, max_speakers=None, language="de", vad=False, prompt=None, model="small", detect_model="same")
     m.cmd_transcribe(args)
     events = [json.loads(line) for line in capsys.readouterr().out.splitlines()]
     p = [e for e in events if e["type"] == "partial"]

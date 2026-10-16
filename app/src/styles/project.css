@@ -435,3 +435,19 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .pv-fit { padding: 22px 26px; border-radius: 26px; text-align: left; }
 .pv-fit h2 { margin: 0 0 8px; font-size: 20px; }
 .pv-fit p { margin: 0 0 14px; color: var(--ink2); }
+
+/* Find with no hits: say why, and offer the closest words in the transcript. */
+.pv-nohit { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 24px 10px; font-size: 13px; line-height: 1.5; opacity: .85; }
+.pv-nohit-sug { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+
+/* Find options and the Replace all preview. */
+.pv-opts { display: inline-flex; gap: 4px; }
+.pv-opts .btn.on { background: color-mix(in srgb, var(--tint) 18%, transparent); }
+.pv-rep-preview { max-height: 220px; overflow: auto; font-size: 13px; }
+.pv-rep-preview ul { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.pv-rep-preview li { display: flex; gap: 10px; align-items: baseline; }
+.pv-rep-time { font-variant-numeric: tabular-nums; opacity: .6; flex: none; }
+.pv-rep-line { flex: 1; min-width: 0; }
+.pv-rep-preview del { text-decoration: line-through; opacity: .65; }
+.pv-rep-preview ins { text-decoration: none; font-weight: 600; background: color-mix(in srgb, var(--tint) 18%, transparent); border-radius: 3px; padding: 0 2px; margin-left: 2px; }
+.pv-rep-flag { flex: none; font-size: 12px; padding: 1px 8px; border-radius: 999px; background: rgba(255, 196, 60, .45); }

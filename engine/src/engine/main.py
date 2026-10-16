@@ -9,7 +9,7 @@ import traceback
 from pathlib import Path
 
 from . import export as ex
-from .models import WHISPER_LANGUAGES
+from .models import WHISPER_LANGUAGES, WHISPER_MODELS
 from .protocol import emit, log, partial, progress
 
 
@@ -30,16 +30,17 @@ def cmd_transcribe(a) -> None:
         data, sr = load_wav(wav)
         offset, duration = a.start or 0.0, len(data) / sr
         log(f"Decoded to 16 kHz mono, {duration:.1f}s. Nothing leaves this computer.")
-        from .asr import check_fit, is_mixed, load_model, probe_languages, transcribe_turns, translate_clip
+        from .asr import check_fit, is_mixed, load_detector, load_model, probe_languages, transcribe_turns, translate_clip
 
         t0 = time.time()
         loaded = load_model(a.model, a.device, a.backend, a.vad)
         model, dev, _compute = loaded
         seconds_load = time.time() - t0
+        detector = load_detector(a.detect_model, a.model, a.device, model)
         if a.language == "auto" and not getattr(a, "accept_fit", False):
             # Before the slow parts: if this model is weak for what is spoken, stop here and let the app ask (the run starts again from scratch)
             have = {n: models._cached(r) for n, r in models.WHISPER_MODELS.items()}
-            ask = check_fit(model, data, sr, a.model, have)
+            ask = check_fit(detector, data, sr, a.model, have)
             if ask:
                 emit("fit", **ask)
                 return
@@ -57,7 +58,7 @@ def cmd_transcribe(a) -> None:
             if a.mixed_languages == "on":
                 mixed = True
             else:
-                found = probe_languages(model, data, sr, turns, offset)
+                found = probe_languages(detector, data, sr, turns, offset)
                 mixed = is_mixed(found)
                 log("Checked the language of each speaker: " + (", ".join(f"{k} {v:.0f}s" for k, v in found.items()) or "no confident result")
                     + (" · several languages found, switching to per-speaker detection" if mixed else " · one language, normal mode"))
@@ -67,7 +68,7 @@ def cmd_transcribe(a) -> None:
 
         if mixed:
             log("Detecting the language separately for each speaker turn")
-            words, lang, asr_info = transcribe_turns(model, data, sr, turns, a.vad, a.prompt, offset, a.verbatim, on_words)
+            words, lang, asr_info = transcribe_turns(model, data, sr, turns, a.vad, a.prompt, offset, a.verbatim, on_words, detector)
             asr_info["device"] = dev
         else:
             words, lang, asr_info = transcribe(data, a.model, None if a.language == "auto" else a.language,
@@ -265,6 +266,8 @@ def build_parser() -> argparse.ArgumentParser:
     t.add_argument("input")
     t.add_argument("--model", default="small")
     t.add_argument("--language", default="auto", choices=["auto", *WHISPER_LANGUAGES])
+    t.add_argument("--detect-model", choices=[*WHISPER_MODELS, "same"], default="tiny",
+                   help="Whisper size that only finds out which language is spoken (default tiny: fast, and the answer is a few letters). 'same' uses --model. Falls back to --model when not downloaded.")
     t.add_argument("--num-speakers", type=int)
     t.add_argument("--min-speakers", type=int)
     t.add_argument("--max-speakers", type=int)

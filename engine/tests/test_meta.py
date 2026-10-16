@@ -9,7 +9,7 @@ from engine import main as m
 
 def _args(**kw):
     base = dict(input="x.wav", mixed_languages="auto", translate=False, verbatim=False, backend="faster", start=None, end=None, no_diarize=False, device="auto", num_speakers=None, min_speakers=None,
-                max_speakers=None, language="auto", vad=False, prompt=None, model="small")
+                max_speakers=None, language="auto", vad=False, prompt=None, model="small", detect_model="same")
     return types.SimpleNamespace(**{**base, **kw})
 
 
@@ -87,6 +87,25 @@ def test_probe_and_is_mixed_thresholds():
     audio = np.zeros(16000 * 20, dtype=np.float32)
     got = probe_languages(model, audio, 16000, [(0, 4, "A"), (5, 8, "B"), (10, 13, "C")], 0.0)
     assert got == {"fr": 4.0, "en": 3.0}  # the 30%-sure detection is ignored
+
+
+def test_detector_falls_back_to_the_transcription_model(monkeypatch):
+    from engine import asr, models
+
+    big = object()
+    assert asr.load_detector("same", "small", "cpu", big) is big
+    assert asr.load_detector("small", "small", "cpu", big) is big
+    monkeypatch.setattr(models, "_cached", lambda repo: False)  # tiny not downloaded
+    assert asr.load_detector("tiny", "small", "cpu", big) is big
+
+
+def test_detector_loads_the_small_size_when_downloaded(monkeypatch):
+    from engine import asr, models
+
+    tiny = object()
+    monkeypatch.setattr(models, "_cached", lambda repo: True)
+    monkeypatch.setattr(asr, "load_model", lambda name, dev, backend="faster", vad=False: (tiny, "cpu", "int8"))
+    assert asr.load_detector("tiny", "large-v3", "cpu", object()) is tiny
 
 
 def test_transcribe_stops_with_a_fit_event_before_doing_the_slow_work(monkeypatch, capsys):

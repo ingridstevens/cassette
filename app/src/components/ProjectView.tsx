@@ -3,7 +3,7 @@ import { useT } from "../i18n";
 import FitCard from "./FitCard";
 import ReviewBar from "./ReviewBar";
 import StartSheet, { TRIAL_SECONDS, spanText, useStartEstimate } from "./StartSheet";
-import { acceptWord, addHighlight, fixWord, highlightOf, unsureWords, withSuggestions, ExportOpts, Options, DraftLine, JobProgress, MOD_KEY, PALETTE, Project, Result, baseName, displayName, fmt, joinWithPrevious, retext, revertLine, splitSegment } from "../types";
+import { acceptWord, addHighlight, fixWord, highlightOf, unsureWords, withSuggestions, ExportOpts, Options, DraftLine, JobProgress, MOD_KEY, PALETTE, Project, Result, baseName, displayName, fmt, isUnsure, joinWithPrevious, retext, revertLine, splitSegment } from "../types";
 import "../styles/project.css";
 import ExportMenu from "./ExportMenu";
 import { langName } from "../languages";
@@ -12,6 +12,7 @@ import HighlightsTab, { LlmJob } from "./HighlightsTab";
 import Inspector, { Moved, Tab, globalOpts, liveSpeakers } from "./Inspector";
 import { Models } from "./useModels";
 import Transcript from "./Transcript";
+import { FIND_DEFAULTS, FindOpts, matcher, nearMisses } from "../find";
 import Waveform, { WaveformHandle } from "./Waveform";
 
 const typing = (t: EventTarget | null) => t instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName);
@@ -154,9 +155,13 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
   const busy = running && !partial;
   const failed = project.status === "error";
   const showResult = !!result && !busy;
-  const q = query.trim().toLowerCase();
-  const matches = useMemo(() => (result && q ? result.segments.flatMap((s, i) => (s.text.toLowerCase().includes(q) ? [i] : [])) : []), [result, q]);
-  useEffect(() => setMi(0), [q]);
+  const [findOpts, setFindOpts] = useState<FindOpts>(FIND_DEFAULTS);
+  const fm = useMemo(() => matcher(query, findOpts), [query, findOpts]);
+  const q = fm.q;
+  const matches = useMemo(() => (result && q ? result.segments.flatMap((s, i) => (fm.test(s.text) ? [i] : [])) : []), [result, q, fm]);
+  /** With no hits, words that nearly fit what was typed, so a search for "deutsche" can offer "Deutsch". */
+  const nearby = useMemo(() => (result && q && !matches.length ? nearMisses(result.segments.map((s) => s.text), query.trim()) : []), [result, q, matches, query]);
+  useEffect(() => setMi(0), [q, findOpts]);
   const [replaceOpen, setReplaceOpen] = useState(false);
   const [replaceWith, setReplaceWith] = useState("");
   const panelFind = useRef<HTMLInputElement>(null);
@@ -164,15 +169,23 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
   useEffect(() => { if (replaceOpen) (query.trim() ? panelWith : panelFind).current?.focus(); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [replaceOpen]);
   /** How many times the text occurs, over all matching lines (a line can hold it more than once). */
-  const occurrences = useMemo(() => (result && q ? matches.reduce((n, i) => n + result.segments[i].text.toLowerCase().split(q).length - 1, 0) : 0), [result, q, matches]);
+  const occurrences = useMemo(() => (result && q ? matches.reduce((n, i) => n + fm.count(result.segments[i].text), 0) : 0), [result, q, matches, fm]);
+  /** Replace all asks for one more click and shows every line it would change. */
+  const [confirmAll, setConfirmAll] = useState(false);
+  useEffect(() => setConfirmAll(false), [q, findOpts, replaceWith, replaceOpen]);
   /** Swap every occurrence of the search text in the given lines (case is ignored, the replacement is taken literally). Edited lines can be put back like any other edit. */
   const replaceIn = (lines: number[]) => {
     if (!result || !q || !lines.length) return;
-    const re = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "gi");
     const todo = new Set(lines);
     let n = 0;
-    const segments = result.segments.map((s, k) => (todo.has(k) ? retext(s, s.text.replace(re, () => { n++; return replaceWith; })) : s));
+    const segments = result.segments.map((s, k) => {
+      if (!todo.has(k)) return s;
+      const r = fm.replace(s.text, replaceWith);
+      n += r.n;
+      return retext(s, r.text);
+    });
     onPatch({ result: { ...result, segments } });
+    setConfirmAll(false);
     flash(n === 1 ? t("Replaced 1 time") : t("Replaced {count} times", { count: n }));
   };
   const step = (d: number) => matches.length && setMi((mi + d + matches.length) % matches.length);
@@ -375,7 +388,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
             <button type="button" className="btn quiet small" onClick={onCancel}>{t("Stop")}</button>
           </div>
         )}
-        <Transcript result={result} names={names} time={time} query={query} highlights={highlights} onHighlight={(i, a, b) => { const h = highlightOf(result.segments[i], a, b); if (h) patchResult((x) => ({ ...x, highlights: addHighlight(x.highlights ?? [], h) })); }} matchSeg={matches[mi] ?? -1} onSeek={(t) => player.current?.seek(t)} onReassign={reassign}
+        <Transcript result={result} names={names} time={time} query={query} findOpts={findOpts} highlights={highlights} onHighlight={(i, a, b) => { const h = highlightOf(result.segments[i], a, b); if (h) patchResult((x) => ({ ...x, highlights: addHighlight(x.highlights ?? [], h) })); }} matchSeg={matches[mi] ?? -1} onSeek={(t) => player.current?.seek(t)} onReassign={reassign}
           onEdit={(i, text) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => (k === i ? retext(s, text) : s)) } })}
           canRetranscribe={canTranscribe} reviewAt={reviewAt} translatingIndex={translating} playing={playing} onPause={() => player.current?.pause()}
           onTranslate={async (i, remove) => {
@@ -423,6 +436,23 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
           )}
         </header>
 
+        {showResult && q && (
+          <div className="pv-nohit">
+            <span className="pv-opts" role="group" aria-label={t("Find options")}>
+              <button type="button" className={"btn quiet small" + (findOpts.matchCase ? " on" : "")} aria-pressed={findOpts.matchCase} onClick={() => setFindOpts((o) => ({ ...o, matchCase: !o.matchCase }))}>{t("Match case")}</button>
+              <button type="button" className={"btn quiet small" + (findOpts.wholeWord ? " on" : "")} aria-pressed={findOpts.wholeWord} onClick={() => setFindOpts((o) => ({ ...o, wholeWord: !o.wholeWord }))}>{t("Whole word")}</button>
+            </span>
+            {!matches.length && (
+              <span role="status">{t("Nothing found for “{query}”.", { query: query.trim() })} {findOpts.matchCase || findOpts.wholeWord ? t("Match case or Whole word is on. Turn it off to find more.") : t("Capitals and accents are ignored, but the whole text has to appear. Try a shorter word.")}</span>
+            )}
+            {nearby.length > 0 && (
+              <span className="pv-nohit-sug">{t("Closest:")}{" "}
+                {nearby.map((n) => <button key={n.word} type="button" className="btn quiet small" onClick={() => { setQuery(n.word); findBox.current?.focus(); }}>{n.word} ({n.count})</button>)}
+              </span>
+            )}
+          </div>
+        )}
+
         {showResult && replaceOpen && (
           <div className="pv-replace" id="pv-replace" role="group" aria-label={t("Replace in transcript")}
             onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); setReplaceOpen(false); } }}>
@@ -445,12 +475,40 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
                 </span>
               )}
             </div>
+            {confirmAll && result && (
+              <div className="pv-rep-preview">
+                <p className="note">{t("These lines will change. Check them, then confirm.")}</p>
+                <ul>
+                  {matches.slice(0, 40).map((i) => {
+                    const seg = result.segments[i];
+                    const unsure = seg.words.some((w) => isUnsure(w) && fm.test(w.word));
+                    return (
+                      <li key={i}>
+                        <span className="pv-rep-time">{fmt(seg.start)}</span>
+                        <span className="pv-rep-line">{fm.parts(seg.text).map((p, k) => p.hit ? <span key={k}><del>{p.text}</del><ins>{replaceWith}</ins></span> : <span key={k}>{p.text}</span>)}</span>
+                        {unsure && <span className="pv-rep-flag">{t("Unsure word")}</span>}
+                      </li>
+                    );
+                  })}
+                </ul>
+                {matches.length > 40 && <p className="note">{t("{count} more lines", { count: matches.length - 40 })}</p>}
+              </div>
+            )}
             <div className="pv-rep-actions">
-              <button type="button" className="btn small" disabled={!matches.length} onClick={() => replaceIn([matches[mi]])}>{t("Replace in this line")}</button>
-              <button type="button" className="btn sun small" disabled={!matches.length} onClick={() => replaceIn(matches)}>{occurrences > 0 ? t("Replace all {count}", { count: occurrences }) : t("Replace all")}</button>
-              <button type="button" className="btn quiet small" onClick={() => setReplaceOpen(false)}>{t("Close")}</button>
+              {confirmAll ? (
+                <>
+                  <button type="button" className="btn sun small" onClick={() => replaceIn(matches)}>{t("Replace all {count}", { count: occurrences })}</button>
+                  <button type="button" className="btn small" onClick={() => setConfirmAll(false)}>{t("Back")}</button>
+                </>
+              ) : (
+                <>
+                  <button type="button" className="btn small" disabled={!matches.length} onClick={() => replaceIn([matches[mi]])}>{t("Replace in this line")}</button>
+                  <button type="button" className="btn sun small" disabled={!matches.length} onClick={() => setConfirmAll(true)}>{occurrences > 0 ? t("Replace all {count}", { count: occurrences }) : t("Replace all")}</button>
+                  <button type="button" className="btn quiet small" onClick={() => setReplaceOpen(false)}>{t("Close")}</button>
+                </>
+              )}
             </div>
-            <p className="note pv-rep-help">{t("Upper and lower case are ignored. Leave “Replace with” empty to delete the word. A changed line can be put back afterwards.")}</p>
+            <p className="note pv-rep-help">{t("Upper and lower case and accents are ignored. Leave “Replace with” empty to delete the word. A changed line can be put back afterwards.")}</p>
           </div>
         )}
 

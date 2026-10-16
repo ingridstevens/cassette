@@ -3,6 +3,7 @@ import { useT } from "../i18n";
 import { MAIN_LANGS, WHISPER_LANGS, langName } from "../languages";
 import { Highlight, UnsureRef, isUnsure, MOD_KEY, PALETTE, Result, chapterDefault, displayName, fmt, wordIn, wordsInSelection } from "../types";
 import { onMenuKeyDown } from "./ExportMenu";
+import { FIND_DEFAULTS, FindOpts, matcher } from "../find";
 import "../styles/project.css";
 
 interface Props {
@@ -10,13 +11,13 @@ interface Props {
   onSeek(t: number): void; onReassign(index: number, speaker: string): void;
   onEdit(index: number, text: string): void; onRevert(index: number): void; onChapter(index: number, title: string | null): void; onMark(index: number): void; onSplit(index: number, wordIndex: number): void; onLanguage(index: number, lang: string | null): void; onRetranscribe(index: number, language: string): void; onTranslate(index: number, remove?: boolean): void; playing: boolean; onPause(): void; reviewAt?: UnsureRef | null; translatingIndex?: number | null; canRetranscribe: boolean; onJoin(index: number): void;
   highlights?: Highlight[]; onHighlight?(index: number, from: number, to: number): void;
-  query?: string; matchSeg?: number;
+  query?: string; findOpts?: FindOpts; matchSeg?: number;
 }
 
 /** How long a click on a word waits for a possible second click before it starts playing (a typical double-click gap). */
 const DOUBLE_CLICK_MS = 260;
 
-export default function Transcript({ result, names, time, onSeek, onReassign, onEdit, onRevert, onChapter, onMark, onSplit, onJoin, onLanguage, onRetranscribe, onTranslate, playing, onPause, reviewAt = null, translatingIndex = null, canRetranscribe, highlights = [], onHighlight, query = "", matchSeg = -1 }: Props) {
+export default function Transcript({ result, names, time, onSeek, onReassign, onEdit, onRevert, onChapter, onMark, onSplit, onJoin, onLanguage, onRetranscribe, onTranslate, playing, onPause, reviewAt = null, translatingIndex = null, canRetranscribe, highlights = [], onHighlight, query = "", findOpts = FIND_DEFAULTS, matchSeg = -1 }: Props) {
   const t = useT();
   const color = (sp: string) => PALETTE[Math.max(0, result.speakers.indexOf(sp)) % PALETTE.length];
   const label = (sp: string) => displayName(sp, result.speakers, names);
@@ -96,7 +97,8 @@ export default function Transcript({ result, names, time, onSeek, onReassign, on
   const menuBox = useRef<HTMLDivElement>(null);
   const active = result.segments.findIndex((s) => time >= s.start && time < s.end);
   useEffect(() => { activeRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }); }, [active]);
-  const q = query.trim().toLowerCase();
+  const fm = matcher(query, findOpts);
+  const q = fm.q;
   useEffect(() => { matchRef.current?.scrollIntoView({ block: "center", behavior: "smooth" }); }, [matchSeg, q]);
   const inUse = new Set(result.segments.map((s) => s.speaker));
   /** Highlighted words get a colour: kept highlights in yellow, suggestions from the language model dotted until the user decides. */
@@ -248,7 +250,7 @@ export default function Transcript({ result, names, time, onSeek, onReassign, on
               startEdit(i, w === undefined ? undefined : Number(w));
             }}>
             {seg.words.map((w, j) => (
-              <span key={j} className={"pv-w" + (time >= w.start && time < w.end ? " cur" : "") + (isUnsure(w) ? " weak" : "") + (reviewAt && reviewAt.seg === i && reviewAt.word === j ? " rv" : "") + (q && w.word.toLowerCase().includes(q) ? " hit" : "") + hlClass(w)} data-w={j} title={isUnsure(w) ? t("The model was not sure about this word. Listen to check it.") : undefined} onClick={(e) => playFrom(e, w.start)}>{w.word}</span>
+              <span key={j} className={"pv-w" + (time >= w.start && time < w.end ? " cur" : "") + (isUnsure(w) ? " weak" : "") + (reviewAt && reviewAt.seg === i && reviewAt.word === j ? " rv" : "") + (q && fm.test(w.word) ? " hit" : "") + hlClass(w)} data-w={j} title={isUnsure(w) ? t("The model was not sure about this word. Listen to check it.") : undefined} onClick={(e) => playFrom(e, w.start)}>{w.word}</span>
             ))}
           </p>
           )
