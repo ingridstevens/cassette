@@ -10,7 +10,7 @@ from pathlib import Path
 
 from . import export as ex
 from .models import WHISPER_LANGUAGES, WHISPER_MODELS
-from .protocol import emit, log, progress
+from .protocol import emit, log, partial, progress
 
 
 def cmd_transcribe(a) -> None:
@@ -30,6 +30,20 @@ def cmd_transcribe(a) -> None:
         data, sr = load_wav(wav)
         offset, duration = a.start or 0.0, len(data) / sr
         log(f"Decoded to 16 kHz mono, {duration:.1f}s. Nothing leaves this computer.")
+        from .asr import check_fit, is_mixed, load_detector, load_model, probe_languages, transcribe_turns, translate_clip
+
+        t0 = time.time()
+        loaded = load_model(a.model, a.device, a.backend, a.vad)
+        model, dev, _compute = loaded
+        seconds_load = time.time() - t0
+        detector = load_detector(a.detect_model, a.model, a.device, model)
+        if a.language == "auto" and not getattr(a, "accept_fit", False):
+            # Before the slow parts: if this model is weak for what is spoken, stop here and let the app ask (the run starts again from scratch)
+            have = {n: models._cached(r) for n, r in models.WHISPER_MODELS.items()}
+            ask = check_fit(detector, data, sr, a.model, have)
+            if ask:
+                emit("fit", **ask)
+                return
         turns = []
         speaker_info, seconds_speakers = {}, None
         if a.no_diarize:
@@ -38,13 +52,8 @@ def cmd_transcribe(a) -> None:
             t0 = time.time()
             turns, speaker_info = diarize(wav, a.device, a.num_speakers, a.min_speakers, a.max_speakers, offset)
             seconds_speakers = round(time.time() - t0, 1)
-        t0 = time.time()
-        from .asr import is_mixed, load_detector, load_model, probe_languages, transcribe_turns, translate_clip
-
-        loaded = load_model(a.model, a.device, a.backend, a.vad)
-        model, dev, _compute = loaded
+        t0 = time.time() - seconds_load  # the time to write the words down includes loading the model
         mixed = False
-        detector = load_detector(a.detect_model, a.model, a.device, model)
         if a.language == "auto" and turns and a.mixed_languages != "off":
             if a.mixed_languages == "on":
                 mixed = True
@@ -53,13 +62,17 @@ def cmd_transcribe(a) -> None:
                 mixed = is_mixed(found)
                 log("Checked the language of each speaker: " + (", ".join(f"{k} {v:.0f}s" for k, v in found.items()) or "no confident result")
                     + (" · several languages found, switching to per-speaker detection" if mixed else " · one language, normal mode"))
+
+        def on_words(got: list[dict]) -> None:  # the transcript grows on screen while the run goes on
+            partial([{k: v for k, v in s.items() if k != "words"} for s in group_segments(assign_speakers(got, turns))])
+
         if mixed:
             log("Detecting the language separately for each speaker turn")
-            words, lang, asr_info = transcribe_turns(model, data, sr, turns, a.vad, a.prompt, offset, a.verbatim, detector)
+            words, lang, asr_info = transcribe_turns(model, data, sr, turns, a.vad, a.prompt, offset, a.verbatim, on_words, detector)
             asr_info["device"] = dev
         else:
             words, lang, asr_info = transcribe(data, a.model, None if a.language == "auto" else a.language,
-                                               a.device, a.vad, a.prompt, offset, duration, a.mixed_languages == "on" and not turns, loaded, a.verbatim)
+                                               a.device, a.vad, a.prompt, offset, duration, a.mixed_languages == "on" and not turns, loaded, a.verbatim, on_words)
         seconds_transcribe = round(time.time() - t0, 1)
     progress("merge", None, "Assigning speakers")
     segments = group_segments(assign_speakers(words, turns))
@@ -223,6 +236,7 @@ def build_parser() -> argparse.ArgumentParser:
                    help="auto: check each speaker's language and switch to per-speaker detection when several are found")
     t.add_argument("--verbatim", action="store_true", help="nudge Whisper to write hesitations (um, äh) down instead of leaving them out")
     t.add_argument("--translate", action="store_true", help="add an English translation to lines in other languages")
+    t.add_argument("--accept-fit", action="store_true", help="do not stop to suggest a better model when this one is weak for the language heard at the start")
     t.set_defaults(fn=cmd_transcribe)
 
     tr = sub.add_parser("translate")

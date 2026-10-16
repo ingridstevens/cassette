@@ -77,8 +77,11 @@ def llm_status() -> dict:
 
 
 def status() -> dict:
+    from .fit import table
+
     mlx = mlx_available()
     return {
+        "fit": table(),
         "llm": llm_status(),
         "mlxAvailable": mlx,
         "mlx": {name: _cached(repo) for name, repo in MLX_MODELS.items()} if mlx else {},

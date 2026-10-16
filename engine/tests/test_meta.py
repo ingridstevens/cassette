@@ -22,6 +22,7 @@ def _fake_engine(monkeypatch):
     words = [{"start": 0.1, "end": 0.5, "word": " Hallo"}]
     monkeypatch.setattr(asr, "transcribe", lambda *a, **k: (words, "de", {"device": "cpu", "languageProb": 0.97}))
     monkeypatch.setattr(asr, "load_model", lambda *a, **k: (object(), "cpu", "int8"))
+    monkeypatch.setattr(asr, "check_fit", lambda *a, **k: None)
     monkeypatch.setattr(asr, "probe_languages", lambda *a, **k: {"de": 9.0})
 
 
@@ -105,3 +106,19 @@ def test_detector_loads_the_small_size_when_downloaded(monkeypatch):
     monkeypatch.setattr(models, "_cached", lambda repo: True)
     monkeypatch.setattr(asr, "load_model", lambda name, dev, backend="faster", vad=False: (tiny, "cpu", "int8"))
     assert asr.load_detector("tiny", "large-v3", "cpu", object()) is tiny
+
+
+def test_transcribe_stops_with_a_fit_event_before_doing_the_slow_work(monkeypatch, capsys):
+    from engine import asr, diarize
+
+    _fake_engine(monkeypatch)
+    monkeypatch.setattr(asr, "check_fit", lambda *a, **k: {"language": "fa", "probability": 0.9, "model": "small", "level": "weak", "suggested": "medium", "have": {}})
+    monkeypatch.setattr(diarize, "diarize", lambda *a, **k: (_ for _ in ()).throw(AssertionError("must not run")))
+    m.cmd_transcribe(_args())
+    events = [json.loads(line) for line in capsys.readouterr().out.splitlines()]
+    assert events[-1]["type"] == "fit" and events[-1]["suggested"] == "medium"
+    assert not any(e["type"] == "done" for e in events)
+    capsys.readouterr()
+    _fake_engine(monkeypatch)  # speaker detection works again
+    m.cmd_transcribe(_args(accept_fit=True))  # "continue anyway" runs the whole job
+    assert _done(capsys)["language"] == "de"

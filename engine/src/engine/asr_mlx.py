@@ -15,6 +15,30 @@ def available() -> bool:
     return sys.platform == "darwin" and platform.machine() == "arm64" and importlib.util.find_spec("mlx_whisper") is not None
 
 
+SAMPLE_RATE = 16000
+CHUNK_SECONDS = 30.0   # Whisper's own window
+SEARCH_SECONDS = 5.0   # a piece ends at the quietest moment in the last few seconds of its window, so words are not cut in half
+
+
+def chunk_bounds(audio) -> list[tuple[int, int]]:
+    """(start, end) sample positions of the pieces `audio` (16 kHz mono) is transcribed in. Short audio is one piece."""
+    import numpy as np
+
+    n, win, back, frame = len(audio), int(CHUNK_SECONDS * SAMPLE_RATE), int(SEARCH_SECONDS * SAMPLE_RATE), int(0.05 * SAMPLE_RATE)
+    if n <= win + back:
+        return [(0, n)]
+    out, lo = [], 0
+    while n - lo > win + back:
+        zone = np.asarray(audio[lo + win - back: lo + win])
+        usable = len(zone) // frame * frame
+        energy = (zone[:usable].reshape(-1, frame) ** 2).mean(axis=1)
+        hi = lo + win - back + int(energy.argmin()) * frame + frame // 2
+        out.append((lo, hi))
+        lo = hi
+    out.append((lo, n))
+    return out
+
+
 class MlxModel:
     is_multilingual = True
 
@@ -47,13 +71,17 @@ class MlxModel:
         prob = 1.0
         if language is None:
             language, prob, _ = self.detect_language(audio)
-        r = mlx_whisper.transcribe(audio, path_or_hf_repo=self.path, language=language, task=task, word_timestamps=word_timestamps,
-                                   initial_prompt=initial_prompt, condition_on_previous_text=condition_on_previous_text)
-        segments = [
-            types.SimpleNamespace(
-                start=s["start"], end=s["end"], text=s["text"],
-                words=[types.SimpleNamespace(start=w["start"], end=w["end"], word=w["word"], probability=w.get("probability", 1.0)) for w in s.get("words") or []],
-            )
-            for s in r["segments"]
-        ]
-        return segments, types.SimpleNamespace(language=language, language_probability=prob)
+
+        def run():
+            # long audio goes in ~30 s pieces so lines can be shown as each piece is finished (mlx-whisper only returns at the end)
+            for lo, hi in chunk_bounds(audio):
+                r = mlx_whisper.transcribe(audio[lo:hi], path_or_hf_repo=self.path, language=language, task=task, word_timestamps=word_timestamps,
+                                           initial_prompt=initial_prompt, condition_on_previous_text=condition_on_previous_text)
+                shift = lo / SAMPLE_RATE
+                for s in r["segments"]:
+                    yield types.SimpleNamespace(
+                        start=s["start"] + shift, end=s["end"] + shift, text=s["text"],
+                        words=[types.SimpleNamespace(start=w["start"] + shift, end=w["end"] + shift, word=w["word"], probability=w.get("probability", 1.0)) for w in s.get("words") or []],
+                    )
+
+        return run(), types.SimpleNamespace(language=language, language_probability=prob)

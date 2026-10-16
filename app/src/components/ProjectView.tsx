@@ -1,8 +1,9 @@
 import { ReactNode, useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "../i18n";
+import FitCard from "./FitCard";
 import ReviewBar from "./ReviewBar";
 import StartSheet, { TRIAL_SECONDS, spanText, useStartEstimate } from "./StartSheet";
-import { acceptWord, addHighlight, fixWord, highlightOf, unsureWords, withSuggestions, ExportOpts, Options, JobProgress, MOD_KEY, PALETTE, Project, Result, baseName, displayName, fmt, joinWithPrevious, retext, revertLine, splitSegment } from "../types";
+import { acceptWord, addHighlight, fixWord, highlightOf, unsureWords, withSuggestions, ExportOpts, Options, DraftLine, JobProgress, MOD_KEY, PALETTE, Project, Result, baseName, displayName, fmt, joinWithPrevious, retext, revertLine, splitSegment } from "../types";
 import "../styles/project.css";
 import ExportMenu from "./ExportMenu";
 import { langName } from "../languages";
@@ -17,9 +18,9 @@ const typing = (t: EventTarget | null) => t instanceof HTMLElement && /^(INPUT|T
 const STAGE_ORDER = ["decode", "diarize", "transcribe", "merge"];
 
 interface Props {
-  project: Project; progress?: JobProgress; blocker: string; waiting: number; visible: boolean;
+  project: Project; progress?: JobProgress; draft?: DraftLine[]; blocker: string; waiting: number; visible: boolean;
   nowPlayingId?: string | null; stopSignal?: number; onPlayingChange?(playing: boolean): void; onOpenSettings?(section?: string): void; models: Models;
-  onTranscribe(range: [number, number] | null, line?: { language: string; speaker: string }, trial?: boolean): void; onCancel(): void; onPatch(p: Partial<Project>): void;
+  onTranscribe(range: [number, number] | null, line?: { language: string; speaker: string }, trial?: boolean, acceptFit?: boolean): void; onCancel(): void; onPatch(p: Partial<Project>): void;
   othersWaiting?: number; onApplyToOthers?(o: Partial<Options>): void; onRemember?(o: Partial<Options>): void;
 }
 
@@ -53,7 +54,7 @@ function Dialog({ title, children, cancel, confirm, onCancel, onConfirm }: { tit
 }
 
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
-export default function ProjectView({ project, progress, blocker, waiting, visible, nowPlayingId, stopSignal = 0, onPlayingChange, onOpenSettings, models, onTranscribe, onCancel, onPatch, othersWaiting = 0, onApplyToOthers, onRemember }: Props) {
+export default function ProjectView({ project, progress, draft, blocker, waiting, visible, nowPlayingId, stopSignal = 0, onPlayingChange, onOpenSettings, models, onTranscribe, onCancel, onPatch, othersWaiting = 0, onApplyToOthers, onRemember }: Props) {
   const t = useT();
   const { result, names, path } = project;
   const player = useRef<WaveformHandle>(null);
@@ -292,6 +293,10 @@ export default function ProjectView({ project, progress, blocker, waiting, visib
     </div>
   );
 
+  const fitCard = project.fitAsk && (
+    <FitCard ask={project.fitAsk} models={models} onDismiss={() => onPatch({ fitAsk: undefined })} onContinue={() => onTranscribe(null, undefined, undefined, true)}
+      onUse={(model) => { onPatch({ opts: { ...project.opts, model } }); onTranscribe(null); }} />
+  );
   let body: ReactNode;
   if (busy) {
     const cur = project.status === "queued" ? -1 : Math.max(0, STAGE_ORDER.indexOf(stage ?? "decode"));
@@ -333,11 +338,12 @@ export default function ProjectView({ project, progress, blocker, waiting, visib
             </div>
           ))}
         </div>
+        {!!draft?.length && !partial && <DraftList lines={draft} names={names} speakers={[...new Set(draft.map((l) => l.speaker))]} />}
         <div className="pv-actions"><button type="button" className="btn" onClick={() => setDialog("stop")}>{t("Stop this one")}</button></div>
       </div></div>
     );
   } else if (!result) {
-    body = failed ? <div className="pv-center"><div className="pv-stack">{errorCard}</div></div> : (
+    body = failed ? <div className="pv-center"><div className="pv-stack">{errorCard}</div></div> : fitCard ? <div className="pv-center"><div className="pv-stack">{fitCard}</div></div> : (
       <div className="pv-center"><div className="pv-stack">
         <StartSheet project={project} duration={duration} eff={effOpts} info={startInfo} models={models} set={(p) => onPatch({ opts: { ...project.opts, ...p } })}
           canStart={canTranscribe} blocker={blocker} othersWaiting={othersWaiting}
@@ -349,6 +355,7 @@ export default function ProjectView({ project, progress, blocker, waiting, visib
     body = (
       <div className="pv-scroll">
         {failed && errorCard}
+        {fitCard}
         {project.previous && !busy && (
           <div className="pv-moved pv-restore" role="status">
             <span>{t("This transcript replaced an earlier one.")}</span>
@@ -531,5 +538,23 @@ export default function ProjectView({ project, progress, blocker, waiting, visib
         </Dialog>
       )}
     </div>
+  );
+}
+
+/** The lines written so far, while the transcription runs. The newest line stays in view. */
+function DraftList({ lines, names, speakers }: { lines: DraftLine[]; names: Record<string, string>; speakers: string[] }) {
+  const t = useT();
+  const end = useRef<HTMLDivElement>(null);
+  useEffect(() => { end.current?.scrollIntoView({ block: "nearest" }); }, [lines.length]);
+  return (
+    <section className="card pv-draft" aria-label={t("Transcript so far")}>
+      <h3>{t("So far")}</h3>
+      <div className="pv-draft-lines" role="log" aria-live="off">
+        {lines.map((l, i) => (
+          <p key={i}><span className="pv-draft-who">{displayName(l.speaker, speakers, names)}</span> <span className="pv-draft-time">{fmt(l.start)}</span> {l.text}</p>
+        ))}
+        <div ref={end} />
+      </div>
+    </section>
   );
 }
