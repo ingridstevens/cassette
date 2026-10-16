@@ -1,9 +1,9 @@
 import { ReactNode, useEffect, useRef } from "react";
 
-interface Props { title: string; children: ReactNode; keepLabel: string; okLabel: string; onKeep(): void; onOk(): void }
+interface Props { title: string; children: ReactNode; keepLabel: string; okLabel: string; onKeep(): void; onOk(): void; /** An optional middle choice, such as "Delete and use another model". */ altLabel?: string; onAlt?(): void }
 
 /** Confirm dialog: focus moves in (to the safe button), Tab stays inside, Escape or a click outside closes it. */
-export default function Dialog({ title, children, keepLabel, okLabel, onKeep, onOk }: Props) {
+export default function Dialog({ title, children, keepLabel, okLabel, onKeep, onOk, altLabel, onAlt }: Props) {
   const box = useRef<HTMLDivElement>(null);
   const keep = useRef<HTMLButtonElement>(null);
   const close = useRef(onKeep);
@@ -29,6 +29,7 @@ export default function Dialog({ title, children, keepLabel, okLabel, onKeep, on
         {children}
         <div className="row">
           <button type="button" className="btn" ref={keep} onClick={onKeep}>{keepLabel}</button>
+          {altLabel && onAlt && <button type="button" className="btn sun" onClick={onAlt}>{altLabel}</button>}
           <button type="button" className="btn danger" onClick={onOk}>{okLabel}</button>
         </div>
       </div>

@@ -97,7 +97,7 @@ export function ModelField({ eff, set, status, models, timeOf, onOpenSettings, b
         );
       })}
       {models.err && <p className="alert warn" role="alert">{models.err}</p>}
-      <small className="pv-more">{t("Need another size?")} <button type="button" className="linkish" onClick={() => onOpenSettings?.("Storage and models")}>{t("Open Settings, Storage and models")}</button></small>
+      <small className="pv-more">{t("Need another size?")} <button type="button" className="linkish" onClick={() => onOpenSettings?.("Transcription")}>{t("Open Settings, Transcription")}</button></small>
       <span className="pv-sr" aria-live="polite">{models.busy.startsWith("download ") ? t("Downloading {model}", { model: modelName(models.busy.slice(9)) }) + dlPct : ""}</span>
     </fieldset>
   );
@@ -125,7 +125,7 @@ export function ExtrasField({ eff, set, advanced, status, onOpenSettings }: Sect
           <select className="input" value={target} disabled={!have} onChange={(e) => set({ translateTo: e.target.value }, true)}>
             {(have ? TRANSLATE_LANGS : ["en"]).map((c) => ({ c, n: langName(c) })).sort((a, b) => (a.c === "en" ? -1 : b.c === "en" ? 1 : a.n.localeCompare(b.n))).map(({ c, n }) => <option key={c} value={c}>{n}</option>)}
           </select>
-          {!have && model && <small>{t("Other languages need the translation model.")} <button type="button" className="linkish" onClick={() => onOpenSettings?.("Storage and models")}>{t("Open Settings, Storage and models")}</button></small>}
+          {!have && model && <small>{t("Other languages need the translation model.")} <button type="button" className="linkish" onClick={() => onOpenSettings?.("Summaries and translation")}>{t("Open Settings, Summaries and translation")}</button></small>}
         </label>
       )}
       <label className="pv-check"><input type="checkbox" checked={!!eff.verbatim} onChange={(e) => set({ verbatim: e.target.checked }, true)} />

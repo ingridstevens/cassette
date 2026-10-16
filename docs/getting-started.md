@@ -2,7 +2,7 @@
 
 > Only macOS (Apple silicon) has been tested. Windows and Linux builds exist in the build setup but have not been tried.
 
-The app opens in your computer's language if it has it (English, Deutsch, Français, Español); change it under Settings, Language.
+The app opens in your computer's language if it has it (English, Deutsch, Français, Español); change it under Settings, Text and language.
 
 ## 1. Start the app
 
@@ -30,7 +30,7 @@ The first screen is called **Turn a recording into text**. It says: one quick do
    interview or a meeting. Each line then says who is talking: Speaker 1, Speaker 2 and so on. It needs a second,
    small download (about 60 MB) from Hugging Face, which requires a free account. The **i** next to the heading
    explains what speaker detection (diarization) does. Choose **Set up speaker detection** (about 3 minutes) or
-   **Continue without it**; you can add it later under **Settings → Storage and models**.
+   **Continue without it**; you can add it later under **Settings → Speakers**.
 
 ### Setting up speaker detection
 
@@ -64,7 +64,7 @@ tells you if Hugging Face rejects the token, or if you made a Fine-grained token
 If something goes wrong see [Troubleshooting](troubleshooting.md).
 
 **Someone else can do this for you.** Ask a friend or your IT team to set up speaker detection once on their computer and
-copy the `models` folder (its location is shown under Settings, Storage and models). On the first screen open
+copy the `models` folder (its location is shown under Settings, Advanced, Models folder). On the first screen open
 **Someone else can do this for me**, click **Import a models folder…** and pick it. Nothing goes online.
 Only models this app knows are copied, and the app tells you if the folder has none.
 

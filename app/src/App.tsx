@@ -8,6 +8,7 @@ import Setup from "./components/Setup";
 import { useModels } from "./components/useModels";
 import "./styles/shell.css";
 import { setLanguage, t, useT } from "./i18n";
+import { setLlm } from "./components/llmChoice";
 import { IS_MAC, ModelStatus, Options, applyLook, displayName, lookLevelOf } from "./types";
 import { useProjects } from "./useProjects";
 
@@ -103,7 +104,7 @@ export default function App() {
         <section className="main">
           <div className="main-body">
             {page === "record" && <RecordPage opts={opts} blocker={blocker} onBack={() => setPage("main")} onSaved={(r) => { setAddError(P.addAndTranscribe([r.path])); setPage("main"); }} />}
-            {page !== "record" && <Setup opts={opts} set={setOpts} status={status} models={models} compact={!noProjects || dismissed} onContinue={() => setDismissed(true)} onOpenSettings={() => openSettings("Storage and models")} />}
+            {page !== "record" && <Setup opts={opts} set={setOpts} status={status} models={models} compact={!noProjects || dismissed} onContinue={() => setDismissed(true)} onOpenSettings={() => openSettings("Transcription")} />}
 
             {page !== "record" && noProjects && setupDone && (
               <div className="empty-wrap">
@@ -144,7 +145,7 @@ export default function App() {
           {dragging && <div className="drop-veil" aria-hidden>{t("Drop to add recordings")}</div>}
         </section>
       </div>
-      {page === "settings" && <SettingsPage key={settingsSection ?? "default"} initialSection={settingsSection} opts={opts} set={setOpts} status={status} models={models} onBack={() => setPage("main")} />}
+      {page === "settings" && <SettingsPage key={settingsSection ?? "default"} initialSection={settingsSection} opts={opts} set={setOpts} status={status} models={models} onBack={() => setPage("main")} onReset={() => { setOpts({ ...DEFAULTS }); setLlm(""); }} />}
       {playingId && (page === "settings" || P.activeId !== playingId) && (() => {
         const playing = P.projects.find((x) => x.id === playingId);
         return playing ? (

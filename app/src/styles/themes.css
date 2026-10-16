@@ -75,3 +75,7 @@ html[data-mode="dark"][data-level="3"] .pv-w.cur { background: #2f5d94; }
 html[data-mode="dark"][data-level="3"] .side { background: #161616; }
 html[data-mode="dark"][data-level="3"] :is(.inspector, .pv-inspector) { background: #121212; }
 html[data-mode="dark"][data-level="3"] .pv-turn.now { background: #1d2430; }
+
+/* High contrast (Settings, Text and language): stronger text and borders in every look */
+html[data-contrast="more"] { --ink2: var(--ink); --ink3: var(--ink); --line: color-mix(in srgb, var(--ink) 55%, transparent); }
+html[data-contrast="more"] .card, html[data-contrast="more"] .st-acc { box-shadow: 0 0 0 2px var(--ink); }

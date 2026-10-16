@@ -1,7 +1,7 @@
 import type { Api } from "../electron/preload";
 import { t } from "./i18n";
 
-declare global { interface Window { api: Api } }
+declare global { interface Window { api: Api } const __APP_VERSION__: string }
 
 export interface Word { start: number; end: number; word: string; speaker: string; prob?: number; /** The user confirmed this word is right (review mode), so it is no longer marked as unsure. */ checked?: boolean }
 export interface Segment { start: number; end: number; speaker: string; text: string; words: Word[]; edited?: boolean; /** Translation of a line in another language (English unless `translationLang` says otherwise). */ translation?: string; translationLang?: string; marked?: boolean; overlap?: boolean; /** Language of this line when it differs from the recording (set by hand). */ lang?: string; chapter?: string; orig?: { text: string; words: Word[] } }
@@ -12,7 +12,7 @@ export interface Summary { summary: string; topics: { start: number; title: stri
 export interface Result { language: string; duration: number; speakers: string[]; segments: Segment[]; highlights?: Highlight[]; summary?: Summary }
 export interface Options {
 
-  model: string; language: string; numSpeakers: string; vad: boolean; prompt: string; noDiarize: boolean; device: string; autosave: boolean; /** Mixed languages: undefined = automatic, true = always per speaker turn, false = off. */ multilingual?: boolean; /** Add an English translation under lines in other languages (undefined = on when the app is in English). */ translate?: boolean; /** Which speech model only finds the language: a size id, "same" (use the transcription model) or undefined (Tiny). */ detectModel?: string; /** Language code to translate lines into (undefined = English). Languages other than English need the translation model. */ translateTo?: string; /** Ask the speech model to write hesitations (um, äh) down. */ verbatim?: boolean; /** Speech engine: "auto" (default) uses the Apple GPU when it can, "faster" always uses the CPU engine. */ whisperEngine?: "auto" | "faster"; minSpeakers?: string; maxSpeakers?: string; /** 0 fairytale sunset … 3 boring corporate */ lookLevel?: number; boring?: boolean; /** Light or dark: "system" (the default) follows the computer. */ colorScheme?: "system" | "light" | "dark"; /** Language of the app itself: "system" (match the computer, the default) or a language id. */ appLanguage?: "system" | "en" | "de" | "fr" | "es";
+  model: string; language: string; numSpeakers: string; vad: boolean; prompt: string; noDiarize: boolean; device: string; autosave: boolean; /** Mixed languages: undefined = automatic, true = always per speaker turn, false = off. */ multilingual?: boolean; /** Add an English translation under lines in other languages (undefined = on when the app is in English). */ translate?: boolean; /** Which speech model only finds the language: a size id, "same" (use the transcription model) or undefined (Tiny). */ detectModel?: string; /** Language code to translate lines into (undefined = English). Languages other than English need the translation model. */ translateTo?: string; /** Ask the speech model to write hesitations (um, äh) down. */ verbatim?: boolean; /** Speech engine: "auto" (default) uses the Apple GPU when it can, "faster" always uses the CPU engine. */ whisperEngine?: "auto" | "faster"; minSpeakers?: string; maxSpeakers?: string; /** 0 fairytale sunset … 3 boring corporate */ lookLevel?: number; boring?: boolean; /** Light or dark: "system" (the default) follows the computer. */ colorScheme?: "system" | "light" | "dark"; /** Language of the app itself: "system" (match the computer, the default) or a language id. */ appLanguage?: "system" | "en" | "de" | "fr" | "es"; /** Zoom of the whole app (1 = normal). */ textSize?: number; /** Stronger text and borders. */ highContrast?: boolean;
 }
 /** A language model the app offers for highlights and summaries. `label` is a model name; `like` is English text the app translates. */
 export interface LlmModel { id: string; label: string; like: string; languages: string[]; license: string }
@@ -132,15 +132,15 @@ export const DEFAULT_EXPORT_OPTS: ExportOpts = { maxChars: 42, maxLines: 2, spea
 /** Default chapter title for a line: its first five words. */
 export const chapterDefault = (text: string) => text.split(/\s+/).filter(Boolean).slice(0, 5).join(" ");
 
-/** Look levels: 0 fairytale sunset (default), 1 cloudy tuesday, 2 open-plan office, 3 boring corporate. Applied as data-level on <html>. */
+/** Look levels: 0 fairytale sunset (default), 1 cloudy tuesday, 2 open-plan office. Applied as data-level on <html>. */
 export const LOOKS = [
   { name: "Fairytale sunset", caption: "Everything glows. This is the intended experience." },
   { name: "Cloudy Tuesday", caption: "The glow has been politely asked to leave." },
   { name: "Open-plan office", caption: "We have aligned on blue." },
-  { name: "Boring corporate", caption: "Per my last email, this is the look." },
 ] as const;
-export const lookLevelOf = (o: { lookLevel?: number; boring?: boolean }) => Math.min(3, Math.max(0, o.lookLevel ?? (o.boring ? 2 : 0)));
-type LookOpts = { lookLevel?: number; boring?: boolean; colorScheme?: "system" | "light" | "dark" };
+/** Saved settings from older versions may still say 3 (the retired “boring corporate” look): that is now the open-plan office. */
+export const lookLevelOf = (o: { lookLevel?: number; boring?: boolean }) => Math.min(2, Math.max(0, o.lookLevel ?? (o.boring ? 2 : 0)));
+type LookOpts = { lookLevel?: number; boring?: boolean; colorScheme?: "system" | "light" | "dark"; textSize?: number; highContrast?: boolean };
 /** Dark when chosen, or when "system" and the computer is in dark mode. */
 export const isDark = (o: LookOpts) => o.colorScheme === "dark" || (o.colorScheme !== "light" && window.matchMedia?.("(prefers-color-scheme: dark)").matches);
 /** Sets the look (data-level) and light or dark (data-mode) on <html>, and picks speaker colours that read well on it. */
@@ -148,6 +148,8 @@ export const applyLook = (o: LookOpts) => {
   const level = lookLevelOf(o), dark = isDark(o), el = document.documentElement;
   el.dataset.level = String(level);
   el.dataset.mode = dark ? "dark" : "light";
+  el.dataset.contrast = o.highContrast ? "more" : "normal";
+  document.body.style.zoom = o.textSize && o.textSize !== 1 ? String(o.textSize) : "";
   const palette = level >= 2 ? (dark ? OFFICE_DARK : OFFICE_PALETTE) : SUNSET_PALETTE;
   PALETTE.splice(0, PALETTE.length, ...palette);
 };

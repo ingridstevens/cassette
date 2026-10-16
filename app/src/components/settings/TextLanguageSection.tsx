@@ -1,0 +1,60 @@
+import { LANGS, LangPref, systemLang } from "../../i18n";
+import { useT } from "../../i18n";
+import { LOOKS, MOD_KEY, lookLevelOf } from "../../types";
+import { Block, SectionProps, SwitchRow } from "./shared";
+
+const SIZES: [number, string][] = [[1, "Normal"], [1.15, "Large"], [1.3, "Extra large"], [1.5, "Largest"]];
+
+export default function TextLanguageSection({ opts, set }: SectionProps) {
+  const t = useT();
+  const size = opts.textSize ?? 1, level = Math.min(lookLevelOf(opts), 2), scheme = opts.colorScheme ?? "system";
+  const pref: LangPref = opts.appLanguage ?? "system";
+  const name = (id: string) => LANGS.find((l) => l.id === id)?.label ?? id;
+  const keys: [string, string][] = [
+    ["Space / K", t("Play or pause")], ["J / L", t("Back or forward 10 seconds")], [`${MOD_KEY}F`, t("Find in the transcript")], [`${MOD_KEY}E`, t("Open the Export menu")],
+    [`${MOD_KEY},`, t("Open Settings")], ["Enter", t("Save an edit")], ["Esc", t("Close a menu or dialog, or cancel an edit")],
+  ];
+  return (
+    <>
+      <Block id="tx-size" title={t("Text size")}>
+        <p className="note">{t("Changes everything in the app. Try it.")}</p>
+        <fieldset className="sizes"><legend className="st-sr">{t("Text size")}</legend>
+          {SIZES.map(([v, label]) => (
+            <label key={v} className={size === v ? "on" : ""}>
+              <input type="radio" name="text-size" checked={size === v} onChange={() => set({ ...opts, textSize: v === 1 ? undefined : v })} />
+              <span><b>{t(label)}</b><span>{t("The quick brown fox.")}</span></span>
+            </label>
+          ))}
+        </fieldset>
+        <SwitchRow id="tx-hc" title={t("High contrast")} help={t("Black text on white, white text on black, and thicker borders.")} on={!!opts.highContrast} onChange={(v) => set({ ...opts, highContrast: v || undefined })} />
+      </Block>
+      <Block id="tx-lang" title={t("Language of the app")}>
+        <div className="f7">
+          <label htmlFor="app-lang">{t("Menus, buttons and messages")}</label>
+          <select id="app-lang" className="input" value={pref} onChange={(e) => { const v = e.target.value as LangPref; set({ ...opts, appLanguage: v === "system" ? undefined : v }); }}>
+            <option value="system">{t("Match my computer ({language})", { language: name(systemLang()) })}</option>
+            {LANGS.map((l) => <option key={l.id} value={l.id} lang={l.id}>{l.label}</option>)}
+          </select>
+        </div>
+        <p className="note">{t("Translations are machine-assisted and have not been reviewed by native speakers yet. If something reads oddly, the English text is the reference.")}</p>
+      </Block>
+      <Block id="tx-look" title={t("Appearance")}>
+        <fieldset className="choices row st-fieldset"><legend>{t("Light or dark")}</legend>
+          {([["system", t("Match my computer")], ["light", t("Light")], ["dark", t("Dark")]] as const).map(([id, label]) => (
+            <label key={id} className={"choice" + (scheme === id ? " on" : "")}><input type="radio" name="scheme" checked={scheme === id} onChange={() => set({ ...opts, colorScheme: id })} /><span><b>{label}</b></span></label>
+          ))}
+        </fieldset>
+        <fieldset className="choices st-fieldset"><legend>{t("Colour mood")}</legend>
+          {LOOKS.slice(0, 3).map((m, i) => (
+            <label key={m.name} className={"choice" + (level === i ? " on" : "")}><input type="radio" name="mood" checked={level === i} onChange={() => set({ ...opts, lookLevel: i, boring: undefined })} /><span><b>{t(m.name)}</b><small>{t(m.caption)}</small></span></label>
+          ))}
+        </fieldset>
+      </Block>
+      <Block id="tx-keys" title={t("Keyboard shortcuts")}>
+        <div className="tbl-wrap"><table className="st-table"><caption className="st-sr">{t("Keyboard shortcuts")}</caption>
+          <thead><tr><th scope="col">{t("Keys")}</th><th scope="col">{t("Does")}</th></tr></thead>
+          <tbody>{keys.map(([k, d]) => <tr key={k}><th scope="row"><kbd>{k}</kbd></th><td>{d}</td></tr>)}</tbody></table></div>
+      </Block>
+    </>
+  );
+}

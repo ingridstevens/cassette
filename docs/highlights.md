@@ -33,7 +33,7 @@ names, that suggestion is dropped. The model can still pick passages you find du
 ### The language model
 
 The suggestions and the summary are written by a small language model that **runs on your computer**. Nothing is sent anywhere. It is a one-time
-download, offered when you first press **Suggest highlights** or **Write a summary**, or any time under Settings, **Storage and models**,
+download, offered when you first press **Suggest highlights** or **Write a summary**, or any time under Settings, **Summaries and translation**,
 **Language model**. There you can download several, delete them, and press **Use** to choose the one every project uses. You can also switch
 in the **Language model** menu of the Highlights tab.
 

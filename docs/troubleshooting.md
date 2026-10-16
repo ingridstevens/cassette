@@ -18,7 +18,7 @@ Then use **Try again**.
 ## "Not enough free disk space"
 
 Downloads need room to unpack: about 1.5× the model size plus half a gigabyte. Free some space, or choose a smaller
-model (Settings → Storage and models shows what each needs).
+model (Settings → Transcription shows what each needs).
 
 ## The download stopped or says it is offline
 
@@ -34,11 +34,11 @@ still transcribe it. If the recording was moved, add it again.
 - Set **Number of speakers** under Options if you know it, then **Transcribe again**.
 - Fix single lines from the speaker name above each line; use **Move all** if the model split one person in two.
 - Very similar voices and people talking over each other are hard. Overlapping speech is flagged as **Overlap** but its words go to one person. Try an exact speaker number or a range under Options.
-- Try Settings → Performance → **CPU only** if labels look odd on a graphics chip.
+- Try Settings → Advanced → Processor → **Processor only** if labels look odd on a graphics chip.
 
 ## Words are wrong
 
-- Use a bigger model (Options → Transcription model; download it under Settings → Storage and models).
+- Use a bigger model (Options → Transcription model; download it under Settings → Transcription).
 - Add names and jargon under **Names and special words**, then transcribe again.
 - Or just fix the line: hover it and click **Edit**.
 - If the language was guessed wrongly, pick it under Options.
@@ -51,7 +51,7 @@ still transcribe it. If the recording was moved, add it again.
 
 ## It's slow
 
-On a Mac with an Apple chip, open Settings, Performance and download the **Apple GPU version** of your model size: the words are then written on
+On a Mac with an Apple chip, open Settings, Advanced, Apple GPU models and download the **Apple GPU version** of your model size: the words are then written on
 the graphics chip, several times faster (the panel shows "Apple GPU" when it is in use; a project with **Skip silence** on, or the choice *Always
 the CPU*, uses the CPU instead). Without that download, and on an Intel Mac, writing the words down uses the CPU. On Windows and Linux it is meant
 to use an NVIDIA card when one is usable; that has never been tried on this project. A smaller model is faster. **Skip silence** helps on
@@ -76,9 +76,9 @@ Copy the whole token (it starts with `hf_`), make sure it came from the **Read**
 and send its form (**Agree and access repository**). If it still says **Form not sent yet**, wait a minute and click **Check now**.
 
 ## Suggest highlights or Write a summary doesn't work
-- **"The language model is not downloaded yet":** open the Highlights tab and press **Download the language model**, or use Settings, Storage and models. It needs one online download.
+- **"The language model is not downloaded yet":** open the Highlights tab and press **Download the language model**, or use Settings, Summaries and translation. It needs one online download.
 - **The tab says the language model is not part of this version:** the build you run doesn't include it (on Windows and Linux it needs llama.cpp, which is not tested yet). Highlighting by hand still works.
-- **It found nothing, or the summary is very short:** small models struggle with very short recordings. Try a bigger one in Settings, Storage and models.
+- **It found nothing, or the summary is very short:** small models struggle with very short recordings. Try a bigger one in Settings, Summaries and translation.
 - **It stops with an error:** the message is shown in the tab and the details are in the activity log (Settings, Privacy). A computer with little memory may not be able to load the larger model; use the small one.
 
 ## macOS says “Apple could not verify … is free of malware”

@@ -11,7 +11,7 @@ export default function SavingSection({ opts, set }: Props) {
       <div className="card st-card">
         <div className="st-row">
           <div className="grow"><h2>{t("Save a backup copy next to each recording")}</h2>
-            <p className="st-lead">{t("After every transcription, the app writes a small data file into the same folder as the recording. Your audio is never changed or moved. This file is a backup that this app can read again; for a transcript you can open or send, use Export on a project.")}</p></div>
+            <p className="st-lead">{t("After every transcription, the app writes a small data file into the same folder as the recording. Your audio is never changed or moved. This file is a backup that this app can read again; for a transcript you can open or send, use Export on a project.")} <b>{t("Transcribing the same recording again replaces that file.")}</b></p></div>
           <button type="button" className="switch" role="switch" aria-checked={on} aria-label={t("Save a backup copy next to each recording")} onClick={() => set({ ...opts, autosave: !on })} />
         </div>
         {on && (

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { IS_MAC, IS_WIN } from "../../types";
 import { HF_TOKEN_PAGE, Models } from "../useModels";
 import { useT } from "../../i18n";
 import Dialog, { useReturnFocus } from "./Dialog";
@@ -44,6 +45,33 @@ export default function PrivacySection({ models }: Props) {
           <div className="st-inset"><b>{t("Stays on this computer")}</b>{t("Your recordings, transcripts, speaker names and the project list.")}</div>
           <div className="st-inset"><b>{t("Uses the internet")}</b>{t("Model downloads from huggingface.co, once. After that the app works offline.")}</div>
         </div>
+      </div>
+
+      <div className="card st-card" role="region" aria-labelledby="pv-net">
+        <h2 id="pv-net">{t("Every network call")}</h2>
+        <div className="tbl-wrap"><table className="st-table"><caption className="st-sr">{t("Every network call")}</caption>
+          <thead><tr><th scope="col">{t("Where")}</th><th scope="col">{t("When")}</th><th scope="col">{t("What is sent")}</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><code>huggingface.co</code></th><td>{t("You press Download on a model")}</td><td>{t("The model name. Your token, if you saved one.")}</td></tr>
+            <tr><th scope="row"><code>huggingface.co</code></th><td>{t("You save a token, or the app checks it")}</td><td>{t("The token, to see if it is valid and which model pages you accepted.")}</td></tr>
+            <tr><th scope="row"><code>download.moonshine.ai</code></th><td>{t("You press Download on a Moonshine model")}</td><td>{t("The language.")}</td></tr>
+          </tbody></table></div>
+        <p className="note">{t("Every network call is listed here. Nothing else leaves this computer. This comes from reading the app's code, not from an independent audit.")}</p>
+      </div>
+
+      <div className="card st-card" role="region" aria-labelledby="pv-store">
+        <h2 id="pv-store">{t("What is stored where")}</h2>
+        <div className="tbl-wrap"><table className="st-table"><caption className="st-sr">{t("What is stored where")}</caption>
+          <thead><tr><th scope="col">{t("What")}</th><th scope="col">{t("Where")}</th><th scope="col" className="act"><span className="st-sr">{t("Action")}</span></th></tr></thead>
+          <tbody>
+            <tr><th scope="row">{t("Your recordings")}</th><td>{t("Where you keep them. Never moved or changed.")}</td><td className="act" /></tr>
+            <tr><th scope="row">{t("Projects, transcripts, speaker names")}</th><td>{t("The app folder")}</td><td className="act"><button type="button" className="btn small" aria-label={t("Show the app folder")} onClick={() => window.api.reveal("data")}>{t("Show")}</button></td></tr>
+            <tr><th scope="row">{t("Backup copies")}</th><td>{t("Next to each recording, if the switch in Saving and export is on")}</td><td className="act" /></tr>
+            <tr><th scope="row">{t("Models")}</th><td>{t("The models folder")}</td><td className="act"><button type="button" className="btn small" aria-label={t("Show the models folder")} onClick={() => window.api.reveal("models")}>{t("Show")}</button></td></tr>
+            <tr><th scope="row">{t("Hugging Face token")}</th><td>{t("Encrypted by your computer's secure storage. Last 4 characters: {hint}", { hint: hint ? hint.slice(-4) : "–" })}</td><td className="act" /></tr>
+            <tr><th scope="row">{t("Activity log")}</th><td>{t("File names and folders. It never contains the text of a transcript.")}</td><td className="act"><button type="button" className="btn small" aria-label={t("Show the activity log")} onClick={() => window.api.reveal("log")}>{t("Show")}</button></td></tr>
+          </tbody></table></div>
+        <p className="note">{t("The app does not encrypt these files. Turn on {name} so they are protected when the computer is off.", { name: IS_MAC ? "FileVault" : IS_WIN ? "BitLocker" : t("disk encryption") })}</p>
       </div>
 
       <div className="card st-card">
