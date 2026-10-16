@@ -69,7 +69,14 @@ function readToken(): string {
 
 app.whenReady().then(() => {
   // In development the Dock shows Electron's own icon; show ours instead. Packaged builds get it from resources/icon.icns.
-  if (process.platform === "darwin" && process.env.VITE_DEV_SERVER_URL) app.dock?.setIcon(path.join(__dirname, "..", "resources", "icon.png"));
+  const devIcon = path.join(__dirname, "..", "resources", "icon.png");
+  if (process.platform === "darwin" && process.env.VITE_DEV_SERVER_URL) app.dock?.setIcon(devIcon);
+  // The About window: our name, version and icon, also in development (where it would otherwise say "Electron").
+  // Packaged builds take the icon from the app bundle, so iconPath is only set when the PNG is there.
+  app.setAboutPanelOptions({
+    applicationName: "Local Transcriber", applicationVersion: app.getVersion(), version: app.getVersion(),
+    copyright: "Public domain (The Unlicense)", ...(fs.existsSync(devIcon) ? { iconPath: devIcon } : {}),
+  });
   registerLive(send, baseEnv);
   ipcMain.on("renderer-error", (_e, message: unknown) => logLine("renderer", String(message).slice(0, 4000)));
   // Returns the raw bytes of an audio/video file so the renderer can build a Blob URL (no custom protocol needed).
