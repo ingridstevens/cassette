@@ -42,6 +42,7 @@ of their veto conditions is met, and one sentence of rationale. 0 means harmful,
 | Ranking | Features by mean score, with the spread (highest minus lowest) |
 | Contested | Features where the spread is 3 or more: decide these yourself |
 | Per-persona table | Every score, so you can see who is for and who is against |
+| Recommendations | The group's combined advice: concrete changes in priority order, who asked for each, what to do first and what not to do, checked against the code |
 | Notes | Anything odd in the votes, and which personas' blind spots apply |
 
 The mean is a hint, not a decision. A veto, a contested feature, or a feature only one persona cares about may matter more than a high mean.
