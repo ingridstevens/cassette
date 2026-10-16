@@ -426,3 +426,38 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .pv-dock { column-gap: 12px; }
 /* when the drawer is open the strip is no longer centred in a fixed-height card, so give it breathing room above */
 .pv-dock:has(.pv-drawer:not([hidden])) { padding-top: 22px; }
+
+/* Ask tab: questions about this transcript */
+.pv-ask { display: flex; flex-direction: column; gap: 10px; flex: 1; min-height: 0; }
+.pv-ask-scope { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--ink2); }
+.pv-ask-scope .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); flex: none; }
+.pv-ask-scope .btn { margin-left: auto; white-space: nowrap; flex: none; }
+.pv-ask-thread { flex: 1; min-height: 160px; overflow-y: auto; display: flex; flex-direction: column; gap: 16px; padding: 2px 2px 8px; }
+.pv-ask-empty { display: flex; flex-direction: column; gap: 10px; }
+.pv-ask-empty h3 { margin: 0; font: 500 22px/1.2 var(--font-read); text-wrap: balance; }
+.pv-ask-sugg { display: flex; flex-direction: column; gap: 8px; }
+.pv-ask-sugg button { font: inherit; text-align: left; display: flex; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; }
+.pv-ask-sugg button:hover:not(:disabled) { border-color: var(--violet); }
+.pv-ask-sugg button:disabled { opacity: .5; cursor: default; }
+.pv-ask-sugg i { font-style: normal; font-size: 12px; color: var(--ink3); white-space: nowrap; }
+.pv-ask-turn { display: flex; flex-direction: column; gap: 10px; }
+.pv-ask-q { align-self: flex-end; max-width: 88%; padding: 8px 14px; border-radius: 16px 16px 4px 16px; background: var(--sun-btn); color: var(--on-sun); font-weight: 550; overflow-wrap: anywhere; }
+.pv-ask-a { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: 16px 16px 16px 4px; background: var(--surface); box-shadow: 0 1px 2px rgba(60, 30, 100, .08); overflow-wrap: anywhere; }
+.pv-ask-a p { margin: 0; }
+.pv-ask-a ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 4px; }
+.pv-ask-cites { display: flex; flex-wrap: wrap; gap: 6px; }
+.pv-ask-cite { font: 500 12px var(--font-ui); font-variant-numeric: tabular-nums; border: 0; border-radius: 999px; padding: 3px 10px; background: rgba(124, 92, 255, .12); color: var(--ink); cursor: pointer; }
+.pv-ask-cite:hover, .pv-ask-cite[aria-pressed="true"] { background: var(--sun-btn); color: var(--on-sun); }
+.pv-ask-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; border-top: 1px solid var(--line); padding-top: 6px; font-size: 11.5px; color: var(--ink3); }
+.pv-ask-think { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.pv-ask-think .prog { width: 100%; }
+.pv-ask-setup { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; padding: 14px 16px; }
+.pv-ask-box { display: flex; align-items: flex-end; gap: 8px; padding: 6px 6px 6px 16px; border-radius: 18px; background: var(--surface); box-shadow: inset 0 0 0 1px var(--line); }
+.pv-ask-box:focus-within { box-shadow: inset 0 0 0 2px var(--violet); }
+.pv-ask-box textarea { flex: 1; min-width: 0; font: inherit; border: 0; background: transparent; color: var(--ink); resize: none; padding: 7px 0; max-height: 120px; }
+.pv-ask-box textarea:focus, .pv-ask-box textarea:focus-visible { outline: none; box-shadow: none; }
+.pv-ask-send { flex: none; width: 36px; height: 36px; border: 0; border-radius: 999px; display: grid; place-items: center; background: var(--sun-btn); color: var(--on-sun); cursor: pointer; }
+.pv-ask-send:disabled { opacity: .45; cursor: default; }
+.pv-ask-send .i { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 2.2; }
+.pv-ask-foot { margin: 0; text-align: center; font-size: 11.5px; }
+.pv-turn[data-cited] { background: color-mix(in srgb, #ffd45e 45%, transparent) !important; border-radius: 8px; }

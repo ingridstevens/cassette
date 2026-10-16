@@ -77,6 +77,13 @@ read it before you share it.
 When you export **Meeting minutes (Word)**, the summary, its topics, decisions and action items come first, then the lines you marked, then the
 highlights as **Key quotes**, then the full record. The summary is marked in the file as written by a language model.
 
+## Ask about the transcript
+
+The **Ask** tab answers questions about this one recording ("What did Maria ask for?", "What was decided?"). It uses the same language model as Highlights
+and runs on this computer. The model only sees this transcript: all of it when it is short, otherwise the lines that best match your question with their
+neighbours. Each answer lists the lines it is based on; click a time to jump to that line and play it. Answers can be wrong, so check those lines.
+The chat is kept while the app is open and is not saved with the project.
+
 ## Search and replace
 
 ![Search and replace bar](screenshots/10-search-replace.jpg)

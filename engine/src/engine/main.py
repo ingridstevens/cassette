@@ -182,6 +182,19 @@ def cmd_summarize(a) -> None:
     emit("done", summary=summarize(segs, names, llm, a.output_language or language, lambda f: progress("summarize", f, "Writing the summary")))
 
 
+def cmd_ask(a) -> None:
+    """Answer a question about a transcript with the local language model, naming the lines the answer is based on."""
+    from .ask import ask
+    from .llm import LocalLLM
+
+    data = json.loads(Path(a.transcript).read_text())
+    segs, names, language = data["segments"], data.get("speakers", {}), data.get("language") or "en"
+    progress("ask", None, "Loading the language model")
+    llm = LocalLLM(a.model)
+    log(f"Answering a question about {len(segs)} lines with the local language model. Nothing leaves this computer.")
+    emit("done", answer=ask(segs, names, str(data.get("question") or ""), llm, language, data.get("history"), lambda f: progress("ask", f, "Reading the transcript")))
+
+
 def cmd_export_clips(a) -> None:
     from .audio import export_clips
 
@@ -257,6 +270,11 @@ def build_parser() -> argparse.ArgumentParser:
     sm.add_argument("--output-language", help="language of the summary (default: the recording's language)")
     sm.set_defaults(fn=cmd_summarize)
 
+    ak = sub.add_parser("ask")
+    ak.add_argument("transcript", help="JSON file: the transcript plus a `question` (and optionally the earlier `history` as {q, a} pairs)")
+    ak.add_argument("--model", default="qwen3-4b", help="language model id, as listed by `models status` (default: qwen3-4b)")
+    ak.set_defaults(fn=cmd_ask)
+
     ec = sub.add_parser("export-clips")
     ec.add_argument("input")
     ec.add_argument("output", help="folder to write the clips into")
@@ -281,7 +299,7 @@ def configure_hub(cmd: str) -> None:
     os.environ["HF_HUB_CACHE"] = str(models_dir())
     os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"  # unsupported ops fall back to CPU instead of crashing
     os.environ["PYANNOTE_CACHE"] = str(models_dir())  # pyannote loads its sub-models from here, not HF_HUB_CACHE
-    if cmd in ("transcribe", "highlights", "summarize"):  # inference never touches the network
+    if cmd in ("transcribe", "highlights", "summarize", "ask"):  # inference never touches the network
         os.environ["HF_HUB_OFFLINE"] = "1"
         os.environ["TRANSFORMERS_OFFLINE"] = "1"
         # pyannote 3.x checkpoints predate torch>=2.6 weights_only loading; they are the official, hash-pinned downloads
