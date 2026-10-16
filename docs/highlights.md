@@ -46,7 +46,7 @@ in the **Language model** menu of the Highlights tab.
 
 All of them work in German, English, French and Spanish. The Qwen3 and Gemma models were tried on the English and German sample interviews
 before they were added to the list. Reasons and summaries are written in the language of the recording. If you downloaded the earlier *Small and quick* model (Qwen2.5 1.5B),
-it stays in the list so you can keep using it or delete it; it is weak in German, so a newer one is better. On a Mac with an Apple chip it runs on the graphics chip through MLX. On Windows and Linux it runs on llama.cpp; **that path has not
+it stays in the list so you can keep using it or delete it; it is weak in German, so a newer one is better. On a Mac with an Apple chip it runs on the graphics chip through MLX. On Windows and Linux it runs on llama.cpp, which is an opt-in install (`uv sync --extra llm` in the `engine` folder; it compiles C++, see [Troubleshooting](troubleshooting.md#windows-and-linux)); **that path has not
 been tested yet**. If a build of the app does not include the language model, the tab says so and highlighting by hand keeps working.
 
 ## Save highlights

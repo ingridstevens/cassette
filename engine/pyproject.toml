@@ -16,8 +16,13 @@ dependencies = [
   "moonshine-voice>=0.1.5 ; platform_machine == 'arm64' and sys_platform == 'darwin' and platform_release >= '24'",  # its wheels need macOS 15 (Darwin 24); older Macs just do not get Moonshine
   "parakeet-mlx>=0.5 ; platform_machine == 'arm64' and sys_platform == 'darwin'",
   "mlx-lm>=0.20 ; platform_machine == 'arm64' and sys_platform == 'darwin'",
-  "llama-cpp-python>=0.3 ; platform_machine != 'arm64' or sys_platform != 'darwin'",
 ]
+
+[project.optional-dependencies]
+# Highlights and summaries on Windows and Linux. llama-cpp-python publishes no prebuilt wheels, so installing it compiles C++
+# (Windows needs Visual Studio Build Tools and CMake). Kept out of the default install so `uv sync` works without a compiler.
+# Install with: uv sync --extra llm
+llm = ["llama-cpp-python>=0.3 ; platform_machine != 'arm64' or sys_platform != 'darwin'"]
 
 [dependency-groups]
 dev = ["pytest>=8", "pyinstaller>=6"]

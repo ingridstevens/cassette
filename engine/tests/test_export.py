@@ -1,4 +1,5 @@
 import json
+import os
 
 from engine.export import to_json, to_md, to_srt, to_txt, to_vtt
 
@@ -244,7 +245,7 @@ def test_import_folder_copies_known_models(tmp_path, monkeypatch):
     (src / "blobs" / "abc").write_text("x")
     snap = src / "snapshots" / "rev1"
     snap.mkdir(parents=True)
-    (snap / "model.bin").symlink_to("../../blobs/abc")
+    (snap / "model.bin").symlink_to(os.path.relpath(src / "blobs" / "abc", snap))  # os.sep-correct, so it also resolves on Windows
     (tmp_path / "src" / "models--someone--unknown" / "snapshots" / "r").mkdir(parents=True)
     got = models.import_folder(tmp_path / "src")
     assert got == ["Systran/faster-whisper-tiny"]

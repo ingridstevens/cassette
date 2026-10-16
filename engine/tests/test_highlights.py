@@ -2,6 +2,7 @@
 import io
 import json
 import subprocess
+from pathlib import Path
 
 from engine.highlights import find_highlights, locate
 from engine.llm import chunk_lines, extract_json
@@ -191,7 +192,7 @@ def test_export_clips_one_file_per_clip(tmp_path):
     for fmt in ("wav", "mp3", "m4a"):
         out = tmp_path / fmt
         paths = export_clips(str(src), str(out), clips, fmt)
-        assert [p.rsplit("/", 1)[1] for p in paths] == [f"01 - Anna Ben - 0m02s.{fmt}", f"02 - 0m07s.{fmt}"]
+        assert [Path(p).name for p in paths] == [f"01 - Anna Ben - 0m02s.{fmt}", f"02 - 0m07s.{fmt}"]
         info = subprocess.run([ffmpeg_exe(), "-i", paths[0]], capture_output=True, text=True).stderr
         assert "Duration: 00:00:02.6" in info or "Duration: 00:00:02.7" in info or "Duration: 00:00:02.5" in info  # 2 s plus 0.3 s of room on each side
 
