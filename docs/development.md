@@ -89,6 +89,18 @@ development and does not happen in a built app.
 `app/src/dev-mock.ts` fakes `window.api` so the UI can run in a plain browser (`?ready` loads a finished
 project; `?offline`, `?denied`, `?lowdisk` trigger the error cards).
 
+## Windows installer
+
+`.github/workflows/build.yml` builds `Local-Transcriber-Setup-<version>.exe` (NSIS, per-user, no administrator prompt) on a Windows runner:
+PyInstaller freezes the engine (`engine/build_engine.sh`, which ends by starting the bundle as a smoke test), then electron-builder wraps it.
+Models are not inside; the app downloads them on first run. Run **build → Run workflow** to get the installer as a workflow artifact,
+or push a tag like `v0.1.0` to also get a draft GitHub release with the installer attached.
+
+Status: **never run**. Expect PyInstaller to need `--hidden-import` or `--collect-all` fixes for PyTorch and pyannote, and have someone
+install the result on a clean Windows PC before publishing. Highlights and summaries (llama.cpp) are left out of the Windows bundle;
+set `ENGINE_LLM=1` to compile them in (needs Visual Studio Build Tools). The installer is unsigned, so Windows SmartScreen shows
+"Windows protected your PC" until a code-signing certificate is added.
+
 ## Screenshots
 
 The pictures in `docs/screenshots/` and the README are generated from the browser mock, so they can be redone whenever the UI changes:
