@@ -1,3 +1,4 @@
+import { sourceTime } from "../sourceLinks";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "../i18n";
 import { Highlight, ModelStatus, PALETTE, Project, Summary, bytes, displayName, fmt } from "../types";
@@ -52,6 +53,11 @@ export default function HighlightsTab({ project, visible, job, error, onSuggest,
     const i = result.segments.findIndex((s) => start < s.end);
     document.querySelector(`.pview:not([hidden]) [data-turn="${Math.max(0, i)}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
     onSeek(start);
+  };
+  // Decisions and action items have no time of their own: link each to the line it most likely came from (a clear match only).
+  const timeOf = (text: string) => {
+    const at = sourceTime(text, result.segments);
+    return at == null ? null : <><button type="button" className="pv-time" onClick={() => show(at)} aria-label={t("Show the line at {time}", { time: fmt(at) })}>{fmt(at)}</button>{" "}</>;
   };
   const who = (h: Highlight) => displayName(h.speaker, result.speakers, names);
   const progress = (label: string) => (
@@ -175,9 +181,10 @@ export default function HighlightsTab({ project, visible, job, error, onSuggest,
                 <ul className="pv-sum-list">{summary.topics.map((x, i) => <li key={i}><button type="button" className="pv-time" onClick={() => show(x.start)} aria-label={t("Play from {time}", { time: fmt(x.start) })}>{fmt(x.start)}</button> {x.title}</li>)}</ul>
               </>
             )}
-            {summary.decisions.length > 0 && (<><h4>{t("Decisions")}</h4><ul className="pv-sum-list">{summary.decisions.map((d, i) => <li key={i}>{d}</li>)}</ul></>)}
-            {summary.actions.length > 0 && (<><h4>{t("Action items")}</h4><ul className="pv-sum-list">{summary.actions.map((a, i) => <li key={i}>{a.text}{a.owner ? <span className="note"> · {a.owner}</span> : null}</li>)}</ul></>)}
+            {summary.decisions.length > 0 && (<><h4>{t("Decisions")}</h4><ul className="pv-sum-list">{summary.decisions.map((d, i) => <li key={i}>{timeOf(d)}{d}</li>)}</ul></>)}
+            {summary.actions.length > 0 && (<><h4>{t("Action items")}</h4><ul className="pv-sum-list">{summary.actions.map((a, i) => <li key={i}>{timeOf(a.text)}{a.text}{a.owner ? <span className="note"> · {a.owner}</span> : null}</li>)}</ul></>)}
             <p className="note">{t("Written by a language model on this computer. Check it before you share it.")}</p>
+            {(summary.decisions.length > 0 || summary.actions.length > 0) && <p className="note">{t("A time next to a decision or action item is the closest matching line. Check that it says what the summary says.")}</p>}
             <div className="pv-hl-acts">
               <button type="button" className="btn small" onClick={copySummary}>{copied ? t("Copied ✓") : t("Copy")}</button>
               <button type="button" className="btn quiet small" onClick={onClearSummary}>{t("Remove")}</button>

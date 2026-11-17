@@ -42,7 +42,7 @@ Personas guess. I checked what I could:
 
 1. **Group and shorten the Export menu** (seven personas): pin Word and one data format, fold the rest under "More formats".
 2. ~~**Demo data that covers the first run:** an English sample and one un-transcribed project in the mock, plus flags to simulate a missing file and an engine failure (Sam, Mara, Lucía).~~ Done: `?fresh`, an English sample, `?missing` and `?enginefail` (see development.md).
-3. **Source links in the summary** (Priya, Mara): a clickable time on every decision and action item.
+3. ~~**Source links in the summary** (Priya, Mara): a clickable time on every decision and action item.~~ Done: each decision and action item links to the closest matching line when there is a clear match; an item with no match (nothing in the transcript says it) gets no time.
 4. **Per-line language chip** with "Transcribe this line again in…" (Lucía; also feeds Jonas).
 5. **Keyboard jumps and a shortcut sheet** (Hana).
 6. **Finish Arabic and Persian** for the transcript, Settings and export menu (about 180 strings), then ask a native reader to review.
