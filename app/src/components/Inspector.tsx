@@ -219,7 +219,7 @@ function Info({ project }: { project: Project }) {
     const lang = mix.length > 1 ? mix.map(([c]) => langName(c)).join(", ") : langName(result.language);
     rows.push([t("Language"), mix.length < 2 && meta?.languageProb != null ? t("{language}, {percent}% sure", { language: lang, percent: Math.round(meta.languageProb * 100) }) : lang]);
     rows.push([t("Speakers"), t("{count} found", { count: live })]);
-    rows.push([t("Models"), meta?.model ? `Whisper ${meta.model}${meta.speakerDevice ? " · pyannote 3.1" : ""}` : "—"]);
+    rows.push([t("Models"), meta?.model ? `Whisper ${meta.model}${meta.speakerDevice ? " · pyannote 3.1" : ""}` : "—", meta?.model ? () => window.api.reveal("models") : undefined]);
     rows.push([t("Finding speakers"), meta ? (meta.speakerDevice ? `${deviceName(meta.speakerDevice)}${meta.secondsSpeakers != null ? ` · ${secs(meta.secondsSpeakers, t)}` : ""}` : t("Skipped")) : "—"]);
     const x = meta?.secondsTranscribe ? ` (${t("{factor}× real time", { factor: (result.duration / Math.max(meta.secondsTranscribe, 0.1)).toFixed(0) })})` : "";
     rows.push([t("Transcribing"), meta?.device ? `${deviceName(meta.device)}${meta.secondsTranscribe != null ? ` · ${secs(meta.secondsTranscribe, t)}` : ""}${x}` : "—"]);
