@@ -18,6 +18,7 @@ your own computer. German, English, French and Spanish are the best tested; abou
 | Save a Word file, minutes, subtitles, a spreadsheet, markers or an anonymised copy | [Exporting](exporting.md) |
 | Know what stays on your computer and what goes online | [Privacy and offline use](privacy-and-offline.md), [Confidentiality](confidentiality.md) |
 | Fix something that isn't working | [Troubleshooting](troubleshooting.md) |
+| Match the look, colours, icon and tone of voice | [Brand guide](brand.md) |
 | Change the code | [Development](development.md) (also see [CONTRIBUTING](../CONTRIBUTING.md)) |
 | See who the app is for, or vote on features and test as those users | [Personas](personas/README.md), [Votes](votes/README.md), [Testing with personas](testing.md) |
 
