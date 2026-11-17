@@ -15,6 +15,7 @@ import { Models } from "./useModels";
 import Transcript from "./Transcript";
 import { FIND_DEFAULTS, FindOpts, matcher, nearMisses } from "../find";
 import Waveform, { WaveformHandle } from "./Waveform";
+import { GoToTime, ShortcutSheet } from "./JumpDialogs";
 
 const typing = (t: EventTarget | null) => t instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName);
 const STAGE_ORDER = ["decode", "diarize", "transcribe", "merge"];
@@ -71,6 +72,8 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
   useEffect(() => { player.current?.setRate(rate); }, [rate, duration]);
   // ---- review mode: step through the words the model was unsure of
   const [review, setReview] = useState(false);
+  const [jumpDialog, setJumpDialog] = useState<"keys" | "goto" | null>(null);
+  const [announce, setAnnounce] = useState("");
   // View choice, remembered: show the language of every line, to spot a line the model tagged wrongly in a recording that is mostly one language.
   const [showLang, setShowLang] = useState(() => { try { return localStorage.getItem("showLineLanguage") === "1"; } catch { return false; } });
   const toggleLang = () => { const next = !showLang; setShowLang(next); try { localStorage.setItem("showLineLanguage", next ? "1" : "0"); } catch { /* storage unavailable: the choice lasts until the app closes */ } };
@@ -240,13 +243,49 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
   }, [stage, project.status, failed]);
   if (stage === "diarize") { const n = /Found (\d+)/.exec(progress?.message ?? ""); if (n) found.current = Number(n[1]); }
 
+  /** Not typing in a field, no menu or dialog open: the shortcut keys that are plain letters only act then. */
+  const quietTarget = (target: EventTarget | null) => !typing(target) && !document.querySelector("[role=dialog], [role=alertdialog]") && !(target instanceof HTMLElement && target.closest("[role=menu]"));
+  /** The line the user is on: the focused one, else the one playing now. */
+  const currentLine = () => {
+    const el = (document.activeElement as HTMLElement | null)?.closest?.("[data-turn]");
+    if (el) return Number(el.getAttribute("data-turn"));
+    let k = 0; result?.segments.forEach((s, i) => { if (s.start <= time + 0.05) k = i; });
+    return k;
+  };
+  /** Move to a line without playing it: the screen reader hears who speaks and what, and the line scrolls into view. */
+  const goToLine = (i: number) => {
+    if (!result) return;
+    const seg = result.segments[i];
+    player.current?.seek(seg.start, false);
+    document.querySelector(`.pview:not([hidden]) [data-turn="${i}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+    setAnnounce(t("Line {n} of {total}. {speaker}, {time}. {text}", { n: i + 1, total: result.segments.length, speaker: displayName(seg.speaker, result.speakers, project.names), time: fmt(seg.start), text: seg.text }));
+  };
+  const jumpSpeaker = (dir: 1 | -1) => {
+    if (!result) return;
+    const segs = result.segments, cur = currentLine();
+    for (let i = cur + dir; i >= 0 && i < segs.length; i += dir) if (segs[i].speaker !== segs[cur].speaker) { goToLine(i); return; }
+    setAnnounce(dir === 1 ? t("No later line from a different speaker.") : t("No earlier line from a different speaker."));
+  };
+  const goToTime = (seconds: number) => {
+    setJumpDialog(null);
+    if (!result) return;
+    let k = 0; result.segments.forEach((s, i) => { if (s.start <= seconds + 0.05) k = i; });
+    window.setTimeout(() => goToLine(k), 0); // after the dialog has closed and focus is back
+  };
+
   useEffect(() => {
     if (!visible) return;
     const key = (e: KeyboardEvent) => {
-      if (dialog) return;
+      if (dialog || jumpDialog) return;
       const mod = e.metaKey || e.ctrlKey;
       if (mod && e.key.toLowerCase() === "e" && showResult) { e.preventDefault(); setExportSignal((n) => n + 1); }
       else if (mod && e.key.toLowerCase() === "f" && showResult) { e.preventDefault(); findBox.current?.focus(); findBox.current?.select(); }
+      else if (!mod && !e.altKey && showResult && !busy && (e.key === "?" || (e.key === "/" && e.shiftKey) || /^[ng]$/i.test(e.key) && !(e.shiftKey && e.key.toLowerCase() === "g")) && quietTarget(e.target)) {
+        e.preventDefault();
+        if (e.key === "?" || e.key === "/") setJumpDialog("keys");
+        else if (e.key.toLowerCase() === "g") setJumpDialog("goto");
+        else jumpSpeaker(e.key === "N" || e.shiftKey ? -1 : 1);
+      }
       else if (!mod && !e.altKey && !e.shiftKey && !busy && /^[jkl]$/i.test(e.key) && !typing(e.target) && !document.querySelector("[role=dialog], [role=alertdialog]") && !(e.target instanceof HTMLElement && e.target.closest("[role=menu]"))) {
         e.preventDefault();
         const k = e.key.toLowerCase();
@@ -256,7 +295,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
     };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [visible, showResult, busy, dialog]);
+  }, [visible, showResult, busy, dialog, jumpDialog, time, result]);
 
   const payload = (format = "", options?: ExportOpts) => ({
     segments: result!.segments.map(({ words, orig, edited, ...s }) => (["srt", "vtt", "edl"].includes(format) || (options?.pauseMarks && STYLED.has(format)) ? { ...s, edited, words: words.map(({ start, end, word }) => ({ start, end, word })) } : format === "changes" ? { ...s, orig: orig && { text: orig.text } } : s)),
@@ -451,6 +490,9 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
 
   return (
     <div hidden={!visible} className={"pview" + (review ? " reviewing" : "")}>
+      <div className="pv-sr" role="status" aria-live="polite" aria-atomic="true">{announce}</div>
+      {jumpDialog === "keys" && visible && <ShortcutSheet onClose={() => setJumpDialog(null)} />}
+      {jumpDialog === "goto" && visible && <GoToTime duration={duration || result?.duration || 0} onGo={goToTime} onClose={() => setJumpDialog(null)} />}
       <section className="pview-main" aria-label={project.name}>
         <header className="tool pv-tool">
           <div className="titles">

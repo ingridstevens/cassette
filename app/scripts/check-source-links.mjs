@@ -23,3 +23,16 @@ assert.equal(sourceTime("Hire two designers in spring", segs), null, "no clear m
 assert.equal(sourceTime("ok", segs), null, "too short to match");
 assert.equal(sourceTime("Genehmigung der Zugangsanfrage", [{ start: 3, text: "Die Zugangsanfrage wartet noch auf die Genehmigung." }]), 3, "German");
 console.log("source links: all checks pass");
+
+// parseTime (the "Go to a time" box)
+const out2 = join(dir, "parsetime.mjs");
+await build({ entryPoints: ["src/parseTime.ts"], outfile: out2, bundle: true, format: "esm", logLevel: "silent" });
+const { parseTime } = await import(pathToFileURL(out2).href);
+assert.equal(parseTime("12:30"), 750);
+assert.equal(parseTime("1:02:03"), 3723);
+assert.equal(parseTime(" 90 "), 90);
+assert.equal(parseTime("0:05"), 5);
+assert.equal(parseTime("12:75"), null, "seconds over 59");
+assert.equal(parseTime("soon"), null);
+assert.equal(parseTime(""), null);
+console.log("go to a time: all checks pass");
