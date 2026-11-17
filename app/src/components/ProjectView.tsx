@@ -71,6 +71,9 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
   useEffect(() => { player.current?.setRate(rate); }, [rate, duration]);
   // ---- review mode: step through the words the model was unsure of
   const [review, setReview] = useState(false);
+  // View choice, remembered: show the language of every line, to spot a line the model tagged wrongly in a recording that is mostly one language.
+  const [showLang, setShowLang] = useState(() => { try { return localStorage.getItem("showLineLanguage") === "1"; } catch { return false; } });
+  const toggleLang = () => { const next = !showLang; setShowLang(next); try { localStorage.setItem("showLineLanguage", next ? "1" : "0"); } catch { /* storage unavailable: the choice lasts until the app closes */ } };
   const [rpos, setRpos] = useState(0);
   const [reviewTotal, setReviewTotal] = useState(0);
   const unsure = useMemo(() => (result ? unsureWords(result.segments) : []), [result]);
@@ -423,7 +426,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
             <button type="button" className="btn quiet small" onClick={onCancel}>{t("Stop")}</button>
           </div>
         )}
-        <Transcript result={result} names={names} time={time} query={query} findOpts={findOpts} highlights={highlights} onHighlight={(i, a, b) => { const h = highlightOf(result.segments[i], a, b); if (h) patchResult((x) => ({ ...x, highlights: addHighlight(x.highlights ?? [], h) })); }} matchSeg={matches[mi] ?? -1} onSeek={(t) => player.current?.seek(t)} onReassign={reassign}
+        <Transcript showLang={showLang} result={result} names={names} time={time} query={query} findOpts={findOpts} highlights={highlights} onHighlight={(i, a, b) => { const h = highlightOf(result.segments[i], a, b); if (h) patchResult((x) => ({ ...x, highlights: addHighlight(x.highlights ?? [], h) })); }} matchSeg={matches[mi] ?? -1} onSeek={(t) => player.current?.seek(t)} onReassign={reassign}
           onEdit={(i, text) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => (k === i ? retext(s, text) : s)) } })}
           canRetranscribe={canTranscribe} reviewAt={reviewAt} translatingIndex={translating} playing={playing} onPause={() => player.current?.pause()}
           onTranslate={async (i, remove) => {
@@ -472,6 +475,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
                   <button type="button" className="btn icon quiet" onClick={() => step(1)} disabled={!matches.length} aria-label={t("Next match")} title={t("Next match (Enter)")}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg></button>
                 </>
               )}
+              <button type="button" className={"btn quiet small" + (showLang ? " on" : "")} aria-pressed={showLang} onClick={toggleLang} title={t("Show the language of every line, so a line tagged with the wrong language stands out. Click a tag to change it.")}>{t("Languages")}</button>
               <button type="button" className={"btn quiet small" + (replaceOpen ? " on" : "")} aria-expanded={replaceOpen} aria-controls="pv-replace" onClick={() => setReplaceOpen(!replaceOpen)} title={t("Replace words in the transcript")}>{t("Replace")}</button>
               <ExportMenu openSignal={exportSignal} hasChapters={result!.segments.some((s) => !!s.chapter?.trim())} markedCount={result!.segments.filter((s) => s.marked).length + keptHighlights.length} onExport={(f, o) => window.api.exportTranscript(payload(f, o), f, project.name)} />
             </>
