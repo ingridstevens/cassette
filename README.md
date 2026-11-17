@@ -182,6 +182,7 @@ Start at [docs/README.md](docs/README.md). Every page:
 | [Confidentiality](docs/confidentiality.md) | Handling sensitive recordings |
 | [Troubleshooting](docs/troubleshooting.md) | When something isn't working, including Windows and Linux |
 | [FAQ](docs/faq.md) and [Glossary](docs/glossary.md) | Quick answers and word meanings |
+| [Brand guide](docs/brand.md) | Icon, petrol colour, type, tone of voice |
 | [Development](docs/development.md) and [CONTRIBUTING](CONTRIBUTING.md) | Changing the code, screenshots, checks |
 | [Dependency vetting](docs/dependency-vetting.md) | How the bundled fonts were checked |
 | [Testing with personas](docs/testing.md), [Personas](docs/personas/README.md), [Votes](docs/votes/README.md) | Who the app is for, and feature votes |
