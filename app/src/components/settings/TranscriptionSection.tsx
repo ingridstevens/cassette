@@ -94,6 +94,7 @@ export default function TranscriptionSection({ opts, set, status, models, say }:
         {eng === "whisper" && <p className="note">{t("One measurement, not a promise: Whisper Small took about 15 seconds for 58 seconds of audio on the processor, and about 1 second on the Apple GPU. Other models have not been measured.")}</p>}
         <p className="note">{t("Words the model is unsure about are always underlined in the transcript.")}</p>
         <p className="note"><button type="button" className="linkish" onClick={() => void models.importFolder()}>{t("Use a models folder…")}</button> {t("Someone in your team can share one folder so nobody has to download.")}</p>
+        <p className="note">{t("Models download from huggingface.co. Transcription models need no account or key; only speaker detection needs a free Hugging Face token.")}</p>
       </Block>
       <Block id="tr-lang" title={t("Language of your recordings")}>
         <p className="note">{t("This follows the model in use: {model}.", { model: nameOf(opts.model) })}</p>
