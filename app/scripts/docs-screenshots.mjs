@@ -37,7 +37,7 @@ const addAndTranscribe = async () => {
 // First launch (nothing downloaded yet)
 await launch("");
 await snap("02-first-launch");
-await step("speaker setup", async () => { await p.getByRole("button", { name: /set up speaker names/i }).click(); await p.waitForTimeout(400); await snap("03-speaker-setup"); });
+await step("speaker setup", async () => { await p.getByRole("button", { name: /set up speaker (names|detection)/i }).click(); await p.waitForTimeout(400); await snap("03-speaker-setup"); });
 await p.close();
 
 // A normal session
@@ -85,5 +85,11 @@ await step("settings", async () => {
   await p.getByRole("button", { name: /^Settings/ }).first().click(); await p.waitForTimeout(600);
   const nav = async (n, file) => { await p.getByRole("button", { name: n }).first().click(); await p.waitForTimeout(500); await snap(file); };
   await nav("Advanced", "17-settings-performance"); await nav("Transcription", "18-settings-storage"); await nav("Privacy", "19-settings-privacy");
+});
+// README hero: the transcript at 1.25x, light and dark
+await step("hero", async () => {
+  p = await (await browser.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: 1.25, locale: "en-US" })).newPage();
+  await p.goto(URL_ + "/?ready"); await p.waitForTimeout(800); await addAndTranscribe();
+  for (const mode of ["light", "dark"]) { await p.emulateMedia({ colorScheme: mode }); await p.waitForTimeout(400); await p.mouse.move(2, 2); await p.screenshot({ path: OUT + `00-hero-${mode}.jpg`, type: "jpeg", quality: 84 }); console.log("ok", "00-hero-" + mode); }
 });
 await browser.close();

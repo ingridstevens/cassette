@@ -193,11 +193,14 @@ the first match.
 - **Summaries and translation:** the language model for highlights and summaries, and the translation model, each with **Use** and **Delete**.
 - **Saving and export:** optionally save a backup file (`name.transcript.json`) next to each recording after transcribing. Transcribing the same
   recording again replaces that file. Your audio is never changed or moved.
-- **Text and language:** **Text size** (four sizes, scales the whole app), the language of the app (*Match my computer*, English, Deutsch, Français or
-  Español; the translations are machine-assisted and not yet reviewed), the **look** (*Fairytale sunset* or *Clean*, same layout, only the colours differ),
-  **Light or dark**, **Contrast** (*Standard* or *High contrast*: stronger colours and heavier borders) and the keyboard shortcuts. Speaker colours stay
-  clearly different from each other in every combination. Settings saved before the two looks carry over: the first two old stops become *Fairytale
-  sunset*, the last two become *Clean*. The language of a recording is separate (see Options).
+- **Text and language:** **Text size** (four sizes, each shown with its percentage, scales the whole app), the language of the app (*Match my computer*, English, Deutsch, Français or
+  Español; the translations are machine-assisted and not yet reviewed), the **look** (*Clean*, the default: flat, with one blue-green accent, in the Inter font; or
+  *Fairytale sunset*; same layout, only the colours differ), **Light or dark**, **Contrast** (*Standard* or *High contrast*: stronger colours and heavier borders),
+  **Soft look** (*Automatic*, *On* or *Off*: blurred glass on menus, dialogs and the player; Automatic turns it on only for computers with more than 6 GB of
+  memory and never in High contrast) and the keyboard shortcuts. Speaker colours stay clearly different from each other in every combination. Text in Arabic
+  script (for example Persian or Arabic words in a line) is shown right to left in the Vazirmatn font. Settings saved before the two looks carry over: the first two
+  old stops become *Fairytale sunset*, the last two become *Clean*; if you never chose a look, you now get *Clean*. The language of a recording is separate (see Options).
+- The brand mark at the top of the project list turns its two reels while a transcript is being written, and stands still otherwise or when your system asks for reduced motion.
 - **Privacy:** what stays on your computer, a table of every network call, a table of what is stored where (with **Show** buttons), your saved token (only the
   last 4 characters are shown), and the activity log. See [Privacy and offline use](privacy-and-offline.md).
 - **Advanced:** closed groups, nothing needs changing. *Processor*: *Automatic* uses your graphics chip when there is one; *Processor only* is slower and most

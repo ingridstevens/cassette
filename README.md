@@ -61,7 +61,7 @@ you press Start.
 
 ## Quick start
 
-There is no installer yet, so you run Cassette from this repository. It takes about 10 minutes, most of it
+There is no installer to download yet, so you run Cassette from this repository. (The Windows installer is configured as one click, for the current user, with no administrator password, but it has not been built or run on a Windows computer, so treat it as untested.) It takes about 10 minutes, most of it
 downloads. You need **Git**, **Node.js 22.12 or newer** and **[uv](https://docs.astral.sh/uv/)** (uv also installs
 the right Python for you). If you use [`mise`](https://mise.jdx.dev), `mise install` in this folder sets up Node and uv.
 

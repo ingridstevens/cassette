@@ -27,6 +27,8 @@ in the setup steps open in your normal browser, and only huggingface.co links ar
 
 Translations into English are done by the local speech model, and translations into other languages by the local translation model (Hy-MT2); mixed-language detection uses the speech model too. Nothing is sent anywhere. Suggested highlights and summaries are written by a language model on your computer, which runs with offline mode on like the speech model. Your transcript is never sent to a service.
 
+**Fonts and the look.** The fonts (Inter and Vazirmatn) are files inside the app; nothing is loaded from the internet to draw a screen. After a build, `npm run built:check` in `app/` fails if the built app names any remote font or CDN address. The *Soft look: Automatic* setting reads how much memory this computer has, on this computer, and sends nothing. Text size, look and contrast are stored only in the app's own settings. The font licences are in [THIRD_PARTY_NOTICES.md](../THIRD_PARTY_NOTICES.md); how the files were checked is in [dependency-vetting.md](dependency-vetting.md).
+
 ## What is stored, and where
 
 Inside the app's data folder (Settings → Privacy → *Open*, or Settings → Saving → *Show app folder*):
