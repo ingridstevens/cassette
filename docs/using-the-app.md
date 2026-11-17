@@ -230,6 +230,9 @@ on disk. Model sizes that haven't been downloaded yet are approximate ("≈").
 | --- | --- |
 | `Space`, `K` | Play / pause |
 | `J`, `L` | Back / forward 10 seconds |
+| `N`, `Shift+N` | Move to the next / previous line from a different speaker. The line scrolls into view, nothing plays, and a screen reader announces its number, speaker, time and text |
+| `G` | Go to a time: type `12:30` (or `1:02:03`, or seconds) and press `Enter` to land on the line at that time |
+| `?` | Show this list of shortcuts |
 | `⌘F` / `Ctrl+F` | Find in the transcript (**Replace** opens next to it) |
 | `⌘E` / `Ctrl+E` | Open the Export menu |
 | `⌘,` / `Ctrl+,` | Open Settings |

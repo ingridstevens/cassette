@@ -1,3 +1,4 @@
+import { shortcutList } from "../../shortcuts";
 import { LANGS, LangPref, resolveLang, systemLang } from "../../i18n";
 import { useT } from "../../i18n";
 import { LOOKS, MOD_KEY, lookOf } from "../../types";
@@ -12,10 +13,7 @@ export default function TextLanguageSection({ opts, set }: SectionProps) {
   // The size as a percentage in the app language's own digits (Intl picks them; Persian or Arabic digits appear if those languages are added)
   const pct = (v: number) => new Intl.NumberFormat(resolveLang(pref), { style: "percent" }).format(v);
   const name = (id: string) => LANGS.find((l) => l.id === id)?.label ?? id;
-  const keys: [string, string][] = [
-    ["Space / K", t("Play or pause")], ["J / L", t("Back or forward 10 seconds")], [`${MOD_KEY}F`, t("Find in the transcript")], [`${MOD_KEY}E`, t("Open the Export menu")],
-    [`${MOD_KEY},`, t("Open Settings")], ["Enter", t("Save an edit")], ["Esc", t("Close a menu or dialog, or cancel an edit")],
-  ];
+  const keys = shortcutList(t);
   return (
     <>
       <Block id="tx-size" title={t("Text size")}>

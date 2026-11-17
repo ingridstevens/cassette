@@ -5,7 +5,7 @@ import { useT } from "../i18n";
 import { PALETTE, Result } from "../types";
 import "../styles/project.css";
 
-export interface WaveformHandle { seek(t: number): void; toggle(): void; pause(): void; skip(delta: number): void; setRate(rate: number): void; markClip(start: number, end: number): void }
+export interface WaveformHandle { seek(t: number, play?: boolean): void; toggle(): void; pause(): void; skip(delta: number): void; setRate(rate: number): void; markClip(start: number, end: number): void }
 interface Props {
   path: string; result: Result | null;
   onTime(t: number): void; onSelection(range: [number, number] | null): void; onPlaying?(p: boolean): void; onDuration?(d: number): void;
@@ -36,7 +36,7 @@ const Waveform = forwardRef<WaveformHandle, Props>(({ path, result, onTime, onSe
   const [attempt, setAttempt] = useState(0);
 
   useImperativeHandle(ref, () => ({
-    seek: (t) => { const w = ws.current; if (w && w.getDuration()) { w.setTime(t); w.play(); } },
+    seek: (t, play = true) => { const w = ws.current; if (w && w.getDuration()) { w.setTime(t); if (play) w.play(); } },
     toggle: () => ws.current?.playPause(),
     markClip: (a, b) => { regions.current?.addRegion({ start: a, end: b, color: "rgba(124, 92, 255, 0.14)" }); },
     setRate: (r) => { ws.current?.setPlaybackRate(r, true); },
