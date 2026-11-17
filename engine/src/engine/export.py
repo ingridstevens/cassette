@@ -224,10 +224,15 @@ def to_srt(segs, names=None, options=None):
     )
 
 
+def _vtt_text(s: str) -> str:
+    """WebVTT cue text: & < > are markup, so spoken text such as "R&D" or "a < b" must be escaped or players show a broken cue."""
+    return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+
 def to_vtt(segs, names=None, options=None):
     names = names or {}
     body = "\n".join(
-        f"{_ts(st, '.')} --> {_ts(en, '.')}\n" + (f"<v {who}>" if who else "") + "\n".join(lines) + "\n"
+        f"{_ts(st, '.')} --> {_ts(en, '.')}\n" + (f"<v {_vtt_text(who)}>" if who else "") + "\n".join(_vtt_text(l) for l in lines) + "\n"
         for st, en, lines, who in _cues(segs, names, options, False)
     )
     return "WEBVTT\n\n" + body
