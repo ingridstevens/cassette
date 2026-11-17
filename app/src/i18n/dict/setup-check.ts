@@ -1,5 +1,6 @@
 export default {
   de: {
+    "Show the language of every line, so a line tagged with the wrong language stands out. Click a tag to change it.": "Die Sprache jeder Zeile anzeigen, damit eine falsch erkannte Zeile auffällt. Auf ein Kürzel klicken, um es zu ändern.",
     "Show the line at {time}": "Zeile bei {time} zeigen",
     "A time next to a decision or action item is the closest matching line. Check that it says what the summary says.": "Die Zeit neben einer Entscheidung oder Aufgabe ist die am besten passende Zeile. Prüfe, ob sie sagt, was die Zusammenfassung sagt.",
     "The speech engine stopped before it finished. This often means the computer ran out of memory: close other programs, or choose a smaller size under Options, then try again. The recording itself is untouched.": "Die Sprach-Engine wurde vor dem Ende gestoppt. Oft heißt das, dass dem Computer der Arbeitsspeicher ausging: Schließe andere Programme oder wähle unter Optionen eine kleinere Größe und versuche es erneut. Die Aufnahme selbst ist unberührt.",
@@ -30,6 +31,7 @@ export default {
     "No microphone was found. You can still transcribe files; to record, connect one and allow access.": "Es wurde kein Mikrofon gefunden. Dateien kannst du weiterhin transkribieren; zum Aufnehmen schließe eines an und erlaube den Zugriff.",
   },
   fr: {
+    "Show the language of every line, so a line tagged with the wrong language stands out. Click a tag to change it.": "Afficher la langue de chaque ligne, pour repérer une ligne marquée dans la mauvaise langue. Cliquez sur une étiquette pour la changer.",
     "Show the line at {time}": "Afficher la ligne à {time}",
     "A time next to a decision or action item is the closest matching line. Check that it says what the summary says.": "L’heure à côté d’une décision ou d’une tâche est la ligne la plus proche. Vérifiez qu’elle dit bien ce que dit le résumé.",
     "The speech engine stopped before it finished. This often means the computer ran out of memory: close other programs, or choose a smaller size under Options, then try again. The recording itself is untouched.": "Le moteur vocal s’est arrêté avant la fin. Cela signifie souvent que l’ordinateur a manqué de mémoire : fermez d’autres programmes ou choisissez une taille plus petite dans Options, puis réessayez. L’enregistrement lui-même n’est pas touché.",
@@ -60,6 +62,7 @@ export default {
     "No microphone was found. You can still transcribe files; to record, connect one and allow access.": "Aucun micro trouvé. Vous pouvez toujours transcrire des fichiers ; pour enregistrer, branchez-en un et autorisez l’accès.",
   },
   es: {
+    "Show the language of every line, so a line tagged with the wrong language stands out. Click a tag to change it.": "Mostrar el idioma de cada línea, para que destaque una línea con el idioma equivocado. Haz clic en una etiqueta para cambiarlo.",
     "Show the line at {time}": "Mostrar la línea en {time}",
     "A time next to a decision or action item is the closest matching line. Check that it says what the summary says.": "La hora junto a una decisión o tarea es la línea que más se parece. Comprueba que diga lo que dice el resumen.",
     "The speech engine stopped before it finished. This often means the computer ran out of memory: close other programs, or choose a smaller size under Options, then try again. The recording itself is untouched.": "El motor de voz se detuvo antes de terminar. A menudo significa que el ordenador se quedó sin memoria: cierra otros programas o elige un tamaño menor en Opciones y vuelve a intentarlo. La grabación en sí no se ha tocado.",

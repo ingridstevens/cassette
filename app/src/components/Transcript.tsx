@@ -11,13 +11,14 @@ interface Props {
   onSeek(t: number): void; onReassign(index: number, speaker: string): void;
   onEdit(index: number, text: string): void; onRevert(index: number): void; onChapter(index: number, title: string | null): void; onMark(index: number): void; onSplit(index: number, wordIndex: number): void; onLanguage(index: number, lang: string | null): void; onRetranscribe(index: number, language: string): void; onTranslate(index: number, remove?: boolean): void; playing: boolean; onPause(): void; reviewAt?: UnsureRef | null; translatingIndex?: number | null; canRetranscribe: boolean; onJoin(index: number): void;
   highlights?: Highlight[]; onHighlight?(index: number, from: number, to: number): void;
+  /** Show the language of every line, not only lines that differ from the recording. */ showLang?: boolean;
   query?: string; findOpts?: FindOpts; matchSeg?: number;
 }
 
 /** How long a click on a word waits for a possible second click before it starts playing (a typical double-click gap). */
 const DOUBLE_CLICK_MS = 260;
 
-export default function Transcript({ result, names, time, onSeek, onReassign, onEdit, onRevert, onChapter, onMark, onSplit, onJoin, onLanguage, onRetranscribe, onTranslate, playing, onPause, reviewAt = null, translatingIndex = null, canRetranscribe, highlights = [], onHighlight, query = "", findOpts = FIND_DEFAULTS, matchSeg = -1 }: Props) {
+export default function Transcript({ showLang, result, names, time, onSeek, onReassign, onEdit, onRevert, onChapter, onMark, onSplit, onJoin, onLanguage, onRetranscribe, onTranslate, playing, onPause, reviewAt = null, translatingIndex = null, canRetranscribe, highlights = [], onHighlight, query = "", findOpts = FIND_DEFAULTS, matchSeg = -1 }: Props) {
   const t = useT();
   const color = (sp: string) => PALETTE[Math.max(0, result.speakers.indexOf(sp)) % PALETTE.length];
   const label = (sp: string) => displayName(sp, result.speakers, names);
@@ -143,7 +144,7 @@ export default function Transcript({ result, names, time, onSeek, onReassign, on
             </button>
             <button type="button" className="pv-time" onClick={() => onSeek(seg.start)} title={t("Play from here")} aria-label={t("Play from {time}", { time: fmt(seg.start) })}>{fmt(seg.start)}</button>
             {seg.marked && <span className="pv-flag pv-marked" title={t("Marked: goes into the meeting minutes and the quote list")}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-3-5.4 3 1.1-6L3.2 9.4l6.1-.8z" /></svg>{t("Marked")}</span>}
-            {(seg.lang && seg.lang !== result.language || mixed) && (
+            {(seg.lang && seg.lang !== result.language || mixed || showLang) && (
               <button type="button" className="pv-flag pv-lang pv-lang-btn" aria-haspopup="dialog" aria-expanded={langPop === i}
                 aria-label={t("Language of this line: {language}. Change it.", { language: langName(seg.lang ?? result.language) })} title={t("This line is in {language}", { language: langName(seg.lang ?? result.language) })}
                 onClick={() => { setMenu(null); setLangPop(langPop === i ? null : i); }}>{(seg.lang ?? result.language).toUpperCase()}</button>

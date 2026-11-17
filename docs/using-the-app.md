@@ -131,7 +131,7 @@ to change the speaker, with one more item for the language and translation of th
 ![The dialog for the language of one line](screenshots/08-language-dialog.jpg)
 
 - **Language of a line:** a small tag (for example `FR`) shows the line's language. In a recording with several languages every line has a tag;
-  otherwise only lines that differ from the recording's language do. Click the tag, or click the speaker name and choose **Language and
+  otherwise only lines that differ from the recording's language do. The **Languages** button in the transcript toolbar shows a tag on every line (remembered), so a short line the model tagged with the wrong language stands out. Click the tag, or click the speaker name and choose **Language and
   translation…**, to open a small dialog with a **Language of this line** dropdown and the actions below. Choosing a language does not change the
   text. To redo the text, press **Transcribe this line again in…** there: that stretch is transcribed again in that language (without speaker
   detection; the line keeps its speaker). `Esc` or **Close** closes the dialog and returns you to the speaker name.
