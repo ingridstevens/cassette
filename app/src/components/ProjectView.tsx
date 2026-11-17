@@ -57,6 +57,7 @@ function Dialog({ title, children, cancel, confirm, onCancel, onConfirm }: { tit
 
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
 export default function ProjectView({ project, progress, draft, blocker, waiting, visible, nowPlayingId, stopSignal = 0, onPlayingChange, onOpenSettings, models, onTranscribe, onCancel, onPatch, othersWaiting = 0, onApplyToOthers, onRemember }: Props) {
+  const [renaming, setRenaming] = useState(false);
   const t = useT();
   const { result, names, path } = project;
   const player = useRef<WaveformHandle>(null);
@@ -445,7 +446,14 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
     <div hidden={!visible} className={"pview" + (review ? " reviewing" : "")}>
       <section className="pview-main" aria-label={project.name}>
         <header className="tool pv-tool">
-          <div className="titles"><h1>{project.name}</h1><div className="sub">{sub}</div></div>
+          <div className="titles">
+            {renaming
+              ? <input autoFocus className="input pv-title-input" defaultValue={project.name} aria-label={t("Project name")}
+                  onFocus={(e) => e.target.select()}
+                  onBlur={(e) => { const n = e.target.value.trim(); if (n && n !== project.name) onPatch({ name: n }); setRenaming(false); }}
+                  onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); if (e.key === "Escape") setRenaming(false); }} />
+              : <h1 tabIndex={0} className="pv-title" title={t("Double-click or press F2 to rename")} onDoubleClick={() => setRenaming(true)}
+                  onKeyDown={(e) => { if (e.key === "F2") setRenaming(true); }}>{project.name}</h1>}<div className="sub">{sub}</div></div>
           {showResult && (
             <>
               {unsure.length > 0 && !review && <button type="button" className="btn small" onClick={startReview} title={t("Step through the words the model was unsure of, with the audio, and fix or confirm each one")}>{unsure.length === 1 ? t("Review 1 unsure word") : t("Review {count} unsure words", { count: unsure.length })}</button>}
