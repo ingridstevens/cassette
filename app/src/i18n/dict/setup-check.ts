@@ -1,5 +1,6 @@
 export default {
   de: {
+    "The speech engine stopped before it finished. This often means the computer ran out of memory: close other programs, or choose a smaller size under Options, then try again. The recording itself is untouched.": "Die Sprach-Engine wurde vor dem Ende gestoppt. Oft heißt das, dass dem Computer der Arbeitsspeicher ausging: Schließe andere Programme oder wähle unter Optionen eine kleinere Größe und versuche es erneut. Die Aufnahme selbst ist unberührt.",
     "Most used": "Am häufigsten genutzt",
     "More formats…": "Weitere Formate …",
     "Fewer formats": "Weniger Formate",
@@ -27,6 +28,7 @@ export default {
     "No microphone was found. You can still transcribe files; to record, connect one and allow access.": "Es wurde kein Mikrofon gefunden. Dateien kannst du weiterhin transkribieren; zum Aufnehmen schließe eines an und erlaube den Zugriff.",
   },
   fr: {
+    "The speech engine stopped before it finished. This often means the computer ran out of memory: close other programs, or choose a smaller size under Options, then try again. The recording itself is untouched.": "Le moteur vocal s’est arrêté avant la fin. Cela signifie souvent que l’ordinateur a manqué de mémoire : fermez d’autres programmes ou choisissez une taille plus petite dans Options, puis réessayez. L’enregistrement lui-même n’est pas touché.",
     "Most used": "Les plus utilisés",
     "More formats…": "Plus de formats…",
     "Fewer formats": "Moins de formats",
@@ -54,6 +56,7 @@ export default {
     "No microphone was found. You can still transcribe files; to record, connect one and allow access.": "Aucun micro trouvé. Vous pouvez toujours transcrire des fichiers ; pour enregistrer, branchez-en un et autorisez l’accès.",
   },
   es: {
+    "The speech engine stopped before it finished. This often means the computer ran out of memory: close other programs, or choose a smaller size under Options, then try again. The recording itself is untouched.": "El motor de voz se detuvo antes de terminar. A menudo significa que el ordenador se quedó sin memoria: cierra otros programas o elige un tamaño menor en Opciones y vuelve a intentarlo. La grabación en sí no se ha tocado.",
     "Most used": "Más usados",
     "More formats…": "Más formatos…",
     "Fewer formats": "Menos formatos",

@@ -45,7 +45,9 @@ export function runEngine(
   return new Promise((resolve) => {
     child.on("close", (code, signal) => {
       jobs.delete(jobId);
-      if (signal) return resolve({ type: "error", message: "Cancelled", cancelled: true });
+      if (cancelled.delete(jobId)) return resolve({ type: "error", message: "Cancelled", cancelled: true });
+      // Ended by the system, not by us (on Mac and Linux, usually the out-of-memory killer): say so instead of looking like a cancel.
+      if (signal) return resolve({ type: "error", message: `Engine exited with code ${signal}` });
       if (code !== 0 && last?.type !== "error") last = { type: "error", message: stderr || `Engine exited with code ${code}` };
       resolve(last);
     });
@@ -57,4 +59,6 @@ export function runEngine(
 export function writeToJob(jobId: string, data: Uint8Array): boolean { const s = jobs.get(jobId)?.stdin; return !!s && !s.destroyed && s.write(data); }
 /** Tell a running job its input has ended. It finishes what it has and exits. */
 export function endJobInput(jobId: string) { jobs.get(jobId)?.stdin?.end(); }
-export function cancelJob(jobId: string) { jobs.get(jobId)?.kill(); }
+/** Jobs the user (or the app) asked to stop, so a process ended by the system is not mistaken for a cancel. */
+const cancelled = new Set<string>();
+export function cancelJob(jobId: string) { const j = jobs.get(jobId); if (j) { cancelled.add(jobId); j.kill(); } }

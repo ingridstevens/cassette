@@ -324,10 +324,14 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
   const hitLabel = !q ? "" : matches.length ? t("{current} of {total}", { current: mi + 1, total: matches.length }) : t("No matches");
 
   // ---- the three non-transcript states
+  // An engine that was stopped or ran out of memory is not the file's fault: say so, and say what to try.
+  const engineStopped = /Engine exited|exit code|MemoryError|out of memory|bad_alloc|access violation|SIG(KILL|SEGV|ABRT)|killed/i.test(project.error ?? "");
   const errorCard = (
     <div className="card pv-err" role="alert">
       <h2><span className="pv-tag">{t("Transcription")}</span>{t("Couldn't transcribe “{name}”", { name: project.name })}</h2>
-      <p>{t("The file may be damaged, or in a format the app can't read. The recording itself is untouched, and the other projects in the list keep going.")}</p>
+      <p>{engineStopped
+        ? t("The speech engine stopped before it finished. This often means the computer ran out of memory: close other programs, or choose a smaller size under Options, then try again. The recording itself is untouched.")
+        : t("The file may be damaged, or in a format the app can't read. The recording itself is untouched, and the other projects in the list keep going.")}</p>
       {details && <pre className="pv-details">{project.error || t("No further details were reported.")}</pre>}
       <div className="pv-actions">
         <button type="button" className="btn sun" disabled={!canTranscribe} onClick={() => onTranscribe(null)}>{t("Try again")}</button>

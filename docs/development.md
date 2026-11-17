@@ -86,8 +86,21 @@ engine/build_engine.sh && cd app && npm run package   # packaged app for this OS
 Hot reload restarts the page when you save a file, which stops audio playback. That is expected during
 development and does not happen in a built app.
 
-`app/src/dev-mock.ts` fakes `window.api` so the UI can run in a plain browser (`?ready` loads a finished
-project; `?offline`, `?denied`, `?lowdisk` trigger the error cards).
+`app/src/dev-mock.ts` fakes `window.api` so the UI can run in a plain browser. Add flags to the address, for example `http://localhost:5173/?ready&fresh`:
+
+| Flag | Effect |
+| --- | --- |
+| `ready` | Models and speaker detection count as installed |
+| `fresh` | Forget saved projects and settings first, so you start from the empty screen |
+| `lowmem` | Pretend the computer has 4 GB of memory |
+| `slow` | Make the transcription step take 12 s, to watch progress and the queue |
+| `fit` | The language check finds Persian and says the chosen size is weak |
+| `battery` | Pretend the computer is on battery |
+| `missing` | *Add recordings* also adds a recording whose file is gone (the missing-file messages) |
+| `enginefail` | Transcribing fails after decoding, with an engine error (the error card and activity log) |
+| `offline`, `denied`, `lowdisk` | Trigger the download and disk error cards |
+
+*Add recordings* gives three samples: a German interview, a German podcast episode and an English team meeting (any path containing "meeting" or "english" comes back in English), all not yet transcribed.
 
 ## Screenshots
 

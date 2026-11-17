@@ -22,6 +22,9 @@ const llmSt: Record<string, boolean> = Object.fromEntries(llmCatalog.map((m) => 
 if (location.search.includes("ready")) { llmSt.small = true; }
 if (location.search.includes("ready")) { st.whisper.small = true; st.whisper.tiny = true; st.diarization = true; token = "hf_mock1234"; }
 
+// ?fresh starts with no saved projects or settings, so the first run can be walked from the empty screen
+if (location.search.includes("fresh")) { try { localStorage.removeItem("mock-projects"); localStorage.removeItem("opts"); } catch { /* storage unavailable */ } }
+
 function wav(seconds = 24, rate = 8000): Uint8Array {
   const n = seconds * rate, buf = new ArrayBuffer(44 + n * 2), v = new DataView(buf);
   const w = (o: number, s: string) => [...s].forEach((c, i) => v.setUint8(o + i, c.charCodeAt(0)));
@@ -31,25 +34,33 @@ function wav(seconds = 24, rate = 8000): Uint8Array {
   return new Uint8Array(buf);
 }
 
+// A second, English sample (a team meeting), so the first-run path can be walked in English as well as German.
+const linesEn: [string, string][] = [
+  ["SPEAKER_00", "Thanks everyone for joining, let's start with last week's actions."], ["SPEAKER_01", "I shipped the fix on Friday, the report is in the shared folder."],
+  ["SPEAKER_02", "Great. I will send the budget numbers by Wednesday."], ["SPEAKER_00", "Perfect. Any blockers before we move on?"],
+  ["SPEAKER_01", "Only the access request, which is still waiting for approval."], ["SPEAKER_02", "I will chase that today."],
+];
 const lines: [string, string][] = [
   ["SPEAKER_00", "Hallo zusammen und willkommen zum Interview."], ["SPEAKER_01", "Danke für die Einladung, ich freue mich sehr."],
   ["SPEAKER_02", "Ich habe vorab ein paar Fragen vorbereitet."], ["SPEAKER_00", "Dann fangen wir direkt mit der ersten an."],
   ["SPEAKER_01", "Gerne. Das Projekt begann vor drei Jahren."], ["SPEAKER_02", "Und wie ging es danach weiter?"],
 ];
-function fake() {
+function fake(path = "") {
+  const english = /meeting|english/i.test(path);
   let t = 0.5;
-  const segments = lines.map(([speaker, text]) => {
+  const segments = (english ? linesEn : lines).map(([speaker, text]) => {
     const ws = text.split(" "), start = t;
     const words = ws.map((word, i) => ({ start: start + i * 0.45, end: start + i * 0.45 + 0.4, word: (i === 0 ? "" : " ") + word, speaker, prob: (i === 3 && speaker === "SPEAKER_02") || i % 6 === 4 ? 0.3 : 0.95 }));
     t = start + ws.length * 0.45 + 0.5;
     return { start, end: t - 0.5, speaker, text, words };
   });
-  return { language: "de", duration: 24, speakers: ["SPEAKER_00", "SPEAKER_01", "SPEAKER_02"], segments };
+  return { language: english ? "en" : "de", duration: 24, speakers: ["SPEAKER_00", "SPEAKER_01", "SPEAKER_02"], segments };
 }
 
 (window as any).api = {
   readAudio: async (p: string) => { if (p.includes("broken")) throw new Error("Error invoking remote method 'read-audio': Error: ENOENT: file not found"); await wait(600); return wav(); },
-  pickFiles: async () => ["/Users/demo/Interview 2026.wav", "/Users/demo/Podcast episode 12.m4a"],
+  // ?missing adds a recording whose file is gone (to read the missing-file messages)
+  pickFiles: async () => ["/Users/demo/Interview 2026.wav", "/Users/demo/Podcast episode 12.m4a", "/Users/demo/Team meeting.wav", ...(location.search.includes("missing") ? ["/Users/demo/broken-recording.wav"] : [])],
   loadProjects: async () => { try { return JSON.parse(localStorage.getItem("mock-projects") || "[]"); } catch { return []; } },
   saveProjects: async (d: unknown) => { try { localStorage.setItem("mock-projects", JSON.stringify(d)); } catch { /* quota */ } return true; },
   saveSidecar: async (p: string) => ({ ok: true, path: p + ".transcript.json" }),
@@ -57,17 +68,23 @@ function fake() {
   transcribe: async function (o: { clientId?: string; acceptFit?: boolean; model?: string }) {
     const jobId = "job" + Math.random().toString(36).slice(2, 7); emit({ jobId, type: "started", clientId: o.clientId });
     (async () => {
+      const path = (o as { input?: string }).input ?? "";
+      // ?enginefail: the engine stops after decoding (to read the error card and the activity log)
+      if (location.search.includes("enginefail")) {
+        await wait(500); emit({ jobId, type: "progress", stage: "decode", fraction: 1, message: "" }); await wait(500);
+        emit({ jobId, type: "error", message: "The speech engine stopped unexpectedly (exit code 3221225477). Close the app and open it again.", detail: "Traceback (mock): access violation in ctranslate2" }); return;
+      }
       if (location.search.includes("fit") && !(o as { acceptFit?: boolean }).acceptFit && ["tiny", "base", "small"].includes((o as { model?: string }).model ?? "")) {
         await wait(600); emit({ jobId, type: "fit", language: "fa", probability: 0.93, model: (o as { model: string }).model, level: "weak", suggested: "medium", have: { ...st.whisper } }); return;
       }
       for (const [stage, ms] of [["decode", 500], ["diarize", 900], ["transcribe", location.search.includes("slow") ? 12000 : 1200], ["merge", 300]] as const) {
         for (let i = 1; i <= 4; i++) {
           emit({ jobId, type: "progress", stage, fraction: i / 4, message: "" });
-          if (stage === "transcribe") emit({ jobId, type: "partial", segments: fake().segments.slice((i - 1) * 2, i * 2).map(({ words: _w, ...s }) => s) });
+          if (stage === "transcribe") emit({ jobId, type: "partial", segments: fake(path).segments.slice((i - 1) * 2, i * 2).map(({ words: _w, ...s }) => s) });
           await wait(ms / 4);
         }
       }
-      emit({ jobId, type: "done", ...fake() });
+      emit({ jobId, type: "done", ...fake(path) });
     })();
     return jobId;
   },
