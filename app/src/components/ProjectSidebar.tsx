@@ -23,9 +23,11 @@ export default function ProjectSidebar({ projects, activeId, progress, blocker, 
     <nav className="side" aria-label={t("Projects")}>
       <div className={"brand" + (projects.some((p) => p.status === "running") ? " busy" : "")} aria-hidden="true">
         <svg viewBox="0 0 32 32" className="brand-mark"><rect width="32" height="32" rx="7" className="bm-bg" />
-          <rect x="3.84" y="7.68" width="24.32" height="16.64" rx="2.56" className="bm-body" /><rect x="6.72" y="9.92" width="18.56" height="4.8" rx=".96" className="bm-label" />
-          <g className="reel" style={{ transformOrigin: "11.2px 19.2px" }}><circle cx="11.2" cy="19.2" r="3.04" className="bm-reel" /><circle cx="11.2" cy="19.2" r="1.02" className="bm-hub" /><path d="M11.2 19.2v-2.2" className="bm-spoke" /></g>
-          <g className="reel" style={{ transformOrigin: "20.8px 19.2px" }}><circle cx="20.8" cy="19.2" r="3.04" className="bm-reel" /><circle cx="20.8" cy="19.2" r="1.02" className="bm-hub" /><path d="M20.8 19.2v-2.2" className="bm-spoke" /></g></svg>
+          <rect x="2.24" y="6.4" width="27.52" height="19.2" rx="2.88" className="bm-body" /><rect x="5.12" y="8.32" width="21.76" height="5.44" rx=".96" className="bm-label" />
+          <rect x="6.72" y="9.92" width="9.6" height="2.24" rx="1.12" className="bm-bar" /><rect x="17.92" y="9.92" width="7.04" height="2.24" rx="1.12" className="bm-amber" />
+          <rect x="5.12" y="15.36" width="21.76" height="7.68" rx="3.84" className="bm-win" />
+          <g className="reel" style={{ transformOrigin: "10.56px 19.2px" }}><circle cx="10.56" cy="19.2" r="2.88" className="bm-reel" /><circle cx="11.2" cy="18.88" r="1.34" className="bm-pupil" /></g>
+          <g className="reel" style={{ transformOrigin: "21.44px 19.2px" }}><circle cx="21.44" cy="19.2" r="2.88" className="bm-reel" /><circle cx="22.08" cy="18.88" r="1.34" className="bm-pupil" /></g></svg>
         <span>Cassette</span>
       </div>
       <button type="button" className="btn sun add-btn" onClick={onAdd}>

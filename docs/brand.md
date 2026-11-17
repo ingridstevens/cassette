@@ -11,16 +11,16 @@ Say "Cassette turns recordings into text", not "the Cassette transcriber tool". 
 
 ## Icon and logo
 
-The icon is a flat, white cassette on a petrol tile: a label strip on top and two round reel holes below. It has no gradient, no glow and no shadow.
-The word "Cassette" is set in Inter SemiBold next to it. In the app the sidebar shows a 26 px version of the same drawing with a small spoke added to each reel, so you can see them turn.
+The icon is a flat white cassette on a petrol tile: a pale label with a dark bar and an amber bar (the amber nods to unsure words), a dark tape window with two white reels whose hubs look slightly sideways, and a plain pale plate at the bottom. It has no gradient, no glow and no shadow. The glance is a quiet detail: it should read as a cassette first. It was chosen by a simulated persona vote (see [votes](votes/2026-11-17-app-icon.md)).
+The word "Cassette" is set in Inter SemiBold next to it. In the app the sidebar shows a 26 px version of the same drawing where the reels turn while a transcript is being written.
 
 | File | Use |
 | --- | --- |
 | `app/resources/icon-src/cassette.svg` | The master drawing, 64 px and up. It has the margin macOS expects around the tile. |
-| `app/resources/icon-src/cassette-small.svg` | The simpler drawing for 16, 24 and 32 px. The tile fills the whole square and the label is bolder. |
+| `app/resources/icon-src/cassette-small.svg` | The simpler drawing for 16, 24 and 32 px. The tile fills the whole square, the bars are thicker and the plate is left out. |
 | `app/resources/icon.svg`, `.png`, `.icns`, `.ico` | Exported files used by the app and the installers. See *App icon* in [Development](development.md). |
 
-**Clear space.** Keep free space around the icon equal to the width of one reel hole (about one fifth of the icon). No text or edge inside it.
+**Clear space.** Keep free space around the icon equal to the width of one reel (about one sixth of the icon). No text or edge inside it.
 
 **Minimum sizes.** Icon alone: 16 px on screen, 10 mm in print. Icon with the word: 96 px wide on screen. Below 48 px always use the small drawing.
 

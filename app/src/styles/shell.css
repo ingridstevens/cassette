@@ -229,7 +229,7 @@ details.detail[open] > summary { margin-bottom: 4px; }
 /* Brand mark: the two reels turn only while a transcript is being written. Transform only, so it costs almost nothing; still when reduced motion is asked for. */
 .brand { display: flex; align-items: center; gap: 9px; padding: 2px 10px 10px; font: 650 15px var(--font-ui); letter-spacing: -.01em; color: var(--ink); }
 .brand-mark { width: 26px; height: 26px; flex: none; }
-.bm-bg { fill: #0a6577; } .bm-body { fill: #fff; } .bm-reel { fill: #0a6577; } .bm-label { fill: #bfe3ea; } .bm-hub { fill: #fff; } .bm-spoke { stroke: #fff; stroke-width: 1; stroke-linecap: round; }
+.bm-bg, .bm-win, .bm-bar, .bm-pupil { fill: #0a6577; } .bm-body, .bm-reel { fill: #fff; } .bm-label { fill: #bfe3ea; } .bm-amber { fill: #f0a45e; }
 .reel { transform-box: view-box; }
 .brand.busy .reel { animation: reel-turn 2.4s linear infinite; }
 @keyframes reel-turn { to { transform: rotate(360deg); } }
