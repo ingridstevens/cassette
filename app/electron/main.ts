@@ -253,6 +253,19 @@ app.whenReady().then(() => {
     } catch (e) { return { ok: false, error: String((e as Error).message) }; }
   });
 
+  // Deletes what the app stored for one project outside its own project list: the backup file beside the recording, and the recording itself
+  // only when the app made it (inside userData/recordings). A file the user added is never touched. Returns file names only, never a path or text.
+  ipcMain.handle("delete-project-files", (_e, audioPath: unknown) => {
+    type R = "removed" | "none" | "failed";
+    if (typeof audioPath !== "string" || !AUDIO_EXT.has(path.extname(audioPath).toLowerCase())) return { ok: false as const, error: "Unsupported recording" };
+    const dir = path.dirname(audioPath);
+    const sidecar = path.join(dir, path.basename(audioPath, path.extname(audioPath)) + ".transcript.json");
+    const gone = (f: string): R => { try { if (!fs.existsSync(f)) return "none"; fs.unlinkSync(f); return "removed"; } catch { return "failed"; } };
+    const rel = path.relative(path.join(app.getPath("userData"), "recordings"), audioPath);
+    const appMade = !!rel && !rel.startsWith("..") && !path.isAbsolute(rel);
+    return { ok: true as const, backup: gone(sidecar), backupName: path.basename(sidecar), appMade, audio: appMade ? gone(audioPath) : ("kept" as const), audioName: path.basename(audioPath) };
+  });
+
   ipcMain.handle("save-clip", async (_e, input: string, start: number, end: number) => {
     // the engine re-encodes to the extension of the chosen file, so the save dialog offers the same formats as "Audio clips as"
     const FORMATS = [["MP3", "mp3"], ["M4A", "m4a"], ["WAV", "wav"]] as const;

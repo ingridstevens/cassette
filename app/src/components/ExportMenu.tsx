@@ -11,7 +11,7 @@ const GROUPS: { title: string; formats: readonly (readonly [string, string, stri
     ["docx", "Word document", ".docx · speakers in bold, with times"],
     ["txt", "Plain text", ".txt · [time] Speaker: text"],
     ["md", "Markdown", ".md"],
-    ["redacted", "Anonymised text", ".txt · names replaced by P01, P02…"],
+    ["redacted", "Anonymised text", ".txt · speaker names replaced by P01, P02…; other names in the text are not found"],
     ["text", "Text style…", "Keep or remove “um”, mark pauses, show or hide times"],
   ] },
   { title: "Subtitles and video", formats: [

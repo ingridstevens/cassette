@@ -201,6 +201,8 @@ the first match.
   switched off (progress animations stay). Speaker colours stay clearly different from each other in every combination. Text in Arabic
   script (for example Persian or Arabic words in a line) is shown right to left in the Vazirmatn font. Settings saved before the two looks carry over: the first two
   old stops become *Fairytale sunset*, the last two become *Clean*; if you never chose a look, you now get *Clean*. The language of a recording is separate (see Options).
+- **Deleting a project:** the **×** beside it in the project list asks first and says what is deleted (the transcript and edits in the app, the backup
+  file next to the recording, and the recording only if you made it with **Record**) and what is not (your own audio file, exports, clips, the activity log). A receipt follows. See [Privacy and offline use](privacy-and-offline.md#removing-things).
 - The brand mark at the top of the project list turns its two reels while a transcript is being written, and stands still otherwise or when your system asks for reduced motion.
 - **Privacy:** what stays on your computer, a table of every network call, a table of what is stored where (with **Show** buttons), your saved token (only the
   last 4 characters are shown), and the activity log. See [Privacy and offline use](privacy-and-offline.md).

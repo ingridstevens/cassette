@@ -47,8 +47,11 @@ or moved.
 
 ## Removing things
 
-- **Remove a project:** the **×** on the project in the sidebar removes it and its transcript from the app. It
-  does not touch your recording or any backup file next to it.
+- **Delete a project:** the **×** on the project in the sidebar opens a dialog that lists what will go and what stays. **Delete** removes the
+  project and its transcript and edits from the app, the backup file (`.transcript.json`) next to the recording if there is one, and the
+  recording itself only if Cassette made it (a recording made with **Record**). A file you added yourself is never touched, and neither are
+  files you exported or clips you saved (the app keeps no list of those) or the activity log, which lists file names. A receipt then lists each
+  file as deleted, not found, could not delete or kept. It shows file names only, appears once and is not saved.
 - **Remove models:** Settings → Transcription (or Summaries and translation) → Delete.
 - **Remove the token:** Settings → Privacy → Remove.
 - **Everything:** quit the app and delete its data folder.

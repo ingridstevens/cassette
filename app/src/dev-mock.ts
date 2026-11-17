@@ -89,6 +89,7 @@ function fake() {
   liveAudio: () => {},
   liveStop: async () => { clearInterval((window as unknown as { __liveTick?: number }).__liveTick); return { ok: true, path: "/Users/demo/Recording 2026-10-16 14.05.wav", seconds: 14, name: "Recording 2026-10-16 14.05" }; },
   cancel: async () => {},
+  deleteProjectFiles: async (p: string) => { const n = p.split(/[\\/]/).pop() ?? p; return { ok: true as const, backup: "removed" as const, backupName: n.replace(/\.[^.]+$/, "") + ".transcript.json", appMade: false, audio: "kept" as const, audioName: n }; },
   powerState: async () => ({ onBattery: location.search.includes("battery") }),
   importModels: async () => { await wait(400); return { type: "done", imported: ["pyannote/speaker-diarization-3.1"] }; },
   models: async (action: string, name?: string) => {

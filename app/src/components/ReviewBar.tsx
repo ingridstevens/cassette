@@ -57,7 +57,7 @@ export default function ReviewBar({ segments, list, pos, current, total, onFix, 
   return (
     <div className="card pv-review" role="group" aria-label={t("Review unsure words")}>
       <div className="pv-rv-top">
-        <span className="pv-rv-count">{t("Unsure word {current} of {total}", { current: Math.min(current, total), total })}</span>
+        <span className="pv-rv-count" role="status">{t("Unsure word {current} of {total}", { current: Math.min(current, total), total })}</span>
         <button type="button" className="btn quiet small" onClick={onExit}>{t("Close review")}</button>
       </div>
       <p className="pv-rv-context">{before}{before ? " " : ""}<mark>{word.word.trim()}</mark>{after ? " " : ""}{after}</p>

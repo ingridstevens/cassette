@@ -38,7 +38,7 @@ export default function OverviewSection({ opts, status, models, onGoTo }: Sectio
       {job("ov-su", t("Summaries and translation"), t("Writes short summaries and translates text. Optional."),
         sum ? <Status kind="ok">{t("Ready · {model}", { model: sumName })}</Status> : <Status kind="off">{t("Not set up")}</Status>,
         sum ? t("Change") : t("Set up"), "Summaries and translation")}
-      <p className="note">{t("Nothing leaves this computer unless you download a model. This comes from reading the app's code, not from an independent audit.")} <button type="button" className="linkish" onClick={() => onGoTo("Privacy")}>{t("See every connection")}</button></p>
+      <p className="note">{t("Your recordings and transcripts never leave this computer. The only connections are model downloads and the Hugging Face token check. This comes from reading the app's code, not from an independent audit.")} <button type="button" className="linkish" onClick={() => onGoTo("Privacy")}>{t("See every connection")}</button></p>
       <p className="note">{t("Already have the model files from a colleague?")} <button type="button" className="linkish" onClick={() => void models.importFolder()}>{t("Use a models folder…")}</button> {t("No account needed.")}</p>
     </>
   );

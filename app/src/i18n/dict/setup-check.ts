@@ -1,5 +1,6 @@
 export default {
   de: {
+    "Your recordings and transcripts never leave this computer. The only connections are model downloads and the Hugging Face token check. This comes from reading the app's code, not from an independent audit.": "Deine Aufnahmen und Transkripte verlassen diesen Computer nie. Verbindungen gibt es nur für Modell-Downloads und die Prüfung des Hugging-Face-Tokens. Das stammt aus dem Lesen des App-Codes, nicht aus einer unabhängigen Prüfung.",
     "{size} is free on this disk.": "{size} sind auf diesem Laufwerk frei.",
     "Check my setup": "Meine Einrichtung prüfen",
     "Checks that the engine, the model, speaker detection, memory, disk space and microphone are ready, and says what to do if not.": "Prüft, ob Engine, Modell, Sprechererkennung, Speicher, Festplatte und Mikrofon bereit sind, und sagt, was zu tun ist, wenn nicht.",
@@ -23,6 +24,7 @@ export default {
     "No microphone was found. You can still transcribe files; to record, connect one and allow access.": "Es wurde kein Mikrofon gefunden. Dateien kannst du weiterhin transkribieren; zum Aufnehmen schließe eines an und erlaube den Zugriff.",
   },
   fr: {
+    "Your recordings and transcripts never leave this computer. The only connections are model downloads and the Hugging Face token check. This comes from reading the app's code, not from an independent audit.": "Vos enregistrements et transcriptions ne quittent jamais cet ordinateur. Les seules connexions sont les téléchargements de modèles et la vérification du jeton Hugging Face. Ceci vient de la lecture du code de l’app, pas d’un audit indépendant.",
     "{size} is free on this disk.": "{size} libres sur ce disque.",
     "Check my setup": "Vérifier ma configuration",
     "Checks that the engine, the model, speaker detection, memory, disk space and microphone are ready, and says what to do if not.": "Vérifie que le moteur, le modèle, la détection des locuteurs, la mémoire, l’espace disque et le micro sont prêts, et indique quoi faire sinon.",
@@ -46,6 +48,7 @@ export default {
     "No microphone was found. You can still transcribe files; to record, connect one and allow access.": "Aucun micro trouvé. Vous pouvez toujours transcrire des fichiers ; pour enregistrer, branchez-en un et autorisez l’accès.",
   },
   es: {
+    "Your recordings and transcripts never leave this computer. The only connections are model downloads and the Hugging Face token check. This comes from reading the app's code, not from an independent audit.": "Tus grabaciones y transcripciones nunca salen de este ordenador. Las únicas conexiones son las descargas de modelos y la comprobación del token de Hugging Face. Esto procede de leer el código de la app, no de una auditoría independiente.",
     "{size} is free on this disk.": "Quedan {size} libres en este disco.",
     "Check my setup": "Comprobar mi configuración",
     "Checks that the engine, the model, speaker detection, memory, disk space and microphone are ready, and says what to do if not.": "Comprueba que el motor, el modelo, la detección de hablantes, la memoria, el espacio en disco y el micrófono están listos, y dice qué hacer si no.",
