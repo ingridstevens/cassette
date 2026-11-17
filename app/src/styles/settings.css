@@ -18,7 +18,8 @@
 .st-root .choice { border: 0; padding: 14px 16px; border-radius: 16px; }
 .st-root .choice span { display: block; }
 .st-root .choice b { font-size: 15px; }
-.st-root .badge { color: var(--ink); }
+/* --sun-btn can be near-black (it is the primary button colour), so dark ink on it vanished into a black pill: use a light tint instead */
+.st-root .badge { color: var(--ink); background: color-mix(in srgb, var(--tint, var(--violet)) 14%, var(--surface)); box-shadow: inset 0 0 0 1px var(--line); }
 .st-root .alert { border: 0; margin: 0; }
 .st-root .alert svg { margin-top: 2px; }
 
