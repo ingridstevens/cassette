@@ -131,3 +131,4 @@ html[dir="rtl"] :is(p, small, .sub, .lead, .note, h1, h2, h3, legend) { unicode-
 .rm-list { margin: 0 0 6px; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 4px; color: var(--ink2); font-size: 14px; }
 .rm-receipt { list-style: none; padding-inline-start: 0; }
 .rm-receipt b { display: inline-block; min-width: 96px; color: var(--ink); }
+html[dir="rtl"] .menu b { unicode-bidi: plaintext; }

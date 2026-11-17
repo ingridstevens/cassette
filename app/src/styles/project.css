@@ -515,3 +515,7 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .pv-ask-model { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink2); margin: 0 4px 6px; }
 .pv-ask-model select { font: inherit; font-weight: 600; color: var(--ink); background: transparent; border: 0; border-radius: 8px; padding: 2px 4px; cursor: pointer; max-width: 100%; }
 .pv-ask-model select:hover { background: rgba(124, 92, 255, .1); }
+
+/* Export menu: "More formats" toggle, set apart from the formats above it. */
+.pv-export-menu .menu-more { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 10px; }
+.pv-export-menu .menu-more b { color: var(--link, var(--ink)); }
