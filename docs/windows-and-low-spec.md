@@ -9,13 +9,13 @@ on one yet, so every speed idea below is untested until someone runs it.
   cores on small computers and all but one (at most 8) on bigger ones, so the app and Windows stay responsive.
 - **Low-memory warning** on the start sheet: if the chosen size plus speaker detection will probably not fit in the memory
   left after Windows (about 2.5 GB), the app says so and names a size that fits, before a run fails halfway.
+- **Smaller default on first launch**: with under 6 GB of memory a new install starts on the Base size instead of Small.
+- **Memory note in Settings, Transcription**: sizes that probably will not fit are marked, as on the start sheet.
+- **Lite look**: at 4 GB or less the app drops fade effects and the decorative pulse (progress animations stay).
 - The browser preview (`npm run dev`) can pretend to have 4 GB: add `?lowmem` to the address.
 
 ## Next (small, safe)
 
-- Pick the default model from memory on first run (Base under 6 GB, Small otherwise) instead of always Small.
-- Show the memory warning in Settings, Transcription too, next to the model list.
-- A "Lite look" that turns off animations and shadows on computers with 4 GB or less (the Soft look is already automatic).
 - Time a real run on a low-end Windows laptop and replace the guessed speeds in `app/src/estimate.ts`.
 
 ## Ideas (bigger, need testing on Windows)
