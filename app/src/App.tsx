@@ -111,7 +111,7 @@ export default function App() {
                 <div className={"dropzone card" + (dragging ? " over" : "")}>
                   <div className="orb"><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H9l-4 3.5V14H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2z" /><path d="M19 9h1a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-1v3.5L15 18h-3" /></svg></div>
                   <h2>{t("Drop recordings here")}</h2>
-                  <p className="lead">{t("Interviews, meetings, calls. The app writes down what everyone says and who said it, in German, English, French or Spanish. Nothing leaves this computer.")}</p>
+                  <p className="lead">{t("Interviews, meetings, calls. The app writes down what everyone says and who said it. Best with German, English, French and Spanish; about 100 other languages work too. Nothing leaves this computer.")}</p>
                   <button type="button" className="btn sun big" onClick={pick}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{t("Choose files…")}</button>
                   <p className="note">{t("Works with mp3, wav, m4a, flac, mp4, mov and more. You can add several at once.")}</p>
                   {addError && <p className="alert err" role="alert">{addError}</p>}
