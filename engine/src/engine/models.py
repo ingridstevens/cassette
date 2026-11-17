@@ -234,25 +234,57 @@ def delete(kind: str, name: str | None = None) -> None:
         shutil.rmtree(models_dir() / ("models--" + r.replace("/", "--")), ignore_errors=True)
 
 
+def _models_root(src: Path) -> Path:
+    src = Path(src)
+    return src if any(src.glob("models--*")) else src / "models"
+
+
+def scan_folder(src: Path) -> dict[str, str]:
+    """For every repo this app knows: "ready" (a snapshot with files), "incomplete" (the folder is there but empty or has no snapshot,
+    for example a copy that stopped halfway or a sync tool that cut it short) or "missing" (not in the folder at all)."""
+    root = _models_root(src)
+    out: dict[str, str] = {}
+    for repo in list(WHISPER_MODELS.values()) + list(PARAKEET_MODELS.values()) + DIARIZATION_REPOS:
+        d = root / ("models--" + repo.replace("/", "--"))
+        if not d.exists():
+            out[repo] = "missing"
+            continue
+        snaps = d / "snapshots"
+        ok = snaps.is_dir() and any(any(s.iterdir()) for s in snaps.iterdir() if s.is_dir())
+        out[repo] = "ready" if ok else "incomplete"
+    return out
+
+
+def folder_report(scan: dict[str, str]) -> list[dict]:
+    """What the app shows after choosing a models folder, one row per model the user can recognise (the three speaker repos count as one):
+    {"id": "small" | "parakeet-v3" | "diarization", "state": "imported" | "incomplete" | "missing"}."""
+    rows = []
+    for name, repo in {**WHISPER_MODELS, **PARAKEET_MODELS}.items():
+        rows.append({"id": name, "state": {"ready": "imported", "incomplete": "incomplete", "missing": "missing"}[scan[repo]]})
+    states = [scan[r] for r in DIARIZATION_REPOS]
+    rows.append({"id": "diarization", "state": "imported" if all(x == "ready" for x in states) else "missing" if all(x == "missing" for x in states) else "incomplete"})
+    return rows
+
+
 def import_folder(src: Path) -> list[str]:
     """Copy models from a folder someone else downloaded (Hugging Face cache layout) into our models folder.
     Only repos this app knows about are copied; a repo counts only if it has a snapshot with files in it.
     Returns the repo ids that were imported."""
     import shutil
 
-    src = Path(src)
-    root = src if any(src.glob("models--*")) else src / "models"
-    known = list(WHISPER_MODELS.values()) + list(PARAKEET_MODELS.values()) + DIARIZATION_REPOS
+    root = _models_root(src)
+    scan = scan_folder(src)
     done: list[str] = []
-    for repo in known:
-        d = root / ("models--" + repo.replace("/", "--"))
-        snaps = d / "snapshots"
-        if not snaps.is_dir() or not any(any(s.iterdir()) for s in snaps.iterdir() if s.is_dir()):
+    for repo, state in scan.items():
+        if state != "ready":
             continue
+        d = root / ("models--" + repo.replace("/", "--"))
         # Keep the cache's symlinks (one copy of each blob) except on Windows, where creating them needs a privilege most accounts lack.
         shutil.copytree(d, models_dir() / d.name, symlinks=sys.platform != "win32", dirs_exist_ok=True)
         done.append(repo)
     if not done:
+        if any(v == "incomplete" for v in scan.values()):
+            raise RuntimeError("The models in that folder look incomplete (a copy that stopped halfway?). Ask whoever shared it to copy the whole folder again.")
         raise RuntimeError("That folder has no models this app can use. Pick the folder that contains the “models--…” folders.")
     return done
 

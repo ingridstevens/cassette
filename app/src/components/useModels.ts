@@ -24,6 +24,9 @@ function friendly(msg: string): ModelError {
 /** Hugging Face's "new token" page with the Read tab already chosen. */
 export const HF_TOKEN_PAGE = "https://huggingface.co/settings/tokens/new?tokenType=read";
 
+/** One model in a folder that was just imported: copied, incomplete in the folder, or not in it. */
+export interface ImportRow { id: string; state: "imported" | "incomplete" | "missing" }
+
 /** Shared model download/delete + token state, used by the setup checklist and the sidebar. */
 export function useModels(refresh: () => void) {
   const [busy, setBusy] = useState("");
@@ -34,6 +37,8 @@ export function useModels(refresh: () => void) {
   const [checking, setChecking] = useState(false);
   const [tokenHint, setTokenHint] = useState("");
   const [access, setAccess] = useState<Access | null>(null);
+  /** What the folder chosen with "Use a models folder" contained, one row per model; shown in a dialog until it is closed. */
+  const [importReport, setImportReport] = useState<ImportRow[] | null>(null);
   const [dl, setDl] = useState<{ fraction: number | null; message: string } | null>(null);
   useEffect(() => window.api.onEvent((e) => {
     if (e.source === "models" && e.type === "progress") setDl({ fraction: e.fraction, message: typeof e.done === "number" ? (typeof e.total === "number" ? t("{done} of {total}", { done: bytes(e.done), total: bytes(e.total) }) : bytes(e.done)) : e.message });
@@ -80,6 +85,7 @@ export function useModels(refresh: () => void) {
     const r = await window.api.importModels();
     if (r?.cancelled) return;
     if (r?.type === "error") setErrInfo({ kind: "other", title: t("Couldn't import models"), body: String(r.message).slice(0, 300) });
+    else if (Array.isArray((r as { report?: unknown })?.report)) setImportReport((r as unknown as { report: ImportRow[] }).report);
     refresh();
   }, [refresh]);
 
@@ -89,6 +95,6 @@ export function useModels(refresh: () => void) {
   const cancel = useCallback(() => { void window.api.cancelModels(); }, []);
 
   /** `err` stays a plain string for older callers; `errInfo` says what kind of problem it was, so the UI can offer the right buttons. */
-  return { busy, err, errInfo, tokenSet, tokenHint, dl, access, checking, checkAccess, importFolder, run, saveToken, clearToken, retry, clearErr, cancel };
+  return { busy, err, errInfo, tokenSet, tokenHint, dl, access, checking, checkAccess, importFolder, importReport, closeImportReport: () => setImportReport(null), run, saveToken, clearToken, retry, clearErr, cancel };
 }
 export type Models = ReturnType<typeof useModels>;
