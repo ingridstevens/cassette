@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "../i18n";
 import { ModelStatus, Project, bytes, displayName, fmt } from "../types";
 import { LlmJob } from "./HighlightsTab";
-import { useLlm } from "./llmChoice";
+import { setLlm, useLlm } from "./llmChoice";
 import { useModels } from "./useModels";
 import "../styles/project.css";
 
@@ -143,6 +143,13 @@ export default function AskTab({ project, visible, thread, job, onAsk, onStop, o
         <div ref={end} />
       </div>
       {busyOther && <p className="note">{t("Another language model job is running. You can ask when it finishes.")}</p>}
+      {llm?.available && (llm.catalog?.length ?? 0) > 1 && (
+        <label className="pv-ask-model">{t("Language model")}
+          <select value={model} onChange={(e) => setLlm(e.target.value)} disabled={!!job || !!models.busy}>
+            {llm.catalog!.map(({ id, label }) => <option key={id} value={id}>{label}{llm.models?.[id] ? " ✓" : ` (${bytes(llm.bytes?.[id] ?? 0)})`}</option>)}
+          </select>
+        </label>
+      )}
       <div className="pv-ask-box">
         <label htmlFor="ask-input" hidden>{t("Ask about this transcript")}</label>
         <textarea id="ask-input" ref={box} rows={1} value={text} disabled={!have} placeholder={t("Ask about this transcript…")}
