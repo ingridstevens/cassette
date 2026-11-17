@@ -47,7 +47,11 @@ select.input { padding-right: 34px; background: var(--surface) url("data:image/s
 .nav b { display: block; font-size: 13.5px; font-weight: 600; letter-spacing: -.005em; }
 .nav small { display: block; font-size: 12px; color: var(--ink2); }
 .st { width: 9px; height: 9px; border-radius: 50%; margin-top: 6px; flex: none; }
-.st.done { background: var(--done); } .st.run { background: var(--rose); box-shadow: 0 0 0 4px rgba(232, 70, 124, .18); }
+.st.done { background: var(--done); }
+/* working: a spinning ring in the accent colour (a solid dot gave no sign that anything was happening, and read as black in some themes) */
+.st.run { width: 11px; height: 11px; margin-top: 5px; box-sizing: border-box; border: 2px solid color-mix(in srgb, var(--violet-ink) 25%, transparent); border-top-color: var(--violet-ink); animation: st-spin .9s linear infinite; }
+@keyframes st-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .st.run { animation: none; border-color: var(--violet-ink); } }
 .st.wait { border: 2px solid var(--violet); } .st.idle { border: 2px solid var(--ink3); }
 .side .spacer { flex: 1; }
 .minibar { height: 3px; border-radius: 3px; background: rgba(120, 90, 180, .2); margin-top: 6px; overflow: hidden; }
