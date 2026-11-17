@@ -318,7 +318,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
   const live = liveSpeakers(project).length;
   const lang = result ? (Object.keys(project.meta?.languages ?? {}).length > 1 ? t("Mixed languages") : langName(result.language)) : "";
   const count = (n: number) => (n === 1 ? t("{count} speaker", { count: n }) : t("{count} speakers", { count: n }));
-  const sub = running ? (project.status === "queued" ? t("Waiting in line") : partial ? t("Redoing part of the transcript…") : t("Transcribing…"))
+  const sub = running ? (project.status === "queued" ? t("Waiting in line") : partial ? t("Redoing part of the transcript…") : "")
     : result ? [lang, fmt(result.duration), count(live), globalOpts().autosave ? t("Saved in this app and next to the audio") : t("Saved in this app")].join(" · ")
     : t("Not transcribed yet");
   const hitLabel = !q ? "" : matches.length ? t("{current} of {total}", { current: mi + 1, total: matches.length }) : t("No matches");
@@ -453,7 +453,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
                   onBlur={(e) => { const n = e.target.value.trim(); if (n && n !== project.name) onPatch({ name: n }); setRenaming(false); }}
                   onKeyDown={(e) => { if (e.key === "Enter") (e.target as HTMLInputElement).blur(); if (e.key === "Escape") setRenaming(false); }} />
               : <h1 tabIndex={0} className="pv-title" title={t("Double-click or press F2 to rename")} onDoubleClick={() => setRenaming(true)}
-                  onKeyDown={(e) => { if (e.key === "F2") setRenaming(true); }}>{project.name}</h1>}<div className="sub">{sub}</div></div>
+                  onKeyDown={(e) => { if (e.key === "F2") setRenaming(true); }}>{project.name}</h1>}{sub && <div className="sub">{sub}</div>}</div>
           {showResult && (
             <>
               {unsure.length > 0 && !review && <button type="button" className="btn small" onClick={startReview} title={t("Step through the words the model was unsure of, with the audio, and fix or confirm each one")}>{unsure.length === 1 ? t("Review 1 unsure word") : t("Review {count} unsure words", { count: unsure.length })}</button>}
