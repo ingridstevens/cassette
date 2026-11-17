@@ -7,6 +7,10 @@ import { BrowserWindow, app, dialog, ipcMain, powerMonitor, safeStorage, session
 import { EngineEvent, cancelJob, runEngine } from "./engine-client";
 import { registerLive } from "./live";
 
+// Show "Cassette" as the app name (menus, About, Dock) instead of "Electron" when run from source.
+// setName also moves the data folder, so keep it exactly where it was: nobody loses their projects or downloaded models.
+{ const userData = app.getPath("userData"); app.setName("Cassette"); app.setPath("userData", userData); }
+
 const AUDIO_EXT = new Set([".mp3", ".wav", ".m4a", ".flac", ".ogg", ".opus", ".aac", ".mp4", ".mov", ".mkv", ".webm"]);
 
 const modelsDir = () => path.join(app.getPath("userData"), "models");
