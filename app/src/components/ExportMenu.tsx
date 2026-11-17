@@ -1,4 +1,4 @@
-import { KeyboardEvent, useEffect, useRef, useState } from "react";
+import { KeyboardEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useT } from "../i18n";
 import { ExportOpts } from "../types";
@@ -55,6 +55,14 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
   const box = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   useEffect(() => { if (openSignal) setOpen(true); }, [openSignal]);
+  const [flip, setFlip] = useState(false);
+  // The toolbar can wrap, leaving the button near the left edge: open rightwards then, so the menu is never clipped by the sidebar.
+  useLayoutEffect(() => {
+    if (!open || !box.current) { setFlip(false); return; }
+    const edge = box.current.closest(".pview")?.getBoundingClientRect().left ?? 0;
+    const b = box.current.getBoundingClientRect();
+    setFlip(b.right - 300 < edge + 8);
+  }, [open]);
   useEffect(() => { if (open) box.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus(); }, [open]);
   useEffect(() => {
     if (!open) return;
@@ -79,7 +87,7 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
           <svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V4M8 8l4-4 4 4M5 14v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4" /></svg>{t("Export")}
         </button>
         {open && (
-          <div className="menu pv-export-menu" role="menu" aria-label={t("Export transcript")} onKeyDown={onMenuKeyDown}>
+          <div className={"menu pv-export-menu" + (flip ? " flip" : "")} role="menu" aria-label={t("Export transcript")} onKeyDown={onMenuKeyDown}>
             {GROUPS.map((g) => (
               <div key={g.title} role="group" aria-label={t(g.title)}>
                 <div className="menu-head" aria-hidden="true">{t(g.title)}</div>

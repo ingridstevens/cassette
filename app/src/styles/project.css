@@ -15,6 +15,7 @@
 .pv-hits { font-size: 12px; white-space: nowrap; }
 .pv-export { position: relative; }
 .pv-export-menu { top: 40px; right: 0; min-width: 300px; }
+.pv-export-menu.flip { right: auto; left: 0; }
 .pv-toast-bad { background: #8e1c40; }
 
 /* transcript */
