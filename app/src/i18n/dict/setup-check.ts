@@ -1,5 +1,8 @@
 export default {
   de: {
+    "Most used": "Am häufigsten genutzt",
+    "More formats…": "Weitere Formate …",
+    "Fewer formats": "Weniger Formate",
     "Your recordings and transcripts never leave this computer. The only connections are model downloads and the Hugging Face token check. This comes from reading the app's code, not from an independent audit.": "Deine Aufnahmen und Transkripte verlassen diesen Computer nie. Verbindungen gibt es nur für Modell-Downloads und die Prüfung des Hugging-Face-Tokens. Das stammt aus dem Lesen des App-Codes, nicht aus einer unabhängigen Prüfung.",
     "{size} is free on this disk.": "{size} sind auf diesem Laufwerk frei.",
     "Check my setup": "Meine Einrichtung prüfen",
@@ -24,6 +27,9 @@ export default {
     "No microphone was found. You can still transcribe files; to record, connect one and allow access.": "Es wurde kein Mikrofon gefunden. Dateien kannst du weiterhin transkribieren; zum Aufnehmen schließe eines an und erlaube den Zugriff.",
   },
   fr: {
+    "Most used": "Les plus utilisés",
+    "More formats…": "Plus de formats…",
+    "Fewer formats": "Moins de formats",
     "Your recordings and transcripts never leave this computer. The only connections are model downloads and the Hugging Face token check. This comes from reading the app's code, not from an independent audit.": "Vos enregistrements et transcriptions ne quittent jamais cet ordinateur. Les seules connexions sont les téléchargements de modèles et la vérification du jeton Hugging Face. Ceci vient de la lecture du code de l’app, pas d’un audit indépendant.",
     "{size} is free on this disk.": "{size} libres sur ce disque.",
     "Check my setup": "Vérifier ma configuration",
@@ -48,6 +54,9 @@ export default {
     "No microphone was found. You can still transcribe files; to record, connect one and allow access.": "Aucun micro trouvé. Vous pouvez toujours transcrire des fichiers ; pour enregistrer, branchez-en un et autorisez l’accès.",
   },
   es: {
+    "Most used": "Más usados",
+    "More formats…": "Más formatos…",
+    "Fewer formats": "Menos formatos",
     "Your recordings and transcripts never leave this computer. The only connections are model downloads and the Hugging Face token check. This comes from reading the app's code, not from an independent audit.": "Tus grabaciones y transcripciones nunca salen de este ordenador. Las únicas conexiones son las descargas de modelos y la comprobación del token de Hugging Face. Esto procede de leer el código de la app, no de una auditoría independiente.",
     "{size} is free on this disk.": "Quedan {size} libres en este disco.",
     "Check my setup": "Comprobar mi configuración",

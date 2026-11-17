@@ -193,3 +193,14 @@ npm run i18n:check       # every string has a German, French and Spanish entry
 ```
 
 Fonts live in `app/src/assets/fonts` (see [dependency-vetting.md](dependency-vetting.md)). The app icon is drawn in `app/resources/icon-src/cassette.svg`; `icon.png`, `icon.ico` and `icon.icns` are made from it with `rsvg-convert`, `magick` and `iconutil` (the small sizes of the `.ico` use `cassette-small.svg`).
+
+## Right-to-left layout and the player
+
+In Arabic and Persian the window mirrors: the project list moves to the right, text aligns right, tabs run right to left. The **player is a deliberate exception inside**:
+
+- The play, back 15 and forward 15 buttons keep their usual left-to-right order and arrow directions. They name the direction of the recording, not the direction of reading.
+- The waveform and the playhead still run left to right, as in audio editors and most players. Clicking further right means later in the recording.
+- The clock stays `0:00 / 0:24` (`dir="ltr"`): numbers are not reordered.
+- The whole player block, and the buttons as a group, do sit on the mirrored side.
+
+This follows Material Design, Firefox and Spotify's guidance (do not mirror media controls or the media progress bar), and is the safer choice because the opposing view (Apple's HIG says to flip controls that show progress, Mozilla says time should run right to left) is mostly about generic progress bars, not about a recording's timeline. It has not been checked with Arabic or Persian readers: ask one before changing it either way.

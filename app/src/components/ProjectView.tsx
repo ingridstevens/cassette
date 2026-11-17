@@ -568,7 +568,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
             <button type="button" className="btn icon quiet skip" aria-label={t("Forward 15 seconds")} onClick={() => player.current?.skip(15)}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 12a8 8 0 1 1-3-6.2M20 4v4h-4" /></svg><b aria-hidden="true">15</b></button>
           </div>
           <div className="pv-clock">
-            <div>{fmt(time)} <span>/ {fmt(duration || result?.duration || 0)}</span></div>
+            <div dir="ltr">{fmt(time)} <span>/ {fmt(duration || result?.duration || 0)}</span></div>
           </div>
           <Waveform key={project.id} ref={player} path={path} result={result} onTime={setTime} onSelection={setSel} onPlaying={setPlaying} onDuration={setDuration} />
           {result && (

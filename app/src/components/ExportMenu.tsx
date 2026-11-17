@@ -32,6 +32,10 @@ const GROUPS: { title: string; formats: readonly (readonly [string, string, stri
   ] },
 ];
 
+/** The few formats most people use, shown first. Everything else sits behind "More formats". */
+const PRIMARY = ["docx", "txt", "srt", "minutes"] as const;
+const ALL = GROUPS.flatMap((g) => g.formats);
+
 /** Arrow/Home/End navigation between the menu items of the menu that received the key. */
 export function onMenuKeyDown(e: KeyboardEvent<HTMLElement>) {
   const items = Array.from(e.currentTarget.querySelectorAll<HTMLElement>('[role^="menuitem"]'));
@@ -50,6 +54,7 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
   const t = useT();
   const [asking, setAsking] = useState<OptionsKind | null>(null);
   const [open, setOpen] = useState(false);
+  const [more, setMore] = useState(false);
   const [msg, setMsg] = useState("");
   const [bad, setBad] = useState(false);
   const box = useRef<HTMLDivElement>(null);
@@ -79,6 +84,16 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
     setTimeout(() => setMsg(""), r.ok ? 2800 : 8000);
   };
   const host = trigger.current?.closest(".pview") ?? document.body;
+  const item = ([f, label, hint]: readonly [string, string, string]) => (
+    <button key={f} type="button" role="menuitem" aria-disabled={(f === "chapters" && !hasChapters) || ((f === "quotes" || f === "highlights") && !markedCount) ? true : undefined}
+      onClick={() => {
+        if ((f === "chapters" && !hasChapters) || ((f === "quotes" || f === "highlights") && !markedCount)) return;
+        setOpen(false); trigger.current?.focus();
+        if (WITH_OPTIONS.has(f)) setAsking(f as OptionsKind); else run(f, STYLED.has(f) ? loadExportOpts() : undefined);
+      }}>
+      <b>{t(label)}</b><small>{f === "chapters" && !hasChapters ? t("Mark chapters first: use “Chapter” on a line") : (f === "quotes" || f === "highlights") && !markedCount ? t("Highlight words or mark a line first") : t(hint)}</small>
+    </button>
+  );
   return (
     <>
       {asking && createPortal(<ExportOptions kind={asking} onCancel={() => setAsking(null)} onConfirm={(o) => { const f = asking; setAsking(null); if (f !== "text") run(f, o); }} />, host)}
@@ -88,21 +103,21 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
         </button>
         {open && (
           <div className={"menu pv-export-menu" + (flip ? " flip" : "")} role="menu" aria-label={t("Export transcript")} onKeyDown={onMenuKeyDown}>
-            {GROUPS.map((g) => (
-              <div key={g.title} role="group" aria-label={t(g.title)}>
-                <div className="menu-head" aria-hidden="true">{t(g.title)}</div>
-                {g.formats.map(([f, label, hint]) => (
-                  <button key={f} type="button" role="menuitem" aria-disabled={(f === "chapters" && !hasChapters) || ((f === "quotes" || f === "highlights") && !markedCount) ? true : undefined}
-                    onClick={() => {
-                      if ((f === "chapters" && !hasChapters) || ((f === "quotes" || f === "highlights") && !markedCount)) return;
-                      setOpen(false); trigger.current?.focus();
-                      if (WITH_OPTIONS.has(f)) setAsking(f as OptionsKind); else run(f, STYLED.has(f) ? loadExportOpts() : undefined);
-                    }}>
-                    <b>{t(label)}</b><small>{f === "chapters" && !hasChapters ? t("Mark chapters first: use “Chapter” on a line") : (f === "quotes" || f === "highlights") && !markedCount ? t("Highlight words or mark a line first") : t(hint)}</small>
-                  </button>
-                ))}
-              </div>
-            ))}
+            <div role="group" aria-label={t("Most used")}>
+              {PRIMARY.map((f) => ALL.find((x) => x[0] === f)!).map(item)}
+            </div>
+            <button type="button" role="menuitem" className="menu-more" aria-expanded={more} onClick={() => setMore(!more)}>
+              <b>{more ? t("Fewer formats") : t("More formats…")}</b>
+            </button>
+            {more && GROUPS.map((g) => {
+              const rest = g.formats.filter(([f]) => !(PRIMARY as readonly string[]).includes(f));
+              return rest.length === 0 ? null : (
+                <div key={g.title} role="group" aria-label={t(g.title)}>
+                  <div className="menu-head" aria-hidden="true">{t(g.title)}</div>
+                  {rest.map(item)}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
