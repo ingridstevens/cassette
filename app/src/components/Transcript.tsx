@@ -227,7 +227,7 @@ export default function Transcript({ result, names, time, onSeek, onReassign, on
           ) : (
           splitting === i ? (
             <div className="pv-editor pv-split" role="group" aria-label={t("Split this line")}>
-              <p className="pv-read">
+              <p className="pv-read" dir="auto">
                 {seg.words.map((w, j) => (
                   <button key={j} type="button" className="pv-w pv-cut" disabled={j === 0} onClick={() => { onSplit(i, j); setSplitting(null); }}
                     aria-label={j === 0 ? w.word.trim() : t("Start a new line at “{word}”", { word: w.word.trim() })}>{w.word}</button>
@@ -240,7 +240,7 @@ export default function Transcript({ result, names, time, onSeek, onReassign, on
               </div>
             </div>
           ) : (
-          <p className="pv-read" title={t("Double-click a word to fix it")}
+          <p className="pv-read" dir="auto" title={t("Double-click a word to fix it")}
             onMouseUp={(e) => { const root = e.currentTarget; window.setTimeout(() => pickWords(i, root), 0); }}
             onMouseDown={(e) => { if (e.detail === 1) wasPlaying.current = playing; }}
             onDoubleClick={(e) => {

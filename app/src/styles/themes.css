@@ -110,7 +110,8 @@ html[data-contrast="high"] a:focus-visible, html[data-contrast="high"] button:fo
 html[data-contrast="high"] .scrim { background: rgba(0, 0, 0, .7); }
 
 /* Clean reading: the plain system sans at 17.5 px, more space between lines. Sunset keeps its serif. */
-html[data-look="clean"] { --font-read: var(--font-ui); }
+/* Clean uses Inter, with Vazirmatn picked automatically for Arabic-script text and the system fonts as fallback. */
+html[data-look="clean"] { --font-ui: "Inter", "Vazirmatn", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; --font-read: var(--font-ui); }
 html[data-look="clean"] .pv-read { font-size: 17.5px; line-height: 1.65; }
 html[data-look="clean"] .pv-rv-context { font-size: 17.5px; }
 html[data-look="clean"] .pv-editor textarea { font-size: 17.5px; }

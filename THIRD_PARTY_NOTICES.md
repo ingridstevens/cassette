@@ -116,3 +116,12 @@ except huggingface.co.
 | Parakeet TDT 0.6B v3 (MLX conversion) | CC-BY-4.0: credit NVIDIA when you redistribute or publish results that depend on it | https://huggingface.co/nvidia/parakeet-tdt-0.6b-v3, https://huggingface.co/mlx-community/parakeet-tdt-0.6b-v3 |
 | Hy-MT2 1.8B (MLX 4-bit and GGUF) | Apache-2.0 | https://huggingface.co/tencent/Hy-MT2-1.8B-GGUF, https://huggingface.co/mlx-community/Hy-MT2-1.8B-4bit |
 | Moonshine streaming models (one per language) | MIT (the legacy non-streaming non-English models are non-commercial and not offered) | https://github.com/moonshine-ai/moonshine/blob/main/LICENSE |
+
+## Fonts bundled with the app
+
+| Name | Version | Licence | Source |
+|---|---|---|---|
+| Inter (Regular, Medium, SemiBold, Bold) | 4.1 | SIL Open Font Licence 1.1 | https://github.com/rsms/inter |
+| Vazirmatn (variable) | 33.003 | SIL Open Font Licence 1.1 | https://github.com/rastikerdar/vazirmatn |
+
+Copyright (c) 2016-2018 The Inter Project Authors. Copyright 2015 The Vazirmatn Project Authors. Used unmodified. The full licence texts are shipped beside the font files in `app/src/assets/fonts/` (`OFL-Inter.txt`, `OFL-Vazirmatn.txt`). Vetting record: `docs/dependency-vetting.md`.
