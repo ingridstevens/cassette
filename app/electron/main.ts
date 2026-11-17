@@ -19,7 +19,7 @@ let modelsJob: string | null = null;
 
 function createWindow() {
   win = new BrowserWindow({
-    width: 1280, height: 860, minWidth: 1040, minHeight: 600, title: "Local Transcriber", ...(process.platform === "darwin" ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 18, y: 18 } } : {}),
+    width: 1280, height: 860, minWidth: 1040, minHeight: 600, title: "Cassette", ...(process.platform === "darwin" ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 18, y: 18 } } : {}),
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   win.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
@@ -74,7 +74,7 @@ app.whenReady().then(() => {
   // The About window: our name, version and icon, also in development (where it would otherwise say "Electron").
   // Packaged builds take the icon from the app bundle, so iconPath is only set when the PNG is there.
   app.setAboutPanelOptions({
-    applicationName: "Local Transcriber", applicationVersion: app.getVersion(), version: app.getVersion(),
+    applicationName: "Cassette", applicationVersion: app.getVersion(), version: app.getVersion(),
     copyright: "Public domain (The Unlicense)", ...(fs.existsSync(devIcon) ? { iconPath: devIcon } : {}),
   });
   registerLive(send, baseEnv);

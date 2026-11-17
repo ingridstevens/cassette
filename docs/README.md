@@ -1,6 +1,6 @@
-# Local Transcriber documentation
+# Cassette documentation
 
-Local Transcriber turns recordings of people speaking into text, and labels who said what. It runs on
+Cassette turns recordings of people speaking into text, and labels who said what. It runs on
 your own computer. German, English, French and Spanish are the best tested; about 100 other languages work too.
 
 | If you want to… | Read |

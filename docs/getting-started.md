@@ -42,7 +42,7 @@ one-line summary with a tick, and a bar shows how many are done and roughly how 
 1. **Create a free Hugging Face account.** **Create account** opens the sign-up page. Already have one? Click
    **I already have one**.
 2. **Make an access code (a token) and paste it here.** **Open token page** opens Hugging Face with the **Read** tab
-   already chosen. Name the token “Local Transcriber” (**Copy name** puts that on your clipboard), click
+   already chosen. Name the token “Cassette” (**Copy name** puts that on your clipboard), click
    **Create token**, copy the code (it starts with `hf_` and is shown only once) and paste it into the app.
    Once saved, the step shows **Saved as hf_…abcd** with a **Replace** link.
 3. **Fill in a short form on two model pages.** The makers of the speaker model (pyannote) ask for a few details before

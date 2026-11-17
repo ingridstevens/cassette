@@ -1,6 +1,6 @@
 # Third-party notices
 
-Local Transcriber's own code is released under [The Unlicense](LICENSE). **That dedication cannot
+Cassette's own code is released under [The Unlicense](LICENSE). **That dedication cannot
 relicense anything written by others.** Every component below keeps its own licence, and anyone who
 redistributes a build of this app (installer, bundle, container) must honour those licences.
 

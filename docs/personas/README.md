@@ -1,6 +1,6 @@
 # Personas
 
-Ten made-up users of Local Transcriber. Each one is written so an AI agent can play them: the file is that agent's
+Ten made-up users of Cassette. Each one is written so an AI agent can play them: the file is that agent's
 instructions. They do two jobs:
 
 - **Vote** on proposed features, each from their own point of view (`/persona-vote`, see [Votes](../votes/README.md)).

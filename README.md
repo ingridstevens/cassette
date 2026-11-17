@@ -1,6 +1,8 @@
 <img src="app/resources/icon.png" alt="" width="96" align="right">
 
-# Local Transcriber
+# Cassette
+
+*A local transcriber.*
 
 **Turn a recording into a transcript that says who spoke, without uploading it anywhere.**
 
@@ -59,7 +61,7 @@ you press Start.
 
 ## Quick start
 
-There is no installer yet, so you run Local Transcriber from this repository. It takes about 10 minutes, most of it
+There is no installer yet, so you run Cassette from this repository. It takes about 10 minutes, most of it
 downloads. You need **Git**, **Node.js 22.12 or newer** and **[uv](https://docs.astral.sh/uv/)** (uv also installs
 the right Python for you). If you use [`mise`](https://mise.jdx.dev), `mise install` in this folder sets up Node and uv.
 
@@ -72,8 +74,8 @@ Tested on Apple silicon (M1 and newer). In Terminal:
 brew install git node uv
 
 # 2. Get the app
-git clone https://github.com/ingridstevens/local-transcriber.git
-cd local-transcriber
+git clone https://github.com/ingridstevens/cassette.git
+cd cassette
 
 # 3. Install, once
 cd engine && uv sync
@@ -92,7 +94,7 @@ Next time, only step 4 (from the `app` folder).
 ### Windows
 
 Not tried yet: nobody has run the app on Windows so far. Please
-[open an issue](https://github.com/ingridstevens/local-transcriber/issues) if something goes wrong.
+[open an issue](https://github.com/ingridstevens/cassette/issues) if something goes wrong.
 
 **Easiest:** download this repository (the green *Code* button, then *Download ZIP*, and unzip it), open the folder in
 PowerShell and run the setup script. It checks your memory and disk space, installs Node.js and uv with `winget` if they are missing,
@@ -119,8 +121,8 @@ winget install Git.Git OpenJS.NodeJS.LTS astral-sh.uv
 # then close PowerShell and open a new one, so it finds them
 
 # 2. Get the app
-git clone https://github.com/ingridstevens/local-transcriber.git
-cd local-transcriber
+git clone https://github.com/ingridstevens/cassette.git
+cd cassette
 
 # 3. Install, once
 cd engine; uv sync

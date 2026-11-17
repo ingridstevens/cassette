@@ -190,7 +190,7 @@ def test_docx_has_talk_share_chapter_band_and_footer():
     doc = Document(io.BytesIO(to_docx(segs, {"A": "Anna", "B": "Ben"}, title="T")))
     text = "\n".join(p.text for p in doc.paragraphs)
     assert "75%" in text and "25%" in text and "Intro" in text and "█" in text
-    assert "Made with Local Transcriber" in doc.sections[0].footer.paragraphs[0].text
+    assert "Made with Cassette" in doc.sections[0].footer.paragraphs[0].text
 
 
 def test_redacted_replaces_names_everywhere():
