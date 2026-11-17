@@ -122,3 +122,6 @@ textarea.input { height: 64px; padding-top: 9px; resize: none; align-items: flex
 /* app-level */
 html, body, #root { height: 100%; }
 body { margin: 0; font-family: var(--font-ui); color: var(--ink); background: var(--dawn); background-attachment: fixed; font-size: 14px; line-height: 1.45; -webkit-font-smoothing: antialiased; }
+
+/* Right-to-left app: text that is still English (not yet translated) should read left to right, with its full stop at the end, not the start. */
+html[dir="rtl"] :is(p, small, .sub, .lead, .note, h1, h2, h3, legend) { unicode-bidi: plaintext; }

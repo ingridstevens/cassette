@@ -148,7 +148,9 @@ def load_model(model_name: str, device: str, backend: str = "faster", vad: bool 
     progress("transcribe", 0.0, f"Loading {model_name} on {dev}")
     path = snapshot_download(WHISPER_MODELS[model_name], cache_dir=models_dir(), local_files_only=True)
     log(f"Whisper model {model_name} loaded from {path} (device={dev}, compute={compute}, offline)")
-    return WhisperModel(path, device=dev, compute_type=compute), dev, compute
+    from .threads import thread_budget
+
+    return WhisperModel(path, device=dev, compute_type=compute, cpu_threads=thread_budget() if dev == "cpu" else 0), dev, compute
 
 
 FIT_SECONDS = 30.0     # the start of the recording used to find its language (one pass, about a second)

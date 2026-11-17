@@ -28,6 +28,13 @@ function stageLabel(stage: string): string {
 export default function App() {
   const t = useT();
   const [opts, setOpts] = useState<Options>(loadOpts);
+  // First launch on a computer with little memory: start with the Base size instead of Small (the user can change it in Settings).
+  const firstRun = useRef((() => { try { return localStorage.getItem("opts") === null; } catch { return false; } })());
+  useEffect(() => {
+    if (!firstRun.current) return;
+    firstRun.current = false;
+    window.api.paths().then((p) => { if (p?.system?.memGB && p.system.memGB < 6) setOpts((o) => ({ ...o, model: "base" })); }).catch(() => {});
+  }, []);
   const [status, setStatus] = useState<ModelStatus | null>(null);
   const [dragging, setDragging] = useState(false);
   const [playingId, setPlayingId] = useState<string | null>(null);

@@ -75,7 +75,7 @@ export default function Setup({ opts, set, status, models, compact = false, onCo
           <div className={"num" + (modelDone ? " ok" : " on")} aria-hidden="true">{modelDone ? "✓" : "1"}</div>
           <div className="grow">
             <h3>{modelDone ? t("Transcription model downloaded") : t("Download the transcription model")}</h3>
-            <p className="sub">{t("The part that listens and writes the words down: “{model}”, about {size}. A good balance of speed and accuracy. You can pick another size in Settings.", { model: modelName(opts.model), size: size.replace("≈ ", "") })}</p>
+            <p className="sub">{t("The part that listens and writes the words down: “{model}”, about {size}. You can pick another size in Settings.", { model: modelName(opts.model), size: size.replace(/^≈\s/, "") })}</p>
             {!modelDone && !dlModel && (
               <div className="actions"><button type="button" className="btn sun" disabled={!!busy} onClick={() => run("download", opts.model)}>{t("Download now")}</button></div>
             )}
@@ -83,7 +83,7 @@ export default function Setup({ opts, set, status, models, compact = false, onCo
               <>
                 <Progress label={t("Model download progress")} fraction={dl?.fraction ?? null} />
                 <p className="sub small-row">
-                  <span>{pct != null ? t("{pct}% of about {size}. Keep the app open.", { pct, size: size.replace("≈ ", "") }) : t("Starting… Keep the app open.")}</span>
+                  <span>{pct != null ? t("{pct}% of about {size}. Keep the app open.", { pct, size: size.replace(/^≈\s/, "") }) : t("Starting… Keep the app open.")}</span>
                   <button type="button" className="btn quiet small" onClick={cancel}>{t("Cancel download")}</button>
                 </p>
               </>
@@ -157,7 +157,7 @@ export default function Setup({ opts, set, status, models, compact = false, onCo
     <section className="setup-page" aria-labelledby="setup-title">
       <div>
         <h1 id="setup-title">{t("Turn a recording into text")}</h1>
-        <p className="lead">{t("First, one quick download (about {size}). After that it works without internet, and your recordings never leave this computer.", { size: size.replace("≈ ", "") })}</p>
+        <p className="lead">{t("First, one quick download (about {size}). After that it works without internet, and your recordings never leave this computer.", { size: size.replace(/^≈\s/, "") })}</p>
       </div>
       {steps}
     </section>

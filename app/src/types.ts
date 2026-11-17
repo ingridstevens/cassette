@@ -160,6 +160,7 @@ export const applyLook = (o: LookOpts) => {
   el.dataset.contrast = high ? "high" : "standard";
   const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory; // gigabytes, rounded; read on this computer, nothing is sent
   el.dataset.soft = !high && (o.soft === "on" || (o.soft !== "off" && (mem ?? 0) > 6)) ? "on" : "off";
+  el.dataset.lite = mem !== undefined && mem <= 4 ? "on" : "off"; // 4 GB or less: no fade effects, nothing to repaint
   document.body.style.zoom = o.textSize && o.textSize !== 1 ? String(o.textSize) : "";
   const p = PALETTES[look];
   PALETTE.splice(0, PALETTE.length, ...(high ? (dark ? p.highDark : p.highLight) : (dark ? p.dark : p.light)));

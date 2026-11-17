@@ -4,6 +4,7 @@ import { useT } from "../../i18n";
 import { ModelErrorCard } from "../ErrorCard";
 import { ENGINE_MODELS, WHISPER_MODELS, isMoonshine, moonshineName } from "../modelInfo";
 import { MODEL_BYTES } from "../useModels";
+import { tooBigForMemory } from "../../estimate";
 import ModelList, { Entry } from "./ModelList";
 import { Block, Engine, SectionProps, engineOf } from "./shared";
 
@@ -15,7 +16,8 @@ export default function TranscriptionSection({ opts, set, status, models, say }:
   const inUse = engineOf(opts.model);
   const [eng, setEng] = useState<Engine>(inUse);
   const [slow, setSlow] = useState(false);
-  useEffect(() => { window.api.paths().then((p) => setSlow(p.system.platform === "darwin" && p.system.arch === "x64")); }, []);
+  const [memGB, setMemGB] = useState<number | undefined>(undefined);
+  useEffect(() => { window.api.paths().then((p) => { setSlow(p.system.platform === "darwin" && p.system.arch === "x64"); setMemGB(p.system.memGB); }); }, []);
   const nameOf = (id: string) => (isMoonshine(id) ? moonshineName(id) : ENGINE_MODELS.some((m) => m.id === id) ? ENGINE_MODELS.find((m) => m.id === id)!.name : `Whisper ${labelOf(id)}`);
   const labelOf = (id: string) => { const m = WHISPER_MODELS.find((x) => x.id === id); return !m ? id : id.startsWith("large") ? m.name : t(m.name); };
   const have = (id: string) => !!status?.whisper[id];
@@ -45,7 +47,7 @@ export default function TranscriptionSection({ opts, set, status, models, say }:
   ];
   const missing = status ? engines.filter((e) => !e[3]).map((e) => e[1]) : [];
   let entries: Entry[] = [];
-  if (eng === "whisper") entries = WHISPER_MODELS.map((m) => entry(m.id, `Whisper ${labelOf(m.id)}`, t(m.like), m.tag ? t(m.tag) : undefined, slow && ["medium", "large-v3-turbo", "large-v3"].includes(m.id) ? { note: t("May be slow on this computer. A smaller size is quicker.") } : {}));
+  if (eng === "whisper") entries = WHISPER_MODELS.map((m) => entry(m.id, `Whisper ${labelOf(m.id)}`, t(m.like), m.tag ? t(m.tag) : undefined, tooBigForMemory(m.id, !opts.noDiarize, memGB) ? { note: t("May not fit in this computer's memory and could stop partway. A smaller size is safer.") } : slow && ["medium", "large-v3-turbo", "large-v3"].includes(m.id) ? { note: t("May be slow on this computer. A smaller size is quicker.") } : {}));
   else if (eng === "parakeet") entries = ENGINE_MODELS.map((m) => entry(m.id, m.name, t(m.like)));
   else entries = (status?.moonshine?.catalog ?? []).map((m) => entry(m.id, moonshineName(m.id), t("Fast drafts in {language}.", { language: langName(m.language) }), undefined, { size: status?.sizes?.whisper[m.id] || m.bytes, downloadSize: m.bytes }));
 
@@ -65,7 +67,7 @@ export default function TranscriptionSection({ opts, set, status, models, say }:
   const moonCat = status?.moonshine?.catalog ?? [];
   return (
     <>
-      <p className="st-lead-big" role="status">{t("In use: {model}. This is the default for new projects.", { model: have(opts.model) ? nameOf(opts.model) : t("no model yet") })}</p>
+      <p className="st-lead-big" role="status">{have(opts.model) ? t("In use: {model}. This is the default for new projects.", { model: nameOf(opts.model) }) : t("No model downloaded yet. New projects will use {model}.", { model: nameOf(opts.model) })}</p>
       {models.errInfo && !models.busy && <ModelErrorCard models={models} />}
       <Block id="tr-eng" title={t("Engine")}>
         <p className="note">{t("The engine is the program that turns speech into text.")}</p>
