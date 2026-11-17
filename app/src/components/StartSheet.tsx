@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "../i18n";
-import { Estimate, engineFor, estimate, loadCalib } from "../estimate";
+import { Estimate, engineFor, estimate, loadCalib, saferModel, tooBigForMemory } from "../estimate";
 import { ModelStatus, Options, Project, fmt } from "../types";
 import TranscribeFields from "./TranscribeFields";
+import { modelName } from "./modelInfo";
 import { Models } from "./useModels";
 import "../styles/project.css";
 
@@ -27,10 +28,12 @@ export function spanText(t: TFn, e: Estimate): string {
 export function useStartEstimate(eff: Options, duration: number, refreshKey: unknown = null) {
   const [status, setStatus] = useState<ModelStatus | null>(null);
   const [onBattery, setOnBattery] = useState(false);
+  const [memGB, setMemGB] = useState<number | undefined>(undefined);
   useEffect(() => {
     let alive = true;
     window.api.models("status").then((r) => { if (alive && r) setStatus(r as unknown as ModelStatus); }).catch(() => {});
     window.api.powerState().then((p) => { if (alive) setOnBattery(!!p?.onBattery); }).catch(() => {});
+    window.api.paths().then((p) => { if (alive) setMemGB(p?.system?.memGB); }).catch(() => {});
     return () => { alive = false; };
   }, [refreshKey]);
   const gpuSpeakers = eff.device !== "cpu";
@@ -39,7 +42,7 @@ export function useStartEstimate(eff: Options, duration: number, refreshKey: unk
   const est = useMemo(() => (duration > 0 ? forModel(eff.model, duration) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [duration, eff.model, eff.noDiarize, eff.whisperEngine, eff.device, eff.vad, status]);
-  return { status, onBattery, engine, est, forModel };
+  return { status, onBattery, memGB, engine, est, forModel };
 }
 export type StartInfo = ReturnType<typeof useStartEstimate>;
 
@@ -51,7 +54,7 @@ interface Props {
 
 export default function StartSheet({ project, duration, eff, info, set, models, canStart, blocker, othersWaiting, onStart, onTrial, onApplyToOthers, onRemember, onOpenSettings }: Props) {
   const t = useT();
-  const { status, onBattery, engine, est, forModel } = info;
+  const { status, onBattery, memGB, engine, est, forModel } = info;
   const [more, setMore] = useState(false);
   const asks = !!est && est.mid > ASK_ABOVE_SECONDS;
   const open = asks || more;
@@ -80,6 +83,7 @@ export default function StartSheet({ project, duration, eff, info, set, models, 
         </span>
       </div>
       {batteryNote && <div className="alert warn" role="status">{t("You're on battery. A job this long uses a lot of power: consider plugging in first.")}</div>}
+      {tooBigForMemory(eff.model, !eff.noDiarize, memGB) && <div className="alert warn" role="status">{t("{model} may not fit in this computer's {mem} GB of memory and could stop partway. The {safer} size is safer.", { model: modelName(eff.model), mem: memGB ?? 0, safer: modelName(saferModel(!eff.noDiarize, memGB)) })}</div>}
       {blocker && <div className="alert warn" role="status">{blocker}</div>}
 
       {open && <div ref={fields} className="pv-start-fields-anchor"><TranscribeFields eff={eff} set={choose} status={status} models={models} timeOf={duration > 0 ? timeOf : undefined} onOpenSettings={onOpenSettings} /></div>}

@@ -34,6 +34,10 @@ def diarize(wav_path, device: str, num_speakers: int | None, min_speakers: int |
     if pipeline is None:
         raise RuntimeError("Speaker model not available. Download it in Settings (needs Hugging Face token).")
     dev = pick_torch_device(device)
+    if dev == "cpu":
+        from .threads import thread_budget
+
+        torch.set_num_threads(thread_budget())
     pipeline.to(torch.device(dev))
 
     data, sr = load_wav(wav_path)

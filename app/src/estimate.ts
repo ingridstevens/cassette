@@ -52,3 +52,11 @@ export function engineFor(model: string, o: { whisperEngine?: string; device?: s
   if (model === "parakeet-v3" || model.startsWith("moonshine-")) return "mlx"; // their own fast engines; the "mlx" rate is the fast one
   return status?.mlxAvailable && status.mlx?.[model] && o.whisperEngine !== "faster" && o.device !== "cpu" && !o.vad ? "mlx" : "faster";
 }
+
+/** Memory a model needs while it runs, in GB (a rough figure from the model file size plus working space; speaker detection adds about 1 GB). */
+const NEED_GB: Record<string, number> = { tiny: 0.6, base: 0.5, small: 1.5, medium: 3.5, "large-v3-turbo": 3.5, "large-v3": 6, "parakeet-v3": 2 };
+export const memoryNeed = (model: string, speakers: boolean) => (NEED_GB[model] ?? (model.startsWith("moonshine-") ? 1 : 1.5)) + (speakers ? 1 : 0);
+/** True when this model plus the system itself probably will not fit in `memGB` (Windows and the app need about 2.5 GB). Unknown memory never warns. */
+export const tooBigForMemory = (model: string, speakers: boolean, memGB: number | undefined) => !!memGB && memoryNeed(model, speakers) > memGB - 2.5;
+/** The biggest of Small, Base and Tiny that fits in `memGB`, for the warning to suggest (Tiny when nothing does). */
+export const saferModel = (speakers: boolean, memGB: number | undefined) => ["small", "base"].find((m) => !tooBigForMemory(m, speakers, memGB)) ?? "tiny";
