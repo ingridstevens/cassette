@@ -171,9 +171,10 @@ def cmd_models(a) -> None:
             models.download_whisper(a.name)
         emit("done", **models.status())
     elif a.action == "import":
+        report = models.folder_report(models.scan_folder(Path(a.name)))  # read before copying: it describes the folder, not our copy
         done = models.import_folder(Path(a.name))
         log(f"Imported {len(done)} model(s) from {a.name}")
-        emit("done", imported=done, **models.status())
+        emit("done", imported=done, report=report, **models.status())
     elif a.action == "check":
         emit("done", **models.check_access(a.token or os.environ.get("HF_TOKEN", "")))
     elif a.action == "delete":

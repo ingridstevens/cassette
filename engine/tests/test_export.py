@@ -467,3 +467,43 @@ def test_mlx_wrapper_returns_faster_whisper_shaped_results(monkeypatch):
 def test_vtt_escapes_markup_characters_in_speech_and_names():
     vtt = to_vtt([_seg("R&D costs <10 and a --> b")], {"SPEAKER_00": "A>B"})
     assert "<v A&gt;B>R&amp;D costs &lt;10 and a --&gt; b" in vtt
+
+
+def _fake_repo(root, repo, files=True):
+    d = root / ("models--" + repo.replace("/", "--")) / "snapshots" / "rev1"
+    d.mkdir(parents=True)
+    if files:
+        (d / "model.bin").write_text("x")
+
+
+def test_folder_report_says_imported_incomplete_and_missing(tmp_path):
+    from engine import models
+
+    src = tmp_path / "src"
+    _fake_repo(src, "Systran/faster-whisper-small")                    # complete
+    _fake_repo(src, "Systran/faster-whisper-tiny", files=False)        # folder there, nothing in it
+    _fake_repo(src, "pyannote/speaker-diarization-3.1")                # one of three speaker repos
+    rows = {r["id"]: r["state"] for r in models.folder_report(models.scan_folder(src))}
+    assert rows["small"] == "imported"
+    assert rows["tiny"] == "incomplete"
+    assert rows["base"] == "missing"
+    assert rows["diarization"] == "incomplete"
+
+
+def test_folder_report_speakers_imported_only_with_all_three_repos(tmp_path):
+    from engine import models
+
+    for repo in models.DIARIZATION_REPOS:
+        _fake_repo(tmp_path, repo)
+    rows = {r["id"]: r["state"] for r in models.folder_report(models.scan_folder(tmp_path))}
+    assert rows["diarization"] == "imported"
+
+
+def test_import_says_incomplete_when_nothing_is_usable_but_something_is_there(tmp_path, monkeypatch):
+    import pytest
+    from engine import models
+
+    monkeypatch.setenv("ENGINE_MODELS_DIR", str(tmp_path / "dst"))
+    _fake_repo(tmp_path / "src", "Systran/faster-whisper-tiny", files=False)
+    with pytest.raises(RuntimeError, match="incomplete"):
+        models.import_folder(tmp_path / "src")

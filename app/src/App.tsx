@@ -5,6 +5,7 @@ import ProjectView from "./components/ProjectView";
 import RecordPage from "./components/RecordPage";
 import SettingsPage from "./components/SettingsPage";
 import RemoveDialog from "./components/RemoveDialog";
+import ImportReport from "./components/ImportReport";
 import Setup from "./components/Setup";
 import { useModels } from "./components/useModels";
 import "./styles/shell.css";
@@ -155,6 +156,7 @@ export default function App() {
           {dragging && <div className="drop-veil" aria-hidden>{t("Drop to add recordings")}</div>}
         </section>
       </div>
+      {models.importReport && <ImportReport rows={models.importReport} onClose={models.closeImportReport} />}
       {removingProject && <RemoveDialog project={removingProject} onClose={() => setRemoving(null)} onDone={() => { P.remove(removingProject.id); setRemoving(null); }} />}
       {page === "settings" && <SettingsPage key={settingsSection ?? "default"} initialSection={settingsSection} opts={opts} set={setOpts} status={status} models={models} onBack={() => setPage("main")} onReset={() => { setOpts({ ...DEFAULTS }); setLlm(""); }} />}
       {playingId && (page === "settings" || P.activeId !== playingId) && (() => {
