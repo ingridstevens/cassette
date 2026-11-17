@@ -58,6 +58,11 @@ export default function TextLanguageSection({ opts, set }: SectionProps) {
             <label key={id} className={"choice" + (contrast === id ? " on" : "")}><input type="radio" name="contrast" checked={contrast === id} onChange={() => set({ ...opts, contrast: id })} /><span><b>{label}</b><small>{id === "high" ? t("Stronger colours and heavier borders, in either look.") : ""}</small></span></label>
           ))}
         </fieldset>
+        <fieldset className="choices row st-fieldset"><legend>{t("Soft look")}</legend>
+          {([["auto", t("Automatic"), t("Blurred glass on menus and panels, only on computers with plenty of memory.")], ["on", t("On"), ""], ["off", t("Off"), ""]] as const).map(([id, label, hint]) => (
+            <label key={id} className={"choice" + ((opts.soft ?? "auto") === id ? " on" : "")}><input type="radio" name="soft" checked={(opts.soft ?? "auto") === id} onChange={() => set({ ...opts, soft: id })} /><span><b>{label}</b><small>{hint}</small></span></label>
+          ))}
+        </fieldset>
       </Block>
       <Block id="tx-keys" title={t("Keyboard shortcuts")}>
         <div className="tbl-wrap"><table className="st-table"><caption className="st-sr">{t("Keyboard shortcuts")}</caption>
