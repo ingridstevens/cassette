@@ -41,11 +41,11 @@ html[data-look="clean"] {
   --ink: #0b0b0f; --ink2: #444a55; --ink3: #626a77;
   --line: #e6e6ea; --paper: #fff; --surface: #fff;
   --dawn: #f7f9fa; --page: #f7f9fa;
-  --sun: #0b6b83; --sun-btn: #0b0b0f; --on-sun: #fff;
-  --rose: #0b6b83; --violet: #0b6b83; --amber: #c2410c; --ok: #15803d; --danger: #b91c1c;
-  --violet-ink: #0b6b83; --tint: #0b0b0f; --tint-k: #000;
-  --hot: #0b6b83; --hot-d: #0b6b83; --focus: #0b6b83; --focus-soft: rgba(11, 107, 131, .2);
-  --wave: #c9c9d1; --wave-progress: #0b6b83;
+  --sun: #0a6577; --sun-btn: #0b0b0f; --on-sun: #fff;
+  --rose: #0a6577; --violet: #0a6577; --amber: #c2410c; --ok: #15803d; --danger: #b91c1c;
+  --violet-ink: #0a6577; --tint: #0b0b0f; --tint-k: #000;
+  --hot: #0a6577; --hot-d: #0a6577; --focus: #0a6577; --focus-soft: rgba(10, 101, 119, .2);
+  --wave: #c9c9d1; --wave-progress: #0a6577;
 }
 /* Clean: neutral shadows and tints instead of the sunset's pink and lilac glows */
 html[data-look="clean"] .btn.sun { box-shadow: none; }
@@ -57,10 +57,10 @@ html[data-look="clean"] .switch { background: #c9c9d1; }
 html[data-look="clean"] .switch[aria-checked="true"] { background: var(--ink); box-shadow: none; }
 html[data-look="clean"] .minibar { background: rgba(0, 0, 0, .1); }
 html[data-look="clean"] .btn[disabled] { background: rgba(0, 0, 0, .05); }
-html[data-look="clean"] .menu button:hover, html[data-look="clean"] .menu button:focus-visible { background: rgba(11, 107, 131, .1); }
-html[data-look="clean"] .choice:has(input:checked) { box-shadow: inset 0 0 0 2px var(--hot), 0 0 0 5px rgba(11, 107, 131, .14); }
-html[data-look="clean"] .st.run { box-shadow: 0 0 0 4px rgba(11, 107, 131, .18); }
-html[data-look="clean"] .pv-w:hover { background: rgba(11, 107, 131, .1); }
+html[data-look="clean"] .menu button:hover, html[data-look="clean"] .menu button:focus-visible { background: rgba(10, 101, 119, .1); }
+html[data-look="clean"] .choice:has(input:checked) { box-shadow: inset 0 0 0 2px var(--hot), 0 0 0 5px rgba(10, 101, 119, .14); }
+html[data-look="clean"] .st.run { box-shadow: 0 0 0 4px rgba(10, 101, 119, .18); }
+html[data-look="clean"] .pv-w:hover { background: rgba(10, 101, 119, .1); }
 html[data-look="clean"] .scrim { background: rgba(11, 11, 15, .4); }
 html[data-look="clean"] .orb { box-shadow: none; }
 
@@ -69,11 +69,11 @@ html[data-look="clean"][data-mode="dark"] {
   --ink: #f2f5f7; --ink2: #b4bec7; --ink3: #94a0ab;
   --line: #28323a; --paper: #12181d; --surface: #1a2229;
   --dawn: #0c1115; --page: #0c1115;
-  --sun: #4fc3dd; --sun-btn: #0e7d97; --on-sun: #fff;
-  --rose: #4fc3dd; --violet: #4fc3dd; --amber: #f0a45e; --ok: #34d399; --danger: #ff7a9c;
+  --sun: #4cc2d4; --sun-btn: #0e7d97; --on-sun: #fff;
+  --rose: #4cc2d4; --violet: #4cc2d4; --amber: #f0a45e; --ok: #34d399; --danger: #ff7a9c;
   --violet-ink: #7fd6e8; --tint: #f5f2f4; --tint-k: #fff;
-  --hot: #4fc3dd; --hot-d: #4fc3dd; --focus: #7fd6e8; --focus-soft: rgba(127, 214, 232, .28);
-  --wave: #36424b; --wave-progress: #4fc3dd;
+  --hot: #4cc2d4; --hot-d: #4cc2d4; --focus: #7fd6e8; --focus-soft: rgba(127, 214, 232, .28);
+  --wave: #36424b; --wave-progress: #4cc2d4;
 }
 html[data-look="clean"][data-mode="dark"] .toast button { color: #0e7d97; }
 html[data-look="clean"][data-mode="dark"] .tabs { background: rgba(255, 255, 255, .07); }

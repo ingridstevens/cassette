@@ -116,17 +116,18 @@ cd app/resources
 mkdir icon.iconset
 for s in 16 32; do rsvg-convert -w $s -h $s icon-src/cassette-small.svg -o icon.iconset/icon_${s}x${s}.png; done
 rsvg-convert -w 32 -h 32 icon-src/cassette-small.svg -o icon.iconset/icon_16x16@2x.png
-for s in 64 128 256 512 1024; do rsvg-convert -w $s -h $s icon-src/cassette.svg -o tmp-$s.png; done
+rsvg-convert -w 24 -h 24 icon-src/cassette-small.svg -o tmp-24.png
+for s in 48 64 128 256 512 1024; do rsvg-convert -w $s -h $s icon-src/cassette.svg -o tmp-$s.png; done
 cp tmp-64.png icon.iconset/icon_32x32@2x.png; cp tmp-128.png icon.iconset/icon_128x128.png
 cp tmp-256.png icon.iconset/icon_128x128@2x.png; cp tmp-256.png icon.iconset/icon_256x256.png
 cp tmp-512.png icon.iconset/icon_256x256@2x.png; cp tmp-512.png icon.iconset/icon_512x512.png
 cp tmp-1024.png icon.iconset/icon_512x512@2x.png; cp tmp-1024.png icon.png
 iconutil -c icns icon.iconset -o icon.icns
-magick icon.iconset/icon_16x16.png icon.iconset/icon_32x32.png tmp-64.png tmp-128.png tmp-256.png icon.ico
+magick icon.iconset/icon_16x16.png tmp-24.png icon.iconset/icon_32x32.png tmp-48.png tmp-256.png icon.ico
 rm -rf icon.iconset tmp-*.png
 ```
 
-The 16 and 32 px sizes use the simpler drawing on purpose: the label's text lines would only be a smudge there.
+The 16 and 32 px sizes use the simpler drawing on purpose: the cut-out reels need to stay big and the tail simple at that size.
 
 ## Translations
 

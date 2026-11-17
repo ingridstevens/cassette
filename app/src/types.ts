@@ -51,8 +51,8 @@ const PALETTES = {
     highDark: ["#ff8fb3", "#ffc27a", "#c9b8ff", "#8fd0ff", "#7ff0c8", "#ffe08a", "#ffa8ee", "#cfd3ea"],
   },
   clean: {
-    light: ["#0b6b83", "#c2410c", "#15803d", "#6d28d9", "#a21caf", "#a16207", "#be123c", "#52525b"],
-    dark: ["#4fc3dd", "#f0a45e", "#a995ee", "#34d399", "#f472b6", "#c084fc", "#facc15", "#a1a1aa"],
+    light: ["#0a6577", "#c2410c", "#15803d", "#6d28d9", "#a21caf", "#a16207", "#be123c", "#52525b"],
+    dark: ["#4cc2d4", "#f0a45e", "#a995ee", "#34d399", "#f472b6", "#c084fc", "#facc15", "#a1a1aa"],
     highLight: ["#0a4f63", "#9a3412", "#0b6b2c", "#5b21b6", "#7e1291", "#7a4a00", "#9f0f3a", "#3f3f46"],
     highDark: ["#7fd6e8", "#ffc27a", "#a8b4ff", "#6ee7b7", "#67e8f9", "#e0b4ff", "#fde047", "#d4d4d8"],
   },
