@@ -48,4 +48,6 @@ Personas guess. I checked what I could:
 6. **Finish Arabic and Persian** for the transcript, Settings and export menu (about 180 strings), then ask a native reader to review. Done for the transcript, export menu, review mode, record page, activity list and the Settings overview (242 more strings each, machine-assisted). Still English: the Settings sub-pages (Transcription, Speakers, Summaries, Saving, Text and language, Privacy, Advanced, About) and the Info/Options/Ask tabs. **A native reader still needs to check all of it.**
 7. ~~**Models-folder result list** after "Use a models folder…" (Sam).~~ Done: a dialog lists each model as copied, incomplete or not in the folder. Not done: checksums and version checks (a file can be complete but the wrong version), a config file and silent install.
 
+Also done after the list: **provenance in the JSON export** (Jonas, Dev). The JSON file's `meta` was always empty; it now carries a schema version, the app and engine versions, the language, the model and devices, and the number of edited lines, with no date so exports stay identical for the same input. Not done: model checksums, and a header in CSV or text exports (it would change their columns).
+
 Held back for now: password lock, burned-in captions, share cards, headless command line (each needs a design decision).

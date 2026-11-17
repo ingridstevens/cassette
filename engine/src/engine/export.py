@@ -328,6 +328,28 @@ def to_md(segs, names=None, options=None):
     return (f"_{note}_\n\n" if note else "") + body
 
 
+JSON_SCHEMA = 1  # bump when a key is renamed or removed; adding keys does not change it
+
+
+def provenance(data: dict) -> dict:
+    """What a JSON export says about how it was made, so it can be cited and compared: the format version, the app and engine versions,
+    the language and the run's model and devices. No date and no file paths, so the same transcript always exports to the same bytes."""
+    try:
+        from importlib.metadata import version
+
+        engine = version("engine")
+    except Exception:
+        engine = None
+    run = data.get("meta") or {}
+    keep = ("model", "device", "speakerDevice", "languageProb", "languages", "mixed", "translated", "secondsSpeakers", "secondsTranscribe")
+    segs = data.get("segments") or []
+    return {
+        "schema": JSON_SCHEMA, "app": data.get("app"), "engine": engine, "language": data.get("language"),
+        "lines": len(segs), "edited_lines": sum(1 for s in segs if s.get("edited")),
+        **{k: run[k] for k in keep if k in run},
+    }
+
+
 def to_json(segs, names=None, meta=None):
     names = names or {}
     return json.dumps(

@@ -299,7 +299,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
 
   const payload = (format = "", options?: ExportOpts) => ({
     segments: result!.segments.map(({ words, orig, edited, ...s }) => (["srt", "vtt", "edl"].includes(format) || (options?.pauseMarks && STYLED.has(format)) ? { ...s, edited, words: words.map(({ start, end, word }) => ({ start, end, word })) } : format === "changes" ? { ...s, orig: orig && { text: orig.text } } : s)),
-    ...(options ? { options } : {}), highlights: keptHighlights.map(({ id: _id, suggested: _s, ...h }) => h), summary: result!.summary, language: result!.language, speakers: Object.fromEntries(result!.speakers.map((s) => [s, displayName(s, result!.speakers, names)])),
+    ...(options ? { options } : {}), app: __APP_VERSION__, meta: project.meta, highlights: keptHighlights.map(({ id: _id, suggested: _s, ...h }) => h), summary: result!.summary, language: result!.language, speakers: Object.fromEntries(result!.speakers.map((s) => [s, displayName(s, result!.speakers, names)])),
   });
   const setSpeaker = (idx: number | null, from: string, to: string) => {
     if (!result) return;
