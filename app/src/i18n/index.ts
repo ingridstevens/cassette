@@ -1,17 +1,20 @@
 import { useSyncExternalStore } from "react";
 
 /** App languages. The recording language (what people speak) is a separate, per-project setting. */
-export type Lang = "en" | "de" | "fr" | "es";
+export type Lang = "en" | "de" | "fr" | "es" | "ar" | "fa";
+/** Languages written right to left: the whole window mirrors. */
+const RTL: Lang[] = ["ar", "fa"];
 export type LangPref = "system" | Lang;
 export const LANGS: { id: Lang; label: string }[] = [
   { id: "en", label: "English" }, { id: "de", label: "Deutsch" }, { id: "fr", label: "Français" }, { id: "es", label: "Español" },
+  { id: "ar", label: "العربية" }, { id: "fa", label: "فارسی" },
 ];
 
 type Dict = Record<string, string>;
 /** Each file in ./dict default-exports { de, fr, es }: English text -> translation. English is the key, so a missing entry falls back to English. */
 const files = import.meta.glob<{ default: Partial<Record<Exclude<Lang, "en">, Dict>> }>("./dict/*.ts", { eager: true });
-const dicts: Record<Exclude<Lang, "en">, Dict> = { de: {}, fr: {}, es: {} };
-for (const f of Object.values(files)) for (const l of ["de", "fr", "es"] as const) Object.assign(dicts[l], f.default[l]);
+const dicts: Record<Exclude<Lang, "en">, Dict> = { de: {}, fr: {}, es: {}, ar: {}, fa: {} };
+for (const f of Object.values(files)) for (const l of ["de", "fr", "es", "ar", "fa"] as const) Object.assign(dicts[l], f.default[l]);
 
 /** "Match my computer": the first language the system prefers that the app has, otherwise English. */
 export function systemLang(): Lang {
@@ -25,7 +28,7 @@ let current: Lang = "en";
 const listeners = new Set<() => void>();
 export function setLanguage(pref?: LangPref) {
   const next = resolveLang(pref);
-  if (typeof document !== "undefined") document.documentElement.lang = next;
+  if (typeof document !== "undefined") { document.documentElement.lang = next; document.documentElement.dir = RTL.includes(next) ? "rtl" : "ltr"; }
   if (next === current) return;
   current = next; listeners.forEach((l) => l());
 }
