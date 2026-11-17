@@ -62,3 +62,12 @@ Whisper can only translate into English. The **translation model Hy-MT2 1.8B** (
 translates lines into 38 languages, including Arabic, Persian, Russian, Turkish, Hebrew, Hindi, Urdu and Ukrainian (not Swahili, Hausa,
 Amharic or Yoruba). Download it under Settings, Summaries and translation, then pick the language under *Translate into* in a project's options.
 It is a small model: read the translations as help, not as final text.
+
+## Sharing models with a team
+
+Models only need to be downloaded once per team, not once per person.
+
+1. On a computer that already has the models, open **Settings, Advanced, Models folder** and choose **Show in Finder** (or File Explorer). Copy that folder to a shared drive or a USB stick.
+2. On the other computer, open **Settings, Transcription** and choose **Use a models folder…**. Pick the folder you copied.
+
+The app **copies** the models it finds into its own models folder, so the shared folder can be disconnected afterwards. Nothing is downloaded, and nobody needs a Hugging Face account for models that are imported this way.
