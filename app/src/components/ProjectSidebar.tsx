@@ -22,9 +22,10 @@ export default function ProjectSidebar({ projects, activeId, progress, blocker, 
   return (
     <nav className="side" aria-label={t("Projects")}>
       <div className={"brand" + (projects.some((p) => p.status === "running") ? " busy" : "")} aria-hidden="true">
-        <svg viewBox="0 0 32 32" className="brand-mark"><rect x="1" y="1" width="30" height="30" rx="8" className="bm-bg" /><rect x="6" y="9" width="20" height="14" rx="3" className="bm-body" />
-          <g className="reel" style={{ transformOrigin: "12px 17px" }}><circle cx="12" cy="17" r="3.2" className="bm-reel" /><path d="M12 14.6v1.6" className="bm-spoke" /></g>
-          <g className="reel" style={{ transformOrigin: "20px 17px" }}><circle cx="20" cy="17" r="3.2" className="bm-reel" /><path d="M20 14.6v1.6" className="bm-spoke" /></g></svg>
+        <svg viewBox="0 0 32 32" className="brand-mark"><rect width="32" height="32" rx="7" className="bm-bg" />
+          <rect x="3.84" y="7.68" width="24.32" height="16.64" rx="2.56" className="bm-body" /><rect x="6.72" y="9.92" width="18.56" height="4.8" rx=".96" className="bm-label" />
+          <g className="reel" style={{ transformOrigin: "11.2px 19.2px" }}><circle cx="11.2" cy="19.2" r="3.04" className="bm-reel" /><circle cx="11.2" cy="19.2" r="1.02" className="bm-hub" /><path d="M11.2 19.2v-2.2" className="bm-spoke" /></g>
+          <g className="reel" style={{ transformOrigin: "20.8px 19.2px" }}><circle cx="20.8" cy="19.2" r="3.04" className="bm-reel" /><circle cx="20.8" cy="19.2" r="1.02" className="bm-hub" /><path d="M20.8 19.2v-2.2" className="bm-spoke" /></g></svg>
         <span>Cassette</span>
       </div>
       <button type="button" className="btn sun add-btn" onClick={onAdd}>
