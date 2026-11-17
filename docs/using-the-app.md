@@ -35,7 +35,7 @@ several recordings waiting, **Use these settings for the other waiting recording
 
 The estimate is a rough guess (shown as a range, and labelled so) until the app has timed a full run on your computer. After that it uses the
 real speed for that model and engine, and the range narrows. Runs with translation or per-speaker languages aren't used for timing because they
-are slower for other reasons, so the estimate can be low for those. If you're on battery and the job will take over ten minutes, the sheet says so.
+are slower for other reasons, so the estimate can be low for those. If you're on battery and the job will take over ten minutes, the sheet says so. If the chosen size (plus speaker detection) will probably not fit in this computer's memory, the sheet warns and names a size that does, and the same note appears next to each size in Settings, Transcription.
 
 **Try the first 3 minutes** (shown for recordings longer than six minutes) transcribes only the start, with your settings, so you can check
 speakers and languages first. The result carries a banner saying it is a sample, with a button to transcribe the whole recording (which replaces
@@ -197,7 +197,8 @@ the first match.
   Español; the translations are machine-assisted and not yet reviewed), the **look** (*Clean*, the default: flat, with one blue-green accent, in the Inter font; or
   *Fairytale sunset*; same layout, only the colours differ), **Light or dark**, **Contrast** (*Standard* or *High contrast*: stronger colours and heavier borders),
   **Soft look** (*Automatic*, *On* or *Off*: blurred glass on menus, dialogs and the player; Automatic turns it on only for computers with more than 6 GB of
-  memory and never in High contrast) and the keyboard shortcuts. Speaker colours stay clearly different from each other in every combination. Text in Arabic
+  memory and never in High contrast) and the keyboard shortcuts. On computers with 4 GB of memory or less a **Lite look** is on by itself: fades and the decorative pulse are
+  switched off (progress animations stay). Speaker colours stay clearly different from each other in every combination. Text in Arabic
   script (for example Persian or Arabic words in a line) is shown right to left in the Vazirmatn font. Settings saved before the two looks carry over: the first two
   old stops become *Fairytale sunset*, the last two become *Clean*; if you never chose a look, you now get *Clean*. The language of a recording is separate (see Options).
 - The brand mark at the top of the project list turns its two reels while a transcript is being written, and stands still otherwise or when your system asks for reduced motion.
@@ -205,7 +206,8 @@ the first match.
   last 4 characters are shown), and the activity log. See [Privacy and offline use](privacy-and-offline.md).
 - **Advanced:** closed groups, nothing needs changing. *Processor*: *Automatic* uses your graphics chip when there is one; *Processor only* is slower and most
   compatible. On a Mac with an Apple chip you can also download the **Apple GPU** versions of Whisper (see [Which model size?](models.md)). *Language
-  checker*, the *Models folder* (path, free space), **Copy diagnostics**, the activity log and **Reset all settings**.
+  checker*, the *Models folder* (path, free space), **Check my setup** (tests the speech engine, the chosen model, speaker detection, memory, free disk space and the microphone, and says what to do about anything
+  that is not Ready), **Copy diagnostics** (includes that check; no transcript text, file names or token), the activity log and **Reset all settings**.
 
 ## The status pill
 

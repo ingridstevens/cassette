@@ -45,7 +45,7 @@ app, no telemetry, no update checks, and it works offline after a one-time model
 
 **Look and accessibility**
 - *Clean* look by default (calm blue-green, Inter font), or *Fairytale sunset*; light, dark or match your computer.
-- Text size in four steps, High contrast, and an optional *Soft look* (blurred glass, only on computers with plenty of memory).
+- Text size in four steps, High contrast, and an optional *Soft look* (blurred glass, only on computers with plenty of memory). Computers with 4 GB or less get a lighter look by themselves.
 - The interface speaks English, German, French and Spanish (or matches your computer); right-to-left text such as Persian or Arabic is shown correctly.
 
 **Private by design**
@@ -66,7 +66,7 @@ app, no telemetry, no update checks, and it works offline after a one-time model
 | Graphics card | Not needed | Apple silicon or NVIDIA speeds things up |
 | Internet | For the install and the model downloads, once | |
 
-No speed table yet: nobody has timed the app on a low-end Windows laptop. Without a graphics card, expect transcription to
+The app warns before a run when the chosen size will probably not fit in memory, starts new installs on the smaller *Base* size under 6 GB, and has a **Check my setup** button (Settings, Advanced). See [Windows and weaker computers](docs/windows-and-low-spec.md). No speed table yet: nobody has timed the app on a low-end Windows laptop. Without a graphics card, expect transcription to
 take longer than the recording on the *Small* size; the app shows an estimate before you press Start.
 
 ## Install

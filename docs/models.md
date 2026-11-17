@@ -7,7 +7,7 @@ approximate downloads (Windows shows slightly smaller numbers; see [file sizes](
 | --- | --- | --- |
 | tiny | about 75 MB | Trying the app, very old computer. Many mistakes. |
 | base | about 145 MB | Quick drafts of clear speech. |
-| small | about 480 MB | **Default.** Good balance for most interviews and meetings. |
+| small | about 480 MB | **Default** (on computers with under 6 GB of memory the first launch starts with *base* instead). Good balance for most interviews and meetings. |
 | medium | about 1.5 GB | Accents, background noise, names. |
 | large-v3-turbo | about 1.6 GB | Near the best quality, faster than large-v3. |
 | large-v3 | about 3 GB | Best quality, slowest. |
