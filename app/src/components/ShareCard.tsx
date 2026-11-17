@@ -79,7 +79,7 @@ function draw(canvas: HTMLCanvasElement, o: Opts) {
 
   if (o.footer) {
     c.font = `500 22px ${UI}`; c.fillStyle = "#7d7396"; c.textAlign = "center";
-    c.fillText("Made with Local Transcriber · everything stays on this computer", SIZE / 2, cy + ch - 34);
+    c.fillText("Made with Cassette · everything stays on this computer", SIZE / 2, cy + ch - 34);
   }
 }
 

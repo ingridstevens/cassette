@@ -15,7 +15,7 @@ export function Progress({ label, fraction }: { label: string; fraction: number 
 }
 
 /** The name we suggest for the Hugging Face token, so nobody has to invent one. Shown and copied as is in every language. */
-const TOKEN_NAME = "Local Transcriber";
+const TOKEN_NAME = "Cassette";
 
 /** One step of the speaker setup: done steps shrink to a one-line summary, only the current step shows its instructions, later steps wait. */
 function Step({ n, at, title, summary, upcoming, children }: { n: number; at: number; title: string; summary?: React.ReactNode; upcoming?: string; children: React.ReactNode }) {

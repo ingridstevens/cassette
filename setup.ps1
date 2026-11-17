@@ -1,4 +1,4 @@
-# Local Transcriber: check this Windows computer, install what is missing, and install the app.
+# Cassette: check this Windows computer, install what is missing, and install the app.
 # Run from the project folder in PowerShell:   .\setup.ps1
 # If PowerShell refuses to run it:             powershell -ExecutionPolicy Bypass -File .\setup.ps1
 # Add -Llm to also build the highlights/summaries engine (needs Visual Studio Build Tools; see docs/troubleshooting.md).
@@ -18,7 +18,7 @@ function Refresh-Path {
 }
 
 Write-Host ""
-Write-Host "Local Transcriber setup" -ForegroundColor Cyan
+Write-Host "Cassette setup" -ForegroundColor Cyan
 Write-Host ""
 
 # 1. The computer ------------------------------------------------------------------------------

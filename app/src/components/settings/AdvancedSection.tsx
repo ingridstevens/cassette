@@ -42,7 +42,7 @@ export default function AdvancedSection({ opts, set, status, models, say, onRese
     return { id: `mlx-${m.id}`, run: `mlx-${m.id}`, name: `Whisper ${label} (${t("Apple GPU")})`, size: status?.mlxSizes?.[m.id] || MODEL_BYTES[m.id], have: !!status?.mlx?.[m.id], inUse: false };
   }) : [];
   const copyDiag = async () => {
-    const text = [`Local Transcriber ${__APP_VERSION__}`, sys ? `${sys.platform} ${sys.arch}, ${sys.chip || "?"}, ${sys.cores} cores, ${sys.memGB} GB` : "",
+    const text = [`Cassette ${__APP_VERSION__}`, sys ? `${sys.platform} ${sys.arch}, ${sys.chip || "?"}, ${sys.cores} cores, ${sys.memGB} GB` : "",
       `Model in use: ${opts.model}`, `Speaker detection: ${status?.diarization ? "ready" : "not set up"}`, `Models: ${Object.entries(status?.whisper ?? {}).filter(([, v]) => v).map(([k]) => k).join(", ") || "none"}`].filter(Boolean).join("\n");
     try { await navigator.clipboard.writeText(text); } catch { return; }
     setCopied(true); say(t("Diagnostics copied. They contain no transcript text and no token.")); window.setTimeout(() => setCopied(false), 2000);

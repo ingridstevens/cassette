@@ -188,7 +188,7 @@ the first match.
   in use changes only when you press **Use** (there is an Undo). Deleting the model in use offers **Delete and use** another downloaded model.
   The **language of recordings** block follows the model in use: Whisper can find the language by itself; Parakeet cannot (it uses a Whisper model, or
   you choose); Moonshine has one model per language. Quick picks (*Faster*, *In the middle*, *Fewer mistakes*) choose a Whisper size.
-- **Speakers:** what speaker detection does and the four guided steps (Hugging Face account, a Read token named *Local Transcriber*, two short forms, the
+- **Speakers:** what speaker detection does and the four guided steps (Hugging Face account, a Read token named *Cassette*, two short forms, the
   download), the same as on the first screen. Once it is set up you can switch it off for new projects, or delete it.
 - **Summaries and translation:** the language model for highlights and summaries, and the translation model, each with **Use** and **Delete**.
 - **Saving and export:** optionally save a backup file (`name.transcript.json`) next to each recording after transcribing. Transcribing the same
