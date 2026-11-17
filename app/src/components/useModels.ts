@@ -3,7 +3,8 @@ import { t } from "../i18n";
 import { bytes } from "../types";
 
 /** Approximate download size of a model, in the units this system uses (see bytes() in types.ts). */
-export const modelSize = (name: string) => `≈ ${bytes(MODEL_BYTES[name] ?? 5e8)}`;
+/** "≈ 1.6 GB" with no-break spaces, so a narrow panel never leaves the ≈ alone at the end of a line. */
+export const modelSize = (name: string) => `≈ ${bytes(MODEL_BYTES[name] ?? 5e8)}`.replace(/ /g, "\u00a0");
 
 /** Approximate download sizes, used to warn before filling the disk. */
 export const MODEL_BYTES: Record<string, number> = { tiny: 75e6, base: 145e6, small: 480e6, medium: 1.5e9, "large-v3-turbo": 1.6e9, "large-v3": 3e9, "parakeet-v3": 2.51e9, diarization: 60e6, "llm-small": 1.2e9, "llm-best": 4.8e9 };

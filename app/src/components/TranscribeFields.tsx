@@ -85,7 +85,7 @@ export function ModelField({ eff, set, status, models, timeOf, onOpenSettings, b
             <input id={`q-${m.id}`} type="radio" name="quality" checked={eff.model === m.id} disabled={missing} onChange={() => set({ model: m.id }, true)} />
             <label htmlFor={`q-${m.id}`}>
               <b>{label}{"tag" in m && m.tag && <span className="badge">{t(m.tag)}</span>}</b>
-              <small>{missing ? t("Not downloaded · {size}", { size: modelSize(m.id).replace("≈ ", "≈ ") }) : timeOf?.(m.id) || ("like" in m && m.like ? t(m.like) : "")}</small>
+              <small>{missing ? t("Not downloaded · {size}", { size: modelSize(m.id) }) : timeOf?.(m.id) || ("like" in m && m.like ? t(m.like) : "")}</small>
             </label>
             {missing && (going ? (
               <span className="pv-dl"><span className="note" role="status">{models.dl?.fraction != null ? `${Math.round(models.dl.fraction * 100)}%` : t("Starting…")}</span>
