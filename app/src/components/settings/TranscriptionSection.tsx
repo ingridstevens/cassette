@@ -67,7 +67,7 @@ export default function TranscriptionSection({ opts, set, status, models, say }:
   const moonCat = status?.moonshine?.catalog ?? [];
   return (
     <>
-      <p className="st-lead-big" role="status">{t("In use: {model}. This is the default for new projects.", { model: have(opts.model) ? nameOf(opts.model) : t("no model yet") })}</p>
+      <p className="st-lead-big" role="status">{have(opts.model) ? t("In use: {model}. This is the default for new projects.", { model: nameOf(opts.model) }) : t("No model downloaded yet. New projects will use {model}.", { model: nameOf(opts.model) })}</p>
       {models.errInfo && !models.busy && <ModelErrorCard models={models} />}
       <Block id="tr-eng" title={t("Engine")}>
         <p className="note">{t("The engine is the program that turns speech into text.")}</p>

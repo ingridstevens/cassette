@@ -75,7 +75,7 @@ export default function Setup({ opts, set, status, models, compact = false, onCo
           <div className={"num" + (modelDone ? " ok" : " on")} aria-hidden="true">{modelDone ? "✓" : "1"}</div>
           <div className="grow">
             <h3>{modelDone ? t("Transcription model downloaded") : t("Download the transcription model")}</h3>
-            <p className="sub">{t("The part that listens and writes the words down: “{model}”, about {size}. A good balance of speed and accuracy. You can pick another size in Settings.", { model: modelName(opts.model), size: size.replace("≈ ", "") })}</p>
+            <p className="sub">{t("The part that listens and writes the words down: “{model}”, about {size}. You can pick another size in Settings.", { model: modelName(opts.model), size: size.replace("≈ ", "") })}</p>
             {!modelDone && !dlModel && (
               <div className="actions"><button type="button" className="btn sun" disabled={!!busy} onClick={() => run("download", opts.model)}>{t("Download now")}</button></div>
             )}

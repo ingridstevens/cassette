@@ -34,7 +34,7 @@
 .px { position: absolute; right: 6px; top: 8px; width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--ink2); font-size: 16px; line-height: 1; cursor: pointer; opacity: 0; }
 .prow:hover .px, .prow:focus-within .px, .px:focus-visible { opacity: 1; }
 .shell .px:hover:not(:disabled) { background: rgba(179, 37, 80, .12); color: var(--danger); box-shadow: none; }
-.pill.local { align-self: flex-start; background: transparent; padding: 0 10px; box-shadow: none; }
+.pill.local { align-self: flex-start; background: transparent; height: auto; min-height: 30px; padding: 5px 10px; border-radius: 16px; line-height: 1.25; box-shadow: none; }
 .settings-row { align-items: center; border-top: 1px solid var(--line); border-radius: 0 0 11px 11px !important; margin-top: 6px; padding-top: 14px !important; }
 .settings-row .kbd { color: var(--ink2); font-size: 12px; }
 
@@ -66,7 +66,7 @@
 .setup-overlay-head { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; }
 .setup-overlay-head .btn { margin-left: -12px; }
 .setup-overlay .setup-page h1 { font-size: 34px; }
-.setup-page { width: 100%; max-width: 780px; margin: 0 auto; padding: 6px 56px 30px; display: flex; flex-direction: column; gap: 20px; box-sizing: content-box; }
+.setup-page { width: 100%; max-width: 892px; margin: 0 auto; padding: 6px 56px 30px; display: flex; flex-direction: column; gap: 20px; box-sizing: border-box; }
 .setup-page h1 { font-family: var(--font-read); font-weight: 500; font-size: 44px; letter-spacing: -.02em; line-height: 1.08; }
 .setup-page .lead { font-size: 16px; color: var(--ink2); margin-top: 12px; max-width: 620px; }
 .setup-card { border-radius: 26px; overflow: hidden; }
