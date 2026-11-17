@@ -21,6 +21,12 @@ export default function ProjectSidebar({ projects, activeId, progress, blocker, 
   const queue = projects.filter((p) => p.status === "queued");
   return (
     <nav className="side" aria-label={t("Projects")}>
+      <div className={"brand" + (projects.some((p) => p.status === "running") ? " busy" : "")} aria-hidden="true">
+        <svg viewBox="0 0 32 32" className="brand-mark"><rect x="1" y="1" width="30" height="30" rx="8" className="bm-bg" /><rect x="6" y="9" width="20" height="14" rx="3" className="bm-body" />
+          <g className="reel" style={{ transformOrigin: "12px 17px" }}><circle cx="12" cy="17" r="3.2" className="bm-reel" /><path d="M12 14.6v1.6" className="bm-spoke" /></g>
+          <g className="reel" style={{ transformOrigin: "20px 17px" }}><circle cx="20" cy="17" r="3.2" className="bm-reel" /><path d="M20 14.6v1.6" className="bm-spoke" /></g></svg>
+        <span>Cassette</span>
+      </div>
       <button type="button" className="btn sun add-btn" onClick={onAdd}>
         <svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{t("Add recordings")}
       </button>

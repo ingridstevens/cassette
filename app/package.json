@@ -12,7 +12,9 @@
     "build": "tsc --noEmit && vite build && npm run build:electron",
     "package": "npm run build && electron-builder",
     "typecheck": "tsc --noEmit",
-    "i18n:check": "node scripts/check-i18n.mjs"
+    "i18n:check": "node scripts/check-i18n.mjs",
+    "contrast:check": "node scripts/contrast-check.mjs",
+    "built:check": "node scripts/check-built-app.mjs"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",

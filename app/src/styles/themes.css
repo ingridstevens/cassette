@@ -10,7 +10,7 @@ html[data-mode="dark"] {
   /* text on the pastel gradient buttons stays dark in dark mode */
   --on-sun: #2b1c3b;
   --tint: #d9ccff; --tint-k: #fff;
-  --rose: #e5729a; --violet: #a58bff; --ok: #2fb37f; --danger: #ff7aa2;
+  --rose: #e5729a; --violet: #a58bff; --ok: #2fb37f; --danger: #7fd6e8;
   --hot: #e5729a; --hot-d: #e5729a; --focus: #a58bff; --focus-soft: rgba(165, 139, 255, .25);
   --violet-ink: #c3b4ff; --err-ink: #ff9fbd; --warn-ink: #ffc68f; --ok-ink: #6fe0b2;
   --wave: #5b5175; --wave-progress: #e5729a;
@@ -38,14 +38,14 @@ html[data-mode="dark"] select.input { background-image: url("data:image/svg+xml,
 
 /* ---- Clean, light: flat off-white, black primary button, one indigo accent ---- */
 html[data-look="clean"] {
-  --ink: #0b0b0f; --ink2: #4a4a55; --ink3: #6b6b78;
+  --ink: #0b0b0f; --ink2: #444a55; --ink3: #626a77;
   --line: #e6e6ea; --paper: #fff; --surface: #fff;
-  --dawn: #fafafa; --page: #fafafa;
-  --sun: #4f46e5; --sun-btn: #0b0b0f; --on-sun: #fff;
-  --rose: #4f46e5; --violet: #4f46e5; --amber: #c2410c; --ok: #15803d; --danger: #b91c1c;
-  --violet-ink: #4338ca; --tint: #0b0b0f; --tint-k: #000;
-  --hot: #4f46e5; --hot-d: #4f46e5; --focus: #4f46e5; --focus-soft: rgba(79, 70, 229, .2);
-  --wave: #c9c9d1; --wave-progress: #4f46e5;
+  --dawn: #f7f9fa; --page: #f7f9fa;
+  --sun: #0b6b83; --sun-btn: #0b0b0f; --on-sun: #fff;
+  --rose: #0b6b83; --violet: #0b6b83; --amber: #c2410c; --ok: #15803d; --danger: #b91c1c;
+  --violet-ink: #0b6b83; --tint: #0b0b0f; --tint-k: #000;
+  --hot: #0b6b83; --hot-d: #0b6b83; --focus: #0b6b83; --focus-soft: rgba(11, 107, 131, .2);
+  --wave: #c9c9d1; --wave-progress: #0b6b83;
 }
 /* Clean: neutral shadows and tints instead of the sunset's pink and lilac glows */
 html[data-look="clean"] .btn.sun { box-shadow: none; }
@@ -57,33 +57,33 @@ html[data-look="clean"] .switch { background: #c9c9d1; }
 html[data-look="clean"] .switch[aria-checked="true"] { background: var(--ink); box-shadow: none; }
 html[data-look="clean"] .minibar { background: rgba(0, 0, 0, .1); }
 html[data-look="clean"] .btn[disabled] { background: rgba(0, 0, 0, .05); }
-html[data-look="clean"] .menu button:hover, html[data-look="clean"] .menu button:focus-visible { background: rgba(79, 70, 229, .1); }
-html[data-look="clean"] .choice:has(input:checked) { box-shadow: inset 0 0 0 2px var(--hot), 0 0 0 5px rgba(79, 70, 229, .14); }
-html[data-look="clean"] .st.run { box-shadow: 0 0 0 4px rgba(79, 70, 229, .18); }
-html[data-look="clean"] .pv-w:hover { background: rgba(79, 70, 229, .1); }
+html[data-look="clean"] .menu button:hover, html[data-look="clean"] .menu button:focus-visible { background: rgba(11, 107, 131, .1); }
+html[data-look="clean"] .choice:has(input:checked) { box-shadow: inset 0 0 0 2px var(--hot), 0 0 0 5px rgba(11, 107, 131, .14); }
+html[data-look="clean"] .st.run { box-shadow: 0 0 0 4px rgba(11, 107, 131, .18); }
+html[data-look="clean"] .pv-w:hover { background: rgba(11, 107, 131, .1); }
 html[data-look="clean"] .scrim { background: rgba(11, 11, 15, .4); }
 html[data-look="clean"] .orb { box-shadow: none; }
 
 /* ---- Clean, dark: near-black, one burgundy-magenta accent ---- */
 html[data-look="clean"][data-mode="dark"] {
-  --ink: #f5f2f4; --ink2: #b3aab0; --ink3: #948a91;
-  --line: #2b242a; --paper: #141014; --surface: #1c161c;
-  --dawn: #0c090c; --page: #0c090c;
-  --sun: #e5386d; --sun-btn: #b3204f; --on-sun: #fff;
-  --rose: #e5386d; --violet: #e5386d; --amber: #f0a45e; --ok: #34d399; --danger: #ff7a9c;
-  --violet-ink: #ff7aa2; --tint: #f5f2f4; --tint-k: #fff;
-  --hot: #e5386d; --hot-d: #e5386d; --focus: #ff6a96; --focus-soft: rgba(255, 106, 150, .25);
-  --wave: #3b3239; --wave-progress: #e5386d;
+  --ink: #f2f5f7; --ink2: #b4bec7; --ink3: #94a0ab;
+  --line: #28323a; --paper: #12181d; --surface: #1a2229;
+  --dawn: #0c1115; --page: #0c1115;
+  --sun: #4fc3dd; --sun-btn: #0e7d97; --on-sun: #fff;
+  --rose: #4fc3dd; --violet: #4fc3dd; --amber: #f0a45e; --ok: #34d399; --danger: #ff7a9c;
+  --violet-ink: #7fd6e8; --tint: #f5f2f4; --tint-k: #fff;
+  --hot: #4fc3dd; --hot-d: #4fc3dd; --focus: #7fd6e8; --focus-soft: rgba(127, 214, 232, .28);
+  --wave: #36424b; --wave-progress: #4fc3dd;
 }
-html[data-look="clean"][data-mode="dark"] .toast button { color: #b3204f; }
+html[data-look="clean"][data-mode="dark"] .toast button { color: #0e7d97; }
 html[data-look="clean"][data-mode="dark"] .tabs { background: rgba(255, 255, 255, .07); }
-html[data-look="clean"][data-mode="dark"] .switch { background: #3b3239; }
-html[data-look="clean"][data-mode="dark"] .switch[aria-checked="true"] { background: #b3204f; }
+html[data-look="clean"][data-mode="dark"] .switch { background: #36424b; }
+html[data-look="clean"][data-mode="dark"] .switch[aria-checked="true"] { background: #0e7d97; }
 html[data-look="clean"][data-mode="dark"] .minibar { background: rgba(255, 255, 255, .12); }
-html[data-look="clean"][data-mode="dark"] .menu button:hover, html[data-look="clean"][data-mode="dark"] .menu button:focus-visible { background: rgba(229, 56, 109, .16); }
-html[data-look="clean"][data-mode="dark"] .choice:has(input:checked) { box-shadow: inset 0 0 0 2px var(--hot), 0 0 0 5px rgba(229, 56, 109, .2); }
-html[data-look="clean"][data-mode="dark"] .st.run { box-shadow: 0 0 0 4px rgba(229, 56, 109, .25); }
-html[data-look="clean"][data-mode="dark"] .pv-w:hover { background: rgba(229, 56, 109, .16); }
+html[data-look="clean"][data-mode="dark"] .menu button:hover, html[data-look="clean"][data-mode="dark"] .menu button:focus-visible { background: rgba(79, 195, 221, .16); }
+html[data-look="clean"][data-mode="dark"] .choice:has(input:checked) { box-shadow: inset 0 0 0 2px var(--hot), 0 0 0 5px rgba(79, 195, 221, .2); }
+html[data-look="clean"][data-mode="dark"] .st.run { box-shadow: 0 0 0 4px rgba(79, 195, 221, .25); }
+html[data-look="clean"][data-mode="dark"] .pv-w:hover { background: rgba(79, 195, 221, .16); }
 
 /* ---- High contrast: same layout, stronger colours, heavier borders. Works with both looks, light or dark. ---- */
 html[data-contrast="high"] { --ink: #000; --ink2: #111; --ink3: #222; --line: #000; --paper: #fff; --surface: #fff; --dawn: #fff; --page: #fff; --wave: #6b6b78; --tint: #000; --tint-k: #000; --done: #111; }
@@ -91,7 +91,7 @@ html[data-contrast="high"][data-mode="dark"] { --ink: #fff; --ink2: #fff; --ink3
 html[data-contrast="high"][data-look="sunset"] { --hot: #a3174f; --hot-d: #a3174f; --rose: #a3174f; --violet: #4b2bb8; --amber: #9a4a00; --sun: #a3174f; --sun-btn: #a3174f; --on-sun: #fff; --wave-progress: #a3174f; --focus: #4b2bb8; }
 html[data-contrast="high"][data-look="sunset"][data-mode="dark"] { --hot: #ff8fb3; --hot-d: #ff8fb3; --rose: #ff8fb3; --violet: #c9b8ff; --amber: #ffc27a; --sun: #ffb3c8; --sun-btn: #ffd0e0; --on-sun: #000; --wave-progress: #ff8fb3; --focus: #c9b8ff; }
 html[data-contrast="high"][data-look="clean"] { --hot: #2a1fc4; --hot-d: #2a1fc4; --rose: #2a1fc4; --violet: #2a1fc4; --amber: #9a3412; --sun: #2a1fc4; --sun-btn: #000; --on-sun: #fff; --wave-progress: #2a1fc4; --focus: #2a1fc4; }
-html[data-contrast="high"][data-look="clean"][data-mode="dark"] { --hot: #ff6a96; --hot-d: #ff6a96; --rose: #ff6a96; --violet: #ff6a96; --amber: #ffc27a; --sun: #ff6a96; --sun-btn: #ffb3c8; --on-sun: #000; --wave-progress: #ff6a96; --focus: #ff6a96; }
+html[data-contrast="high"][data-look="clean"][data-mode="dark"] { --hot: #7fd6e8; --hot-d: #7fd6e8; --rose: #7fd6e8; --violet: #7fd6e8; --amber: #ffc27a; --sun: #7fd6e8; --sun-btn: #ffb3c8; --on-sun: #000; --wave-progress: #7fd6e8; --focus: #7fd6e8; }
 html[data-contrast="high"] body, html[data-contrast="high"] .win { background: var(--dawn); }
 html[data-contrast="high"] .card, html[data-contrast="high"] .dialog, html[data-contrast="high"] .menu, html[data-contrast="high"] .pv-dock, html[data-contrast="high"] .btn, html[data-contrast="high"] .pill, html[data-contrast="high"] .search, html[data-contrast="high"] .input, html[data-contrast="high"] .choice { box-shadow: none; border: 2px solid var(--ink); }
 html[data-contrast="high"] .btn.sun { border-color: transparent; }
@@ -108,3 +108,17 @@ html[data-contrast="high"] .pv-turn.now { background: transparent; box-shadow: n
 html[data-contrast="high"] .nav small, html[data-contrast="high"] .tool .sub, html[data-contrast="high"] .note, html[data-contrast="high"] .pv-hint { color: var(--ink); }
 html[data-contrast="high"] a:focus-visible, html[data-contrast="high"] button:focus-visible, html[data-contrast="high"] [tabindex]:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
 html[data-contrast="high"] .scrim { background: rgba(0, 0, 0, .7); }
+
+/* Clean reading: the plain system sans at 17.5 px, more space between lines. Sunset keeps its serif. */
+/* Clean uses Inter, with Vazirmatn picked automatically for Arabic-script text and the system fonts as fallback. */
+html[data-look="clean"] { --font-ui: "Inter", "Vazirmatn", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; --font-read: var(--font-ui); }
+html[data-look="clean"] .pv-read { font-size: 17.5px; line-height: 1.65; }
+html[data-look="clean"] .pv-rv-context { font-size: 17.5px; }
+html[data-look="clean"] .pv-editor textarea { font-size: 17.5px; }
+html[data-look="clean"] .pv-trans { font-style: normal; font-size: 15px; }
+/* Right-to-left text (Persian, Arabic): a taller line and a little more room */
+.pv-read:dir(rtl), .pv-trans:dir(rtl) { line-height: 1.95; }
+/* Soft look: glass only on floating surfaces, and only when the computer can afford it (html[data-soft="on"]). Off by default. */
+html[data-soft="on"] .menu, html[data-soft="on"] .dialog, html[data-soft="on"] .pv-dock { -webkit-backdrop-filter: blur(18px) saturate(1.3); backdrop-filter: blur(18px) saturate(1.3); background: color-mix(in srgb, var(--paper) 82%, transparent); }
+@media (prefers-reduced-transparency: reduce) { html[data-soft="on"] .menu, html[data-soft="on"] .dialog, html[data-soft="on"] .pv-dock { backdrop-filter: none; -webkit-backdrop-filter: none; background: var(--paper); } }
+@media (forced-colors: active) { html[data-soft="on"] .menu, html[data-soft="on"] .dialog, html[data-soft="on"] .pv-dock { backdrop-filter: none; } }

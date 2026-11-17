@@ -180,3 +180,15 @@ build on macOS, Linux and Windows. Packaging (all four targets) runs only for `v
 - NVIDIA GPU use for Whisper is chosen through ctranslate2 and has never run on this project (no NVIDIA hardware); Windows and Linux builds are untested.
 - Overlapping speech is flagged (words keep one speaker, the louder one); the flag has only been unit-tested, not tried on real crosstalk.
 - Windows and Linux builds are untested; the build workflow has not been run.
+
+## Checks that keep the look and privacy claims true
+
+From `app/`:
+
+```bash
+npm run contrast:check   # WCAG contrast of the Clean look's colour pairs, read from src/styles/themes.css
+npm run build && npm run built:check   # fails if the built app names a remote font, stylesheet or CDN address
+npm run i18n:check       # every string has a German, French and Spanish entry
+```
+
+Fonts live in `app/src/assets/fonts` (see [dependency-vetting.md](dependency-vetting.md)). The app icon is drawn in `app/resources/icon-src/cassette.svg`; `icon.png`, `icon.ico` and `icon.icns` are made from it with `rsvg-convert`, `magick` and `iconutil` (the small sizes of the `.ico` use `cassette-small.svg`).

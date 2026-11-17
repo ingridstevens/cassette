@@ -1,5 +1,10 @@
 export default {
   de: {
+    "Soft look": "Weiche Optik",
+    "Automatic": "Automatisch",
+    "On": "An",
+    "Off": "Aus",
+    "Blurred glass on menus and panels, only on computers with plenty of memory.": "Unscharfes Glas auf Menüs und Feldern. Nur auf Computern mit viel Speicher.",
     "Language of the app": "Sprache der App",
     "Menus, buttons and messages. By default the app uses your computer's language when it has it, and English otherwise.": "Menüs, Schaltflächen und Meldungen. Standardmäßig verwendet die App die Sprache deines Computers, wenn sie sie hat, sonst Englisch.",
     "Match my computer ({language})": "Wie mein Computer ({language})",
@@ -9,6 +14,11 @@ export default {
     "Tip: if a recording mixes languages, leave Mixed languages on Automatic in the project's Options, or set the language of a single line in its speaker menu.": "Tipp: Wenn eine Aufnahme mehrere Sprachen mischt, lass „Gemischte Sprachen“ in den Optionen des Projekts auf „Automatisch“ oder stelle die Sprache einer einzelnen Zeile in ihrem Sprechermenü ein.",
   },
   fr: {
+    "Soft look": "Aspect doux",
+    "Automatic": "Automatique",
+    "On": "Activé",
+    "Off": "Désactivé",
+    "Blurred glass on menus and panels, only on computers with plenty of memory.": "Verre dépoli sur les menus et les panneaux, seulement sur les ordinateurs avec beaucoup de mémoire.",
     "Language of the app": "Langue de l’application",
     "Menus, buttons and messages. By default the app uses your computer's language when it has it, and English otherwise.": "Menus, boutons et messages. Par défaut, l’application utilise la langue de votre ordinateur si elle la propose, sinon l’anglais.",
     "Match my computer ({language})": "Comme mon ordinateur ({language})",
@@ -18,6 +28,11 @@ export default {
     "Tip: if a recording mixes languages, leave Mixed languages on Automatic in the project's Options, or set the language of a single line in its speaker menu.": "Astuce : si un enregistrement mélange plusieurs langues, laissez « Langues mélangées » sur « Automatique » dans les Options du projet, ou réglez la langue d’une seule ligne dans son menu de locuteur.",
   },
   es: {
+    "Soft look": "Aspecto suave",
+    "Automatic": "Automático",
+    "On": "Activado",
+    "Off": "Desactivado",
+    "Blurred glass on menus and panels, only on computers with plenty of memory.": "Cristal esmerilado en menús y paneles, solo en ordenadores con mucha memoria.",
     "Language of the app": "Idioma de la aplicación",
     "Menus, buttons and messages. By default the app uses your computer's language when it has it, and English otherwise.": "Menús, botones y mensajes. Por defecto, la aplicación usa el idioma de tu ordenador si lo tiene, y si no, inglés.",
     "Match my computer ({language})": "Igual que mi ordenador ({language})",

@@ -11,7 +11,7 @@ export interface Highlight { id: string; start: number; end: number; text: strin
 export interface Summary { summary: string; topics: { start: number; title: string }[]; decisions: string[]; actions: { text: string; owner: string | null }[]; model?: string; at?: number }
 export interface Result { language: string; duration: number; speakers: string[]; segments: Segment[]; highlights?: Highlight[]; summary?: Summary }
 export interface Options {
-  model: string; language: string; numSpeakers: string; vad: boolean; prompt: string; noDiarize: boolean; device: string; autosave: boolean; /** Mixed languages: undefined = automatic, true = always per speaker turn, false = off. */ multilingual?: boolean; /** Add an English translation under lines in other languages (undefined = on when the app is in English). */ translate?: boolean; /** Language code to translate lines into (undefined = English). Languages other than English need the translation model. */ translateTo?: string; /** Which speech model only finds the language: a size id, "same" (use the transcription model) or undefined (Tiny). */ detectModel?: string; /** Ask the speech model to write hesitations (um, äh) down. */ verbatim?: boolean; /** Speech engine: "auto" (default) uses the Apple GPU when it can, "faster" always uses the CPU engine. */ whisperEngine?: "auto" | "faster"; minSpeakers?: string; maxSpeakers?: string; /** The look: "sunset" (Fairytale sunset, the default) or "clean". Older saved settings used lookLevel 0–3 (and boring), which lookOf still reads. */ look?: "sunset" | "clean"; /** High contrast: stronger colours and heavier borders, in either look. */ contrast?: "standard" | "high"; lookLevel?: number; boring?: boolean; /** Light or dark: "system" (the default) follows the computer. */ colorScheme?: "system" | "light" | "dark"; /** Language of the app itself: "system" (match the computer, the default) or a language id. */ appLanguage?: "system" | "en" | "de" | "fr" | "es"; /** Zoom of the whole app (1 = normal). */ textSize?: number;
+  model: string; language: string; numSpeakers: string; vad: boolean; prompt: string; noDiarize: boolean; device: string; autosave: boolean; /** Mixed languages: undefined = automatic, true = always per speaker turn, false = off. */ multilingual?: boolean; /** Add an English translation under lines in other languages (undefined = on when the app is in English). */ translate?: boolean; /** Language code to translate lines into (undefined = English). Languages other than English need the translation model. */ translateTo?: string; /** Which speech model only finds the language: a size id, "same" (use the transcription model) or undefined (Tiny). */ detectModel?: string; /** Ask the speech model to write hesitations (um, äh) down. */ verbatim?: boolean; /** Speech engine: "auto" (default) uses the Apple GPU when it can, "faster" always uses the CPU engine. */ whisperEngine?: "auto" | "faster"; minSpeakers?: string; maxSpeakers?: string; /** The look: "clean" (the default) or "sunset" (Fairytale sunset). Older saved settings used lookLevel 0–3 (and boring), which lookOf still reads. */ look?: "sunset" | "clean"; /** High contrast: stronger colours and heavier borders, in either look. */ contrast?: "standard" | "high"; lookLevel?: number; boring?: boolean; /** Light or dark: "system" (the default) follows the computer. */ colorScheme?: "system" | "light" | "dark"; /** Language of the app itself: "system" (match the computer, the default) or a language id. */ appLanguage?: "system" | "en" | "de" | "fr" | "es"; /** Zoom of the whole app (1 = normal). */ textSize?: number; /** Soft look: blurred glass on floating panels. "auto" (default) is on only with more than 6 GB of memory. */ soft?: "auto" | "on" | "off";
 }
 /** A language model the app offers for highlights and summaries. `label` is a model name; `like` is English text the app translates. */
 export interface LlmModel { id: string; label: string; like: string; languages: string[]; license: string }
@@ -51,10 +51,10 @@ const PALETTES = {
     highDark: ["#ff8fb3", "#ffc27a", "#c9b8ff", "#8fd0ff", "#7ff0c8", "#ffe08a", "#ffa8ee", "#cfd3ea"],
   },
   clean: {
-    light: ["#4f46e5", "#c2410c", "#15803d", "#0e7490", "#a21caf", "#a16207", "#be123c", "#52525b"],
-    dark: ["#e5386d", "#f0a45e", "#7c8cff", "#34d399", "#22d3ee", "#c084fc", "#facc15", "#a1a1aa"],
-    highLight: ["#2a1fc4", "#9a3412", "#0b6b2c", "#0b5c75", "#7e1291", "#7a4a00", "#9f0f3a", "#3f3f46"],
-    highDark: ["#ff6a96", "#ffc27a", "#a8b4ff", "#6ee7b7", "#67e8f9", "#e0b4ff", "#fde047", "#d4d4d8"],
+    light: ["#0b6b83", "#c2410c", "#15803d", "#6d28d9", "#a21caf", "#a16207", "#be123c", "#52525b"],
+    dark: ["#4fc3dd", "#f0a45e", "#a995ee", "#34d399", "#f472b6", "#c084fc", "#facc15", "#a1a1aa"],
+    highLight: ["#0a4f63", "#9a3412", "#0b6b2c", "#5b21b6", "#7e1291", "#7a4a00", "#9f0f3a", "#3f3f46"],
+    highDark: ["#7fd6e8", "#ffc27a", "#a8b4ff", "#6ee7b7", "#67e8f9", "#e0b4ff", "#fde047", "#d4d4d8"],
   },
 } as const;
 /** Speaker colours. Mutated in place by applyLook so every component that imports it picks up the current look. */
@@ -144,12 +144,12 @@ export const chapterDefault = (text: string) => text.split(/\s+/).filter(Boolean
 /** The two looks. They share every layout, shape and font: only colours differ. */
 export const LOOKS = [
   { id: "sunset", name: "Fairytale sunset", caption: "Soft peach, rose and lilac. Warm and calm." },
-  { id: "clean", name: "Clean", caption: "Flat and quiet: black, white and one accent." },
+  { id: "clean", name: "Clean", caption: "Flat and quiet: one blue-green accent." },
 ] as const;
 export type LookId = (typeof LOOKS)[number]["id"];
-type LookOpts = { look?: LookId; contrast?: "standard" | "high"; lookLevel?: number; boring?: boolean; colorScheme?: "system" | "light" | "dark"; textSize?: number };
+type LookOpts = { look?: LookId; contrast?: "standard" | "high"; lookLevel?: number; boring?: boolean; /** Soft look (blurred glass on floating panels): "auto" (the default) turns it on only for computers with more than 6 GB of memory. */ soft?: "auto" | "on" | "off"; colorScheme?: "system" | "light" | "dark"; textSize?: number };
 /** The chosen look. Settings saved before the two looks (lookLevel 0–3, or boring) map to sunset for 0–1 and Clean for 2–3. */
-export const lookOf = (o: LookOpts): LookId => o.look === "clean" || o.look === "sunset" ? o.look : (o.lookLevel ?? (o.boring ? 2 : 0)) >= 2 ? "clean" : "sunset";
+export const lookOf = (o: LookOpts): LookId => o.look === "clean" || o.look === "sunset" ? o.look : (o.lookLevel ?? (o.boring ? 2 : 3)) >= 2 ? "clean" : "sunset";
 /** Dark when chosen, or when "system" and the computer is in dark mode. */
 export const isDark = (o: LookOpts) => o.colorScheme === "dark" || (o.colorScheme !== "light" && window.matchMedia?.("(prefers-color-scheme: dark)").matches);
 /** Sets the look (data-look), light or dark (data-mode) and contrast (data-contrast) on <html>, and picks speaker colours that read well on it. */
@@ -158,6 +158,8 @@ export const applyLook = (o: LookOpts) => {
   el.dataset.look = look;
   el.dataset.mode = dark ? "dark" : "light";
   el.dataset.contrast = high ? "high" : "standard";
+  const mem = (navigator as Navigator & { deviceMemory?: number }).deviceMemory; // gigabytes, rounded; read on this computer, nothing is sent
+  el.dataset.soft = !high && (o.soft === "on" || (o.soft !== "off" && (mem ?? 0) > 6)) ? "on" : "off";
   document.body.style.zoom = o.textSize && o.textSize !== 1 ? String(o.textSize) : "";
   const p = PALETTES[look];
   PALETTE.splice(0, PALETTE.length, ...(high ? (dark ? p.highDark : p.highLight) : (dark ? p.dark : p.light)));

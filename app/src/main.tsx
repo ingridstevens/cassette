@@ -3,6 +3,7 @@ import App from "./App";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { setLanguage } from "./i18n";
 import { applyLook } from "./types";
+import "./styles/fonts.css";
 import "./styles/base.css";
 import "./styles/themes.css";
 

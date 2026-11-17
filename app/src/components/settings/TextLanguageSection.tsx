@@ -1,4 +1,4 @@
-import { LANGS, LangPref, systemLang } from "../../i18n";
+import { LANGS, LangPref, resolveLang, systemLang } from "../../i18n";
 import { useT } from "../../i18n";
 import { LOOKS, MOD_KEY, lookOf } from "../../types";
 import { Block, SectionProps } from "./shared";
@@ -9,6 +9,8 @@ export default function TextLanguageSection({ opts, set }: SectionProps) {
   const t = useT();
   const size = opts.textSize ?? 1, look = lookOf(opts), scheme = opts.colorScheme ?? "system", contrast = opts.contrast === "high" ? "high" : "standard";
   const pref: LangPref = opts.appLanguage ?? "system";
+  // The size as a percentage in the app language's own digits (Intl picks them; Persian or Arabic digits appear if those languages are added)
+  const pct = (v: number) => new Intl.NumberFormat(resolveLang(pref), { style: "percent" }).format(v);
   const name = (id: string) => LANGS.find((l) => l.id === id)?.label ?? id;
   const keys: [string, string][] = [
     ["Space / K", t("Play or pause")], ["J / L", t("Back or forward 10 seconds")], [`${MOD_KEY}F`, t("Find in the transcript")], [`${MOD_KEY}E`, t("Open the Export menu")],
@@ -22,7 +24,7 @@ export default function TextLanguageSection({ opts, set }: SectionProps) {
           {SIZES.map(([v, label]) => (
             <label key={v} className={size === v ? "on" : ""}>
               <input type="radio" name="text-size" checked={size === v} onChange={() => set({ ...opts, textSize: v === 1 ? undefined : v })} />
-              <span><b>{t(label)}</b><span>{t("The quick brown fox.")}</span></span>
+              <span><b>{t(label)} · {pct(v)}</b><span>{t("The quick brown fox.")}</span></span>
             </label>
           ))}
         </fieldset>
@@ -56,6 +58,11 @@ export default function TextLanguageSection({ opts, set }: SectionProps) {
         <fieldset className="choices row st-fieldset"><legend>{t("Contrast")}</legend>
           {([["standard", t("Standard")], ["high", t("High contrast")]] as const).map(([id, label]) => (
             <label key={id} className={"choice" + (contrast === id ? " on" : "")}><input type="radio" name="contrast" checked={contrast === id} onChange={() => set({ ...opts, contrast: id })} /><span><b>{label}</b><small>{id === "high" ? t("Stronger colours and heavier borders, in either look.") : ""}</small></span></label>
+          ))}
+        </fieldset>
+        <fieldset className="choices row st-fieldset"><legend>{t("Soft look")}</legend>
+          {([["auto", t("Automatic"), t("Blurred glass on menus and panels, only on computers with plenty of memory.")], ["on", t("On"), ""], ["off", t("Off"), ""]] as const).map(([id, label, hint]) => (
+            <label key={id} className={"choice" + ((opts.soft ?? "auto") === id ? " on" : "")}><input type="radio" name="soft" checked={(opts.soft ?? "auto") === id} onChange={() => set({ ...opts, soft: id })} /><span><b>{label}</b><small>{hint}</small></span></label>
           ))}
         </fieldset>
       </Block>
