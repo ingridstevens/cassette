@@ -12,6 +12,7 @@ on one yet, so every speed idea below is untested until someone runs it.
 - **Smaller default on first launch**: with under 6 GB of memory a new install starts on the Base size instead of Small.
 - **Memory note in Settings, Transcription**: sizes that probably will not fit are marked, as on the start sheet.
 - **Lite look**: at 4 GB or less the app drops fade effects and the decorative pulse (progress animations stay).
+- **Check my setup** (Settings, Advanced): engine, model, speakers, memory, disk and microphone in one list, also added to Copy diagnostics.
 - The browser preview (`npm run dev`) can pretend to have 4 GB: add `?lowmem` to the address.
 
 ## Next (small, safe)
