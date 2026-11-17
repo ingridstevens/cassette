@@ -73,7 +73,10 @@
 .pv-stage + .pv-stage { border-top: 1px solid var(--line); }
 .pv-ic { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; flex: none; font-size: 13px; font-weight: 650; }
 .pv-ic.ok { background: var(--done); color: var(--on-done); }
-.pv-ic.now { background: var(--sun-btn); color: var(--ink); }
+/* the step being worked on: a spinning ring (a solid fill read as a black dot with an invisible number) */
+.pv-ic.now { position: relative; box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--violet-ink) 25%, transparent); color: var(--ink); }
+.pv-ic.now::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid transparent; border-top-color: var(--violet-ink); animation: st-spin 1s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .pv-ic.now::after { animation: none; border-color: var(--violet-ink); } }
 .pv-ic.todo { box-shadow: inset 0 0 0 1.5px var(--ink3); color: var(--ink2); }
 .pv-stage-text { flex: 1; min-width: 0; }
 .pv-stage-text b { font-size: 15px; font-weight: 600; }
