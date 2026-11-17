@@ -456,7 +456,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
                   onKeyDown={(e) => { if (e.key === "F2") setRenaming(true); }}>{project.name}</h1>}{sub && <div className="sub">{sub}</div>}</div>
           {showResult && (
             <>
-              {unsure.length > 0 && !review && <button type="button" className="btn small" onClick={startReview} title={t("Step through the words the model was unsure of, with the audio, and fix or confirm each one")}>{unsure.length === 1 ? t("Review 1 unsure word") : t("Review {count} unsure words", { count: unsure.length })}</button>}
+              {unsure.length > 0 && <button type="button" className="btn small" style={review ? { visibility: "hidden" } : undefined} onClick={startReview} title={t("Step through the words the model was unsure of, with the audio, and fix or confirm each one")}>{unsure.length === 1 ? t("Review 1 unsure word") : t("Review {count} unsure words", { count: unsure.length })}</button>}
               <div className="search"><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
                 <input ref={findBox} dir="auto" type="search" value={query} aria-label={t("Find in transcript")} placeholder={t("Find in transcript ({key}F)", { key: MOD_KEY })} onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); step(e.shiftKey ? -1 : 1); } if (e.key === "Escape") { setQuery(""); findBox.current?.blur(); } }} />
