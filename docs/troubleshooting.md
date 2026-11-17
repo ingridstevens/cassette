@@ -4,6 +4,11 @@ The status pill at the bottom of the sidebar opens a plain-language activity lis
 raw log, and **Open log file** shows it on disk. Include it when you report a problem (it lists file names, so
 check it first).
 
+**Not sure what is wrong?** Open **Settings, Advanced, Diagnostics and reset** and press **Check my setup**. It tests the
+speech engine, the chosen model, speaker detection, memory, free disk space and the microphone, marks each as Ready,
+Warning or Problem, and says what to do. **Copy diagnostics** afterwards includes the result; it has no transcript text,
+file names or token, so it is safe to paste into an email.
+
 ## Speaker detection won't download ("Hugging Face said no")
 
 Almost always one of:

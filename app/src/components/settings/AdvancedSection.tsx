@@ -6,6 +6,8 @@ import { MODEL_BYTES } from "../useModels";
 import Dialog, { useReturnFocus } from "./Dialog";
 import ModelList, { Entry } from "./ModelList";
 import { SectionProps } from "./shared";
+import { Check, checksText, setupChecks } from "../../setupCheck";
+import type { ModelStatus } from "../../types";
 
 type Paths = Awaited<ReturnType<typeof window.api.paths>>;
 
@@ -27,6 +29,8 @@ export default function AdvancedSection({ opts, set, status, models, say, onRese
   const [free, setFree] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
   const [ask, setAsk] = useState(false);
+  const [checks, setChecks] = useState<Check[] | null>(null);
+  const [checking, setChecking] = useState(false);
   const back = useReturnFocus();
   useEffect(() => { window.api.paths().then(setPaths); }, []);
   useEffect(() => { window.api.diskFree().then(setFree); }, [status]);
@@ -41,9 +45,20 @@ export default function AdvancedSection({ opts, set, status, models, say, onRese
     const label = m.id.startsWith("large") ? m.name : t(m.name);
     return { id: `mlx-${m.id}`, run: `mlx-${m.id}`, name: `Whisper ${label} (${t("Apple GPU")})`, size: status?.mlxSizes?.[m.id] || MODEL_BYTES[m.id], have: !!status?.mlx?.[m.id], inUse: false };
   }) : [];
+  const runCheck = async () => {
+    setChecking(true);
+    let fresh: ModelStatus | null = null;
+    try { fresh = (await window.api.models("status")) as unknown as ModelStatus; } catch { fresh = null; }
+    let mics: number | null = null;
+    try { mics = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "audioinput").length; } catch { mics = null; }
+    const p = paths ?? await window.api.paths();
+    const list = setupChecks({ opts, status: fresh, memGB: p.system.memGB, freeBytes: await window.api.diskFree(), microphones: mics }, t);
+    setChecks(list); setChecking(false);
+    say(list.some((c) => c.level !== "ok") ? t("Something needs attention.") : t("Everything is ready."));
+  };
   const copyDiag = async () => {
     const text = [`Cassette ${__APP_VERSION__}`, sys ? `${sys.platform} ${sys.arch}, ${sys.chip || "?"}, ${sys.cores} cores, ${sys.memGB} GB` : "",
-      `Model in use: ${opts.model}`, `Speaker detection: ${status?.diarization ? "ready" : "not set up"}`, `Models: ${Object.entries(status?.whisper ?? {}).filter(([, v]) => v).map(([k]) => k).join(", ") || "none"}`].filter(Boolean).join("\n");
+      `Model in use: ${opts.model}`, `Speaker detection: ${status?.diarization ? "ready" : "not set up"}`, `Models: ${Object.entries(status?.whisper ?? {}).filter(([, v]) => v).map(([k]) => k).join(", ") || "none"}`, free != null ? `Free disk: ${bytes(free)}` : "", checks ? "Setup check:\n" + checksText(checks) : ""].filter(Boolean).join("\n");
     try { await navigator.clipboard.writeText(text); } catch { return; }
     setCopied(true); say(t("Diagnostics copied. They contain no transcript text and no token.")); window.setTimeout(() => setCopied(false), 2000);
   };
@@ -79,6 +94,13 @@ export default function AdvancedSection({ opts, set, status, models, say, onRese
       </Acc>
       <h2 className="grp-h">{t("Help and reset")}</h2>
       <Acc title={t("Diagnostics and reset")}>
+        <div className="st-row st-setting"><div className="grow"><b>{t("Check my setup")}</b><p className="note">{t("Checks that the engine, the model, speaker detection, memory, disk space and microphone are ready, and says what to do if not.")}</p></div>
+          <button type="button" className="btn small" disabled={checking} onClick={() => void runCheck()}>{checking ? t("Checking…") : t("Check")}</button></div>
+        {checks && (
+          <ul className="st-checks" aria-label={t("Check my setup")}>
+            {checks.map((c) => <li key={c.id} className={"st-check " + c.level}><b>{c.level === "ok" ? t("Ready") : c.level === "warn" ? t("Warning") : t("Problem")}</b> <span>{c.text}</span></li>)}
+          </ul>
+        )}
         <div className="st-row st-setting"><div className="grow"><b>{t("Copy diagnostics")}</b><p className="note">{t("Version, system and model list for a bug report. It never contains transcript text or your token.")}</p></div>
           <button type="button" className="btn small" onClick={copyDiag}>{copied ? t("Copied ✓") : t("Copy")}</button></div>
         <div className="st-row st-setting"><div className="grow"><b>{t("Activity log")}</b><p className="note">{t("File names and folders. It never contains transcript text.")}</p></div>
