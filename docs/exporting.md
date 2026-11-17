@@ -29,6 +29,22 @@ The menu is grouped: **Read and share** (Word, text, Markdown, anonymised, Text 
 
 The **Text style…** item at the bottom of the menu is not an export; it sets how the text formats are written (below).
 
+## The JSON file
+
+`Everything (JSON)` has three top-level keys: `meta`, `speakers` and `segments`.
+
+| `meta` key | Meaning |
+| --- | --- |
+| `schema` | The version of this layout (now `1`). It changes only when a key is renamed or removed; adding keys does not change it, so check it before relying on a layout. |
+| `app`, `engine` | The versions of Cassette and of its engine that wrote the file |
+| `language` | The recording's language |
+| `lines`, `edited_lines` | How many lines there are and how many you changed by hand |
+| `model`, `device`, `speakerDevice` | The speech model and the processors used for the run |
+| `languageProb`, `languages`, `mixed`, `translated` | How sure the language check was, the seconds of speech per language when several were found, whether lines were checked one by one, and how many were translated |
+| `secondsTranscribe`, `secondsSpeakers` | How long the run took |
+
+There is no date and no file path in the file, so the same transcript always exports to identical bytes. The spreadsheet (`.csv`) and text formats have no such header: a header would change their columns, which scripts depend on. Their columns will not change without a note in the release notes.
+
 If saving fails, the menu shows **Export failed:** with the reason. Cancelling the save window shows nothing.
 
 ## Text style

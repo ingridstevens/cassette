@@ -507,3 +507,18 @@ def test_import_says_incomplete_when_nothing_is_usable_but_something_is_there(tm
     _fake_repo(tmp_path / "src", "Systran/faster-whisper-tiny", files=False)
     with pytest.raises(RuntimeError, match="incomplete"):
         models.import_folder(tmp_path / "src")
+
+
+def test_json_export_says_how_it_was_made_and_is_deterministic():
+    import json
+    from engine.export import JSON_SCHEMA, provenance, to_json
+
+    data = {"app": "0.1.0", "language": "de", "segments": [{**SEGS[0]}, {**SEGS[1], "edited": True}],
+            "meta": {"model": "small", "device": "cpu", "secondsTranscribe": 4.2, "unrelated": "x"}}
+    meta = provenance(data)
+    assert meta["schema"] == JSON_SCHEMA == 1
+    assert (meta["app"], meta["language"], meta["lines"], meta["edited_lines"], meta["model"], meta["device"]) == ("0.1.0", "de", 2, 1, "small", "cpu")
+    assert "unrelated" not in meta and "date" not in meta
+    one = to_json(data["segments"], NAMES, meta)
+    assert one == to_json(data["segments"], NAMES, provenance(data))
+    assert json.loads(one)["meta"]["schema"] == 1
