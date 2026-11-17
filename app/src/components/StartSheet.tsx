@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useT } from "../i18n";
 import { Estimate, engineFor, estimate, loadCalib } from "../estimate";
 import { ModelStatus, Options, Project, fmt } from "../types";
@@ -55,6 +55,9 @@ export default function StartSheet({ project, duration, eff, info, set, models, 
   const [more, setMore] = useState(false);
   const asks = !!est && est.mid > ASK_ABOVE_SECONDS;
   const open = asks || more;
+  // "Change settings" opens the questions below the estimate; bring them into view so the sticky Start bar doesn't leave only the first one showing.
+  const fields = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (more) fields.current?.scrollIntoView({ block: "start", behavior: "smooth" }); }, [more]);
   const choose = (p: Partial<Options>, remember = false) => { set(p); if (remember) onRemember(p); };
 
   const timeOf = (model: string) => (duration > 0 ? spanText(t, forModel(model, duration)) : "");
@@ -79,7 +82,7 @@ export default function StartSheet({ project, duration, eff, info, set, models, 
       {batteryNote && <div className="alert warn" role="status">{t("You're on battery. A job this long uses a lot of power: consider plugging in first.")}</div>}
       {blocker && <div className="alert warn" role="status">{blocker}</div>}
 
-      {open && <TranscribeFields eff={eff} set={choose} status={status} models={models} timeOf={duration > 0 ? timeOf : undefined} onOpenSettings={onOpenSettings} />}
+      {open && <div ref={fields} className="pv-start-fields-anchor"><TranscribeFields eff={eff} set={choose} status={status} models={models} timeOf={duration > 0 ? timeOf : undefined} onOpenSettings={onOpenSettings} /></div>}
 
       <div className="pv-actions">
         <button type="button" className="btn sun big" disabled={!canStart} onClick={onStart}>{est ? t("Start ({time})", { time: spanText(t, est) }) : t("Start")}</button>

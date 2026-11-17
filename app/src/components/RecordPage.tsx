@@ -61,7 +61,7 @@ export default function RecordPage({ opts, blocker, onSaved, onBack }: Props) {
       {(on || rec.confirmed || rec.tentative) && (
         <section className="card rec-text" aria-label={t("Live transcript")}>
           <h2>{t("Live transcript")}</h2>
-          <p className="rec-words" aria-live="off">{rec.confirmed}<span className="rec-tent">{rec.tentative}</span></p>
+          <p className="rec-words" dir="auto" aria-live="off">{rec.confirmed}<span className="rec-tent">{rec.tentative}</span></p>
           <div ref={end} />
           <p className="note">{t("Grey words may still change. This is a draft: the saved recording is transcribed again with speakers.")}</p>
         </section>

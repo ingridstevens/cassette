@@ -194,11 +194,11 @@ export default function Transcript({ result, names, time, onSeek, onReassign, on
             </div>
           )}
           {seg.chapter && chap !== i && (
-            <div className="pv-chapter"><span className="pv-flag" title={t("A chapter starts here")}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5" /></svg>{t("Chapter")}</span><b>{seg.chapter}</b></div>
+            <div className="pv-chapter"><span className="pv-flag" title={t("A chapter starts here")}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 21V4M5 4h11l-2 4 2 4H5" /></svg>{t("Chapter")}</span><b dir="auto">{seg.chapter}</b></div>
           )}
           {chap === i && (
             <div className="pv-editor pv-chap-edit" role="group" aria-label={t("Chapter title")}>
-              <input autoFocus type="text" value={chapDraft} aria-label={t("Chapter title")} placeholder={t("Chapter title")} onChange={(e) => setChapDraft(e.target.value)} onFocus={(e) => e.currentTarget.select()}
+              <input autoFocus dir="auto" type="text" value={chapDraft} aria-label={t("Chapter title")} placeholder={t("Chapter title")} onChange={(e) => setChapDraft(e.target.value)} onFocus={(e) => e.currentTarget.select()}
                 onKeyDown={(e) => { if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); closeChap(i); } if (e.key === "Enter") { e.preventDefault(); saveChap(i); } }} />
               <div className="pv-editor-row">
                 <button type="button" className="btn sun small" onClick={() => saveChap(i)}>{t("Save")}</button>
@@ -209,7 +209,7 @@ export default function Transcript({ result, names, time, onSeek, onReassign, on
           )}
           {editing === i ? (
             <div className="pv-editor">
-              <textarea autoFocus ref={editArea} value={draft} rows={Math.max(2, Math.ceil(draft.length / 60))} aria-label={t("Edit this line")}
+              <textarea autoFocus dir="auto" ref={editArea} value={draft} rows={Math.max(2, Math.ceil(draft.length / 60))} aria-label={t("Edit this line")}
                 onChange={(e) => setDraft(e.target.value)} onSelect={(e) => setTypedSel([e.currentTarget.selectionStart, e.currentTarget.selectionEnd])}
                 onKeyDown={(e) => {
                   if (e.key === "Escape") { e.preventDefault(); setEditing(null); }
@@ -227,7 +227,7 @@ export default function Transcript({ result, names, time, onSeek, onReassign, on
           ) : (
           splitting === i ? (
             <div className="pv-editor pv-split" role="group" aria-label={t("Split this line")}>
-              <p className="pv-read">
+              <p className="pv-read" dir="auto">
                 {seg.words.map((w, j) => (
                   <button key={j} type="button" className="pv-w pv-cut" disabled={j === 0} onClick={() => { onSplit(i, j); setSplitting(null); }}
                     aria-label={j === 0 ? w.word.trim() : t("Start a new line at “{word}”", { word: w.word.trim() })}>{w.word}</button>
@@ -240,7 +240,7 @@ export default function Transcript({ result, names, time, onSeek, onReassign, on
               </div>
             </div>
           ) : (
-          <p className="pv-read" title={t("Double-click a word to fix it")}
+          <p className="pv-read" dir="auto" title={t("Double-click a word to fix it")}
             onMouseUp={(e) => { const root = e.currentTarget; window.setTimeout(() => pickWords(i, root), 0); }}
             onMouseDown={(e) => { if (e.detail === 1) wasPlaying.current = playing; }}
             onDoubleClick={(e) => {
@@ -263,7 +263,7 @@ export default function Transcript({ result, names, time, onSeek, onReassign, on
           )}
           {translatingIndex === i && <p className="pv-trans" role="status">{t("Translating…")}</p>}
           {seg.translation && editing !== i && (
-            <p className="pv-trans" lang={seg.translationLang ?? "en"} aria-label={seg.translationLang && seg.translationLang !== "en" ? t("Translation") : t("English translation")}><span className="pv-flag pv-lang" aria-hidden="true">{(seg.translationLang ?? "en").toUpperCase()}</span> {seg.translation}</p>
+            <p className="pv-trans" dir="auto" lang={seg.translationLang ?? "en"} aria-label={seg.translationLang && seg.translationLang !== "en" ? t("Translation") : t("English translation")}><span className="pv-flag pv-lang" aria-hidden="true">{(seg.translationLang ?? "en").toUpperCase()}</span> {seg.translation}</p>
           )}
           {seg.edited && editing !== i && (
             <div className="pv-edited"><span>{t("Edited")}</span><button type="button" className="link-btn" onClick={() => onRevert(i)} aria-label={t("Put the line at {time} back to what the model heard", { time: fmt(seg.start) })}>{t("Put back what the model heard")}</button></div>

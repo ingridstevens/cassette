@@ -14,3 +14,6 @@ dist-electron/
 # local test recordings and scratch screenshots: keep them on this computer
 test-media/
 shots/
+
+# local persona digest: keep it on this computer (the shared versions are in docs/personas/)
+PERSONAS.md
