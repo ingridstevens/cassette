@@ -462,3 +462,8 @@ def test_mlx_wrapper_returns_faster_whisper_shaped_results(monkeypatch):
     assert segs[0].words[0].word == " Hallo" and segs[0].words[0].probability == 0.8 and segs[0].end == 1.0
     assert calls["language"] == "de" and calls["task"] == "translate" and calls["initial_prompt"] == "Müller"
     assert "vad_filter" not in calls and "multilingual" not in calls  # not supported there, not passed on
+
+
+def test_vtt_escapes_markup_characters_in_speech_and_names():
+    vtt = to_vtt([_seg("R&D costs <10 and a --> b")], {"SPEAKER_00": "A>B"})
+    assert "<v A&gt;B>R&amp;D costs &lt;10 and a --&gt; b" in vtt
