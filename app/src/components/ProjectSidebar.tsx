@@ -65,8 +65,8 @@ export default function ProjectSidebar({ projects, activeId, progress, blocker, 
                   {playingId === p.id && <span className="eq" role="img" aria-label={t("Playing now")}><i /><i /><i /></span>}
                 </button>
               )}
-              <button type="button" className="px" aria-label={t("Remove {name} from the list", { name: p.name })} title={t("Remove from list (your audio file is not deleted)")}
-                onClick={() => { if (confirm(t("Remove “{name}” from the list?", { name: p.name }) + "\n\n" + t("Your audio file is not deleted. Its transcript in this app will be."))) onRemove(p.id); }}>×</button>
+              <button type="button" className="px" aria-label={t("Delete {name} and its files", { name: p.name })} title={t("Delete this project (your own audio file is not deleted)")}
+                onClick={() => onRemove(p.id)}>×</button>
             </div>
           );
         })}

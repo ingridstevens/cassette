@@ -4,6 +4,7 @@ import ProjectSidebar from "./components/ProjectSidebar";
 import ProjectView from "./components/ProjectView";
 import RecordPage from "./components/RecordPage";
 import SettingsPage from "./components/SettingsPage";
+import RemoveDialog from "./components/RemoveDialog";
 import Setup from "./components/Setup";
 import { useModels } from "./components/useModels";
 import "./styles/shell.css";
@@ -101,12 +102,14 @@ export default function App() {
   const [settingsSection, setSettingsSection] = useState<string | undefined>(undefined);
   const openSettings = (section?: string) => { setSettingsSection(section); setPage("settings"); };
   const noProjects = P.projects.length === 0;
+  const [removing, setRemoving] = useState<string | null>(null);
+  const removingProject = P.projects.find((p) => p.id === removing);
 
   return (
     <>
       <div className={"shell" + (dragging ? " dragging" : "")} hidden={page === "settings"} onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={(e) => { if (e.currentTarget === e.target) setDragging(false); }} onDrop={onDrop}>
         <ProjectSidebar projects={P.projects} activeId={P.activeId} progress={P.progress} blocker={blocker}
-          onSelect={(id) => { P.setActiveId(id); setPage("main"); }} onAdd={pick} onRecord={() => setPage("record")} onRemove={P.remove} onRename={P.rename} onTranscribeAll={P.transcribeAll} doneCount={P.projects.filter((p) => p.result).length} onExportAll={() => window.api.exportTranscript({ projects: P.projects.filter((p) => p.result).map((p) => ({ name: p.name, segments: p.result!.segments.map(({ words: _w, orig: _o, ...s }) => s), speakers: Object.fromEntries(p.result!.speakers.map((s) => [s, displayName(s, p.result!.speakers, p.names)])) })) }, "combined-csv", "all-projects")} onOpenSettings={() => openSettings()} playingId={playingId}
+          onSelect={(id) => { P.setActiveId(id); setPage("main"); }} onAdd={pick} onRecord={() => setPage("record")} onRemove={(id) => setRemoving(id)} onRename={P.rename} onTranscribeAll={P.transcribeAll} doneCount={P.projects.filter((p) => p.result).length} onExportAll={() => window.api.exportTranscript({ projects: P.projects.filter((p) => p.result).map((p) => ({ name: p.name, segments: p.result!.segments.map(({ words: _w, orig: _o, ...s }) => s), speakers: Object.fromEntries(p.result!.speakers.map((s) => [s, displayName(s, p.result!.speakers, p.names)])) })) }, "combined-csv", "all-projects")} onOpenSettings={() => openSettings()} playingId={playingId}
           activity={<Activity lines={lines} live={live} setupNeeded={!!blocker} onClear={() => setLines([])} />} />
         <section className="main">
           <div className="main-body">
@@ -152,6 +155,7 @@ export default function App() {
           {dragging && <div className="drop-veil" aria-hidden>{t("Drop to add recordings")}</div>}
         </section>
       </div>
+      {removingProject && <RemoveDialog project={removingProject} onClose={() => setRemoving(null)} onDone={() => { P.remove(removingProject.id); setRemoving(null); }} />}
       {page === "settings" && <SettingsPage key={settingsSection ?? "default"} initialSection={settingsSection} opts={opts} set={setOpts} status={status} models={models} onBack={() => setPage("main")} onReset={() => { setOpts({ ...DEFAULTS }); setLlm(""); }} />}
       {playingId && (page === "settings" || P.activeId !== playingId) && (() => {
         const playing = P.projects.find((x) => x.id === playingId);

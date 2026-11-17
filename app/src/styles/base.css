@@ -125,3 +125,9 @@ body { margin: 0; font-family: var(--font-ui); color: var(--ink); background: va
 
 /* Right-to-left app: text that is still English (not yet translated) should read left to right, with its full stop at the end, not the start. */
 html[dir="rtl"] :is(p, small, .sub, .lead, .note, h1, h2, h3, legend) { unicode-bidi: plaintext; }
+
+/* Delete-project dialog: covers the whole window, lists what goes and what stays. */
+.scrim.win { position: fixed; inset: 0; width: calc(100vw / var(--zoom, 1)); height: calc(100vh / var(--zoom, 1)); z-index: 70; }
+.rm-list { margin: 0 0 6px; padding-inline-start: 20px; display: flex; flex-direction: column; gap: 4px; color: var(--ink2); font-size: 14px; }
+.rm-receipt { list-style: none; padding-inline-start: 0; }
+.rm-receipt b { display: inline-block; min-width: 96px; color: var(--ink); }
