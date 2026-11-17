@@ -65,7 +65,7 @@ Highlights you haven't answered yet (still suggested) are not exported.
 
 - a short summary of what the conversation was about;
 - **Topics** with the time each one starts (click a time to play from there);
-- **Decisions** that were made;
+- **Decisions** that were made. A decision or action item that clearly matches a line of the transcript shows that line's time; click it to jump to the line and hear it. The match is by shared words, so check that the line says what the summary says. An item with no time did not match any line, which is worth a second look;
 - **Action items**, with who is responsible when it was said.
 
 ![Summary with topics, decisions and action items](screenshots/16-summary.jpg)
