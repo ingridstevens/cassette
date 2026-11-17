@@ -36,7 +36,7 @@ html[data-mode="dark"] .setup-slim.info .btn.quiet { color: var(--ink2); }
 html[data-mode="dark"] .alert.err { color: var(--err-ink); }
 html[data-mode="dark"] select.input { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23c6bcdc' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E"); }
 
-/* ---- Clean, light: flat off-white, black primary button, one indigo accent ---- */
+/* ---- Clean, light: flat off-white, black primary button, one petrol accent ---- */
 html[data-look="clean"] {
   --ink: #0b0b0f; --ink2: #444a55; --ink3: #626a77;
   --line: #e6e6ea; --paper: #fff; --surface: #fff;
@@ -64,7 +64,7 @@ html[data-look="clean"] .pv-w:hover { background: rgba(10, 101, 119, .1); }
 html[data-look="clean"] .scrim { background: rgba(11, 11, 15, .4); }
 html[data-look="clean"] .orb { box-shadow: none; }
 
-/* ---- Clean, dark: near-black, one burgundy-magenta accent ---- */
+/* ---- Clean, dark: near-black, one petrol accent ---- */
 html[data-look="clean"][data-mode="dark"] {
   --ink: #f2f5f7; --ink2: #b4bec7; --ink3: #94a0ab;
   --line: #28323a; --paper: #12181d; --surface: #1a2229;

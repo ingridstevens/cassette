@@ -12,7 +12,7 @@ Say "Cassette turns recordings into text", not "the Cassette transcriber tool". 
 ## Icon and logo
 
 The icon is a flat, white cassette on a petrol tile: a label strip on top and two round reel holes below. It has no gradient, no glow and no shadow.
-The word "Cassette" is set in Inter SemiBold next to it. In the app the sidebar shows a small version of the same drawing.
+The word "Cassette" is set in Inter SemiBold next to it. In the app the sidebar shows a 26 px version of the same drawing with a small spoke added to each reel, so you can see them turn.
 
 | File | Use |
 | --- | --- |
@@ -28,7 +28,7 @@ The word "Cassette" is set in Inter SemiBold next to it. In the app the sidebar 
 
 ## Colour
 
-One brand colour, **petrol**: a deep blue-green. It is the only accent in the interface, so anything petrol means
+One brand colour, **petrol** (in the **Clean** look, which is the brand; the older Sunset look is an optional extra and not covered here): a deep blue-green. It is the only accent in the interface, so anything petrol means
 "you can act here" or "this is the current thing".
 
 | Name | Hex | Where | Contrast |
@@ -52,7 +52,7 @@ White on petrol is 6.7:1, which passes AA for all text sizes. The primary button
 | Ink and greys | `#0b0b0f`, `#444a55`, `#626a77` | `#f2f5f7`, `#b4bec7`, `#94a0ab` | Text, second-level text, hints. All 4.5:1 or more on the page. |
 | Page and card | `#f7f9fa`, `#ffffff` | `#0c1115`, `#12181d` | Background and cards |
 
-Speaker colours are eight fixed colours per mode, with petrol first (see `PALETTES` in `types.ts`). Never colour a speaker black, white or amber.
+Speaker colours are eight fixed colours per mode, with petrol first (see `PALETTES` in `types.ts`). Speaker 2 happens to be orange, close to amber; the unsure-word underline is what tells them apart, so do not use amber for a second meaning anywhere else. Never colour a speaker black or white.
 Colour is never the only signal: unsure words also have an underline, speakers also have a name.
 
 ## Typography
@@ -68,9 +68,10 @@ Colour is never the only signal: unsure words also have an underline, speakers a
 | Section title | 17 px | 650 |
 | Names, field values | 15 px | 650 |
 | Body, buttons, menus | 14 px (buttons 13) | 400–600 |
+| Transcript | 17.5 px | 400 |
 | Hints, times, chips | 12–12.5 px | 500 |
 
-Never go below 12 px. Transcript text is 16 px. Line height is 1.45 for interface text, 1.6 for transcript lines and 1.95 for right-to-left transcript lines. The user can scale all text to 115, 130 or 150 percent in Settings; layouts must survive 150.
+Never go below 12 px. Transcript text is 17.5 px in the Clean look. Line height is 1.45 for interface text, 1.6 for transcript lines and 1.95 for right-to-left transcript lines. The user can scale all text to 115, 130 or 150 percent in Settings; layouts must survive 150.
 The code still has a few in-between sizes (13.5 px, 11.5 px). Treat the table above as the target when you touch a rule.
 
 Shape: pills (fully round) for buttons and chips, 10 px for inputs and menu items, 16 px for cards. Spacing in steps of 4 px.
@@ -115,6 +116,6 @@ Write new CSS with logical properties (`margin-inline-start`, not `margin-left`)
 
 ## Motion
 
-The one piece of motion is the logo: the two reels turn slowly (one turn in 2.4 seconds) while a transcript is being written, and stop when it is done.
+The main piece of motion is the logo (the small sound bars that show playback also move, and stop for reduced motion): the two reels turn slowly (one turn in 2.4 seconds) while a transcript is being written, and stop when it is done.
 Everything else is quick (150 ms or less) and only fades or moves a short distance. No bouncing, no looping decoration.
 When the system asks for reduced motion, the reels stay still and nothing else moves; the state is still shown with text ("Writing…").
