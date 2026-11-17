@@ -491,7 +491,7 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .pv-turn[data-cited] { background: color-mix(in srgb, #ffd45e 45%, transparent) !important; border-radius: 8px; }
 
 /* narrow main column (the window at its minimum width, with the right panel open): let the toolbar wrap to a second row instead of running under the panel */
-.shell .tool.pv-tool { flex-wrap: wrap; height: auto; min-height: 64px; row-gap: 6px; padding-bottom: 8px; }
+.shell .tool.pv-tool { flex-wrap: wrap; height: auto; min-height: 64px; row-gap: 6px; padding-top: 14px; padding-bottom: 8px; } /* air above the title: level with the sidebar header, not the window edge */
 /* the questions scroll under the sticky Start bar: stop the bar's own top edge from hiding the first one */
 .pv-start-fields-anchor { scroll-margin-top: 12px; }
 /* short windows: slimmer start sheet, so more than one choice shows above the Start bar */
