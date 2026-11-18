@@ -16,6 +16,17 @@ import { createProjectsStore } from "./projectsStore";
 
 const AUDIO_EXT = new Set([".mp3", ".wav", ".m4a", ".flac", ".ogg", ".opus", ".aac", ".mp4", ".mov", ".mkv", ".webm"]);
 
+// One running copy only: two would both rewrite projects.json and erase each other's edits. The lock is tied to the userData path, so it comes after setPath.
+if (!app.requestSingleInstanceLock()) {
+  app.quit();
+} else {
+  app.on("second-instance", (_e, argv) => {
+    if (win) { if (win.isMinimized()) win.restore(); win.focus(); }
+    const files = argv.filter((a) => AUDIO_EXT.has(path.extname(a).toLowerCase()) && fs.existsSync(a));
+    if (files.length) win?.webContents.send("open-files", files);
+  });
+}
+
 const modelsDir = () => path.join(app.getPath("userData"), "models");
 const tokenFile = () => path.join(app.getPath("userData"), "hf-token.bin");
 const baseEnv = () => ({ ENGINE_MODELS_DIR: modelsDir() });
