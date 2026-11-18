@@ -81,7 +81,16 @@ function readToken(): string {
   try { return safeStorage.decryptString(fs.readFileSync(tokenFile())); } catch { return ""; }
 }
 
+// Transcript text handed to the engine as a file lives in a private folder (owner-only), not the shared system temp folder, and is always deleted afterwards.
+const privateTmp = () => { const d = path.join(app.getPath("userData"), "tmp"); fs.mkdirSync(d, { recursive: true, mode: 0o700 }); return d; };
+async function withTempJson<T>(data: unknown, fn: (file: string) => Promise<T>): Promise<T> {
+  const f = path.join(privateTmp(), `${randomUUID()}.json`);
+  fs.writeFileSync(f, JSON.stringify(data), { mode: 0o600 });
+  try { return await fn(f); } finally { fs.rmSync(f, { force: true }); }
+}
+
 app.whenReady().then(() => {
+  try { fs.rmSync(path.join(app.getPath("userData"), "tmp"), { recursive: true, force: true }); } catch { /* leftovers from a crash; nothing to do */ }
   // In development the Dock shows Electron's own icon; show ours instead. Packaged builds get it from resources/icon.icns.
   const devIcon = path.join(__dirname, "..", "resources", "icon.png");
   if (process.platform === "darwin" && process.env.VITE_DEV_SERVER_URL) app.dock?.setIcon(devIcon);
@@ -117,11 +126,10 @@ app.whenReady().then(() => {
   ipcMain.handle("llm-run", async (_e, kind: unknown, payload: { segments: unknown[]; speakers: Record<string, string>; language: string; question?: string; history?: { q: string; a: string }[] }, o: { jobId?: unknown; clientId?: unknown; model?: unknown; count?: unknown }) => {
     if (kind !== "highlights" && kind !== "summarize" && kind !== "ask") return { type: "error", message: "Unknown job" };
     const jobId = typeof o?.jobId === "string" && o.jobId.length <= 80 ? o.jobId : randomUUID();
-    const tmp = path.join(os.tmpdir(), `transcript-${randomUUID()}.json`);
-    fs.writeFileSync(tmp, JSON.stringify(payload));
-    const a = [kind, tmp, ...(typeof o?.model === "string" && /^[a-z0-9][a-z0-9.-]{0,40}$/.test(o.model) ? ["--model", o.model] : []), ...(kind === "highlights" && Number.isInteger(o?.count) && (o.count as number) > 0 ? ["--count", String(o.count)] : [])];
-    try { return await runEngine(jobId, a, baseEnv(), (e) => send("engine-event", { jobId, source: "llm", clientId: o?.clientId, ...e })); }
-    finally { fs.rmSync(tmp, { force: true }); }
+    return await withTempJson(payload, (tmp) => {
+      const a = [kind, tmp, ...(typeof o?.model === "string" && /^[a-z0-9][a-z0-9.-]{0,40}$/.test(o.model) ? ["--model", o.model] : []), ...(kind === "highlights" && Number.isInteger(o?.count) && (o.count as number) > 0 ? ["--count", String(o.count)] : [])];
+      return runEngine(jobId, a, baseEnv(), (e) => send("engine-event", { jobId, source: "llm", clientId: o?.clientId, ...e }));
+    });
   });
   // One audio file per highlight, written into a folder the user picks (created if needed), then shown in the file manager.
   ipcMain.handle("export-clips", async (_e, input: unknown, clips: { start: number; end: number; speaker?: string }[], format: unknown, name: unknown) => {
@@ -130,10 +138,7 @@ app.whenReady().then(() => {
     if (r.canceled || !r.filePaths[0]) return { cancelled: true };
     const fmt = format === "wav" || format === "m4a" ? format : "mp3";
     const dir = path.join(r.filePaths[0], `${String(name || "Highlights").replace(/[\\/:*?"<>|]/g, "-")} highlights`);
-    const tmp = path.join(os.tmpdir(), `clips-${randomUUID()}.json`);
-    fs.writeFileSync(tmp, JSON.stringify(clips.map((c) => ({ start: c.start, end: c.end, speaker: String(c.speaker ?? "") }))));
-    const res = await runEngine(randomUUID(), ["export-clips", input, dir, "--clips", tmp, "--format", fmt], {}, () => {}) as EngineEvent | null;
-    fs.rmSync(tmp, { force: true });
+    const res = await withTempJson(clips.map((c) => ({ start: c.start, end: c.end, speaker: String(c.speaker ?? "") })), (tmp) => runEngine(randomUUID(), ["export-clips", input, dir, "--clips", tmp, "--format", fmt], {}, () => {})) as EngineEvent | null;
     if (res?.type !== "done") return { ok: false, error: String(res?.message ?? "The export failed.").slice(0, 300) };
     const paths = res.paths as string[];
     if (paths[0]) shell.showItemInFolder(paths[0]);
@@ -247,10 +252,7 @@ app.whenReady().then(() => {
     const ext = ({ chapters: "txt", quotes: "txt", highlights: "docx", changes: "txt", redacted: "txt", minutes: "docx", "combined-csv": "csv" } as Record<string, string>)[format] ?? format; // the engine format id differs from the file extension for chapters
     const r = await dialog.showSaveDialog({ defaultPath: `${defaultName}.${ext}`, filters: [{ name: ext.toUpperCase(), extensions: [ext] }] });
     if (r.canceled || !r.filePath) return { cancelled: true };
-    const tmp = path.join(os.tmpdir(), `transcript-${randomUUID()}.json`);
-    fs.writeFileSync(tmp, JSON.stringify(payload));
-    const res = await runEngine(randomUUID(), ["export", tmp, r.filePath, "--format", format], {}, () => {});
-    fs.rmSync(tmp, { force: true });
+    const res = await withTempJson(payload, (tmp) => runEngine(randomUUID(), ["export", tmp, r.filePath!, "--format", format], {}, () => {}));
     return res?.type === "done" ? { ok: true, path: r.filePath } : { ok: false, error: String(res?.message ?? "The export failed.").slice(0, 300) };
   });
 
