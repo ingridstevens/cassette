@@ -30,7 +30,7 @@ def cmd_transcribe(a) -> None:
         data, sr = load_wav(wav)
         offset, duration = a.start or 0.0, len(data) / sr
         log(f"Decoded to 16 kHz mono, {duration:.1f}s. Nothing leaves this computer.")
-        from .asr import check_fit, is_mixed, load_detector, load_model, probe_languages, transcribe_turns, translate_clip
+        from .asr import check_fit, is_mixed, load_detector, load_model, probe_languages, transcribe_turns, translate_clip, translation_model
 
         # With a separate (small) language checker and speaker detection on, the speech model is loaded AFTER the speakers are found:
         # the small checker and the speaker model are never in memory together with the big speech model. Otherwise it is loaded first,
@@ -112,10 +112,11 @@ def cmd_transcribe(a) -> None:
         translated = translate_segments(segments, target, lang, translator, lambda f: progress("translate", f, "Translating"))
         log(f"Translated {translated} line(s) into {target} with the translation model")
     elif target:
+        translator = translation_model(a.model, model, a.device) if any((s.get("lang") or lang) != "en" for s in segments) else model
         for seg in segments:
             if (seg.get("lang") or lang) != "en":
                 progress("translate", translated / max(len(segments), 1), "Translating to English")
-                seg["translation"] = translate_clip(model, data, sr, seg["start"], seg["end"], offset, seg.get("lang") or lang)
+                seg["translation"] = translate_clip(translator, data, sr, seg["start"], seg["end"], offset, seg.get("lang") or lang)
                 seg["translationLang"] = "en"
                 translated += 1
         log(f"Translated {translated} line(s) to English")
@@ -155,7 +156,7 @@ def cmd_live(a) -> None:
 
 def cmd_translate(a) -> None:
     """English translation of one stretch of a recording (for the "Translate to English" action on a line)."""
-    from .asr import load_model, translate_clip
+    from .asr import load_model, translate_clip, translation_model
     from .audio import decode, load_wav
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -163,7 +164,7 @@ def cmd_translate(a) -> None:
         decode(a.input, wav, a.start, a.end)
         data, sr = load_wav(wav)
         model, _dev, _c = load_model(a.model, a.device, a.backend)
-        text = translate_clip(model, data, sr, a.start or 0.0, (a.start or 0.0) + len(data) / sr, a.start or 0.0, None if a.language == "auto" else a.language)
+        text = translate_clip(translation_model(a.model, model, a.device), data, sr, a.start or 0.0, (a.start or 0.0) + len(data) / sr, a.start or 0.0, None if a.language == "auto" else a.language)
     emit("done", text=text)
 
 

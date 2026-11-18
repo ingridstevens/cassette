@@ -45,3 +45,22 @@ def test_long_lines_are_translated_in_sentence_pieces():
 
     translate_segments([{"text": text, "lang": "fr"}], "en", "de", Rec())
     assert len(seen) == len(pieces(text)) > 1 and all(len(p) <= 240 for p in seen)
+
+
+def test_turbo_and_helper_engines_translate_with_a_downloaded_whisper_size_that_can(monkeypatch):
+    import pytest
+
+    from engine import asr, models
+
+    loaded = []
+    monkeypatch.setattr(asr, "load_model", lambda name, device, backend="faster": (loaded.append(name) or name, device, "x"))
+    cached = {"medium": False, "small": True, "large-v3-turbo": True, "tiny": True}
+    monkeypatch.setattr(models, "_cached", lambda repo: cached.get(next((n for n, r in models.WHISPER_MODELS.items() if r == repo), ""), False))
+    assert asr.translation_model("small", "current", "cpu") == "current"
+    assert asr.translation_model("large-v3-turbo", "current", "cpu") == "small"
+    assert asr.translation_model("parakeet-tdt", "current", "cpu") == "small"
+    assert asr._whisper_helper("cpu") == "tiny"
+    cached.update(tiny=False, small=False)
+    assert asr._whisper_helper("cpu") is None
+    with pytest.raises(RuntimeError, match="other than Large v3 turbo"):
+        asr.translation_model("large-v3-turbo", "current", "cpu")
