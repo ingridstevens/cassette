@@ -86,7 +86,7 @@ export default function StartSheet({ project, duration, eff, info, set, models, 
       {tooBigForMemory(eff.model, !eff.noDiarize, memGB) && <div className="alert warn" role="status">{t("{model} may not fit in this computer's {mem} GB of memory and could stop partway. The {safer} size is safer.", { model: modelName(eff.model), mem: memGB ?? 0, safer: modelName(saferModel(!eff.noDiarize, memGB)) })}</div>}
       {blocker && <div className="alert warn" role="status">{blocker}</div>}
 
-      {open && <div ref={fields} className="pv-start-fields-anchor"><TranscribeFields eff={eff} set={choose} status={status} models={models} timeOf={duration > 0 ? timeOf : undefined} onOpenSettings={onOpenSettings} /></div>}
+      {open && <div ref={fields} className="pv-start-fields-anchor"><TranscribeFields hasResult={!!project.result} eff={eff} set={choose} status={status} models={models} timeOf={duration > 0 ? timeOf : undefined} onOpenSettings={onOpenSettings} /></div>}
 
       <div className="pv-actions">
         <button type="button" className="btn sun big" disabled={!canStart} onClick={onStart}>{est ? t("Start ({time})", { time: spanText(t, est) }) : t("Start")}</button>

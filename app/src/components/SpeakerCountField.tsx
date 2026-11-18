@@ -3,8 +3,8 @@ import { Options } from "../types";
 
 const upTo = (n: number) => Array.from({ length: n }, (_, i) => i + 1);
 
-/** "How many people speak?": automatic, an exact number, or a range. Used in the project's Options tab and in the start sheet. */
-export default function SpeakerCountField({ eff, set }: { eff: Options; set(p: Partial<Options>): void }) {
+/** "How many people speak?": automatic, an exact number, or a range. Used in the project's Options tab and in the start sheet. `hasResult` is false before the first transcription, when "transcribe again" would make no sense. */
+export default function SpeakerCountField({ eff, set, hasResult = true }: { eff: Options; set(p: Partial<Options>): void; hasResult?: boolean }) {
   const t = useT();
   return (
     <label className="field">{t("Number of speakers")}
@@ -26,7 +26,7 @@ export default function SpeakerCountField({ eff, set }: { eff: Options; set(p: P
             </select>
           </label>
         </span>
-      ) : <span className="note pv-plain">{t("Know it's exactly 3? Set it here and transcribe again.")}</span>}
+      ) : <span className="note pv-plain">{hasResult ? t("Know it's exactly 3? Set it here and transcribe again.") : t("Know how many people speak? Set it here; it makes speaker detection more reliable.")}</span>}
     </label>
   );
 }

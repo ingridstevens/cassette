@@ -14,6 +14,8 @@ interface Props {
   status: ModelStatus | null; models: Models;
   /** The time this recording would take with a model, when it is known. */
   timeOf?(model: string): string;
+  /** Whether the recording has been transcribed already. */
+  hasResult?: boolean;
   /** Languages the app found in the last run, shown next to the automatic choice. */
   found?: string;
   /** Also show "Skip silence" and "Names and special words". */
@@ -27,7 +29,7 @@ export default function TranscribeFields(p: Props) {
       <LanguageField {...p} />
       <ModelField {...p} />
       <div className="pv-start-col">
-        <SpeakerCountField eff={p.eff} set={(x) => p.set(x)} />
+        <SpeakerCountField eff={p.eff} set={(x) => p.set(x)} hasResult={p.hasResult} />
         <TranscriptOnlyField {...p} />
         <ExtrasField {...p} />
         {p.advanced && <NamesField {...p} />}
