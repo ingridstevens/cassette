@@ -105,6 +105,7 @@ function fake(path = "") {
   },
   mockMic: true,
   liveAudio: () => {},
+  liveRecover: async () => [],
   liveStop: async () => { clearInterval((window as unknown as { __liveTick?: number }).__liveTick); return { ok: true, path: "/Users/demo/Recording 2026-10-16 14.05.wav", seconds: 14, name: "Recording 2026-10-16 14.05" }; },
   cancel: async () => {},
   logState: async () => ({ on: localStorage.getItem("mock-log-off") !== "1", bytes: localStorage.getItem("mock-log-cleared") === "1" ? 0 : 18432, hideNames: localStorage.getItem("mock-log-hide") === "1" }),

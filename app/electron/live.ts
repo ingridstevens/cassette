@@ -15,6 +15,17 @@ function wavHeader(bytes: number): Buffer {
 const two = (n: number) => String(n).padStart(2, "0");
 const stamp = (d = new Date()) => `${d.getFullYear()}-${two(d.getMonth() + 1)}-${two(d.getDate())} ${two(d.getHours())}.${two(d.getMinutes())}`;
 
+/** Turns a raw .pcm recording into a .wav next to it, removes the .pcm and returns the .wav path. */
+async function pcmToWav(pcmPath: string): Promise<string> {
+  const wav = pcmPath.replace(/\.pcm$/, ".wav");
+  const bytes = fs.statSync(pcmPath).size;
+  const out = fs.createWriteStream(wav);
+  out.write(wavHeader(bytes));
+  await new Promise<void>((res, rej) => { const src = fs.createReadStream(pcmPath); src.on("error", rej); out.on("error", rej); out.on("finish", () => res()); src.pipe(out); });
+  fs.rmSync(pcmPath, { force: true });
+  return wav;
+}
+
 interface Session { jobId: string; pcm: fs.WriteStream; pcmPath: string; bytes: number; peak: number; name: string; done: Promise<unknown> }
 let current: Session | null = null;
 
@@ -53,15 +64,22 @@ export function registerLive(send: (channel: string, payload: unknown) => void, 
     current = null;
     endJobInput(s.jobId);
     await new Promise<void>((r) => s.pcm.end(() => r()));
-    const wav = s.pcmPath.replace(/\.pcm$/, ".wav");
-    try {
-      const out = fs.createWriteStream(wav);
-      out.write(wavHeader(s.bytes));
-      await new Promise<void>((res, rej) => { const src = fs.createReadStream(s.pcmPath); src.on("error", rej); out.on("error", rej); out.on("finish", () => res()); src.pipe(out); });
-      fs.rmSync(s.pcmPath, { force: true });
-    } catch (err) { return { ok: false, error: String(err).slice(0, 200) }; }
+    let wav: string;
+    try { wav = await pcmToWav(s.pcmPath); } catch (err) { return { ok: false, error: String(err).slice(0, 200) }; }
     await Promise.race([s.done, new Promise((r) => setTimeout(r, 15000))]); // let the last words reach the window
     if (s.peak < 100) { fs.rmSync(wav, { force: true }); return { ok: false, error: "silent" }; } // about -50 dB: the microphone gave nothing, so there is nothing to transcribe
     return { ok: true, path: wav, seconds: s.bytes / (RATE * 2), name: s.name };
+  });
+  /** Recordings a crash left behind as .pcm: turn each into a .wav (skipping the one running now and anything under 1 s) and return the paths. */
+  ipcMain.handle("live-recover", async () => {
+    const dir = path.join(app.getPath("userData"), "recordings");
+    if (!fs.existsSync(dir)) return [];
+    const out: string[] = [];
+    for (const f of fs.readdirSync(dir).filter((f) => f.endsWith(".pcm"))) {
+      const p = path.join(dir, f);
+      if (current?.pcmPath === p || fs.statSync(p).size < RATE * 2) continue;
+      try { out.push(await pcmToWav(p)); } catch { /* leave it for next time */ }
+    }
+    return out;
   });
 }

@@ -11,6 +11,8 @@ const api = {
   transcribe: (opts: Record<string, unknown>): Promise<string> => ipcRenderer.invoke("transcribe", opts),
   liveStart: (o: Record<string, unknown>): Promise<{ ok: boolean; jobId?: string; error?: string }> => ipcRenderer.invoke("live-start", o),
   liveAudio: (jobId: string, pcm: Uint8Array): void => { ipcRenderer.send("live-audio", jobId, pcm); },
+  /** Turns recordings left behind by a crash into WAV files and returns their paths. */
+  liveRecover: (): Promise<string[]> => ipcRenderer.invoke("live-recover"),
   liveStop: (jobId: string): Promise<{ ok: boolean; path?: string; seconds?: number; name?: string; error?: string }> => ipcRenderer.invoke("live-stop", jobId),
   cancel: (jobId: string) => ipcRenderer.invoke("cancel", jobId),
   powerState: (): Promise<{ onBattery: boolean }> => ipcRenderer.invoke("power-state"),
