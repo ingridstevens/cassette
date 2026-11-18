@@ -271,6 +271,10 @@ export default function Transcript({ easy = false, showLang, result, names, time
             </button>
             <button type="button" className="pv-time" onClick={() => onSeek(seg.start)} title={t("Play from here")} aria-label={t("Play from {time}", { time: fmt(seg.start) })}>{fmt(seg.start)}</button>
             {seg.marked && <span className="pv-flag pv-marked" title={t("Marked: goes into the meeting minutes and the quote list")}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-3-5.4 3 1.1-6L3.2 9.4l6.1-.8z" /></svg>{t("Marked")}</span>}
+            {(() => { // a highlighted passage in this line gets its own badge (a pen, not the marked line's star) so the two never look alike
+              const inLine = highlights.filter((h) => h.start < seg.end && h.end > seg.start), kept = inLine.some((h) => !h.suggested);
+              return inLine.length > 0 && <span className="pv-flag pv-hlflag" title={kept ? t("Highlighted: a passage in this line is kept in the Highlights tab") : t("Suggested: a passage in this line is a suggested highlight you have not kept yet")}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4" /></svg>{kept ? t("Highlighted") : t("Suggested")}</span>;
+            })()}
             {!easy && (seg.lang && seg.lang !== result.language || mixed || showLang) && (
               <button type="button" className="pv-flag pv-lang pv-lang-btn" aria-haspopup="dialog" aria-expanded={langPop === i}
                 aria-label={t("Language of this line: {language}. Change it.", { language: langName(seg.lang ?? result.language) })} title={t("This line is in {language}", { language: langName(seg.lang ?? result.language) })}

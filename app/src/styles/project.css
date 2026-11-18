@@ -222,6 +222,9 @@
 .btn.skip svg.i { width: 28px; height: 28px; }
 .pv-range { display: flex; gap: 10px; margin-top: 8px; } .pv-range label { display: flex; flex-direction: column; gap: 4px; flex: 1; font-size: 12.5px; color: var(--ink2); }
 .pv-flag.pv-marked { background: rgba(240, 138, 60, .18); color: var(--warn-ink); }
+.pv-flag.pv-hlflag { background: rgba(47, 201, 160, .2); color: var(--ok-ink); box-shadow: inset 0 -2px 0 rgba(20, 130, 100, .55); }
+.pv-marklegend .pv-lg { display: inline-flex; align-items: center; gap: 8px; }
+.pv-marklegend { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 0 0 10px; font-size: 13px; color: var(--ink2); }
 .pv-flag.pv-overlap { background: rgba(124, 92, 255, .14); color: var(--violet-ink); }
 .pv-turn.marked { box-shadow: inset 3px 0 0 #f08a3c; }
 .pv-cut { border: 0; background: none; padding: 0; font: inherit; color: inherit; cursor: crosshair; border-radius: 4px; }
