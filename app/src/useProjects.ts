@@ -22,6 +22,7 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   const [progress, setProgress] = useState<Record<string, JobProgress>>({});
   const [drafts, setDrafts] = useState<Record<string, DraftLine[]>>({});
   const [loaded, setLoaded] = useState(false);
+  const [notice, setNotice] = useState("");  // set once, when the saved project list had to be recovered
   const optsRef = useRef(opts); optsRef.current = opts;
   const logRef = useRef(log); logRef.current = log;
   const jobs = useRef(new Map<string, { pid: string; range: Range; line?: LineRedo; trial?: boolean }>());      // engine jobId -> project
@@ -33,14 +34,21 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   // load once
   useEffect(() => {
     window.api.loadProjects().then((raw) => {
-      const list = (raw as Project[]).map((p) => ({ ...p, status: (p.result ? "done" : "idle") as Project["status"] }));
+      if (raw.recoveredFrom || raw.corruptCopy) {
+        const time = raw.recoveredAt ? new Date(raw.recoveredAt).toLocaleString(currentLang()) : "";
+        setNotice(raw.recoveredFrom && time
+          ? t("Your project list was damaged. Cassette restored the copy from {time}. The damaged file is kept in the data folder.", { time })
+          : raw.recoveredFrom ? t("Your project list was damaged. Cassette restored an earlier copy. The damaged file is kept in the data folder.")
+          : t("Your project list was damaged and no earlier copy could be restored. The damaged file is kept in the data folder."));
+      }
+      const list = (raw.projects as Project[]).map((p) => ({ ...p, status: (p.result ? "done" : "idle") as Project["status"] }));
       setProjects(list); setActiveId(list[0]?.id ?? null); setLoaded(true);
     }).catch(() => setLoaded(true));
   }, []);
   // debounced save (only after the first load, so we never overwrite saved projects with an empty list)
   useEffect(() => {
     if (!loaded) return;
-    const timer = setTimeout(() => { window.api.saveProjects(projects.map(persisted)).catch(() => {}); }, 400);
+    const timer = setTimeout(() => { window.api.saveProjects(projects.map(persisted)).then((r) => { if (!r.ok) logRef.current("error", `Couldn't save the project list: ${r.error}`); }).catch(() => {}); }, 400);
     return () => clearTimeout(timer);
   }, [projects, loaded]);
 
@@ -151,6 +159,6 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     }
   }), [patch]);
 
-  return { projects, activeId, setActiveId, progress, drafts, add, addAndTranscribe, remove, rename: (id: string, name: string) => patch(id, { name }), patch, transcribe, cancel,
+  return { projects, notice, dismissNotice: () => setNotice(""), activeId, setActiveId, progress, drafts, add, addAndTranscribe, remove, rename: (id: string, name: string) => patch(id, { name }), patch, transcribe, cancel,
     transcribeAll: () => projectsRef.current.filter((p) => p.status === "idle" || p.status === "error").forEach((p) => transcribe(p.id)) };
 }

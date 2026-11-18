@@ -2,8 +2,8 @@ import { contextBridge, ipcRenderer, webUtils } from "electron";
 
 const api = {
   pickFiles: (): Promise<string[]> => ipcRenderer.invoke("pick-file"),
-  loadProjects: (): Promise<unknown[]> => ipcRenderer.invoke("projects-load"),
-  saveProjects: (data: unknown): Promise<boolean> => ipcRenderer.invoke("projects-save", data),
+  loadProjects: (): Promise<{ projects: unknown[]; recoveredFrom?: string; recoveredAt?: number; corruptCopy?: string }> => ipcRenderer.invoke("projects-load"),
+  saveProjects: (data: unknown): Promise<{ ok: boolean; error?: string }> => ipcRenderer.invoke("projects-save", data),
   saveSidecar: (audioPath: string, data: unknown): Promise<{ ok: boolean; path?: string; error?: string }> => ipcRenderer.invoke("save-sidecar", audioPath, data),
   readAudio: (path: string): Promise<Uint8Array | null> => ipcRenderer.invoke("read-audio", path),
   transcribe: (opts: Record<string, unknown>): Promise<string> => ipcRenderer.invoke("transcribe", opts),

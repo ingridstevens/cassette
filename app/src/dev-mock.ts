@@ -61,8 +61,8 @@ function fake(path = "") {
   readAudio: async (p: string) => { if (p.includes("broken")) throw new Error("Error invoking remote method 'read-audio': Error: ENOENT: file not found"); await wait(600); return wav(); },
   // ?missing adds a recording whose file is gone (to read the missing-file messages)
   pickFiles: async () => ["/Users/demo/Interview 2026.wav", "/Users/demo/Podcast episode 12.m4a", "/Users/demo/Team meeting.wav", ...(location.search.includes("missing") ? ["/Users/demo/broken-recording.wav"] : [])],
-  loadProjects: async () => { try { return JSON.parse(localStorage.getItem("mock-projects") || "[]"); } catch { return []; } },
-  saveProjects: async (d: unknown) => { try { localStorage.setItem("mock-projects", JSON.stringify(d)); } catch { /* quota */ } return true; },
+  loadProjects: async () => { try { return { projects: JSON.parse(localStorage.getItem("mock-projects") || "[]") }; } catch { return { projects: [] }; } },
+  saveProjects: async (d: unknown) => { try { localStorage.setItem("mock-projects", JSON.stringify(d)); } catch { /* quota */ } return { ok: true }; },
   saveSidecar: async (p: string) => ({ ok: true, path: p + ".transcript.json" }),
   pathForFile: (f: File) => "/Users/demo/" + f.name,
   transcribe: async function (o: { clientId?: string; acceptFit?: boolean; model?: string }) {
