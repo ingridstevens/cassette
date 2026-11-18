@@ -198,8 +198,8 @@ details.detail[open] > summary { margin-bottom: 4px; }
 
 /* the status pill lives in the sidebar footer, so no header strip sits above the inspector */
 .side-activity { padding: 0 4px 6px; }
-.side-activity .pill { width: 100%; justify-content: flex-start; background: color-mix(in srgb, var(--surface) 70%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tint) 14%, transparent); }
-.side-activity .pill-label { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.side-activity .pill { height: auto; min-height: 30px; padding-top: 5px; padding-bottom: 5px; width: 100%; justify-content: flex-start; background: color-mix(in srgb, var(--surface) 70%, transparent); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tint) 14%, transparent); }
+.side-activity .pill-label { min-width: 0; white-space: normal; text-align: left; line-height: 1.25; }
 .side-activity .pill .chev, .side-activity .pill svg:last-child { margin-left: auto; }
 .shell .ac-pop { position: fixed; left: 264px; bottom: 16px; top: auto; right: auto; }
 .shell .side { position: relative; }
@@ -234,3 +234,5 @@ details.detail[open] > summary { margin-bottom: 4px; }
 .brand.busy .reel { animation: reel-turn 2.4s linear infinite; }
 @keyframes reel-turn { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .brand.busy .reel { animation: none; } }
+
+.side .group-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }

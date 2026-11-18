@@ -9,7 +9,7 @@
 .pv-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* toolbar */
-.pv-tool .titles h1, .pv-tool .sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-tool .titles h1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pview .search { width: 250px; flex: none; }
 .pview .search input { padding: 0; height: 100%; }
 .pv-hits { font-size: 12px; white-space: nowrap; }
@@ -151,7 +151,8 @@
 .pv-tool { -webkit-app-region: drag; height: 64px; }
 .pv-tool button, .pv-tool input, .pv-tool .search, .pv-tool a { -webkit-app-region: no-drag; }
 .pv-tool .titles { flex: 1 1 160px; min-width: 160px; }
-.pv-tool .titles h1, .pv-tool .titles .sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-tool .titles h1 { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-tool .titles .sub { white-space: normal; overflow-wrap: anywhere; }
 .pview .search { flex: 0 1 300px; min-width: 230px; width: auto; }
 .pview .search input { min-width: 110px; } /* the typed word always stays readable; the match count gives way first */
 .pview .search .pv-hits { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }

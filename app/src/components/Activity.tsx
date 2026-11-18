@@ -57,7 +57,7 @@ export default function Activity({ lines, live, setupNeeded = false, onClear }: 
       <button type="button" ref={pillBtn} className={"pill" + (live ? " live" : hasError ? " bad" : "")} aria-haspopup="dialog" aria-expanded={open} onClick={() => setOpen(!open)}
         title={t("The app works offline and your files never leave this computer. Click to see recent activity.")}>
         <span className="dot" aria-hidden />
-        <span className="pill-label">{live ? <>{live.label}{pct}</> : hasError ? t("Something went wrong") : setupNeeded ? t("Setup unfinished") : t("Ready · works offline")}</span>
+        <span className="pill-label">{live ? <>{live.label}{pct}</> : hasError ? t("Something went wrong") : setupNeeded ? t("Setup unfinished") : t("Ready · nothing leaves this computer")}</span>
         <svg className="i chev" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
       </button>
       {open && (
