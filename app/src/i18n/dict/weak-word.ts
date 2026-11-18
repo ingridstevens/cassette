@@ -1,5 +1,5 @@
 export default {
-  de: { "The model was not sure about this word. Listen to check it.": "Das Modell war sich bei diesem Wort nicht sicher. Hör zur Kontrolle hinein." },
-  fr: { "The model was not sure about this word. Listen to check it.": "Le modèle n’était pas sûr de ce mot. Écoutez pour vérifier." },
-  es: { "The model was not sure about this word. Listen to check it.": "El modelo no estaba seguro de esta palabra. Escúchala para comprobarlo." },
+  de: { "The model was not sure about this word. Listen to check it.": "Das Modell war sich bei diesem Wort nicht sicher. Hör zur Kontrolle hinein.", "Dotted words: the model wasn't sure. Press R to check them.": "Gepunktete Wörter: Das Modell war sich nicht sicher. Drücke R, um sie zu prüfen.", "Got it": "Verstanden", "unsure": "unsicher", "Review the unsure words": "Die unsicheren Wörter prüfen" },
+  fr: { "The model was not sure about this word. Listen to check it.": "Le modèle n’était pas sûr de ce mot. Écoutez pour vérifier.", "Dotted words: the model wasn't sure. Press R to check them.": "Mots en pointillés : le modèle n’était pas sûr. Appuyez sur R pour les vérifier.", "Got it": "Compris", "unsure": "incertain", "Review the unsure words": "Vérifier les mots incertains" },
+  es: { "The model was not sure about this word. Listen to check it.": "El modelo no estaba seguro de esta palabra. Escúchala para comprobarlo.", "Dotted words: the model wasn't sure. Press R to check them.": "Palabras punteadas: el modelo no estaba seguro. Pulsa R para comprobarlas.", "Got it": "Entendido", "unsure": "dudosa", "Review the unsure words": "Revisar las palabras dudosas" },
 };

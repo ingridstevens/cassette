@@ -11,7 +11,7 @@ const looks = {
   "Clean dark": { ...tokens(block('html[data-look="clean"]')), ...tokens(block('html[data-look="clean"][data-mode="dark"]')) },
 };
 // [foreground token, background token, minimum, what]
-const pairs = [["ink", "paper", 4.5, "body text"], ["ink2", "paper", 4.5, "secondary text"], ["ink3", "paper", 4.5, "hints"], ["violet-ink", "paper", 4.5, "accent text"], ["on-sun", "sun-btn", 4.5, "primary button text"], ["focus", "paper", 3, "focus ring"], ["hot", "paper", 3, "current line marker"], ["ink", "dawn", 4.5, "text on page"], ["ink2", "dawn", 4.5, "secondary on page"]];
+const pairs = [["ink", "paper", 4.5, "body text"], ["ink2", "paper", 4.5, "secondary text"], ["ink3", "paper", 4.5, "hints"], ["violet-ink", "paper", 4.5, "accent text"], ["on-sun", "sun-btn", 4.5, "primary button text"], ["focus", "paper", 3, "focus ring"], ["hot", "paper", 3, "current line marker"], ["warn", "surface", 3, "unsure-word underline"], ["ink", "dawn", 4.5, "text on page"], ["ink2", "dawn", 4.5, "secondary on page"]];
 let fail = 0, pass = 0;
 for (const [name, t] of Object.entries(looks)) for (const [f, b, min, what] of pairs) {
   if (!t[f] || !t[b]) { console.error(`${name}: missing token ${!t[f] ? f : b} for ${what}`); fail++; continue; }

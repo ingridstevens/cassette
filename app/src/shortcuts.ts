@@ -10,6 +10,7 @@ export const shortcutList = (t: TFn): [string, string][] => [
   ["O / Shift+O", t("Next or previous overlap, where two people talk at once")],
   ["M / Shift+M", t("Next or previous marked line")],
   ["C / Shift+C", t("Next or previous chapter")],
+  ["R", t("Review the unsure words")],
   ["G", t("Go to a time in the recording")],
   ["[ / ]", t("Mark the start and the end of a clip at the playhead")],
   ["S", t("Save the marked clip")],

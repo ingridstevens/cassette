@@ -21,7 +21,7 @@
   --wave: #c9b9e6; --wave-progress: var(--hot);
   /* finished steps: quiet, in the look's own secondary ink, so only the running step stands out. Green stays for "all good" states. */
   --done: var(--ink2); --on-done: var(--surface);
-  --violet-ink: #5a3fd6; --err-ink: #8e1c40; --warn-ink: #6a3500; --ok-ink: #0b6347;
+  --violet-ink: #5a3fd6; --err-ink: #8e1c40; --warn-ink: #6a3500; --warn: #a35f00; --ok-ink: #0b6347;
   --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif;
   --font-read: ui-serif, "New York", Georgia, "Times New Roman", serif; /* system serif: the app never loads web fonts, so it stays fully offline */
 }

@@ -25,7 +25,7 @@ interface Props {
   nowPlayingId?: string | null; stopSignal?: number; onPlayingChange?(playing: boolean): void; onOpenSettings?(section?: string): void; models: Models;
   onTranscribe(range: [number, number] | null, line?: { language: string; speaker: string }, trial?: boolean, acceptFit?: boolean): void; onCancel(): void; onPatch(p: Partial<Project>): void;
   othersWaiting?: number; onApplyToOthers?(o: Partial<Options>): void; onRemember?(o: Partial<Options>): void;
-  /** The Settings default for the first Export menu item, and where to keep the last export (not an edit, so it leaves the retention date alone). */ defaultExport?: string; onExported?(last: LastExport): void;
+  /** The Settings default for the first Export menu item, and where to keep the last export (not an edit, so it leaves the retention date alone). */ defaultExport?: string; onExported?(last: LastExport): void; /** The user has dismissed the explanation of dotted words. */ unsureLegendSeen?: boolean;
 }
 
 function Dialog({ title, children, cancel, confirm, onCancel, onConfirm }: { title: string; children: ReactNode; cancel: string; confirm: string; onCancel(): void; onConfirm(): void }) {
@@ -58,7 +58,7 @@ function Dialog({ title, children, cancel, confirm, onCancel, onConfirm }: { tit
 }
 
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
-export default function ProjectView({ project, progress, draft, blocker, waiting, visible, nowPlayingId, stopSignal = 0, onPlayingChange, onOpenSettings, models, onTranscribe, onCancel, onPatch, othersWaiting = 0, onApplyToOthers, onRemember, defaultExport, onExported }: Props) {
+export default function ProjectView({ project, progress, draft, blocker, waiting, visible, nowPlayingId, stopSignal = 0, onPlayingChange, onOpenSettings, models, onTranscribe, onCancel, onPatch, othersWaiting = 0, onApplyToOthers, onRemember, defaultExport, onExported, unsureLegendSeen }: Props) {
   const [renaming, setRenaming] = useState(false);
   const t = useT();
   const { result, names, path } = project;
@@ -310,9 +310,10 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
         else if (sel) void window.api.saveClip(path, sel[0], sel[1]).then((ok) => { if (ok) flash(t("Clip saved ✓")); });
         else flash(t("Mark a clip first: [ for the start, ] for the end"));
       }
-      else if (!mod && !e.altKey && showResult && !busy && /^[omc]$/i.test(e.key) && quietTarget(e.target)) {
+      else if (!mod && !e.altKey && showResult && !busy && /^[omcr]$/i.test(e.key) && quietTarget(e.target)) {
         e.preventDefault();
-        jumpFlag(e.key.toLowerCase() === "o" ? "overlap" : e.key.toLowerCase() === "m" ? "marked" : "chapter", e.shiftKey ? -1 : 1);
+        if (e.key.toLowerCase() === "r") { if (!review && unsure.length > 0) startReview(); }
+        else jumpFlag(e.key.toLowerCase() === "o" ? "overlap" : e.key.toLowerCase() === "m" ? "marked" : "chapter", e.shiftKey ? -1 : 1);
       }
       else if (!mod && !e.altKey && !e.shiftKey && !busy && /^[jkl]$/i.test(e.key) && !typing(e.target) && !document.querySelector("[role=dialog], [role=alertdialog]") && !(e.target instanceof HTMLElement && e.target.closest("[role=menu]"))) {
         e.preventDefault();
@@ -323,7 +324,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
     };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [visible, showResult, busy, dialog, jumpDialog, time, result, sel, clipStart, path]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [visible, showResult, busy, dialog, jumpDialog, time, result, sel, clipStart, path, review, unsure]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const payload = (format = "", options?: ExportOpts) => ({
     segments: result!.segments.map(({ words, orig, edited, ...s }) => (["srt", "vtt", "edl"].includes(format) || (options?.pauseMarks && STYLED.has(format)) ? { ...s, edited, words: words.map(({ start, end, word }) => ({ start, end, word })) } : format === "changes" ? { ...s, orig: orig && { text: orig.text } } : s)),
@@ -491,6 +492,12 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
           <div className="pv-partial" role="status">
             <span><b>{project.status === "queued" ? t("Waiting in line to redo this part") : t("Redoing this part…")}</b> {project.status === "running" && progress?.stage === "transcribe" && progress.fraction != null ? `${Math.round(progress.fraction * 100)}%` : ""}</span>
             <button type="button" className="btn quiet small" onClick={onCancel}>{t("Stop")}</button>
+          </div>
+        )}
+        {unsure.length > 0 && !unsureLegendSeen && (
+          <div className="pv-legend" role="note">
+            <span>{t("Dotted words: the model wasn't sure. Press R to check them.")}</span>
+            <button type="button" className="btn quiet small" onClick={() => onRemember?.({ unsureLegendSeen: true })}>{t("Got it")}</button>
           </div>
         )}
         <Transcript showLang={showLang} result={result} names={names} time={time} query={query} findOpts={findOpts} highlights={highlights} onHighlight={(i, a, b) => { const h = highlightOf(result.segments[i], a, b); if (h) patchResult((x) => ({ ...x, highlights: addHighlight(x.highlights ?? [], h) })); }} matchSeg={matches[mi] ?? -1} onSeek={(t) => player.current?.seek(t)} onReassign={reassign}
