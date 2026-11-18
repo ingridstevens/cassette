@@ -50,4 +50,6 @@ Personas guess. I checked what I could:
 
 Also done after the list: **provenance in the JSON export** (Jonas, Dev). The JSON file's `meta` was always empty; it now carries a schema version, the app and engine versions, the language, the model and devices, and the number of edited lines, with no date so exports stay identical for the same input. Not done: model checksums, and a header in CSV or text exports (it would change their columns).
 
+Also done: **log controls** (Okafor): Settings, Privacy can switch the activity log off and clear the file. Not done: hiding file names inside the log, retention timers.
+
 Held back for now: password lock, burned-in captions, share cards, headless command line (each needs a design decision).
