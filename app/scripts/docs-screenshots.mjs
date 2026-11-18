@@ -58,11 +58,11 @@ await snap("05-transcript");
 await step("line actions", async () => { await p.getByText("Danke für die Einladung").hover(); await p.waitForTimeout(300); await snap("06-line-actions", { keepMouse: true }); });
 await step("speaker menu", async () => { await p.getByRole("button", { name: /Ben/ }).first().click(); await p.waitForTimeout(300); await snap("07-speaker-menu", { keepMouse: true }); await p.keyboard.press("Escape"); });
 await step("language dialog", async () => { await p.getByRole("button", { name: /Ben/ }).first().click(); await p.getByText(/Language and translation/).click(); await p.waitForTimeout(400); await snap("08-language-dialog", { keepMouse: true }); await p.keyboard.press("Escape"); await p.keyboard.press("Escape"); });
-await step("options", () => tall(1160, async () => { await tab("Options"); await p.waitForTimeout(400); await snap("11-options"); }));
-await step("info", async () => { await tab("Info"); await p.waitForTimeout(400); await snap("12-info"); });
+await step("options", () => tall(1160, async () => { await tab("Details"); await p.waitForTimeout(400); await snap("11-options"); }));
+await step("info", async () => { await tab("Details"); await p.evaluate(() => document.querySelector(".pv-details section:last-child")?.scrollIntoView()); await p.waitForTimeout(400); await snap("12-info"); });
 await step("export menu", async () => { await tab("Speakers"); await tall(1060, async () => { await p.getByRole("button", { name: /export/i }).first().click(); await p.waitForTimeout(400); await snap("13-export-menu", { keepMouse: true }); await p.keyboard.press("Escape"); }); });
 await step("highlight selection", async () => {
-  await tab("Highlights");
+  await tab("AI");
   const box = await p.getByText("Projekt begann vor drei Jahren").first().boundingBox();
   await p.mouse.move(box.x + 2, box.y + box.height / 2); await p.mouse.down(); await p.mouse.move(box.x + box.width - 2, box.y + box.height / 2, { steps: 8 }); await p.mouse.up(); await p.waitForTimeout(400);
   await snap("14-highlight-selection", { keepMouse: true });

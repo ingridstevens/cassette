@@ -28,12 +28,12 @@
 ## Meeting to minutes
 1. Transcribe and name the speakers.
 2. **Mark** each decision or action item.
-3. Optionally press **Write a summary** in the Highlights tab and read it through.
+3. Optionally press **Write a summary** in the AI tab (Highlights and summary) and read it through.
 4. Export **Meeting minutes (Word)**. Check the summary and the "Decisions and action items" list.
 
 ## Soundbites for a podcast or social media
 1. Transcribe, fix mistakes, name the speakers.
-2. Press **Suggest highlights** in the Highlights tab, or select the passages yourself. **Keep** the good ones, **Dismiss** the rest.
+2. Press **Suggest highlights** in the AI tab (Highlights and summary), or select the passages yourself. **Keep** the good ones, **Dismiss** the rest.
 3. **Save audio clips…** gives you one audio file per highlight. **Export, Highlights (Word)** gives you the quotes with times for captions.
 
 ## Research to an anonymised transcript

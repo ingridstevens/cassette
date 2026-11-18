@@ -549,3 +549,12 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .pv-spk-helptext { display: flex; flex-direction: column; gap: 6px; }
 .pv-spk-helptext[hidden] { display: none; }
 .pv-spk-helptext p { margin: 0; }
+
+/* Inspector: AI sub-tabs, folded help ("?") and the Details tab */
+.pv-ai { display: flex; flex-direction: column; gap: 8px; }
+.pv-ai-scope { margin: 0; }
+.pv-subtabs { margin-bottom: 4px; }
+.pv-hint { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.pv-hint-folded { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.pv-hint-q { min-width: 24px; min-height: 24px; font-weight: 700; }
+.pv-details h3 { margin: 0 0 8px; }
