@@ -190,8 +190,8 @@ Start at [docs/README.md](docs/README.md). Every page:
 
 ## Privacy in one paragraph
 
-Audio and transcripts stay on your machine (projects live in the app's data folder). The only host the app talks
-to is **huggingface.co**, to download models and to check your token; transcription itself runs with the Hugging
+Audio and transcripts stay on your machine (projects live in the app's data folder). The only hosts the app talks
+to are **huggingface.co**, and **download.moonshine.ai** for Moonshine models, to download models and to check your token; transcription itself runs with the Hugging
 Face hub in offline mode. Your token is stored encrypted with Electron `safeStorage`. Details:
 [Privacy and offline use](docs/privacy-and-offline.md) and [SECURITY.md](SECURITY.md).
 

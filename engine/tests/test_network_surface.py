@@ -68,3 +68,11 @@ def test_app_does_not_make_its_own_requests():
 def test_only_huggingface_pages_can_be_opened_from_the_app():
     main = (APP / "electron" / "main.ts").read_text(encoding="utf-8")
     assert 'startsWith("https://huggingface.co/")' in main
+
+
+def test_readme_and_security_name_every_host_the_app_uses():
+    network_hosts = ALLOWED_HOSTS - {"www.w3.org"}  # the XML namespace string is not a network host
+    for doc in ("README.md", "SECURITY.md", "docs/privacy-and-offline.md"):
+        text = (ROOT / doc).read_text(encoding="utf-8")
+        missing = sorted(h for h in network_hosts if h not in text)
+        assert not missing, f"{doc} does not name {missing}. Update it to match ALLOWED_HOSTS."
