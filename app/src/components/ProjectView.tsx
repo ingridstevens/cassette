@@ -14,7 +14,7 @@ import Inspector, { Moved, Tab, globalOpts, liveSpeakers } from "./Inspector";
 import { Models } from "./useModels";
 import Transcript from "./Transcript";
 import { FIND_DEFAULTS, FindOpts, matcher, nearMisses } from "../find";
-import { scrollToTurn } from "../windowing";
+import { revealTurn, scrollToTurn } from "../windowing";
 import Waveform, { WaveformHandle } from "./Waveform";
 import { GoToTime, ShortcutSheet } from "./JumpDialogs";
 
@@ -176,11 +176,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
   const showLine = (i: number) => {
     const seg = result?.segments[i];
     if (!seg) return;
-    document.querySelectorAll("[data-cited]").forEach((el) => el.removeAttribute("data-cited"));
-    void scrollToTurn(i).then((el) => {
-      el?.setAttribute("data-cited", ""); // an attribute, not a class: React rewrites the line's class as playback moves
-      window.setTimeout(() => el?.removeAttribute("data-cited"), 6000);
-    });
+    void revealTurn(i);
     player.current?.seek(seg.start);
   };
   const highlights = result?.highlights ?? [];

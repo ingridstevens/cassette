@@ -15,7 +15,7 @@ You can also select words while you are editing a line (**Edit**) and click **Hi
 ![Selecting words in a line](screenshots/14-highlight-selection.jpg)
 
 A highlight remembers the stretch of the recording, not the line, so it stays correct when you edit, split or join lines. Each highlight in the tab
-has **Play** (plays just that passage), **Show in the transcript** (click its time), **Save clip** (that passage as one audio file) and **Remove**.
+has **Play** (plays just that passage), **Show in the transcript** (click the card, or its time: the transcript scrolls to the passage and it pulses once; with reduced motion it jumps and stays marked), **Save clip** (that passage as one audio file) and **Remove**.
 
 **Mark** still works as before and flags a whole line. Marked lines go into the quote list and the minutes. If a marked line already holds a
 highlight, only the highlight is listed in the quote list.
