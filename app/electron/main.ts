@@ -44,6 +44,8 @@ function openFiles(candidates: string[]) {
   if (win && !win.isDestroyed() && rendererReady) win.webContents.send("open-files", files); else pendingOpen.push(...files);
 }
 
+/** The sample interview shipped with the app (extraResources in electron-builder.yml; docs/samples when run from source). */
+const SAMPLE_FILE = "test-interview-english-two-voices.m4a";
 const modelsDir = () => path.join(app.getPath("userData"), "models");
 const tokenFile = () => path.join(app.getPath("userData"), "hf-token.bin");
 const baseEnv = () => ({ ENGINE_MODELS_DIR: modelsDir() });
@@ -186,6 +188,19 @@ app.whenReady().then(() => {
     return r.canceled ? [] : r.filePaths;
   });
   // Files dropped on the window (their paths come from webUtils.getPathForFile) become known too.
+  // "Try a sample": copies the bundled English interview into userData/recordings (so deleting the project deletes the copy, never the bundled file) and returns its path.
+  ipcMain.handle("sample", () => {
+    try {
+      const src = app.isPackaged ? path.join(process.resourcesPath, "sample", SAMPLE_FILE) : path.join(app.getAppPath(), "..", "docs", "samples", SAMPLE_FILE);
+      const dir = path.join(app.getPath("userData"), "recordings");
+      fs.mkdirSync(dir, { recursive: true });
+      let n = 1, dest = path.join(dir, "Sample interview.m4a");
+      while (fs.existsSync(dest)) dest = path.join(dir, `Sample interview (${++n}).m4a`);
+      fs.copyFileSync(src, dest);
+      known.add([dest]);
+      return { ok: true as const, path: dest };
+    } catch (e) { return { ok: false as const, error: String((e as Error).message) }; }
+  });
   ipcMain.handle("register-paths", (_e, paths: unknown) => { if (Array.isArray(paths)) known.add(paths.filter(mediaFile)); });
 
   ipcMain.handle("transcribe", async (_e, opts: Record<string, unknown>) => {
