@@ -1,6 +1,6 @@
 /* App shell: sidebar, header, empty state, first-run setup, error cards, activity popover.
    Built on the tokens and classes in base.css. Several rules reset legacy styles.css element selectors. */
-.shell { display: flex; height: 100vh; width: 100%; overflow: hidden; background: transparent; }
+.shell { display: flex; height: calc(100vh / var(--zoom, 1)); /* body zoom does not scale vh, so divide it back out or the bottom of the window is cut off at larger text sizes */ width: 100%; overflow: hidden; background: transparent; container: shell / inline-size; }
 .shell[hidden] { display: none; }
 .shell .grow { flex: 1; min-width: 0; }
 .shell h1, .shell h2, .shell h3, .shell h4, .shell p { margin: 0; background: none; -webkit-text-fill-color: currentColor; color: inherit; }
@@ -236,3 +236,44 @@ details.detail[open] > summary { margin-bottom: 4px; }
 @media (prefers-reduced-motion: reduce) { .brand.busy .reel { animation: none; } }
 
 .side .group-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+/* Small windows and large text. The text size is a body zoom, so the shell's own width (the container) is the room the layout really has:
+   at 150% text a 1280 px window is about 853 px wide. Below 1200 the inspector becomes a drawer, below 900 the project list becomes an icon rail. */
+.shell .nav-ini, .shell .pv-insp-toggle, .shell .pv-insp-close, .shell .pv-insp-scrim { display: none; }
+@container shell (max-width: 1199px) {
+  .pview { --insp-w: min(332px, calc(100% - 48px)); }
+  .pview aside.pv-inspector { position: absolute; top: 0; right: 0; bottom: 0; z-index: 30; width: var(--insp-w); max-width: 100%; box-sizing: border-box; visibility: hidden; transform: translateX(100%); background: var(--surface); box-shadow: -18px 0 40px -18px rgba(60, 30, 110, .45); }
+  .pview aside.pv-inspector.drawer-open { visibility: visible; transform: none; }
+  .shell .pview aside.pv-inspector .pv-insp-close { display: inline-flex; align-self: flex-end; flex: none; margin-bottom: -8px; }
+  .shell .pv-tool .pv-insp-toggle { display: inline-flex; flex: none; }
+  .shell .pview.insp-open .pv-insp-scrim { display: block; position: absolute; inset: 0; z-index: 29; background: rgba(40, 20, 80, .22); }
+}
+@media (prefers-reduced-motion: no-preference) {
+  @container shell (max-width: 1199px) { .pview aside.pv-inspector { transition: transform .18s ease, visibility 0s .18s; } .pview aside.pv-inspector.drawer-open { transition: transform .18s ease; } }
+}
+/* the rail keeps every control reachable: the words are hidden visually only, so screen readers and the title tooltip still have them */
+@container shell (max-width: 899px) {
+  .shell .side { width: 64px; padding: 58px 8px 12px; align-items: stretch; }
+  .side .brand { padding: 2px 0 10px; justify-content: center; }
+  .side .brand > span, .side .group-row > span, .side .side-note { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .side .group-row { padding: 0; min-height: 4px; }
+  .side .group-row .btn, .side > .btn.small { font-size: 0; gap: 0; padding: 0; width: 100%; justify-content: center; }
+  .side > .btn.small::before { content: "CSV" / ""; font-size: 11px; }
+  .side .group-row .btn::before { content: "↻" / ""; font-size: 15px; }
+  .shell .add-btn { width: 100%; padding: 0; font-size: 0; gap: 0; }
+  .shell .add-btn svg.i { width: 18px; height: 18px; }
+  .shell button.nav { padding: 7px 0; justify-content: center; position: relative; }
+  .shell .nav-ini { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: color-mix(in srgb, var(--violet) 14%, transparent); color: var(--ink); font: 650 14px var(--font-ui); }
+  .shell button.nav .st { position: absolute; top: 6px; right: 6px; margin: 0; }
+  .shell button.nav .grow { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .shell button.nav .eq { position: absolute; bottom: 4px; right: 6px; margin: 0; }
+  .prow .nav .eq { margin-right: 0; }
+  .shell .px { right: 0; top: 0; width: 18px; height: 18px; font-size: 14px; background: var(--surface); }
+  .side-activity { padding: 0; }
+  .side-activity .pill { padding: 0; justify-content: center; }
+  .side-activity .pill-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .side-activity .pill .chev, .side-activity .pill svg:last-child { display: none; }
+  .settings-row { justify-content: center; }
+  .settings-row .grow, .settings-row .kbd { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .shell .ac-pop { left: 72px; }
+}

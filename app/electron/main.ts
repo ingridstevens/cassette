@@ -63,7 +63,7 @@ let modelsJob: string | null = null;
 function createWindow() {
   rendererReady = false;
   win = new BrowserWindow({
-    width: 1280, height: 860, minWidth: 1040, minHeight: 600, title: "Cassette", ...(process.platform === "darwin" ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 18, y: 18 } } : {}),
+    width: 1280, height: 860, minWidth: 720, minHeight: 600, title: "Cassette", ...(process.platform === "darwin" ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 18, y: 18 } } : {}),
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   win.webContents.setWindowOpenHandler(() => ({ action: "deny" }));
