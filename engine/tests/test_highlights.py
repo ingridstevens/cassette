@@ -111,12 +111,13 @@ def test_highlights_are_limited_to_count_and_sorted_by_time():
 
 def test_summary_parses_topics_decisions_actions():
     answer = json.dumps({"summary": "They talked about shipping.", "topics": [{"time": "0:10", "title": "Shipping weekly"}, {"time": "9:99:99", "title": "bad"}, {"time": "0:30", "title": "Launch"}],
-                         "decisions": ["Launch on 5 May", ""], "actions": [{"text": "Write the announcement", "owner": "Anna"}, {"text": "Book a room", "owner": "null"}]})
+                         "decisions": [{"text": "Launch on 5 May", "at": "0:29"}, "Plain string", {"text": "Off the end", "at": "59:00"}, ""],
+                         "actions": [{"text": "Write the announcement", "owner": "Anna", "at": "0:31"}, {"text": "Book a room", "owner": "null"}]})
     s = summarize(SEGS, NAMES, Fake(answer), "en")
     assert s["summary"] == "They talked about shipping."
     assert s["topics"] == [{"start": 10.0, "title": "Shipping weekly"}]  # a 37-second recording gets one topic, however many the model wrote
-    assert s["decisions"] == ["Launch on 5 May"]
-    assert s["actions"] == [{"text": "Write the announcement", "owner": "Anna"}, {"text": "Book a room", "owner": None}]
+    assert s["decisions"] == [{"text": "Launch on 5 May", "line": 2}, {"text": "Plain string", "line": None}, {"text": "Off the end", "line": None}]
+    assert s["actions"] == [{"line": 2, "text": "Write the announcement", "owner": "Anna"}, {"line": None, "text": "Book a room", "owner": None}]
 
 
 def test_topics_snap_to_the_line_they_fall_in_once_per_line():
@@ -171,14 +172,14 @@ def test_minutes_include_summary_and_key_quotes():
 
     from engine.export import to_minutes
 
-    summary = {"summary": "They talked about shipping.", "topics": [{"start": 10, "title": "Shipping"}], "decisions": ["Launch on 5 May"], "actions": [{"text": "Write the announcement", "owner": "Anna"}]}
+    summary = {"summary": "They talked about shipping.", "topics": [{"start": 10, "title": "Shipping"}], "decisions": [{"text": "Launch on 5 May", "line": 2}, "Old saved decision"], "actions": [{"text": "Write the announcement", "owner": "Anna", "line": 2}, {"text": "Old action", "owner": None}]}
     hl = [{"start": 10.5, "end": 13.0, "text": "the best thing we ever did", "speaker": "B"}]
     d = Document(io.BytesIO(to_minutes(SEGS, NAMES, summary=summary, highlights=hl)))
     text = "\n".join(p.text for p in d.paragraphs)
-    for needle in ("Summary", "They talked about shipping.", "0:10  Shipping", "Launch on 5 May", "Key quotes", "the best thing we ever did"):
+    for needle in ("Summary", "They talked about shipping.", "0:10  Shipping", "[0:30] Launch on 5 May", "Old saved decision", "Key quotes", "the best thing we ever did"):
         assert needle in text
     cells = [c.text for r in d.tables[0].rows for c in r.cells]  # action items are a table now (owner, action, due)
-    assert "Write the announcement" in cells and "Anna" in cells
+    assert "[0:30] Write the announcement" in cells and "Anna" in cells and "Old action" in cells
 
 
 def test_export_clips_one_file_per_clip(tmp_path):
