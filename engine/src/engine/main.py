@@ -2,6 +2,7 @@
 import argparse
 import json
 import os
+import re
 import sys
 import tempfile
 import threading
@@ -10,7 +11,7 @@ import traceback
 from pathlib import Path
 
 from . import export as ex
-from .models import WHISPER_LANGUAGES, WHISPER_MODELS
+from .models import PARAKEET_MODELS, WHISPER_LANGUAGES, WHISPER_MODELS
 from .protocol import emit, log, partial, progress
 
 
@@ -298,13 +299,20 @@ def cmd_clip(a) -> None:
     emit("done", path=a.output)
 
 
+def _speech_model(v: str) -> str:
+    """A speech model id: a Whisper size, Parakeet, or a Moonshine id (those depend on what is installed, so only their shape is checked)."""
+    if v in WHISPER_MODELS or v in PARAKEET_MODELS or re.fullmatch(r"moonshine-[a-z0-9-]{1,30}", v):
+        return v
+    raise argparse.ArgumentTypeError(f"unknown speech model {v!r}")
+
+
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="engine")
     sub = p.add_subparsers(dest="cmd", required=True)
 
     t = sub.add_parser("transcribe")
     t.add_argument("input")
-    t.add_argument("--model", default="small")
+    t.add_argument("--model", default="small", type=_speech_model)
     t.add_argument("--language", default="auto", choices=["auto", *WHISPER_LANGUAGES])
     t.add_argument("--detect-model", choices=[*WHISPER_MODELS, "same"], default="tiny",
                    help="Whisper size that only finds out which language is spoken (default tiny: fast, and the answer is a few letters). 'same' uses --model. Falls back to --model when not downloaded.")
