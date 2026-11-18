@@ -736,6 +736,13 @@ def to_combined_csv(items, options=None):
     return ("\ufeff" if excel else "") + buf.getvalue()
 
 
+def _with_time(item, segs) -> str:
+    """Text of a summary item with the time of its source line in front; older summaries (plain strings, no line) print as they are."""
+    text = item if isinstance(item, str) else item.get("text", "")
+    line = None if isinstance(item, str) else item.get("line")
+    return f"[{_clock(segs[line]['start'])}] {text}" if isinstance(line, int) and 0 <= line < len(segs) else text
+
+
 def to_minutes(segs, names=None, title=None, lang=None, summary=None, highlights=None) -> bytes:
     """Word document laid out as minutes: attendees, decisions and action items (lines the user marked), then the record."""
     from docx import Document
@@ -770,7 +777,7 @@ def to_minutes(segs, names=None, title=None, lang=None, summary=None, highlights
         for s in marked:
             doc.add_paragraph(f"{s['text']} ({_name(s, names)}, {_clock(s['start'])})", style="List Bullet")
         for d in decisions:
-            doc.add_paragraph(d, style="List Bullet")
+            doc.add_paragraph(_with_time(d, segs), style="List Bullet")
     else:
         doc.add_paragraph(L["nomarks"])
     if summary.get("actions"):
@@ -783,7 +790,7 @@ def to_minutes(segs, names=None, title=None, lang=None, summary=None, highlights
         for a in summary["actions"]:
             row = table.add_row().cells
             row[0].text = a.get("owner") or "—"
-            row[1].text = a["text"]
+            row[1].text = _with_time(a, segs)
             row[2].text = ""
     quotes = quote_list([], highlights)
     if quotes:
