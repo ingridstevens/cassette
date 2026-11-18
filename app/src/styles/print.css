@@ -1,0 +1,13 @@
+/* Print / PDF: only the transcript, flowing over as many pages as it needs. Used by "Print / PDF" and "Large-print PDF" in the export menu. */
+@media print {
+  .side, .inspector, .pv-dock, .tool, .skip-link, .toast, .pv-sr, .pv-nohit, .pv-replace, .pv-partial, .pv-copy, .pv-edit, .pv-who-btn svg, .pv-flag.pv-marked svg,
+  .pv-menu, .pv-pop, .menu, .setup-overlay { display: none !important; }
+  html, body { background: #fff !important; height: auto !important; overflow: visible !important; }
+  .shell, .main, .main-body, .pview, .pview-main, .pv-scroll { display: block !important; height: auto !important; min-height: 0 !important; overflow: visible !important; position: static !important; background: none !important; padding: 0 !important; margin: 0 !important; }
+  .pview[hidden], .shell[hidden] { display: none !important; }
+  .pv-turn { break-inside: avoid; box-shadow: none !important; background: none !important; border-left: 0 !important; max-width: none; padding: 6px 0; color: #000; }
+  .pv-turn * { color: #000 !important; background: none !important; }
+  .pv-chapter { break-after: avoid; }
+  html.print-large { font-size: 150%; }
+  html.print-large .pv-scroll { zoom: 1.5; } /* the transcript text is sized in px, which a larger root font size does not reach */
+}
