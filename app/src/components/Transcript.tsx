@@ -147,6 +147,7 @@ export default function Transcript({ showLang, result, names, time, onSeek, onRe
   return (
     <>
       <span ref={anchor} hidden />
+      <span id="pv-unsure-label" className="pv-sr">{t("unsure")}</span>
       {result.segments.map((seg, i) => (
         <div key={i} ref={i === matchSeg ? matchRef : i === active ? activeRef : undefined}
           data-turn={i} className={"pv-turn" + (seg.marked ? " marked" : "") + (i === active ? " now" : "") + (i === matchSeg ? " found" : "") + (i > 0 && result.segments[i - 1].speaker === seg.speaker ? " cont" : "")}>
@@ -265,7 +266,7 @@ export default function Transcript({ showLang, result, names, time, onSeek, onRe
               startEdit(i, w === undefined ? undefined : Number(w));
             }}>
             {seg.words.map((w, j) => (
-              <span key={j} className={"pv-w" + (time >= w.start && time < w.end ? " cur" : "") + (isUnsure(w) ? " weak" : "") + (reviewAt && reviewAt.seg === i && reviewAt.word === j ? " rv" : "") + (q && fm.test(w.word) ? " hit" : "") + hlClass(w)} data-w={j} title={isUnsure(w) ? t("The model was not sure about this word. Listen to check it.") : undefined} onClick={(e) => playFrom(e, w.start)}>{w.word}</span>
+              <span key={j} className={"pv-w" + (time >= w.start && time < w.end ? " cur" : "") + (isUnsure(w) ? " weak" : "") + (reviewAt && reviewAt.seg === i && reviewAt.word === j ? " rv" : "") + (q && fm.test(w.word) ? " hit" : "") + hlClass(w)} data-w={j} aria-describedby={isUnsure(w) ? "pv-unsure-label" : undefined} title={isUnsure(w) ? t("The model was not sure about this word. Listen to check it.") : undefined} onClick={(e) => playFrom(e, w.start)}>{w.word}</span>
             ))}
           </p>
           )
