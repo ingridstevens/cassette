@@ -1,5 +1,6 @@
 export default {
   de: {
+    "Back to the playing line": "Zurück zur aktuellen Zeile",
     "Details": "Details",
     "Less": "Weniger",
     "Previous": "Vorheriger",
@@ -246,6 +247,7 @@ export default {
     "Show recording in {app}": "Aufnahme in {app} anzeigen",
   },
   fr: {
+    "Back to the playing line": "Retour à la ligne en cours",
     "Details": "Détails",
     "Less": "Moins",
     "Previous": "Précédent",
@@ -492,6 +494,7 @@ export default {
     "Show recording in {app}": "Afficher l’enregistrement dans {app}",
   },
   es: {
+    "Back to the playing line": "Volver a la línea en reproducción",
     "Details": "Detalles",
     "Less": "Menos",
     "Previous": "Anterior",

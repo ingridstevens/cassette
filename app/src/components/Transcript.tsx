@@ -97,7 +97,20 @@ export default function Transcript({ showLang, result, names, time, onSeek, onRe
   };
   const menuBox = useRef<HTMLDivElement>(null);
   const active = result.segments.findIndex((s) => time >= s.start && time < s.end);
-  useEffect(() => { activeRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }); }, [active]);
+  // Follow the playing line until the user scrolls or types; Play (or the button) turns it back on.
+  const [follow, setFollow] = useState(true);
+  const anchor = useRef<HTMLSpanElement>(null);
+  useEffect(() => { if (playing) setFollow(true); }, [playing]);
+  useEffect(() => {
+    const box = anchor.current?.closest(".pv-scroll");
+    if (!box) return;
+    const off = () => setFollow(false);
+    box.addEventListener("wheel", off, { passive: true });
+    box.addEventListener("touchmove", off, { passive: true });
+    box.addEventListener("keydown", off);
+    return () => { box.removeEventListener("wheel", off); box.removeEventListener("touchmove", off); box.removeEventListener("keydown", off); };
+  }, []);
+  useEffect(() => { if (follow) activeRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }); }, [active, follow]);
   const fm = matcher(query, findOpts);
   const q = fm.q;
   useEffect(() => { matchRef.current?.scrollIntoView({ block: "center", behavior: "smooth" }); }, [matchSeg, q]);
@@ -133,6 +146,7 @@ export default function Transcript({ showLang, result, names, time, onSeek, onRe
 
   return (
     <>
+      <span ref={anchor} hidden />
       {result.segments.map((seg, i) => (
         <div key={i} ref={i === matchSeg ? matchRef : i === active ? activeRef : undefined}
           data-turn={i} className={"pv-turn" + (seg.marked ? " marked" : "") + (i === active ? " now" : "") + (i === matchSeg ? " found" : "")}>
@@ -271,6 +285,9 @@ export default function Transcript({ showLang, result, names, time, onSeek, onRe
           )}
         </div>
       ))}
+      {playing && !follow && active >= 0 && (
+        <button type="button" className="btn small pv-follow" onClick={() => setFollow(true)}>{t("Back to the playing line")}</button>
+      )}
     </>
   );
 }
