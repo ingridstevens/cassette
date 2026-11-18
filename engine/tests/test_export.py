@@ -613,3 +613,18 @@ def test_redacted_key_defaults_to_beside_export(tmp_path):
     (tmp_path / "out").mkdir()
     main.cmd_export(_redacted_args(tmp_path, key_output=None))
     assert (tmp_path / "out" / "x.anonymisation-key.txt").exists()
+
+
+def test_csv_excel_option_adds_bom_and_defuses_formulas():
+    from engine.export import to_combined_csv, to_csv
+
+    segs = [{"start": 0, "end": 1, "speaker": "S", "text": "Grüße", "translation": "-1"}]
+    names = {"S": "=1+1"}
+    plain = to_csv(segs, names)
+    assert not plain.startswith("﻿") and "=1+1" in plain and "'=1+1" not in plain
+    xl = to_csv(segs, names, {"excel": True})
+    assert xl.startswith("﻿start_seconds") and "'=1+1" in xl and "Grüße" in xl and "'-1" in xl
+    items = [{"name": "@p", "segments": segs, "speakers": names}]
+    assert not to_combined_csv(items).startswith("﻿")
+    cx = to_combined_csv(items, {"excel": True})
+    assert cx.startswith("﻿project") and "'@p" in cx and "'=1+1" in cx
