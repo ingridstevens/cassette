@@ -4,6 +4,8 @@ const api = {
   pickFiles: (): Promise<string[]> => ipcRenderer.invoke("pick-file"),
   loadProjects: (): Promise<{ projects: unknown[]; recoveredFrom?: string; recoveredAt?: number; corruptCopy?: string }> => ipcRenderer.invoke("projects-load"),
   saveProjects: (data: unknown): Promise<{ ok: boolean; error?: string }> => ipcRenderer.invoke("projects-save", data),
+  /** Blocks until the file is written: used when the window closes, where an async save would be lost. */
+  saveProjectsSync: (data: unknown): boolean => ipcRenderer.sendSync("projects-save-sync", data),
   saveSidecar: (audioPath: string, data: unknown): Promise<{ ok: boolean; path?: string; error?: string }> => ipcRenderer.invoke("save-sidecar", audioPath, data),
   readAudio: (path: string): Promise<Uint8Array | null> => ipcRenderer.invoke("read-audio", path),
   transcribe: (opts: Record<string, unknown>): Promise<string> => ipcRenderer.invoke("transcribe", opts),

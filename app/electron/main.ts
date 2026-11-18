@@ -259,6 +259,10 @@ app.whenReady().then(() => {
   ipcMain.handle("projects-save", (_e, data: unknown) => {
     try { projectsStore.save(data); return { ok: true }; } catch (e) { return { ok: false, error: String((e as Error).message) }; }
   });
+  // Synchronous flush for beforeunload: the 400 ms debounced save would not get to run when the window closes.
+  ipcMain.on("projects-save-sync", (e, data: unknown) => {
+    try { projectsStore.save(data); e.returnValue = true; } catch { e.returnValue = false; }
+  });
   // Writes <audio name>.transcript.json beside the audio file (optional setting in the app).
   ipcMain.handle("save-sidecar", (_e, audioPath: string, data: unknown) => {
     if (!mediaFile(audioPath)) return { ok: false, error: "Unsupported or missing recording" };
