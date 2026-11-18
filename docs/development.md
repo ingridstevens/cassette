@@ -54,7 +54,7 @@ Inference runs with offline mode on (`HF_HUB_OFFLINE=1`); only `models download`
   `disk-free`, `peaks`, projects load/save). Keep handlers small and validate arguments.
 - `app/electron/preload.ts`: the only bridge (`window.api`).
 - `app/src/useProjects.ts`: project list, persistence, the one-at-a-time queue, engine events.
-- `app/src/components/`: `ProjectView` (transcript, player, toolbar), `Inspector` (Speakers / Highlights / Options / Info), `HighlightsTab` (highlights, suggestions, audio clips, summary),
+- `app/src/components/`: `ProjectView` (transcript, player, toolbar), `Inspector` (Speakers / AI / Details), `HighlightsTab` (highlights, suggestions, audio clips, summary),
   `Transcript` (lines, editing, chapters), `ReviewBar` (review mode), `ExportMenu` and `ExportOptions`, `Setup` (first
   launch), `settings/` (Settings screens), `Activity` (status pill). `ShareCard.tsx` and `shareCardLib.ts` (a "who talks the most"
   picture) exist but are not wired into the UI yet.

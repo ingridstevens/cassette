@@ -4,6 +4,7 @@ import { useT } from "../i18n";
 import { Highlight, ModelStatus, PALETTE, Project, Summary, SummaryItem, bytes, displayName, fmt } from "../types";
 import { scrollToTurn } from "../windowing";
 import { setLlm, useLlm } from "./llmChoice";
+import Hint from "../Hint";
 import { useModels } from "./useModels";
 import "../styles/project.css";
 
@@ -108,7 +109,7 @@ export default function HighlightsTab({ project, visible, job, error, onSuggest,
     <div className="pv-col pv-hl">
       <section aria-labelledby="hl-title">
         <div className="pv-hl-titlerow"><h3 id="hl-title">{t("Highlights")}</h3><span className="note">{t("{count} kept", { count: kept.length })}</span></div>
-        <p className="note">{t("Select words in the transcript and choose “Highlight this passage”, or let the language model suggest some. Use them for soundbites, quotes and show notes.")}</p>
+        <Hint id="highlights">{t("Select words in the transcript and choose “Highlight this passage”, or let the language model suggest some. Use them for soundbites, quotes and show notes.")}</Hint>
         {llm?.available && (
           <label className="field">{t("Language model")}
             <select className="input" value={model} onChange={(e) => setLlm(e.target.value)} disabled={running}>
@@ -174,7 +175,7 @@ export default function HighlightsTab({ project, visible, job, error, onSuggest,
 
       <section aria-labelledby="sum-title" className="pv-sum">
         <div className="pv-hl-titlerow"><h3 id="sum-title">{t("Summary")}</h3></div>
-        <p className="note">{t("A short summary with topics, decisions and tasks. It goes into the meeting minutes when you export them.")}</p>
+        <Hint id="summary">{t("A short summary with topics, decisions and tasks. It goes into the meeting minutes when you export them.")}</Hint>
         {llm?.available && have && (running && job?.kind === "summarize" ? progress(t("Writing the summary…")) : (
           <button type="button" className={"btn small pv-hl-go" + (summary ? "" : " sun")} disabled={running} onClick={() => onSummarize(model)}>{summary ? t("Write it again") : t("Write a summary")}</button>
         ))}

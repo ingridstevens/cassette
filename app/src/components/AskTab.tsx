@@ -3,6 +3,7 @@ import { useT } from "../i18n";
 import { ModelStatus, Project, bytes, displayName, fmt } from "../types";
 import { LlmJob } from "./HighlightsTab";
 import { setLlm, useLlm } from "./llmChoice";
+import Hint from "../Hint";
 import { useModels } from "./useModels";
 import "../styles/project.css";
 
@@ -102,7 +103,7 @@ export default function AskTab({ project, visible, thread, job, onAsk, onStop, o
         {thread.length === 0 ? (
           <div className="pv-ask-empty">
             <h3>{t("What do you want to know about this recording?")}</h3>
-            <p className="note">{t("Ask in your own words. Every answer points to the lines it came from, so you can check it.")}</p>
+            <Hint id="ask">{t("Ask in your own words. Every answer points to the lines it came from, so you can check it.")}</Hint>
             {have && (
               <div className="pv-ask-sugg">
                 {suggestions.map(([q, tag]) => <button key={q} type="button" disabled={!!job} onClick={() => send(q)}><span>{q}</span><i>{tag}</i></button>)}

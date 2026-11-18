@@ -6,9 +6,11 @@ import { Models } from "./useModels";
 import { WHISPER_MODELS, modelName } from "./modelInfo";
 import { langName } from "../languages";
 import { FILE_MANAGER, ModelStatus, Options, PALETTE, Project, baseName, bytes, defaultName, displayName, fmt, revertLine } from "../types";
+import Hint from "../Hint";
+import { Tab, TABS, legacyAiPart } from "../hints";
 import "../styles/project.css";
 
-export type Tab = "speakers" | "highlights" | "ask" | "options" | "info";
+export type { Tab };
 export interface Moved { from: string; to: string; idx: number }
 
 const SMALL_MODELS = ["tiny", "base", "small"];
@@ -55,8 +57,10 @@ interface Props {
 
 export default function Inspector({ project, tab, onTab, visible, moved, onMoveAll, onUndo, canTranscribe, onAskAgain, onPatch, onOpenSettings, models, highlightsPanel, askPanel, onShowLine }: Props) {
   const t = useT();
-  const ids = { speakers: useId(), highlights: useId(), ask: useId(), options: useId(), info: useId() };
-  const tabs: [Tab, string][] = [["speakers", "Speakers"], ["highlights", "Highlights"], ["ask", "Ask"], ["options", "Options"], ["info", "Info"]];
+  const ids = { speakers: useId(), ai: useId(), details: useId() };
+  const labels: Record<Tab, string> = { speakers: "Speakers", ai: "AI", details: "Details" };
+  const tabs: [Tab, string][] = TABS.map((id) => [id, labels[id]]);
+  const [part, setPart] = useState<"highlights" | "ask">(() => legacyAiPart(tab));
   const move = (e: React.KeyboardEvent, i: number) => {
     const n = e.key === "ArrowRight" ? (i + 1) % tabs.length : e.key === "ArrowLeft" ? (i + tabs.length - 1) % tabs.length : -1;
     if (n < 0) return;
@@ -72,12 +76,47 @@ export default function Inspector({ project, tab, onTab, visible, moved, onMoveA
       </div>
       <div className="pv-tab" id={ids[tab]} role="tabpanel" aria-labelledby={ids[tab] + "-tab"}>
         {tab === "speakers" && <Speakers project={project} moved={moved} onMoveAll={onMoveAll} onUndo={onUndo} onPatch={onPatch} />}
-        {tab === "highlights" && highlightsPanel}
-        {tab === "ask" && askPanel}
-        {tab === "options" && <OptionsTab project={project} visible={visible} canTranscribe={canTranscribe} onAskAgain={onAskAgain} onPatch={onPatch} onOpenSettings={onOpenSettings} models={models} />}
-        {tab === "info" && <Info project={project} onPatch={onPatch} onShowLine={onShowLine} />}
+        {tab === "ai" && <AiTab part={part} onPart={setPart} highlightsPanel={highlightsPanel} askPanel={askPanel} />}
+        {tab === "details" && (
+          <div className="pv-col pv-details">
+            <section aria-labelledby={ids.details + "-opt"}>
+              <h3 id={ids.details + "-opt"}>{t("Options")}</h3>
+              <OptionsTab project={project} visible={visible} canTranscribe={canTranscribe} onAskAgain={onAskAgain} onPatch={onPatch} onOpenSettings={onOpenSettings} models={models} />
+            </section>
+            <section aria-labelledby={ids.details + "-info"}>
+              <h3 id={ids.details + "-info"}>{t("Info")}</h3>
+              <Info project={project} onPatch={onPatch} onShowLine={onShowLine} />
+            </section>
+          </div>
+        )}
       </div>
     </aside>
+  );
+}
+
+/** Highlights (with the summary) and Ask: optional and run by a language model on this computer. A second, smaller set of tabs switches between them. */
+function AiTab({ part, onPart, highlightsPanel, askPanel }: { part: "highlights" | "ask"; onPart(p: "highlights" | "ask"): void; highlightsPanel?: ReactNode; askPanel?: ReactNode }) {
+  const t = useT();
+  const base = useId();
+  const parts: ["highlights" | "ask", string][] = [["highlights", t("Highlights and summary")], ["ask", t("Ask")]];
+  const move = (e: React.KeyboardEvent, i: number) => {
+    const n = e.key === "ArrowRight" ? (i + 1) % parts.length : e.key === "ArrowLeft" ? (i + parts.length - 1) % parts.length : -1;
+    if (n < 0) return;
+    e.preventDefault(); onPart(parts[n][0]); document.getElementById(`${base}-${parts[n][0]}-tab`)?.focus();
+  };
+  return (
+    <div className="pv-ai">
+      <p className="note pv-ai-scope">{t("Optional, runs on this computer")}</p>
+      <div className="tabs pv-subtabs" role="tablist" aria-label={t("AI sections")}>
+        {parts.map(([id, label], i) => (
+          <button key={id} id={`${base}-${id}-tab`} role="tab" type="button" aria-selected={part === id} aria-controls={`${base}-panel`} tabIndex={part === id ? 0 : -1}
+            onClick={() => onPart(id)} onKeyDown={(e) => move(e, i)}>{label}</button>
+        ))}
+      </div>
+      <div id={`${base}-panel`} role="tabpanel" aria-labelledby={`${base}-${part}-tab`}>
+        {part === "highlights" ? highlightsPanel : askPanel}
+      </div>
+    </div>
   );
 }
 
@@ -156,7 +195,7 @@ function OptionsTab({ project, visible, canTranscribe, onAskAgain, onPatch, onOp
   const suggestion = modelSuggestion(eff, meta, foundCodes, status);
   return (
     <div className="pv-col pv-options">
-      <div className="note">{t("These apply to this project the next time you transcribe it.")}</div>
+      <Hint id="options">{t("These apply to this project the next time you transcribe it.")}</Hint>
       {suggestion && (
         <div className="pv-moved" role="status">
           <b>{suggestion.reason === "mixed" ? t("Several languages in one recording are hard for a small model.") : suggestion.reason === "weak" ? t("Some of these languages need a bigger model to be written down well.") : t("The language was hard to recognise.")}</b>
@@ -257,7 +296,7 @@ function Changes({ project, onPatch, onShowLine }: { project: Project; onPatch(p
   return (
     <section className="pv-changes" aria-labelledby="pv-changes-h">
       <h3 id="pv-changes-h">{changed.length === 1 ? t("1 line changed by you") : changed.length ? t("{count} lines changed by you", { count: changed.length }) : t("Changes by you")}</h3>
-      {changed.length === 0 && <p className="note">{t("No line has been changed yet. Every change you make is listed here with what the model heard, and can be put back.")}</p>}
+      {changed.length === 0 && <Hint id="changes">{t("No line has been changed yet. Every change you make is listed here with what the model heard, and can be put back.")}</Hint>}
       <ul>
         {changed.map(({ s, i }) => (
           <li key={i}>

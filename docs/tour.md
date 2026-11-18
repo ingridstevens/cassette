@@ -57,12 +57,12 @@ Search the transcript, or **Replace** a misheard word everywhere. → [Search an
 
 ## 5. Options and information
 
-The **Options** tab holds what applies the next time you transcribe the project: languages, model, number of speakers, translation, hesitations, silence, vocabulary.
+The **Details** tab starts with **Options**, which hold what applies the next time you transcribe the project: languages, model, number of speakers, translation, hesitations, silence, vocabulary.
 → [Options (per project)](using-the-app.md#options-per-project)
 
 ![The Options tab](screenshots/11-options.jpg)
 
-The **Info** tab says what file this is, which models ran and how long each step took.
+Below them, **Info** says what file this is, which models ran and how long each step took.
 
 ![The Info tab](screenshots/12-info.jpg)
 
