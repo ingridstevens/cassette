@@ -8,6 +8,7 @@ import { EngineEvent, cancelJob, killAllJobs, runEngine } from "./engine-client"
 import { redactNames } from "./logRedact";
 import { registerLive } from "./live";
 import { createKnownPaths } from "./knownPaths";
+import { EXPORT_FORMATS, isNum, modelsOk, safeName, saveClipOk, speakerCount, transcribeProblem } from "./validate";
 import { isAppNavigation } from "./navGuard";
 import { createProjectsStore } from "./projectsStore";
 
@@ -205,19 +206,20 @@ app.whenReady().then(() => {
 
   ipcMain.handle("transcribe", async (_e, opts: Record<string, unknown>) => {
     if (!mediaFile(opts?.input)) throw new Error("Unsupported or missing recording");
+    const bad = transcribeProblem(opts); if (bad) throw new Error(bad);
     const jobId = randomUUID();
     const a = ["transcribe", String(opts.input), "--model", String(opts.model), "--language", String(opts.language)];
     const range = opts.numSpeakers === "range";
-    if (range) { a.push("--min-speakers", String(opts.minSpeakers ?? "2"), "--max-speakers", String(opts.maxSpeakers ?? "4")); }
+    if (range) { a.push("--min-speakers", String(speakerCount(opts.minSpeakers) ?? 2), "--max-speakers", String(speakerCount(opts.maxSpeakers) ?? 4)); }
     if (opts.language === "auto") a.push("--mixed-languages", opts.multilingual === true ? "on" : opts.multilingual === false ? "off" : "auto");
     if (typeof opts.detectModel === "string" && /^[a-z0-9-]{1,20}$/.test(opts.detectModel)) a.push("--detect-model", opts.detectModel);
     if (opts.translate) a.push(typeof opts.translateTo === "string" && /^[a-zA-Z-]{2,8}$/.test(opts.translateTo) && opts.translateTo !== "en" ? "--translate-to" : "--translate", ...(typeof opts.translateTo === "string" && /^[a-zA-Z-]{2,8}$/.test(opts.translateTo) && opts.translateTo !== "en" ? [opts.translateTo] : []));
     if (opts.whisperEngine === "faster") a.push("--backend", "faster");
     if (opts.verbatim) a.push("--verbatim");
-    for (const k of ["numSpeakers", "start", "end"] as const) {
-      if (k === "numSpeakers" && range) continue;
-      if (opts[k] != null && opts[k] !== "") a.push(`--${k.replace(/[A-Z]/g, (c) => "-" + c.toLowerCase())}`, String(opts[k]));
-    }
+    const nSpeakers = speakerCount(opts.numSpeakers);
+    if (!range && nSpeakers) a.push("--num-speakers", String(nSpeakers));
+    if (isNum(opts.start)) a.push("--start", String(opts.start));
+    if (isNum(opts.end)) a.push("--end", String(opts.end));
     if (opts.device && opts.device !== "auto") a.push("--device", String(opts.device));
     if (opts.vad) a.push("--vad");
     if (opts.prompt) a.push(`--prompt=${String(opts.prompt).slice(0, 2000)}`); // "=" form: a value starting with "-" would be read as an option
@@ -236,6 +238,7 @@ app.whenReady().then(() => {
     return await runEngine(randomUUID(), ["models", "import", r.filePaths[0]], baseEnv(), () => {}) as EngineEvent | null;
   });
   ipcMain.handle("models", async (_e, action: string, name?: string) => {
+    if (!modelsOk(action, name)) throw new Error("Unsupported model action");
     const a = ["models", action, ...(name ? [name] : [])];
     const env: Record<string, string> = { ...baseEnv() };
     if ((name === "diarization" && action === "download") || action === "check") env.HF_TOKEN = readToken();
@@ -306,8 +309,9 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle("export", async (_e, payload: { segments: unknown[]; speakers: Record<string, string> }, format: string, defaultName: string) => {
+    if (typeof format !== "string" || !EXPORT_FORMATS.has(format)) return { ok: false, error: "Unsupported export format." };
     const ext = ({ chapters: "txt", quotes: "txt", highlights: "docx", changes: "txt", redacted: "txt", minutes: "docx", "combined-csv": "csv" } as Record<string, string>)[format] ?? format; // the engine format id differs from the file extension for chapters
-    const r = await dialog.showSaveDialog({ defaultPath: `${defaultName}.${ext}`, filters: [{ name: ext.toUpperCase(), extensions: [ext] }] });
+    const r = await dialog.showSaveDialog({ defaultPath: `${safeName(defaultName, "Transcript")}.${ext}`, filters: [{ name: ext.toUpperCase(), extensions: [ext] }] });
     if (r.canceled || !r.filePath) return { cancelled: true };
     const args = ["--format", format];
     if (format === "redacted") { // the key maps P01 back to real names, so it goes to a second place, away from the anonymised text
@@ -371,6 +375,7 @@ app.whenReady().then(() => {
   });
 
   ipcMain.handle("save-clip", async (_e, input: string, start: number, end: number) => {
+    if (!mediaFile(input) || !saveClipOk(start, end)) return null;
     // the engine re-encodes to the extension of the chosen file, so the save dialog offers the same formats as "Audio clips as"
     const FORMATS = [["MP3", "mp3"], ["M4A", "m4a"], ["WAV", "wav"]] as const;
     const src = path.extname(input).slice(1).toLowerCase();
