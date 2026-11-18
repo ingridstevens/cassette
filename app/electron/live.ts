@@ -2,6 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { app, ipcMain, systemPreferences } from "electron";
+import type { KnownPaths } from "./knownPaths";
 import { EngineEvent, endJobInput, runEngine, writeToJob } from "./engine-client";
 
 const RATE = 16000;
@@ -31,7 +32,7 @@ let current: Session | null = null;
 
 /** Live recording: the window sends 16 kHz mono 16-bit microphone audio; this feeds it to the engine's `live` command
  *  and also writes it to disk, so a crash or a failing engine never loses the recording. */
-export function registerLive(send: (channel: string, payload: unknown) => void, env: () => Record<string, string>) {
+export function registerLive(send: (channel: string, payload: unknown) => void, env: () => Record<string, string>, known: KnownPaths) {
   ipcMain.handle("live-start", async (_e, o: { model?: unknown; language?: unknown; whisperEngine?: unknown; device?: unknown }) => {
     if (current) return { ok: false, error: "A recording is already running." };
     if (process.platform === "darwin" && !(await systemPreferences.askForMediaAccess("microphone"))) return { ok: false, error: "denied" };
@@ -68,6 +69,7 @@ export function registerLive(send: (channel: string, payload: unknown) => void, 
     try { wav = await pcmToWav(s.pcmPath); } catch (err) { return { ok: false, error: String(err).slice(0, 200) }; }
     await Promise.race([s.done, new Promise((r) => setTimeout(r, 15000))]); // let the last words reach the window
     if (s.peak < 100) { fs.rmSync(wav, { force: true }); return { ok: false, error: "silent" }; } // about -50 dB: the microphone gave nothing, so there is nothing to transcribe
+    known.add([wav]);
     return { ok: true, path: wav, seconds: s.bytes / (RATE * 2), name: s.name };
   });
   /** Recordings a crash left behind as .pcm: turn each into a .wav (skipping the one running now and anything under 1 s) and return the paths. */
@@ -78,7 +80,7 @@ export function registerLive(send: (channel: string, payload: unknown) => void, 
     for (const f of fs.readdirSync(dir).filter((f) => f.endsWith(".pcm"))) {
       const p = path.join(dir, f);
       if (current?.pcmPath === p || fs.statSync(p).size < RATE * 2) continue;
-      try { out.push(await pcmToWav(p)); } catch { /* leave it for next time */ }
+      try { const w = await pcmToWav(p); known.add([w]); out.push(w); } catch { /* leave it for next time */ }
     }
     return out;
   });
