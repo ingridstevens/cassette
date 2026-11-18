@@ -52,4 +52,6 @@ Also done after the list: **provenance in the JSON export** (Jonas, Dev). The JS
 
 Also done: **log controls** (Okafor): Settings, Privacy can switch the activity log off and clear the file. Not done: hiding file names inside the log, retention timers.
 
+Also done: **network tripwire and source column** (Dev): a test that fails when network-capable code or a new web address appears outside the known places, and a "Where in the code" column in Settings, Privacy, Every network call.
+
 Held back for now: password lock, burned-in captions, share cards, headless command line (each needs a design decision).
