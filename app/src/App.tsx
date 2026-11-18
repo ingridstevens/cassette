@@ -106,8 +106,16 @@ export default function App() {
   const [removing, setRemoving] = useState<string | null>(null);
   const removingProject = P.projects.find((p) => p.id === removing);
 
+  // First thing a keyboard or screen-reader user can tab to: skip the sidebar and the toolbar, and land on the first line of the transcript.
+  const skipToTranscript = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const first = document.querySelector<HTMLElement>(".pview:not([hidden]) [data-turn] .pv-time");
+    first?.focus(); first?.scrollIntoView({ block: "center" });
+  };
+
   return (
     <>
+      {page === "main" && <a href="#transcript" className="skip-link" onClick={skipToTranscript}>{t("Skip to the transcript")}</a>}
       <div className={"shell" + (dragging ? " dragging" : "")} hidden={page === "settings"} onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={(e) => { if (e.currentTarget === e.target) setDragging(false); }} onDrop={onDrop}>
         <ProjectSidebar projects={P.projects} activeId={P.activeId} progress={P.progress} blocker={blocker}
           onSelect={(id) => { P.setActiveId(id); setPage("main"); }} onAdd={pick} onRecord={() => setPage("record")} onRemove={(id) => setRemoving(id)} onRename={P.rename} onTranscribeAll={P.transcribeAll} doneCount={P.projects.filter((p) => p.result).length} onExportAll={() => window.api.exportTranscript({ projects: P.projects.filter((p) => p.result).map((p) => ({ name: p.name, segments: p.result!.segments.map(({ words: _w, orig: _o, ...s }) => s), speakers: Object.fromEntries(p.result!.speakers.map((s) => [s, displayName(s, p.result!.speakers, p.names)])) })) }, "combined-csv", "all-projects")} onOpenSettings={() => openSettings()} playingId={playingId}

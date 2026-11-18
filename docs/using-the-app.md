@@ -226,11 +226,16 @@ on disk. Model sizes that haven't been downloaded yet are approximate ("≈").
 
 ## Keyboard summary
 
+The first thing you reach with `Tab` is **Skip to the transcript**, which appears at the top left while it has focus and moves you to the first line, past the sidebar and the toolbar.
+
 | Keys | Does |
 | --- | --- |
 | `Space`, `K` | Play / pause |
 | `J`, `L` | Back / forward 10 seconds |
 | `N`, `Shift+N` | Move to the next / previous line from a different speaker. The line scrolls into view, nothing plays, and a screen reader announces its number, speaker, time and text |
+| `O`, `Shift+O` | Next / previous overlap (a line where two people talk at once). Same announcing as `N` |
+| `M`, `Shift+M` | Next / previous marked line |
+| `C`, `Shift+C` | Next / previous chapter |
 | `G` | Go to a time: type `12:30` (or `1:02:03`, or seconds) and press `Enter` to land on the line at that time |
 | `?` | Show this list of shortcuts |
 | `⌘F` / `Ctrl+F` | Find in the transcript (**Replace** opens next to it) |
