@@ -4,6 +4,7 @@
   .pv-menu, .pv-pop, .menu, .setup-overlay { display: none !important; }
   html, body { background: #fff !important; height: auto !important; overflow: visible !important; }
   .shell, .main, .main-body, .pview, .pview-main, .pv-scroll { display: block !important; height: auto !important; min-height: 0 !important; overflow: visible !important; position: static !important; background: none !important; padding: 0 !important; margin: 0 !important; }
+  .shell { container-type: normal !important; } /* a size container could keep the transcript from flowing over pages */
   .pview[hidden], .shell[hidden] { display: none !important; }
   .pv-rows { display: block !important; }
   .pv-turn { break-inside: avoid; box-shadow: none !important; background: none !important; border-left: 0 !important; max-width: none; padding: 6px 0; color: #000; }

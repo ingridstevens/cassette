@@ -544,8 +544,14 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
     );
   }
 
+  // Narrow windows (or large text): the inspector is a drawer opened from the header. The CSS decides when; this only tracks open or closed.
+  const [drawer, setDrawer] = useState(false);
+  const drawerBtn = useRef<HTMLButtonElement>(null);
+  const closeDrawer = () => { setDrawer(false); drawerBtn.current?.focus(); };
+  const inspectorId = "pv-inspector-" + project.id;
+
   return (
-    <div hidden={!visible} className={"pview" + (review ? " reviewing" : "")}>
+    <div hidden={!visible} className={"pview" + (review ? " reviewing" : "") + (drawer ? " insp-open" : "")}>
       <div className="pv-sr" role="status" aria-live="polite" aria-atomic="true">{announce}</div>
       {jumpDialog === "keys" && visible && <ShortcutSheet onClose={() => setJumpDialog(null)} />}
       {jumpDialog === "goto" && visible && <GoToTime duration={duration || result?.duration || 0} onGo={goToTime} onClose={() => setJumpDialog(null)} />}
@@ -578,6 +584,9 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
               <ExportMenu openSignal={exportSignal} lastExport={project.lastExport} defaultFormat={defaultExport} onRemember={(format, options) => onExported?.({ format, options })} hasChapters={result!.segments.some((s) => !!s.chapter?.trim())} markedCount={result!.segments.filter((s) => s.marked).length + keptHighlights.length} onExport={(f, o) => f === "print" || f === "print-large" ? window.api.printPdf(project.name, f === "print-large") : window.api.exportTranscript(payload(f, o), f, project.name)} />
             </>
           )}
+          <button ref={drawerBtn} type="button" className={"btn icon quiet pv-insp-toggle" + (drawer ? " on" : "")} aria-expanded={drawer} aria-controls={inspectorId} aria-label={drawer ? t("Hide inspector") : t("Show inspector")} title={drawer ? t("Hide inspector") : t("Show inspector")} onClick={() => (drawer ? closeDrawer() : setDrawer(true))}>
+            <svg className="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3" /><path d="M15 4v16" /></svg>
+          </button>
         </header>
 
         {showResult && q && (
@@ -714,7 +723,8 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
         {notice && <div className="toast" role="status"><span>{notice}</span></div>}
       </section>
 
-      <Inspector project={project} tab={tab} onTab={setTab} visible={visible} moved={moved} onMoveAll={moveAll} onUndo={undo}
+      <div className="pv-insp-scrim" aria-hidden onClick={closeDrawer} />
+      <Inspector id={inspectorId} drawerOpen={drawer} onDrawerClose={closeDrawer} project={project} tab={tab} onTab={setTab} visible={visible} moved={moved} onMoveAll={moveAll} onUndo={undo}
         canTranscribe={canTranscribe} onAskAgain={again} onPatch={onPatch} onOpenSettings={onOpenSettings} models={models} onShowLine={showLine}
         askPanel={<AskTab project={project} visible={visible} thread={askThread} job={llmJob} onAsk={runAsk}
           onStop={() => { askStopped.current = true; void window.api.cancel(llmId.current); }} onClear={() => setAskThread([])} onShow={showLine} />}

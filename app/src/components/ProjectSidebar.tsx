@@ -61,6 +61,7 @@ export default function ProjectSidebar({ projects, activeId, progress, blocker, 
                   onKeyDown={(e) => { if (e.key === "F2") setEditing(p.id); }}
                   aria-current={p.id === activeId ? "page" : undefined} title={`${p.path}\n${t("Double-click or press F2 to rename")}`}>
                   <span className={"st " + DOT[p.status]} aria-hidden />
+                  <span className="nav-ini" aria-hidden>{[...p.name.trim()][0]?.toUpperCase() ?? "·"}</span>
                   <span className="grow"><b>{p.name}</b><small>{sub}</small>
                     {p.status === "running" && <div className="minibar" role="progressbar" aria-label={t("Progress for {name}", { name: p.name })} aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct ?? undefined}><i style={{ width: `${pct ?? 5}%` }} /></div>}
                   </span>
