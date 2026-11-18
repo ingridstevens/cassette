@@ -36,6 +36,7 @@ packages = ["src/engine"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["needs_ml: needs torch, faster-whisper or another ML library; deselect with -m \"not needs_ml\" in a light environment"]
 
 [tool.ruff]
 line-length = 140
