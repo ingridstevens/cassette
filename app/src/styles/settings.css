@@ -211,3 +211,12 @@ kbd { font: 12.5px ui-monospace, Menlo, monospace; padding: 2px 8px; border-radi
 .st-check.warn b { color: var(--warn-ink); }
 .st-check.bad { box-shadow: inset 0 0 0 2px var(--danger); }
 .st-check.bad b { color: var(--danger); }
+
+/* The network-call table has four text columns: top-aligned, the code paths wrap inside their column instead of running past the card. */
+.st-net th, .st-net td { vertical-align: top; padding: 10px 10px 10px 0; }
+.st-net thead th { vertical-align: bottom; }
+.st-net th[scope="row"] { white-space: nowrap; }
+.st-net td:nth-child(2), .st-net td:nth-child(3) { width: 26%; }
+.st-net td:nth-child(4) { width: 28%; }
+.st-net td:nth-child(4) code { overflow-wrap: anywhere; font-size: 12px; }
+.st-net td small { display: block; }

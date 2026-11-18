@@ -8,6 +8,9 @@ import { bytes } from "../../types";
 
 interface Props { models: Models }
 
+/** A file path that can wrap after a slash instead of in the middle of a word. */
+const Path = ({ p }: { p: string }) => <code>{p.split("/").map((part, i, all) => <span key={i}>{part}{i < all.length - 1 ? <>/<wbr /></> : null}</span>)}</code>;
+
 export default function PrivacySection({ models }: Props) {
   const t = useT();
   // The hook has no way to clear its token state, so this section keeps its own copy and re-reads it from the main process.
@@ -56,13 +59,13 @@ export default function PrivacySection({ models }: Props) {
 
       <div className="card st-card" role="region" aria-labelledby="pv-net">
         <h2 id="pv-net">{t("Every network call")}</h2>
-        <div className="tbl-wrap"><table className="st-table"><caption className="st-sr">{t("Every network call")}</caption>
+        <div className="tbl-wrap"><table className="st-table st-net"><caption className="st-sr">{t("Every network call")}</caption>
           <thead><tr><th scope="col">{t("Where")}</th><th scope="col">{t("When")}</th><th scope="col">{t("What is sent")}</th><th scope="col">{t("Where in the code")}</th></tr></thead>
           <tbody>
-            <tr><th scope="row"><code>huggingface.co</code></th><td>{t("You press Download on a model")}</td><td>{t("The model name. Your token, if you saved one.")}</td><td><code>engine/src/engine/models.py</code> <small>_fetch</small></td></tr>
-            <tr><th scope="row"><code>huggingface.co</code></th><td>{t("You save a token, or the app checks it")}</td><td>{t("The token, to see if it is valid and which model pages you accepted.")}</td><td><code>engine/src/engine/models.py</code> <small>check_access</small></td></tr>
-            <tr><th scope="row"><code>download.moonshine.ai</code></th><td>{t("You press Download on a Moonshine model")}</td><td>{t("The language.")}</td><td><code>engine/src/engine/asr_moonshine.py</code></td></tr>
-            <tr><th scope="row"><code>huggingface.co</code></th><td>{t("You press Open the token page or Open the two model pages")}</td><td>{t("Nothing: your browser opens the page. The app opens only huggingface.co pages.")}</td><td><code>app/electron/main.ts</code> <small>open-external</small></td></tr>
+            <tr><th scope="row"><code>huggingface.co</code></th><td>{t("You press Download on a model")}</td><td>{t("The model name. Your token, if you saved one.")}</td><td><Path p="engine/src/engine/models.py" /> <small>_fetch</small></td></tr>
+            <tr><th scope="row"><code>huggingface.co</code></th><td>{t("You save a token, or the app checks it")}</td><td>{t("The token, to see if it is valid and which model pages you accepted.")}</td><td><Path p="engine/src/engine/models.py" /> <small>check_access</small></td></tr>
+            <tr><th scope="row"><code>download.moonshine.ai</code></th><td>{t("You press Download on a Moonshine model")}</td><td>{t("The language.")}</td><td><Path p="engine/src/engine/asr_moonshine.py" /></td></tr>
+            <tr><th scope="row"><code>huggingface.co</code></th><td>{t("You press Open the token page or Open the two model pages")}</td><td>{t("Nothing: your browser opens the page. The app opens only huggingface.co pages.")}</td><td><Path p="app/electron/main.ts" /> <small>open-external</small></td></tr>
           </tbody></table></div>
         <p className="note">{t("Every network call is listed here. Nothing else leaves this computer. This comes from reading the app's code, not from an independent audit.")}</p>
         <p className="note">{t("A test in the project (engine/tests/test_network_surface.py) fails if code that can reach the network appears in a new place or a new web address is written into the app. It is a tripwire, not an audit.")}</p>
