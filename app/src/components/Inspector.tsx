@@ -46,7 +46,7 @@ function addedLabel(ts: number, t: TFn) {
 interface Props {
   project: Project; tab: Tab; onTab(t: Tab): void; visible: boolean;
   moved: Moved | null; onMoveAll(): void; onUndo(): void;
-  canTranscribe: boolean; onAskAgain(): void; onPatch(p: Partial<Project>): void; onOpenSettings?(section?: string): void; models: Models;
+  canTranscribe: boolean; onAskAgain(): void; onPatch(p: Partial<Project>, label?: string, merge?: boolean): void; onOpenSettings?(section?: string): void; models: Models;
   /** The Highlights and Ask tabs (built by the project view, which owns the language-model jobs). */
   highlightsPanel?: ReactNode; askPanel?: ReactNode;
   /** Scroll to and mark a line of the transcript (used by the list of changes in Info). */
@@ -108,7 +108,7 @@ function Speakers({ project, moved, onMoveAll, onUndo, onPatch }: Pick<Props, "p
           <div className="pv-spk-head">
             <span className="sw" style={{ background: PALETTE[s.index % PALETTE.length] }} aria-hidden />
             <input className="pv-namefield" value={names[s.id] ?? ""} placeholder={defaultName(s.id, result.speakers)} aria-label={t("Name for speaker {number}", { number: s.index + 1 })}
-              onChange={(e) => onPatch({ names: { ...names, [s.id]: e.target.value } })} />
+              onChange={(e) => onPatch({ names: { ...names, [s.id]: e.target.value } }, t("rename a speaker"), true)} />
             <span className="note">{s.turns === 1 ? t("{count} turn", { count: s.turns }) : t("{count} turns", { count: s.turns })}</span>
           </div>
           <div className="pv-bar" aria-hidden><i style={{ width: `${s.pct}%`, background: PALETTE[s.index % PALETTE.length] }} /></div>
@@ -203,7 +203,7 @@ function OptionRows({ eff, set, status, models, found, speakers, hasResult, onOp
   );
 }
 
-function Info({ project, onPatch, onShowLine }: { project: Project; onPatch(p: Partial<Project>): void; onShowLine?(index: number): void }) {
+function Info({ project, onPatch, onShowLine }: { project: Project; onPatch(p: Partial<Project>, label?: string, merge?: boolean): void; onShowLine?(index: number): void }) {
   const t = useT();
   const { result, meta, path } = project;
   const [size, setSize] = useState<number | null | undefined>(undefined);
@@ -240,11 +240,11 @@ function Info({ project, onPatch, onShowLine }: { project: Project; onPatch(p: P
 }
 
 /** Every line the user changed by hand: what the model heard, what it says now, and a way back. The transcript keeps the model's version (`orig`) for each. */
-function Changes({ project, onPatch, onShowLine }: { project: Project; onPatch(p: Partial<Project>): void; onShowLine?(index: number): void }) {
+function Changes({ project, onPatch, onShowLine }: { project: Project; onPatch(p: Partial<Project>, label?: string, merge?: boolean): void; onShowLine?(index: number): void }) {
   const t = useT();
   const result = project.result!;
   const changed = result.segments.map((s, i) => ({ s, i })).filter(({ s }) => s.edited && s.orig);
-  const putBack = (i: number) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => (k === i ? revertLine(s) : s)) } });
+  const putBack = (i: number) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => (k === i ? revertLine(s) : s)) } }, t("put a line back"));
   return (
     <section className="pv-changes" aria-labelledby="pv-changes-h">
       <h3 id="pv-changes-h">{changed.length === 1 ? t("1 line changed by you") : changed.length ? t("{count} lines changed by you", { count: changed.length }) : t("Changes by you")}</h3>

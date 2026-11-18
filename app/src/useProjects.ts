@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { recordSpeed } from "./estimate";
+import { History, emptyHistory, record, stepBack, stepForward } from "./history";
 import { currentLang, t } from "./i18n";
 import { DraftLine, FitAsk, JobProgress, MEDIA_EXT, Options, Project, Result, RunMeta, Segment, baseName, displayName, stripExt } from "./types";
 
@@ -29,6 +30,7 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   const jobs = useRef(new Map<string, { pid: string; range: Range; line?: LineRedo; trial?: boolean }>());      // engine jobId -> project
   const pending = useRef(new Map<string, { range: Range; line?: LineRedo; trial?: boolean; acceptFit?: boolean }>());                            // project -> range for its next run
   const projectsRef = useRef(projects); projectsRef.current = projects;
+  const history = useRef(new Map<string, History>());  // project -> undo and redo steps for transcript edits (kept while the app runs)
 
   const patch = useCallback((id: string, p: Partial<Project>) => setProjects((l) => l.map((x) => (x.id === id ? { ...x, ...p } : x))), []);
 
@@ -106,7 +108,7 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
 
   const remove = useCallback((id: string) => {
     const j = jobOf(id); if (j) window.api.cancel(j);
-    pending.current.delete(id);
+    pending.current.delete(id); history.current.delete(id);
     setProjects((l) => { const next = l.filter((p) => p.id !== id); setActiveId((a) => (a === id ? next[0]?.id ?? null : a)); return next; });
   }, []);
 
@@ -159,6 +161,7 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     } else if (e.type === "done") {
       jobs.current.delete(e.jobId);
       dropDraft();
+      history.current.delete(pid);  // the engine's transcript replaces the one the steps belong to
       setProgress((m) => { const { [pid]: _, ...rest } = m; return rest; });
       const r: Result = { language: e.language, duration: e.duration, speakers: e.speakers, segments: e.segments };
       const meta: RunMeta = { ...(e.meta ?? {}), finishedAt: Date.now() };
@@ -181,7 +184,25 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   }), [patch]);
 
   const open = useCallback((id: string | null) => { setActiveId(id); if (id) patch(id, { openedAt: Date.now() }); }, [patch]);
-  const edit = useCallback((id: string, p: Partial<Project>) => patch(id, { ...p, editedAt: Date.now() }), [patch]);
-  return { projects, notice, saveError, dismissNotice: () => setNotice(""), activeId, setActiveId: open, edit, progress, drafts, add, addAndTranscribe, remove, rename: (id: string, name: string) => patch(id, { name }), patch, transcribe, cancel,
+  /** Every user edit goes through here. An edit of the transcript or the speaker names can be undone; `label` says what it was, `merge` folds quick repeats (typing a name) into one step. */
+  const edit = useCallback((id: string, p: Partial<Project>, label?: string, merge?: boolean) => {
+    const cur = projectsRef.current.find((x) => x.id === id);
+    if (cur?.result && ("result" in p || "names" in p)) history.current.set(id, record(history.current.get(id) ?? emptyHistory(), { result: cur.result, names: cur.names }, label, Date.now(), merge));
+    patch(id, { ...p, editedAt: Date.now() });
+  }, [patch]);
+  const step = useCallback((id: string, f: typeof stepBack): string | null => {
+    const cur = projectsRef.current.find((x) => x.id === id);
+    const h = history.current.get(id);
+    if (!cur?.result || !h) return null;
+    const r = f(h, { result: cur.result, names: cur.names });
+    if (!r) return null;
+    history.current.set(id, r.h);
+    patch(id, { result: r.snap.result, names: r.snap.names, editedAt: Date.now() });
+    return r.snap.label ?? "";
+  }, [patch]);
+  /** Each returns the label of the edit it undid or redid (empty when it had none), or null when there was nothing to do. */
+  const undo = useCallback((id: string) => step(id, stepBack), [step]);
+  const redo = useCallback((id: string) => step(id, stepForward), [step]);
+  return { projects, notice, saveError, dismissNotice: () => setNotice(""), activeId, setActiveId: open, edit, undo, redo, progress, drafts, add, addAndTranscribe, remove, rename: (id: string, name: string) => patch(id, { name }), patch, transcribe, cancel,
     transcribeAll: () => projectsRef.current.filter((p) => p.status === "idle" || p.status === "error").forEach((p) => transcribe(p.id)) };
 }
