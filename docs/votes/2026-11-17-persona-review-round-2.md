@@ -56,4 +56,6 @@ Also done: **network tripwire and source column** (Dev): a test that fails when 
 
 Also done: **anonymisation report and key** (Jonas, Okafor): the anonymised export writes a report (counts, and capitalised words still in the text to check by hand; no real names) and a separate key file. Not done: a pseudonym table shared across interviews, finding names by a name detector.
 
+Also done: **a readable change list** (Mara): Info tab, "Changes by you": each changed line with what the model heard, what it says now, a jump to the line and a way back. Not done: a per-line "verified by ear" mark, a timeline of when each change was made.
+
 Held back for now: password lock, burned-in captions, share cards, headless command line (each needs a design decision).
