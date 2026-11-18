@@ -14,6 +14,7 @@ import Inspector, { Moved, Tab, globalOpts, liveSpeakers } from "./Inspector";
 import { Models } from "./useModels";
 import Transcript from "./Transcript";
 import { FIND_DEFAULTS, FindOpts, matcher, nearMisses } from "../find";
+import { scrollToTurn } from "../windowing";
 import Waveform, { WaveformHandle } from "./Waveform";
 import { GoToTime, ShortcutSheet } from "./JumpDialogs";
 
@@ -168,10 +169,10 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
     const seg = result?.segments[i];
     if (!seg) return;
     document.querySelectorAll("[data-cited]").forEach((el) => el.removeAttribute("data-cited"));
-    const el = document.querySelector(`.pview:not([hidden]) [data-turn="${i}"]`);
-    el?.scrollIntoView({ block: "center", behavior: "smooth" });
-    el?.setAttribute("data-cited", ""); // an attribute, not a class: React rewrites the line's class as playback moves
-    window.setTimeout(() => el?.removeAttribute("data-cited"), 6000);
+    void scrollToTurn(i).then((el) => {
+      el?.setAttribute("data-cited", ""); // an attribute, not a class: React rewrites the line's class as playback moves
+      window.setTimeout(() => el?.removeAttribute("data-cited"), 6000);
+    });
     player.current?.seek(seg.start);
   };
   const highlights = result?.highlights ?? [];
@@ -258,7 +259,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
     if (!result) return;
     const seg = result.segments[i];
     player.current?.seek(seg.start, false);
-    document.querySelector(`.pview:not([hidden]) [data-turn="${i}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+    void scrollToTurn(i);
     setAnnounce(t("Line {n} of {total}. {speaker}, {time}. {text}", { n: i + 1, total: result.segments.length, speaker: displayName(seg.speaker, result.speakers, project.names), time: fmt(seg.start), text: seg.text }));
   };
   const jumpSpeaker = (dir: 1 | -1) => {
@@ -378,7 +379,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
   const endReview = () => { window.clearTimeout(clipTimer.current); player.current?.pause(); setReview(false); };
   useEffect(() => { // bring the word into view and play the bit around it whenever the word under review changes
     if (!review || !reviewAt) return;
-    const show = window.setTimeout(() => document.querySelector(`.pview:not([hidden]) [data-turn="${reviewAt.seg}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" }), 80); // after the card has taken its space
+    const show = window.setTimeout(() => void scrollToTurn(reviewAt.seg), 80); // after the card has taken its space
     playAround(reviewAt);
     return () => { window.clearTimeout(clipTimer.current); window.clearTimeout(show); };
   // eslint-disable-next-line react-hooks/exhaustive-deps

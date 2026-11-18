@@ -2,6 +2,7 @@ import { sourceTime } from "../sourceLinks";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "../i18n";
 import { Highlight, ModelStatus, PALETTE, Project, Summary, bytes, displayName, fmt } from "../types";
+import { scrollToTurn } from "../windowing";
 import { setLlm, useLlm } from "./llmChoice";
 import { useModels } from "./useModels";
 import "../styles/project.css";
@@ -51,7 +52,7 @@ export default function HighlightsTab({ project, visible, job, error, onSuggest,
   const chooseFormat = (f: string) => { setFormat(f); try { localStorage.setItem(FORMAT_KEY, f); } catch { /* same */ } };
   const show = (start: number) => {
     const i = result.segments.findIndex((s) => start < s.end);
-    document.querySelector(`.pview:not([hidden]) [data-turn="${Math.max(0, i)}"]`)?.scrollIntoView({ block: "center", behavior: "smooth" });
+    void scrollToTurn(Math.max(0, i));
     onSeek(start);
   };
   // Decisions and action items have no time of their own: link each to the line it most likely came from (a clear match only).

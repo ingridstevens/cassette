@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useT } from "../i18n";
 import { MAIN_LANGS, WHISPER_LANGS, langName } from "../languages";
 import { Highlight, UnsureRef, isUnsure, PALETTE, Result, chapterDefault, displayName, fmt, wordIn, wordsInSelection } from "../types";
 import { onMenuKeyDown } from "./ExportMenu";
 import { FIND_DEFAULTS, FindOpts, matcher } from "../find";
+import { SCROLL_EVENT, ScrollJob, renderIndices, rowOffsets, spacerHeight, visibleRange } from "../windowing";
 import "../styles/project.css";
 
 interface Props {
@@ -17,13 +18,13 @@ interface Props {
 
 /** How long a click on a word waits for a possible second click before it starts playing (a typical double-click gap). */
 const DOUBLE_CLICK_MS = 260;
+/** Space between two lines (the .pv-rows gap), and how far past the visible area lines stay drawn, in px. */
+const GAP = 2, OVERSCAN = 700;
 
 export default function Transcript({ showLang, result, names, time, onSeek, onReassign, onEdit, onRevert, onChapter, onMark, onSplit, onJoin, onLanguage, onRetranscribe, onTranslate, playing, onPause, reviewAt = null, translatingIndex = null, canRetranscribe, highlights = [], onHighlight, query = "", findOpts = FIND_DEFAULTS, matchSeg = -1 }: Props) {
   const t = useT();
   const color = (sp: string) => PALETTE[Math.max(0, result.speakers.indexOf(sp)) % PALETTE.length];
   const label = (sp: string) => displayName(sp, result.speakers, names);
-  const activeRef = useRef<HTMLDivElement>(null);
-  const matchRef = useRef<HTMLDivElement>(null);
   const [menu, setMenu] = useState<number | null>(null);
   const [langPop, setLangPop] = useState<number | null>(null);
   const langBox = useRef<HTMLDivElement>(null);
@@ -110,10 +111,110 @@ export default function Transcript({ showLang, result, names, time, onSeek, onRe
     box.addEventListener("keydown", off);
     return () => { box.removeEventListener("wheel", off); box.removeEventListener("touchmove", off); box.removeEventListener("keydown", off); };
   }, []);
-  useEffect(() => { if (follow) activeRef.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }); }, [active, follow]);
   const fm = matcher(query, findOpts);
   const q = fm.q;
-  useEffect(() => { matchRef.current?.scrollIntoView({ block: "center", behavior: "smooth" }); }, [matchSeg, q]);
+
+  // Windowing: only the lines near the viewport are in the page; blank space of the same height stands in for the rest.
+  const n = result.segments.length;
+  const listRef = useRef<HTMLDivElement>(null);
+  const box = useRef<Element | null>(null);
+  const heights = useRef(new WeakMap<object, number>()); // measured height of each line, kept by line so a split or join does not lose the others
+  const [rev, setRev] = useState(0); // bumped when a measured height changed
+  const offsets = useMemo(() => rowOffsets(result.segments.map((s) => heights.current.get(s)), n, GAP), [rev, result.segments, n]); // eslint-disable-line react-hooks/exhaustive-deps
+  const offsetsRef = useRef(offsets); offsetsRef.current = offsets;
+  const segsRef = useRef(result.segments); segsRef.current = result.segments;
+  const [range, setRange] = useState<[number, number]>([0, 40]);
+  /** The line that has keyboard focus stays drawn (with its neighbours, so Tab can reach them) even when scrolled out of the window. */
+  const [focusRow, setFocusRow] = useState<number | null>(null);
+  /** A pending "scroll this line into view": the line is drawn first, then scrolled to. */
+  const [job, setJob] = useState<ScrollJob | null>(null);
+  const jobRef = useRef<ScrollJob | null>(null);
+  const [printing, setPrinting] = useState(false);
+  const goTo = (index: number, block: "center" | "nearest", behavior: "smooth" | "auto" = "smooth") => { if (index >= 0 && index < n) setJob({ index, block, behavior, resolve: () => {} }); };
+
+  const recalc = () => {
+    const b = box.current, list = listRef.current;
+    if (!b || !list || !b.clientHeight) return; // not on screen
+    const rel = b.getBoundingClientRect().top - list.getBoundingClientRect().top; // how far the top of the list is above the top of the scroller
+    const [s, e] = visibleRange(offsetsRef.current, rel, rel + b.clientHeight, OVERSCAN);
+    setRange((r) => (r[0] === s && r[1] === e ? r : [s, e]));
+  };
+  const recalcRef = useRef(recalc); recalcRef.current = recalc;
+  useLayoutEffect(() => {
+    const b = box.current = anchor.current?.closest(".pv-scroll") ?? null;
+    if (!b) return;
+    const onScroll = () => recalcRef.current(); // scroll events already come once per frame
+    b.addEventListener("scroll", onScroll, { passive: true });
+    const ro = new ResizeObserver(onScroll);
+    ro.observe(b);
+    recalcRef.current();
+    return () => { b.removeEventListener("scroll", onScroll); ro.disconnect(); };
+  }, []);
+  useLayoutEffect(() => { recalcRef.current(); }, [offsets]);
+
+  // Measure the lines that are drawn (now, and whenever one grows or shrinks: an editor opens, a translation arrives).
+  const seen = useRef(new Set<Element>());
+  const sizes = useRef<ResizeObserver | null>(null);
+  const measure = (el: Element) => {
+    const seg = segsRef.current[Number((el as HTMLElement).dataset.turn)], h = (el as HTMLElement).offsetHeight;
+    if (!seg || !h || Math.abs((heights.current.get(seg) ?? 0) - h) < 0.5) return false;
+    heights.current.set(seg, h); return true;
+  };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useLayoutEffect(() => {
+    sizes.current ??= new ResizeObserver((entries) => { let changed = false; for (const e of entries) changed = measure(e.target) || changed; if (changed) setRev((r) => r + 1); });
+    const rows = [...(listRef.current?.querySelectorAll(":scope > [data-turn]") ?? [])];
+    let changed = false;
+    for (const el of rows) { changed = measure(el) || changed; if (!seen.current.has(el)) { seen.current.add(el); sizes.current.observe(el); } }
+    for (const el of [...seen.current]) if (!rows.includes(el)) { seen.current.delete(el); sizes.current.unobserve(el); }
+    if (changed) setRev((r) => r + 1); // settles: the second pass measures the same heights
+  });
+  useEffect(() => () => sizes.current?.disconnect(), []);
+
+  // Other parts of the app ask for a line to be scrolled to (keyboard jumps, the highlights list, "show the line"): see scrollToTurn.
+  useEffect(() => {
+    const on = (ev: Event) => {
+      const j = (ev as CustomEvent<ScrollJob>).detail;
+      if (!j || j.handled || anchor.current?.closest(".pview[hidden]") || !(j.index >= 0 && j.index < segsRef.current.length)) return;
+      j.handled = true; jobRef.current?.resolve(null); setJob(j);
+    };
+    document.addEventListener(SCROLL_EVENT, on);
+    return () => document.removeEventListener(SCROLL_EVENT, on);
+  }, []);
+  useLayoutEffect(() => {
+    if (!job) return;
+    jobRef.current = job;
+    const b = box.current, el = listRef.current?.querySelector<HTMLElement>(`:scope > [data-turn="${job.index}"]`) ?? null;
+    if (!el || !b) { job.resolve(null); return; }
+    const far = Math.abs(el.getBoundingClientRect().top - b.getBoundingClientRect().top) > 3 * b.clientHeight; // a long jump does not animate through thousands of lines
+    el.scrollIntoView({ block: job.block, behavior: far ? "auto" : job.behavior });
+    recalcRef.current(); // draw the lines around the target now rather than on the first scroll event
+    if (far) requestAnimationFrame(() => requestAnimationFrame(() => { // lines drawn on the way were measured: put the target back where it belongs
+      const r = el.getBoundingClientRect(), bb = b.getBoundingClientRect();
+      if (el.isConnected && Math.abs(r.top + r.height / 2 - (bb.top + bb.height / 2)) > 4 && job.block === "center") el.scrollIntoView({ block: "center", behavior: "auto" });
+    }));
+    job.resolve(el);
+    const done = window.setTimeout(() => setJob((c) => (c === job ? null : c)), 2500); // the line stays drawn while the scroll settles
+    return () => window.clearTimeout(done);
+  }, [job]);
+
+  // Printing needs every line on the page: the main process adds .printing to <html> and waits for data-print-ready.
+  useEffect(() => {
+    const root = document.documentElement;
+    const sync = () => setPrinting(root.classList.contains("printing") && !anchor.current?.closest(".pview[hidden]"));
+    sync();
+    const mo = new MutationObserver(sync);
+    mo.observe(root, { attributes: true, attributeFilter: ["class"] });
+    return () => mo.disconnect();
+  }, []);
+  useEffect(() => {
+    if (!printing) return;
+    document.documentElement.dataset.printReady = "1";
+    return () => { delete document.documentElement.dataset.printReady; };
+  }, [printing]);
+
+  useEffect(() => { if (follow && active >= 0) goTo(active, "nearest"); }, [active, follow]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (matchSeg >= 0) goTo(matchSeg, "center"); }, [matchSeg, q]); // eslint-disable-line react-hooks/exhaustive-deps
   const inUse = new Set(result.segments.map((s) => s.speaker));
   /** Highlighted words get a colour: kept highlights in yellow, suggestions from the language model dotted until the user decides. */
   const hlClass = (w: { start: number; end: number; word: string }) => { const h = highlights.find((x) => wordIn(w as never, x)); return h ? (h.suggested ? " hl sug" : " hl") : ""; };
@@ -144,12 +245,22 @@ export default function Transcript({ showLang, result, names, time, onSeek, onRe
     return () => { document.removeEventListener("mousedown", away); document.removeEventListener("keydown", esc); };
   }, [langPop]);
 
+  const shown = renderIndices(n, printing ? [0, n] : range, [editing, menu, langPop, chap, splitting, picked?.seg, translatingIndex, job?.index, reviewAt?.seg, focusRow, focusRow === null ? null : focusRow - 1, focusRow === null ? null : focusRow + 1].filter((x): x is number => typeof x === "number"));
+  const layout: ({ i: number } | { gap: number; key: string })[] = [];
+  let prev = -1;
+  for (const i of shown) { if (i > prev + 1) layout.push({ gap: spacerHeight(offsets, prev + 1, i, GAP), key: `g${prev + 1}` }); layout.push({ i }); prev = i; }
+  if (n > 0 && prev < n - 1) layout.push({ gap: spacerHeight(offsets, prev + 1, n, GAP), key: `g${prev + 1}` });
+
   return (
     <>
       <span ref={anchor} hidden />
       <span id="pv-unsure-label" className="pv-sr">{t("unsure")}</span>
-      {result.segments.map((seg, i) => (
-        <div key={i} ref={i === matchSeg ? matchRef : i === active ? activeRef : undefined}
+      <div className="pv-rows" role="list" ref={listRef}>
+      {layout.map((it) => {
+        if ("gap" in it) return <div key={it.key} className="pv-gap" aria-hidden style={{ height: it.gap, flex: "none" }} />;
+        const i = it.i, seg = result.segments[i];
+        return (
+        <div key={i} role="listitem" aria-posinset={i + 1} aria-setsize={n} onFocus={() => setFocusRow(i)}
           data-turn={i} className={"pv-turn" + (seg.marked ? " marked" : "") + (i === active ? " now" : "") + (i === matchSeg ? " found" : "") + (i > 0 && result.segments[i - 1].speaker === seg.speaker ? " cont" : "")}>
           <div className="pv-who">
             <button type="button" className="pv-who-btn" data-who={i} aria-haspopup="menu" aria-expanded={menu === i}
@@ -285,7 +396,9 @@ export default function Transcript({ showLang, result, names, time, onSeek, onRe
             <div className="pv-edited"><span>{t("Edited")}</span><button type="button" className="link-btn" onClick={() => onRevert(i)} aria-label={t("Put the line at {time} back to what the model heard", { time: fmt(seg.start) })}>{t("Put back what the model heard")}</button></div>
           )}
         </div>
-      ))}
+        );
+      })}
+      </div>
       {playing && !follow && active >= 0 && (
         <button type="button" className="btn small pv-follow" onClick={() => setFollow(true)}>{t("Back to the playing line")}</button>
       )}

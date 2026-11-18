@@ -357,14 +357,16 @@ app.whenReady().then(() => {
     const base = String(typeof name === "string" && name.trim() ? name : "Transcript").replace(/[\\/:*?"<>|]/g, "-");
     const r = await dialog.showSaveDialog({ defaultPath: `${base}.pdf`, filters: [{ name: "PDF", extensions: ["pdf"] }] });
     if (r.canceled || !r.filePath) return { cancelled: true };
-    const root = `document.documentElement.classList.toggle("print-large", ${large === true})`;
+    const root = `document.documentElement.classList.toggle("print-large", ${large === true}); document.documentElement.classList.add("printing")`;
     try {
       await e.sender.executeJavaScript(root);
+      // The transcript only keeps the lines near the viewport in the page; "printing" makes it draw them all, and it says so with data-print-ready.
+      await e.sender.executeJavaScript(`new Promise((done) => { const t0 = Date.now(); const check = () => document.documentElement.dataset.printReady || Date.now() - t0 > 10000 ? requestAnimationFrame(() => done(true)) : setTimeout(check, 50); check(); })`);
       const pdf = await e.sender.printToPDF({ pageSize: "A4", printBackground: false });
       fs.writeFileSync(r.filePath, pdf);
       return { ok: true, path: r.filePath };
     } catch (err) { return { ok: false, error: String((err as Error).message) }; }
-    finally { await e.sender.executeJavaScript(`document.documentElement.classList.remove("print-large")`).catch(() => {}); }
+    finally { await e.sender.executeJavaScript(`document.documentElement.classList.remove("print-large", "printing")`).catch(() => {}); }
   });
 
   const projectsStore = createProjectsStore(app.getPath("userData"), logLine);
