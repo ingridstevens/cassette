@@ -23,7 +23,11 @@ cd app && npm run dev         # Vite + Electron; needs `uv` on PATH
 ```bash
 cd engine && uv run pytest -q
 cd app && npx tsc --noEmit && npm run build
+cd app && npm run e2e         # Playwright in Chromium against the dev mock (downloads the browser on first run)
 ```
+
+The end-to-end tests live in `app/e2e/`, a workspace of its own (like `app/lint/`), so the browser tooling stays out
+of the app's installs. They use role and label selectors against `src/dev-mock.ts`; add a flow there when you add one.
 
 ## Engine protocol
 
