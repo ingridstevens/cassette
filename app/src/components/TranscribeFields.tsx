@@ -117,7 +117,7 @@ export const ignoresExtras = (model: string) => /^(parakeet|moonshine)/.test(mod
 export function ExtrasField({ eff, set, advanced, status, onOpenSettings }: Section) {
   const t = useT();
   const limited = ignoresExtras(eff.model);
-  const translate = eff.translate ?? currentLang() === "en";
+  const translate = eff.translate ?? false;
   const model = status?.llm?.translation?.[0], have = !!model && !!status?.llm?.models?.[model.id];
   const target = have ? eff.translateTo ?? "en" : "en";
   return (

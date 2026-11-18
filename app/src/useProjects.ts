@@ -129,7 +129,7 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     patch(next.id, { status: "running" });
     const { range: rg = null, line, acceptFit } = pending.current.get(next.id) ?? {};
     const forced = line ? { language: line.language, noDiarize: true, multilingual: false } : {};
-    const translate = (next.opts?.translate ?? optsRef.current.translate) ?? currentLang() === "en";
+    const translate = (next.opts?.translate ?? optsRef.current.translate) ?? false;
     window.api.transcribe({ input: next.path, ...optsRef.current, ...next.opts, translate, ...forced, acceptFit, start: rg?.[0], end: rg?.[1], clientId: next.id })
       .catch((e: unknown) => patch(next.id, { status: "error", error: String(e) }));
   }, [projects, patch]);

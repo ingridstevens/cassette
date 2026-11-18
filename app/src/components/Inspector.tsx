@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useId, useMemo, useRef, useState } from "react";
-import { currentLang, useT } from "../i18n";
+import { useT } from "../i18n";
 import { ExtrasField, LanguageField, ModelField, NamesField, TranscriptOnlyField, langMode } from "./TranscribeFields";
 import SpeakerCountField from "./SpeakerCountField";
 import { Models } from "./useModels";
@@ -174,7 +174,7 @@ function OptionRows({ eff, set, status, models, found, speakers, onOpenSettings 
   const mode = langMode(eff);
   const range = eff.numSpeakers === "range";
   const n = Number(eff.numSpeakers);
-  const translate = eff.translate ?? currentLang() === "en";
+  const translate = eff.translate ?? false;
   const extras = [translate && (eff.translateTo && eff.translateTo !== "en" ? t("Translation into {language}", { language: langName(eff.translateTo) }) : t("English translation")), eff.verbatim && t("Write hesitations down"), eff.vad && t("Skip silence")].filter(Boolean).join(", ");
   const tag = WHISPER_MODELS.find((m) => m.id === eff.model)?.tag;
   const fields = { eff, set, status, models, found, onOpenSettings, advanced: true, bare: true };
