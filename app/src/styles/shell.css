@@ -258,6 +258,7 @@ details.detail[open] > summary { margin-bottom: 4px; }
   .side .brand > span, .side .group-row > span, .side .side-note { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .side .group-row { padding: 0; min-height: 4px; }
   .side .group-row .btn, .side > .btn.small { font-size: 0; gap: 0; padding: 0; width: 100%; justify-content: center; }
+  .side > .btn.small::before { content: "CSV" / ""; font-size: 11px; }
   .side .group-row .btn::before { content: "↻" / ""; font-size: 15px; }
   .shell .add-btn { width: 100%; padding: 0; font-size: 0; gap: 0; }
   .shell .add-btn svg.i { width: 18px; height: 18px; }
