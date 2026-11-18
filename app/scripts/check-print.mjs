@@ -20,5 +20,10 @@ if (!/printPdf/.test(readFileSync("electron/preload.ts", "utf8"))) fail("preload
 const menu = readFileSync("src/components/ExportMenu.tsx", "utf8");
 if (!/PRIMARY = \[[^\]]*"print"[^\]]*"print-large"/.test(menu)) fail("the export menu does not list the print formats in the most-used group");
 
+// "Again" export: the last export is saved with the project and offered first in the menu
+if (!/lastExport/.test(readFileSync("src/useProjects.ts", "utf8"))) fail("useProjects.ts no longer saves lastExport");
+if (!/onRemember\?\.\(f/.test(menu) || !/menu-again/.test(menu)) fail("the export menu does not remember or offer the last export");
+if (!/defaultExport/.test(readFileSync("src/components/settings/SavingSection.tsx", "utf8"))) fail("Settings has no default export format");
+
 console.log(`print check: ${bad} problem(s)`);
 process.exit(bad ? 1 : 0);

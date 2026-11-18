@@ -4,7 +4,7 @@ import { currentLang, t } from "./i18n";
 import { DraftLine, FitAsk, JobProgress, MEDIA_EXT, Options, Project, Result, RunMeta, Segment, baseName, displayName, stripExt } from "./types";
 
 type Range = [number, number] | null;
-const persisted = (p: Project) => ({ id: p.id, path: p.path, name: p.name, addedAt: p.addedAt, openedAt: p.openedAt, editedAt: p.editedAt, result: p.result, names: p.names, opts: p.opts, meta: p.meta, trial: p.trial, previous: p.previous });
+const persisted = (p: Project) => ({ id: p.id, path: p.path, name: p.name, addedAt: p.addedAt, openedAt: p.openedAt, editedAt: p.editedAt, result: p.result, names: p.names, opts: p.opts, meta: p.meta, trial: p.trial, previous: p.previous, lastExport: p.lastExport });
 
 /** Replace the segments overlapping a re-transcribed range, keep the rest. */
 /** `line` is set when one line is transcribed again in a chosen language: the new text keeps that line's speaker and gets the language. */
