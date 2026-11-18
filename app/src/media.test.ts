@@ -7,7 +7,7 @@ describe("mediaPathFromUrl", () => {
     expect(mediaPathFromUrl(`media://file/${encodeURIComponent("C:\\Users\\ä\\x.mp3")}`)).toBe("C:\\Users\\ä\\x.mp3");
   });
   it("refuses other shapes", () => {
-    for (const u of ["media://other/%2Fa.mp3", "http://file/%2Fa.mp3", "media://file/", "media://file/%E0%A4%A", "media://file/%2Fa.mp3?x=1", "media://file/a%00.mp3", "nonsense"]) expect(mediaPathFromUrl(u)).toBeNull();
+    for (const u of ["media://other/%2Fa.mp3", "ftp://file/%2Fa.mp3", "media://file/", "media://file/%E0%A4%A", "media://file/%2Fa.mp3?x=1", "media://file/a%00.mp3", "nonsense"]) expect(mediaPathFromUrl(u)).toBeNull();
   });
 });
 
