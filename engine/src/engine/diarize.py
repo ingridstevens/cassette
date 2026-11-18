@@ -27,10 +27,10 @@ def diarize(wav_path, device: str, num_speakers: int | None, min_speakers: int |
     from pyannote.audio import Pipeline
 
     from .audio import load_wav
-    from .models import models_dir
+    from .models import diarization_config
 
     progress("diarize", 0.0, "Loading speaker model")
-    pipeline = Pipeline.from_pretrained("pyannote/speaker-diarization-3.1", cache_dir=str(models_dir()))
+    pipeline = Pipeline.from_pretrained(str(diarization_config()))  # pinned local files, hashes checked
     if pipeline is None:
         raise RuntimeError("Speaker model not available. Download it in Settings (needs Hugging Face token).")
     dev = pick_torch_device(device)

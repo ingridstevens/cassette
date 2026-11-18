@@ -402,7 +402,8 @@ def configure_hub(cmd: str) -> None:
     if cmd in ("transcribe", "live", "highlights", "summarize", "ask"):  # inference never touches the network
         os.environ["HF_HUB_OFFLINE"] = "1"
         os.environ["TRANSFORMERS_OFFLINE"] = "1"
-        # pyannote 3.x checkpoints predate torch>=2.6 weights_only loading; they are the official, hash-pinned downloads
+        # pyannote 3.x checkpoints predate torch>=2.6 weights_only loading, so torch must load them as pickles. That is safe only because
+        # diarization_config() checks each of those files against a pinned sha256 first, and every download is pinned to a commit.
         os.environ["TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD"] = "1"
 
 

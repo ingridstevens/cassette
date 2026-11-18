@@ -115,7 +115,7 @@ class LocalLLM:
     def __init__(self, name: str):
         from huggingface_hub import snapshot_download
 
-        from .models import models_dir
+        from .models import PINS, models_dir
 
         if name not in LLM_MODELS:
             raise RuntimeError(f"Unknown language model: {name}")
@@ -125,7 +125,7 @@ class LocalLLM:
         repo, fname = repo_for(name, self.backend)
         self.thinks = bool(LLM_MODELS[name].get("thinks"))
         try:
-            path = Path(snapshot_download(repo, cache_dir=models_dir(), allow_patterns=[fname] if fname else None, local_files_only=True))
+            path = Path(snapshot_download(repo, revision=PINS[repo], cache_dir=models_dir(), allow_patterns=[fname] if fname else None, local_files_only=True))
         except Exception as exc:  # noqa: BLE001
             raise RuntimeError("The language model is not downloaded yet. Download it first.") from exc
         if self.backend == "mlx":
