@@ -80,7 +80,7 @@ export default function PrivacySection({ models }: Props) {
             <tr><th scope="row">{t("Projects, transcripts, speaker names")}</th><td>{t("The app folder")}</td><td className="act"><button type="button" className="btn small" aria-label={t("Show the app folder")} onClick={() => window.api.reveal("data")}>{t("Show")}</button></td></tr>
             <tr><th scope="row">{t("Backup copies")}</th><td>{t("Next to each recording, if the switch in Saving and export is on")}</td><td className="act" /></tr>
             <tr><th scope="row">{t("Models")}</th><td>{t("The models folder")}</td><td className="act"><button type="button" className="btn small" aria-label={t("Show the models folder")} onClick={() => window.api.reveal("models")}>{t("Show")}</button></td></tr>
-            <tr><th scope="row">{t("Hugging Face token")}</th><td>{t("Encrypted by your computer's secure storage. Last 4 characters: {hint}", { hint: hint ? hint.slice(-4) : "–" })}</td><td className="act" /></tr>
+            <tr><th scope="row">{t("Hugging Face token")}</th><td>{hint ? t("Encrypted by your computer's secure storage. Last 4 characters: {hint}", { hint: hint.slice(-4) }) : t("No token is saved.")}</td><td className="act" /></tr>
             <tr><th scope="row">{t("Activity log")}</th><td>{t("File names and folders. It never contains the text of a transcript.")}</td><td className="act"><button type="button" className="btn small" aria-label={t("Show the activity log")} onClick={() => window.api.reveal("log")}>{t("Show")}</button></td></tr>
           </tbody></table></div>
         <p className="note">{t("The app does not encrypt these files. Turn on {name} so they are protected when the computer is off.", { name: IS_MAC ? "FileVault" : IS_WIN ? "BitLocker" : t("disk encryption") })}</p>
@@ -88,8 +88,15 @@ export default function PrivacySection({ models }: Props) {
 
       <div className="card st-card">
         <div className="st-row">
-          <div className="grow"><h2>{t("Hugging Face token")}</h2>
-            <p className="st-lead">{t("Saved in this computer's secure storage and used only to download the speaker model. Only the last 4 characters are shown, so the full token never appears on screen again. Removing it doesn't delete models you already have.")}</p></div>
+          <div className="grow">
+            <h2 className="st-tok-h">{t("Hugging Face token")}
+              {hint
+                ? <span className="st-chip on"><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>{t("Saved")}</span>
+                : <span className="st-chip">{t("Not saved")}</span>}
+            </h2>
+            <p className="st-lead">{hint
+              ? t("A token is saved in this computer's secure storage and used only to download the speaker model. Only the last 4 characters are shown, so the full token never appears on screen again. Removing it doesn't delete models you already have.")
+              : t("No token is saved. You only need one to download the speaker-detection model. A token you add is kept in this computer's secure storage and is never shown in full again.")}</p></div>
           <div className="st-token">
             {replacing ? (
               <>
@@ -103,13 +110,14 @@ export default function PrivacySection({ models }: Props) {
               </>
             ) : hint ? (
               <>
+                <span className="st-mask-label">{t("Saved token")}</span>
                 <span className="input st-mask" role="img" aria-label={t("Saved token, hidden except the last 4 characters")}>{hint}</span>
                 <span className="btns"><button type="button" className="btn small" onClick={open}>{t("Replace")}</button>
                   <button type="button" className="btn quiet small danger" onClick={() => { back.remember(); setConfirm(true); }}>{t("Remove")}</button></span>
               </>
             ) : (
               <>
-                <span className="note">{t("No token saved.")}</span>
+                <span className="input st-mask st-empty">{t("No token saved")}</span>
                 <span className="btns"><button type="button" className="btn quiet small" onClick={() => window.api.openExternal(HF_TOKEN_PAGE)}>{t("Open token page")}</button>
                   <button type="button" className="btn small" onClick={open}>{t("Add a token")}</button></span>
               </>
