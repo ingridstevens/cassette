@@ -4,6 +4,7 @@ import json
 import os
 import sys
 import tempfile
+import threading
 import time
 import traceback
 from pathlib import Path
@@ -405,9 +406,20 @@ def configure_hub(cmd: str) -> None:
         os.environ["TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD"] = "1"
 
 
+def _exit_with_parent() -> None:
+    """Safety net: if the app that started us disappears (crash, kill -9), stop instead of running on."""
+    parent = os.getppid()
+    while True:
+        time.sleep(2)
+        if os.getppid() != parent:  # re-parented: the app is gone
+            os._exit(1)
+
+
 def main() -> None:
     args = build_parser().parse_args()
     configure_hub(args.cmd)
+    if os.name != "nt":  # on Windows the app kills the tree with taskkill instead
+        threading.Thread(target=_exit_with_parent, daemon=True).start()
     try:
         args.fn(args)
     except Exception as exc:  # noqa: BLE001 - surfaced to UI as an error event
