@@ -23,6 +23,7 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   const [drafts, setDrafts] = useState<Record<string, DraftLine[]>>({});
   const [loaded, setLoaded] = useState(false);
   const [notice, setNotice] = useState("");  // set once, when the saved project list had to be recovered
+  const [saveError, setSaveError] = useState<string | null>(null);  // set while the last save failed; cleared by the next one that works
   const optsRef = useRef(opts); optsRef.current = opts;
   const logRef = useRef(log); logRef.current = log;
   const jobs = useRef(new Map<string, { pid: string; range: Range; line?: LineRedo; trial?: boolean }>());      // engine jobId -> project
@@ -48,7 +49,10 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   // debounced save (only after the first load, so we never overwrite saved projects with an empty list)
   useEffect(() => {
     if (!loaded) return;
-    const timer = setTimeout(() => { window.api.saveProjects(projects.map(persisted)).then((r) => { if (!r.ok) logRef.current("error", `Couldn't save the project list: ${r.error}`); }).catch(() => {}); }, 400);
+    const timer = setTimeout(() => { window.api.saveProjects(projects.map(persisted)).then((r) => {
+      if (!r.ok) logRef.current("error", `Couldn't save the project list: ${r.error}`);
+      setSaveError(r.ok ? null : r.error ?? "unknown");
+    }).catch((e) => setSaveError(String(e))); }, 400);
     return () => clearTimeout(timer);
   }, [projects, loaded]);
 
@@ -167,6 +171,6 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     }
   }), [patch]);
 
-  return { projects, notice, dismissNotice: () => setNotice(""), activeId, setActiveId, progress, drafts, add, addAndTranscribe, remove, rename: (id: string, name: string) => patch(id, { name }), patch, transcribe, cancel,
+  return { projects, notice, saveError, dismissNotice: () => setNotice(""), activeId, setActiveId, progress, drafts, add, addAndTranscribe, remove, rename: (id: string, name: string) => patch(id, { name }), patch, transcribe, cancel,
     transcribeAll: () => projectsRef.current.filter((p) => p.status === "idle" || p.status === "error").forEach((p) => transcribe(p.id)) };
 }
