@@ -545,3 +545,7 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 @media (prefers-reduced-motion: reduce) { .pv-start .pv-fold::before { transition: none; } }
 .pv-start .pv-start-fields-anchor { margin-top: 10px; }
 .pv-center:has(.pv-start) { padding-bottom: 24px; }
+.pv-spk-help { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
+.pv-spk-helptext { display: flex; flex-direction: column; gap: 6px; }
+.pv-spk-helptext[hidden] { display: none; }
+.pv-spk-helptext p { margin: 0; }

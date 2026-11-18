@@ -97,12 +97,22 @@ function Speakers({ project, moved, onMoveAll, onUndo, onPatch }: Pick<Props, "p
   const t = useT();
   const { result, names } = project;
   const list = useMemo(() => liveSpeakers(project), [project]);
+  const [help, setHelp] = useState(false);
+  const helpId = useId();
   if (!result) return <p className="note">{t("Speakers appear here once the recording is transcribed. You can then name them and fix any line that was given to the wrong person.")}</p>;
   const name = (id: string) => displayName(id, result.speakers, names);
   const remaining = moved ? result.segments.filter((s) => s.speaker === moved.from).length : 0;
   return (
     <div className="pv-col">
-      <div className="note">{t("Click a name to rename it. Wrong speaker on a line? Click the name above that line to move it to someone else.")}</div>
+      <div className="pv-spk-help">
+        <button type="button" className="btn quiet small" aria-expanded={help} aria-controls={helpId} onClick={() => setHelp((h) => !h)}>
+          <span aria-hidden>?</span> {t("Help with speakers")}
+        </button>
+        <div id={helpId} hidden={!help} className="pv-spk-helptext">
+          <p className="note">{t("Click a name to rename it. Wrong speaker on a line? Click the name above that line to move it to someone else.")}</p>
+          <p className="note">{t("Many speakers? The list scrolls and is sorted by who talks most. If it finds far too many, one person was probably split into several: set the number of speakers under Options and transcribe again.")}</p>
+        </div>
+      </div>
       {list.map((s) => (
         <div key={s.id} className="card pv-spk">
           <div className="pv-spk-head">
@@ -127,7 +137,6 @@ function Speakers({ project, moved, onMoveAll, onUndo, onPatch }: Pick<Props, "p
           <button type="button" className="btn quiet small" onClick={onUndo}>{t("Undo")}</button>
         </div>
       )}
-      <div className="note">{t("Many speakers? The list scrolls and is sorted by who talks most. If it finds far too many, one person was probably split into several: set the number of speakers under Options and transcribe again.")}</div>
     </div>
   );
 }
