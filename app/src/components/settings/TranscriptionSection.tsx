@@ -46,7 +46,7 @@ export default function TranscriptionSection({ opts, set, status, models, say }:
     ["moonshine", "Moonshine", t("By Moonshine AI · MIT licence · one small model per language · word times are estimates"), moonOk],
   ];
   const missing = status ? engines.filter((e) => !e[3]).map((e) => e[1]) : [];
-  let entries: Entry[] = [];
+  let entries: Entry[];
   if (eng === "whisper") entries = WHISPER_MODELS.map((m) => entry(m.id, `Whisper ${labelOf(m.id)}`, t(m.like), m.tag ? t(m.tag) : undefined, tooBigForMemory(m.id, !opts.noDiarize, memGB) ? { note: t("May not fit in this computer's memory and could stop partway. A smaller size is safer.") } : slow && ["medium", "large-v3-turbo", "large-v3"].includes(m.id) ? { note: t("May be slow on this computer. A smaller size is quicker.") } : {}));
   else if (eng === "parakeet") entries = ENGINE_MODELS.map((m) => entry(m.id, m.name, t(m.like)));
   else entries = (status?.moonshine?.catalog ?? []).map((m) => entry(m.id, moonshineName(m.id), t("Fast drafts in {language}.", { language: langName(m.language) }), undefined, { size: status?.sizes?.whisper[m.id] || m.bytes, downloadSize: m.bytes }));

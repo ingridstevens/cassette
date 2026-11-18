@@ -274,7 +274,6 @@ def test_changes_and_minutes_follow_language():
 
 
 def test_docx_date_and_footer_are_localised():
-    import io
     from datetime import date
     from engine.export import _long_date, to_docx
 

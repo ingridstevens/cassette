@@ -47,9 +47,9 @@ export default function AdvancedSection({ opts, set, status, models, say, onRese
   }) : [];
   const runCheck = async () => {
     setChecking(true);
-    let fresh: ModelStatus | null = null;
+    let fresh: ModelStatus | null;
     try { fresh = (await window.api.models("status")) as unknown as ModelStatus; } catch { fresh = null; }
-    let mics: number | null = null;
+    let mics: number | null;
     try { mics = (await navigator.mediaDevices.enumerateDevices()).filter((d) => d.kind === "audioinput").length; } catch { mics = null; }
     const p = paths ?? await window.api.paths();
     const list = setupChecks({ opts, status: fresh, memGB: p.system.memGB, freeBytes: await window.api.diskFree(), microphones: mics }, t);

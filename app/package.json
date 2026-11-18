@@ -14,7 +14,8 @@
     "typecheck": "tsc --noEmit",
     "i18n:check": "node scripts/check-i18n.mjs",
     "test": "vitest run",
-    "links:check": "node scripts/check-source-links.mjs && node scripts/check-log-redact.mjs && node scripts/check-projects-store.mjs && node scripts/check-known-paths.mjs && node scripts/check-nav-guard.mjs && node scripts/check-print.mjs && node scripts/check-file-associations.mjs && npm test",
+    "lint": "npm ci --prefix lint --no-audit --no-fund && node lint/node_modules/eslint/bin/eslint.js -c lint/eslint.config.js .",
+    "links:check": "node scripts/check-source-links.mjs && node scripts/check-log-redact.mjs && node scripts/check-projects-store.mjs && node scripts/check-known-paths.mjs && node scripts/check-nav-guard.mjs && node scripts/check-print.mjs && node scripts/check-file-associations.mjs && npm test && npm run lint",
     "contrast:check": "node scripts/contrast-check.mjs",
     "built:check": "node scripts/check-built-app.mjs"
   },

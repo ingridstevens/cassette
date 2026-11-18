@@ -300,7 +300,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
         else if (e.key.toLowerCase() === "g") setJumpDialog("goto");
         else jumpSpeaker(e.key === "N" || e.shiftKey ? -1 : 1);
       }
-      else if (!mod && !e.altKey && showResult && !busy && !e.shiftKey && /^[\[\],.s]$/i.test(e.key) && quietTarget(e.target)) {
+      else if (!mod && !e.altKey && showResult && !busy && !e.shiftKey && /^[[\],.s]$/i.test(e.key) && quietTarget(e.target)) {
         // clips by keyboard: [ starts a clip at the playhead, ] ends it, S saves it; , and . move the playhead half a second
         e.preventDefault();
         if (e.key === "[") markStart();

@@ -1,7 +1,7 @@
 import { shortcutList } from "../../shortcuts";
 import { LANGS, LangPref, resolveLang, systemLang } from "../../i18n";
 import { useT } from "../../i18n";
-import { LOOKS, MOD_KEY, lookOf } from "../../types";
+import { LOOKS, lookOf } from "../../types";
 import { Block, SectionProps } from "./shared";
 
 const SIZES: [number, string][] = [[1, "Normal"], [1.15, "Large"], [1.3, "Extra large"], [1.5, "Largest"]];
