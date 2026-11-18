@@ -2,7 +2,8 @@ import { shortcutList } from "../../shortcuts";
 import { LANGS, LangPref, resolveLang, systemLang } from "../../i18n";
 import { useT } from "../../i18n";
 import { LOOKS, lookOf } from "../../types";
-import { Block, SectionProps } from "./shared";
+import { isEasy } from "../../easy";
+import { Block, SectionProps, SwitchRow } from "./shared";
 
 const SIZES: [number, string][] = [[1, "Normal"], [1.15, "Large"], [1.3, "Extra large"], [1.5, "Largest"]];
 
@@ -26,6 +27,10 @@ export default function TextLanguageSection({ opts, set }: SectionProps) {
             </label>
           ))}
         </fieldset>
+      </Block>
+      <Block id="tx-easy" title={t("Simple mode")}>
+        <SwitchRow id="tx-easy-sw" title={t("Fewer buttons")} on={isEasy(opts)} onChange={(v) => set({ ...opts, easy: v })}
+          help={t("Shows only your recordings, the transcript, play, edit, rename speakers, Print and Word. Summaries, review, chapters, clips, marked lines and the other export formats come back when you turn this off.")} />
       </Block>
       <Block id="tx-lang" title={t("Language of the app")}>
         <div className="f7">

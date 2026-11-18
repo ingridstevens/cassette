@@ -13,6 +13,7 @@ interface Props {
   onEdit(index: number, text: string): void; onRevert(index: number): void; onChapter(index: number, title: string | null): void; onMark(index: number): void; onSplit(index: number, wordIndex: number): void; onLanguage(index: number, lang: string | null): void; onRetranscribe(index: number, language: string): void; onTranslate(index: number, remove?: boolean): void; playing: boolean; onPause(): void; reviewAt?: UnsureRef | null; translatingIndex?: number | null; canRetranscribe: boolean; onJoin(index: number): void;
   highlights?: Highlight[]; onHighlight?(index: number, from: number, to: number): void;
   /** Show the language of every line, not only lines that differ from the recording. */ showLang?: boolean;
+  /** Easy mode: only the speaker, the time and Edit stay on each line. */ easy?: boolean;
   query?: string; findOpts?: FindOpts; matchSeg?: number;
 }
 
@@ -21,7 +22,7 @@ const DOUBLE_CLICK_MS = 260;
 /** Space between two lines (the .pv-rows gap), and how far past the visible area lines stay drawn, in px. */
 const GAP = 2, OVERSCAN = 700;
 
-export default function Transcript({ showLang, result, names, time, onSeek, onReassign, onEdit, onRevert, onChapter, onMark, onSplit, onJoin, onLanguage, onRetranscribe, onTranslate, playing, onPause, reviewAt = null, translatingIndex = null, canRetranscribe, highlights = [], onHighlight, query = "", findOpts = FIND_DEFAULTS, matchSeg = -1 }: Props) {
+export default function Transcript({ easy = false, showLang, result, names, time, onSeek, onReassign, onEdit, onRevert, onChapter, onMark, onSplit, onJoin, onLanguage, onRetranscribe, onTranslate, playing, onPause, reviewAt = null, translatingIndex = null, canRetranscribe, highlights = [], onHighlight, query = "", findOpts = FIND_DEFAULTS, matchSeg = -1 }: Props) {
   const t = useT();
   const color = (sp: string) => PALETTE[Math.max(0, result.speakers.indexOf(sp)) % PALETTE.length];
   const label = (sp: string) => displayName(sp, result.speakers, names);
@@ -270,17 +271,17 @@ export default function Transcript({ showLang, result, names, time, onSeek, onRe
             </button>
             <button type="button" className="pv-time" onClick={() => onSeek(seg.start)} title={t("Play from here")} aria-label={t("Play from {time}", { time: fmt(seg.start) })}>{fmt(seg.start)}</button>
             {seg.marked && <span className="pv-flag pv-marked" title={t("Marked: goes into the meeting minutes and the quote list")}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-3-5.4 3 1.1-6L3.2 9.4l6.1-.8z" /></svg>{t("Marked")}</span>}
-            {(seg.lang && seg.lang !== result.language || mixed || showLang) && (
+            {!easy && (seg.lang && seg.lang !== result.language || mixed || showLang) && (
               <button type="button" className="pv-flag pv-lang pv-lang-btn" aria-haspopup="dialog" aria-expanded={langPop === i}
                 aria-label={t("Language of this line: {language}. Change it.", { language: langName(seg.lang ?? result.language) })} title={t("This line is in {language}", { language: langName(seg.lang ?? result.language) })}
                 onClick={() => { setMenu(null); setLangPop(langPop === i ? null : i); }}>{(seg.lang ?? result.language).toUpperCase()}</button>
             )}
             {seg.overlap && <span className="pv-flag pv-overlap" title={t("More than one person was talking here. The words are assigned to the louder speaker.")}>{t("Overlap")}</span>}
-            <button type="button" className="pv-copy pv-edit" aria-pressed={!!seg.marked} onClick={() => onMark(i)} title={t("Mark this line as a decision, action item or quote. Marked lines go into the meeting minutes and the quote list.")}>{seg.marked ? t("Marked ✓") : t("Mark")}</button>
-            <button type="button" className="pv-copy pv-edit" data-chap={i} onClick={() => startChap(i)} aria-label={seg.chapter ? t("Change the chapter at the line at {time}", { time: fmt(seg.start) }) : t("Add a chapter at the line at {time}", { time: fmt(seg.start) })} title={t("Mark where a new topic starts. Chapters can be exported as a list for YouTube or podcast show notes.")}>{t("Chapter")}</button>
-            <button type="button" className="pv-copy pv-edit" aria-pressed={splitting === i} onClick={() => setSplitting(splitting === i ? null : i)} title={t("Split this line in two, for example when several people spoke in turn and the app put them in one line.")}>{t("Split")}</button>
+            {!easy && <button type="button" className="pv-copy pv-edit" aria-pressed={!!seg.marked} onClick={() => onMark(i)} title={t("Mark this line as a decision, action item or quote. Marked lines go into the meeting minutes and the quote list.")}>{seg.marked ? t("Marked ✓") : t("Mark")}</button>}
+            {!easy && <button type="button" className="pv-copy pv-edit" data-chap={i} onClick={() => startChap(i)} aria-label={seg.chapter ? t("Change the chapter at the line at {time}", { time: fmt(seg.start) }) : t("Add a chapter at the line at {time}", { time: fmt(seg.start) })} title={t("Mark where a new topic starts. Chapters can be exported as a list for YouTube or podcast show notes.")}>{t("Chapter")}</button>}
+            {!easy && <button type="button" className="pv-copy pv-edit" aria-pressed={splitting === i} onClick={() => setSplitting(splitting === i ? null : i)} title={t("Split this line in two, for example when several people spoke in turn and the app put them in one line.")}>{t("Split")}</button>}
             <button type="button" className="pv-copy pv-edit-btn" onClick={() => startEdit(i)} aria-label={t("Edit the text of the line at {time}", { time: fmt(seg.start) })} title={t("Fix the words of this line")}>{t("Edit")}</button>
-            <button type="button" className="pv-copy" onClick={() => copyQuote(i)} aria-label={t("Copy this line as a quote with the speaker and time")} title={t("Copy as a quote, with speaker and time")}>{copied === i ? t("Copied ✓") : t("Copy quote")}</button>
+            {!easy && <button type="button" className="pv-copy" onClick={() => copyQuote(i)} aria-label={t("Copy this line as a quote with the speaker and time")} title={t("Copy as a quote, with speaker and time")}>{copied === i ? t("Copied ✓") : t("Copy quote")}</button>}
           </div>
           {menu === i && (
             <div ref={menuBox} className="menu pv-turn-menu" role="menu" aria-label={t("Who said this line?")} onKeyDown={onMenuKeyDown}>
@@ -290,11 +291,11 @@ export default function Transcript({ showLang, result, names, time, onSeek, onRe
                   <span className="pv-menu-item"><span className="sw" style={{ background: color(sp) }} aria-hidden /><b>{label(sp)}</b><span aria-hidden>{sp === seg.speaker ? "✓" : ""}</span></span>
                 </button>
               ))}
-              <div className="pv-menu-sep" role="separator" />
+              {!easy && <><div className="pv-menu-sep" role="separator" />
               <button type="button" role="menuitem" aria-haspopup="dialog" onClick={() => { setMenu(null); setLangPop(i); }}>
                 <span className="pv-menu-item"><b>{t("Language and translation…")}</b></span>
                 <small>{langName(seg.lang ?? result.language)}</small>
-              </button>
+              </button></>}
             </div>
           )}
           {langPop === i && (
@@ -382,7 +383,7 @@ export default function Transcript({ showLang, result, names, time, onSeek, onRe
           </p>
           )
           )}
-          {picked?.seg === i && editing !== i && splitting !== i && (
+          {!easy && picked?.seg === i && editing !== i && splitting !== i && (
             <div className="pv-picked" role="group" aria-label={t("Highlight the selected words")}>
               <button type="button" className="btn sun small" onMouseDown={(e) => e.preventDefault()} onClick={() => highlight(i, picked.from, picked.to)}>{t("Highlight this passage")}</button>
               <span className="note">{t("{count} words selected", { count: picked.to - picked.from + 1 })}</span>

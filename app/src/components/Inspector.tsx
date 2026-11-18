@@ -55,10 +55,12 @@ interface Props {
   onShowLine?(index: number): void;
   /** Narrow windows: the inspector is a drawer. `id` lets the toggle button point at it; Esc or the Close button asks to close it. */
   id?: string; drawerOpen?: boolean; onDrawerClose?(): void;
+  /** Easy mode: only the Speakers panel (renaming), no tabs. */ easy?: boolean;
 }
 
-export default function Inspector({ project, tab, onTab, visible, moved, onMoveAll, onUndo, canTranscribe, onAskAgain, onPatch, onOpenSettings, models, highlightsPanel, askPanel, onShowLine, id, drawerOpen, onDrawerClose }: Props) {
+export default function Inspector({ project, tab, onTab, visible, moved, onMoveAll, onUndo, canTranscribe, onAskAgain, onPatch, onOpenSettings, models, highlightsPanel, askPanel, onShowLine, id, drawerOpen, onDrawerClose, easy = false }: Props) {
   const t = useT();
+  if (easy) tab = "speakers";
   const ids = { speakers: useId(), ai: useId(), details: useId() };
   const labels: Record<Tab, string> = { speakers: "Speakers", ai: "AI", details: "Details" };
   const tabs: [Tab, string][] = TABS.map((id) => [id, labels[id]]);
@@ -69,18 +71,18 @@ export default function Inspector({ project, tab, onTab, visible, moved, onMoveA
     e.preventDefault(); onTab(tabs[n][0]); document.getElementById(ids[tabs[n][0]] + "-tab")?.focus();
   };
   // Opening the drawer moves focus to the current tab, so a keyboard user lands inside it.
-  useEffect(() => { if (drawerOpen) document.getElementById(ids[tab] + "-tab")?.focus(); }, [drawerOpen]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (drawerOpen) (document.getElementById(ids[tab] + "-tab") ?? document.querySelector<HTMLElement>(".pv-insp-close"))?.focus(); }, [drawerOpen]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <aside id={id} className={"inspector pv-inspector" + (drawerOpen ? " drawer-open" : "")} aria-label={t("Inspector")}
       onKeyDown={(e) => { if (e.key === "Escape" && drawerOpen && !e.defaultPrevented) { e.preventDefault(); onDrawerClose?.(); } }}>
       {onDrawerClose && <button type="button" className="btn quiet small pv-insp-close" onClick={onDrawerClose}>{t("Close inspector")}</button>}
-      <div className="tabs" role="tablist" aria-label={t("Inspector sections")}>
+      {!easy && <div className="tabs" role="tablist" aria-label={t("Inspector sections")}>
         {tabs.map(([id, label], i) => (
           <button key={id} id={ids[id] + "-tab"} role="tab" type="button" aria-selected={tab === id} aria-controls={ids[id]} tabIndex={tab === id ? 0 : -1}
             onClick={() => onTab(id)} onKeyDown={(e) => move(e, i)}>{t(label)}</button>
         ))}
-      </div>
-      <div className="pv-tab" id={ids[tab]} role="tabpanel" aria-labelledby={ids[tab] + "-tab"}>
+      </div>}
+      <div className="pv-tab" id={ids[tab]} role="tabpanel" {...(easy ? { "aria-label": t("Speakers") } : { "aria-labelledby": ids[tab] + "-tab" })}>
         {tab === "speakers" && <Speakers project={project} moved={moved} onMoveAll={onMoveAll} onUndo={onUndo} onPatch={onPatch} />}
         {tab === "ai" && <AiTab part={part} onPart={setPart} highlightsPanel={highlightsPanel} askPanel={askPanel} />}
         {tab === "details" && (
