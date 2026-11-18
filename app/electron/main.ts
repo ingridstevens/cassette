@@ -275,7 +275,17 @@ app.whenReady().then(() => {
     const ext = ({ chapters: "txt", quotes: "txt", highlights: "docx", changes: "txt", redacted: "txt", minutes: "docx", "combined-csv": "csv" } as Record<string, string>)[format] ?? format; // the engine format id differs from the file extension for chapters
     const r = await dialog.showSaveDialog({ defaultPath: `${defaultName}.${ext}`, filters: [{ name: ext.toUpperCase(), extensions: [ext] }] });
     if (r.canceled || !r.filePath) return { cancelled: true };
-    const res = await withTempJson(payload, (tmp) => runEngine(randomUUID(), ["export", tmp, r.filePath!, "--format", format], {}, () => {}));
+    const args = ["--format", format];
+    if (format === "redacted") { // the key maps P01 back to real names, so it goes to a second place, away from the anonymised text
+      const k = await dialog.showSaveDialog({
+        title: "Where should the key go? Keep it apart from the data",
+        defaultPath: path.join(app.getPath("documents"), `${path.basename(r.filePath, path.extname(r.filePath))}.anonymisation-key.txt`),
+        filters: [{ name: "TXT", extensions: ["txt"] }],
+      });
+      if (k.canceled || !k.filePath) return { cancelled: true };
+      args.push("--key-output", k.filePath);
+    }
+    const res = await withTempJson(payload, (tmp) => runEngine(randomUUID(), ["export", tmp, r.filePath!, ...args], {}, () => {}));
     return res?.type === "done" ? { ok: true, path: r.filePath } : { ok: false, error: String(res?.message ?? "The export failed.").slice(0, 300) };
   });
 

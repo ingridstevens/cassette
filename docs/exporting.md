@@ -50,7 +50,7 @@ There is no date and no file path in the file, so the same transcript always exp
 **Anonymised text** also writes two small files next to the export, with the same name:
 
 - `….anonymisation-report.txt`: how many speakers were replaced by codes, how many times the names you gave to speakers were removed from the text, and a list of **words that start with a capital letter inside a sentence and are still in the text** (with counts), which may be names of people, places or organisations to check by hand. It contains no real name, so it can be given to a reviewer or an ethics board. It says what it cannot tell you: it only looks for capitalised words (a name at the start of a sentence, or in lower case, is not listed), it only removes names you gave to speakers, and it is a help for checking, not proof. For German it notes that every noun is capitalised, so the list is long. English "I'm" and "I've" are not listed.
-- `….anonymisation-key.txt`: which code is which speaker (`P01 = Anna`) and how often each name was removed. **Keep it apart from the data.**
+- `….anonymisation-key.txt`: which code is which speaker (`P01 = Anna`) and how often each name was removed. **Keep it apart from the data.** The app asks for a second place to save it, and suggests your Documents folder.
 
 If saving fails, the menu shows **Export failed:** with the reason. Cancelling the save window shows nothing.
 
