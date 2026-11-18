@@ -588,3 +588,28 @@ def test_redaction_respects_word_boundaries_and_name_parts():
     segs = [{"start": 0, "end": 1, "speaker": "A", "text": "Sarah met Miller, also Sarah Miller"}]
     report, key = redaction_report(segs, {"A": "Sarah Miller"}, "en")
     assert "3 time(s) in 1 name(s)" in report and "Sarah Miller: 3x" in key
+
+
+def _redacted_args(tmp_path, **kw):
+    import argparse
+    t = tmp_path / "t.json"
+    t.write_text(json.dumps({"segments": [{"start": 0, "end": 1, "speaker": "SPEAKER_00", "text": "Hello Anna."}], "speakers": NAMES, "language": "en"}))
+    return argparse.Namespace(transcript=str(t), output=str(tmp_path / "out" / "x.txt"), format="redacted", **kw)
+
+
+def test_redacted_key_goes_to_key_output_and_report_stays_beside_export(tmp_path):
+    from engine import main
+    (tmp_path / "out").mkdir()
+    (tmp_path / "keys").mkdir()
+    key = tmp_path / "keys" / "k.txt"
+    main.cmd_export(_redacted_args(tmp_path, key_output=str(key)))
+    assert "Anna" in key.read_text()
+    assert (tmp_path / "out" / "x.anonymisation-report.txt").exists()
+    assert not (tmp_path / "out" / "x.anonymisation-key.txt").exists()
+
+
+def test_redacted_key_defaults_to_beside_export(tmp_path):
+    from engine import main
+    (tmp_path / "out").mkdir()
+    main.cmd_export(_redacted_args(tmp_path, key_output=None))
+    assert (tmp_path / "out" / "x.anonymisation-key.txt").exists()

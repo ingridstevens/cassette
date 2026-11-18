@@ -232,7 +232,8 @@ def cmd_export(a) -> None:
             report, key = ex.redaction_report(segs, names, data.get("language"))
             out = Path(a.output)
             out.with_name(out.stem + ".anonymisation-report.txt").write_text(report, encoding="utf-8", newline="")
-            out.with_name(out.stem + ".anonymisation-key.txt").write_text(key, encoding="utf-8", newline="")
+            key_path = Path(a.key_output) if getattr(a, "key_output", None) else out.with_name(out.stem + ".anonymisation-key.txt")
+            key_path.write_text(key, encoding="utf-8", newline="")
     emit("done", path=a.output)
 
 
@@ -352,6 +353,7 @@ def build_parser() -> argparse.ArgumentParser:
     e.add_argument("transcript")
     e.add_argument("output")
     e.add_argument("--format", required=True, choices=["txt", "srt", "vtt", "md", "json", "csv", "docx", "chapters", "edl", "minutes", "highlights", "redacted", "quotes", "changes", "combined-csv"])
+    e.add_argument("--key-output", help="where to write the anonymisation key (default: beside the export)")
     e.set_defaults(fn=cmd_export)
 
     h = sub.add_parser("highlights")
