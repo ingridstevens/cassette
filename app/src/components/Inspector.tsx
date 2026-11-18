@@ -117,8 +117,11 @@ function Speakers({ project, moved, onMoveAll, onUndo, onPatch }: Pick<Props, "p
         <div key={s.id} className="card pv-spk">
           <div className="pv-spk-head">
             <span className="sw" style={{ background: PALETTE[s.index % PALETTE.length] }} aria-hidden />
-            <input className="pv-namefield" value={names[s.id] ?? ""} placeholder={defaultName(s.id, result.speakers)} aria-label={t("Name for speaker {number}", { number: s.index + 1 })}
-              onChange={(e) => onPatch({ names: { ...names, [s.id]: e.target.value } }, t("rename a speaker"), true)} />
+            <span className="pv-nameedit">
+              <input className="pv-namefield" value={names[s.id] ?? ""} placeholder={defaultName(s.id, result.speakers)} aria-label={t("Rename {name}", { name: name(s.id) })} title={t("Rename {name}", { name: name(s.id) })}
+                onChange={(e) => onPatch({ names: { ...names, [s.id]: e.target.value } }, t("rename a speaker"), true)} />
+              <svg className="i pv-pencil" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z M14 6l4 4" /></svg>
+            </span>
             <span className="note">{s.turns === 1 ? t("{count} turn", { count: s.turns }) : t("{count} turns", { count: s.turns })}</span>
           </div>
           <div className="pv-bar" aria-hidden><i style={{ width: `${s.pct}%`, background: PALETTE[s.index % PALETTE.length] }} /></div>
