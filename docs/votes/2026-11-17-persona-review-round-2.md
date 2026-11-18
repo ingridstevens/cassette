@@ -58,4 +58,6 @@ Also done: **anonymisation report and key** (Jonas, Okafor): the anonymised expo
 
 Also done: **a readable change list** (Mara): Info tab, "Changes by you": each changed line with what the model heard, what it says now, a jump to the line and a way back. Not done: a per-line "verified by ear" mark, a timeline of when each change was made.
 
+Also done: **an action-item table in the minutes** (Priya): Owner, Action and an empty Due column to fill in (no date is invented). Not done: owners picked from the Mark button, carry-over of last week's open items, a team roster.
+
 Held back for now: password lock, burned-in captions, share cards, headless command line (each needs a design decision).

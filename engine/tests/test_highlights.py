@@ -175,8 +175,10 @@ def test_minutes_include_summary_and_key_quotes():
     hl = [{"start": 10.5, "end": 13.0, "text": "the best thing we ever did", "speaker": "B"}]
     d = Document(io.BytesIO(to_minutes(SEGS, NAMES, summary=summary, highlights=hl)))
     text = "\n".join(p.text for p in d.paragraphs)
-    for needle in ("Summary", "They talked about shipping.", "0:10  Shipping", "Launch on 5 May", "Write the announcement (Anna)", "Key quotes", "the best thing we ever did"):
+    for needle in ("Summary", "They talked about shipping.", "0:10  Shipping", "Launch on 5 May", "Key quotes", "the best thing we ever did"):
         assert needle in text
+    cells = [c.text for r in d.tables[0].rows for c in r.cells]  # action items are a table now (owner, action, due)
+    assert "Write the announcement" in cells and "Anna" in cells
 
 
 def test_export_clips_one_file_per_clip(tmp_path):
