@@ -1,6 +1,7 @@
 /** Arabic (ar) and Persian (fa): the Ask tab, the right-hand panel (Speakers, Options, Info), the language-fit card, the model-folder report, error cards and the newer shortcut texts. Machine-assisted and not yet reviewed by a native speaker. */
 export default {
   ar: {
+    "Help with speakers": "مساعدة حول المتحدثين",
     "Next or previous overlap, where two people talk at once": "التداخل التالي أو السابق، حيث يتحدث شخصان معًا",
     "Next or previous marked line": "السطر المعلَّم التالي أو السابق",
     "Next or previous chapter": "الفصل التالي أو السابق",
@@ -138,6 +139,7 @@ export default {
     "Reload": "إعادة التحميل",
   },
   fa: {
+    "Help with speakers": "راهنما درباره گوینده‌ها",
     "Next or previous overlap, where two people talk at once": "هم‌پوشانی بعدی یا قبلی، جایی که دو نفر همزمان حرف می‌زنند",
     "Next or previous marked line": "خط نشان‌دار بعدی یا قبلی",
     "Next or previous chapter": "فصل بعدی یا قبلی",

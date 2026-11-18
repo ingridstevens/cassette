@@ -1,5 +1,6 @@
 export default {
   de: {
+    "Help with speakers": "Hilfe zu Sprechern",
     "Back to the playing line": "Zurück zur aktuellen Zeile",
     "Details": "Details",
     "Less": "Weniger",
@@ -247,6 +248,7 @@ export default {
     "Show recording in {app}": "Aufnahme in {app} anzeigen",
   },
   fr: {
+    "Help with speakers": "Aide sur les locuteurs",
     "Back to the playing line": "Retour à la ligne en cours",
     "Details": "Détails",
     "Less": "Moins",
@@ -494,6 +496,7 @@ export default {
     "Show recording in {app}": "Afficher l’enregistrement dans {app}",
   },
   es: {
+    "Help with speakers": "Ayuda sobre los hablantes",
     "Back to the playing line": "Volver a la línea en reproducción",
     "Details": "Detalles",
     "Less": "Menos",
