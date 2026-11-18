@@ -237,6 +237,9 @@ The first thing you reach with `Tab` is **Skip to the transcript**, which appear
 | `M`, `Shift+M` | Next / previous marked line |
 | `C`, `Shift+C` | Next / previous chapter |
 | `G` | Go to a time: type `12:30` (or `1:02:03`, or seconds) and press `Enter` to land on the line at that time |
+| `[`, `]` | Mark the start and the end of a clip at the playhead (a message says what was marked) |
+| `S` | Save the marked clip as an audio file |
+| `,`, `.` | Move the playhead back / forward half a second, for placing a clip edge exactly |
 | `?` | Show this list of shortcuts |
 | `⌘F` / `Ctrl+F` | Find in the transcript (**Replace** opens next to it) |
 | `⌘E` / `Ctrl+E` | Open the Export menu |
