@@ -64,6 +64,13 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
   const { result, names, path } = project;
   const player = useRef<WaveformHandle>(null);
   const [rate, setRate] = useState(() => { try { return Number(localStorage.getItem("playbackRate")) || 1; } catch { return 1; } });
+  /** Move to the next (or previous) speed in SPEEDS; `wrap` goes round from the fastest back to the slowest, for the pill. */
+  const stepRate = (dir: 1 | -1, wrap = false) => {
+    const i = SPEEDS.findIndex((r) => r >= rate - 1e-9);
+    const cur = i < 0 ? SPEEDS.length - 1 : i;
+    const next = wrap ? (cur + dir + SPEEDS.length) % SPEEDS.length : Math.min(SPEEDS.length - 1, Math.max(0, cur + dir));
+    chooseRate(SPEEDS[next]);
+  };
   const chooseRate = (r: number) => { setRate(r); try { localStorage.setItem("playbackRate", String(r)); } catch { /* remembered speed is a convenience only */ } };
   const findBox = useRef<HTMLInputElement>(null);
   const [time, setTime] = useState(0);
@@ -324,6 +331,10 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
         if (e.key.toLowerCase() === "r") { if (!review && unsure.length > 0) startReview(); }
         else jumpFlag(e.key.toLowerCase() === "o" ? "overlap" : e.key.toLowerCase() === "m" ? "marked" : "chapter", e.shiftKey ? -1 : 1);
       }
+      else if (!mod && !e.altKey && !busy && (e.key === "<" || e.key === ">") && !typing(e.target) && !document.querySelector("[role=dialog], [role=alertdialog]") && !(e.target instanceof HTMLElement && e.target.closest("[role=menu]"))) {
+        e.preventDefault();
+        stepRate(e.key === ">" ? 1 : -1);
+      }
       else if (!mod && !e.altKey && !e.shiftKey && !busy && /^[jkl]$/i.test(e.key) && !typing(e.target) && !document.querySelector("[role=dialog], [role=alertdialog]") && !(e.target instanceof HTMLElement && e.target.closest("[role=menu]"))) {
         e.preventDefault();
         const k = e.key.toLowerCase();
@@ -333,7 +344,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
     };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [visible, showResult, busy, dialog, jumpDialog, time, result, sel, clipStart, path, review, unsure]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [visible, showResult, busy, dialog, jumpDialog, time, result, sel, clipStart, path, review, unsure, rate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const payload = (format = "", options?: ExportOpts) => ({
     segments: result!.segments.map(({ words, orig, edited, ...s }) => (["srt", "vtt", "edl"].includes(format) || (options?.pauseMarks && STYLED.has(format)) ? { ...s, edited, words: words.map(({ start, end, word }) => ({ start, end, word })) } : format === "changes" ? { ...s, orig: orig && { text: orig.text } } : s)),
@@ -663,6 +674,8 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
           </div>
           <div className="pv-clock">
             <div dir="ltr">{fmt(time)} <span>/ {fmt(duration || result?.duration || 0)}</span></div>
+            <button type="button" className={"pv-speed" + (rate !== 1 ? " on" : "")} dir="ltr" onClick={() => stepRate(1, true)}
+              aria-label={t("Playback speed {rate}×. Click to change.", { rate })} title={t("Playback speed: click to change, or press < and >")}>{rate}×</button>
           </div>
           <Waveform key={project.id} ref={player} path={path} result={result} onTime={setTime} onSelection={setSel} onPlaying={setPlaying} onDuration={setDuration} />
           {result && (
@@ -687,9 +700,6 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
               <button type="button" className="btn quiet small" onClick={nextTurn} title={t("Next speaker")}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M18 5v14M5 6v12l9-6z" /></svg>{t("Next")}</button>
               <span className="pv-sep" aria-hidden />
               <button type="button" className="btn quiet small" onClick={() => void copyTime()}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2.5" /><path d="M5 15V6.5A1.5 1.5 0 0 1 6.5 5H15" /></svg>{t("Copy time")}</button>
-              <label className="pv-rate"><span>{t("Speed")}</span>
-                <select value={rate} aria-label={t("Playback speed")} onChange={(e) => chooseRate(Number(e.target.value))}>{SPEEDS.map((r) => <option key={r} value={r}>{r}×</option>)}</select>
-              </label>
             </div>
             <div className="pv-tools" role="group">
               <button type="button" className="btn quiet small" onClick={markStart}>{t("Start clip")}</button>
