@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { BrowserWindow, app, dialog, ipcMain, powerMonitor, safeStorage, session, shell } from "electron";
-import { EngineEvent, cancelJob, runEngine } from "./engine-client";
+import { EngineEvent, cancelJob, killAllJobs, runEngine } from "./engine-client";
 import { redactNames } from "./logRedact";
 import { registerLive } from "./live";
 import { createKnownPaths } from "./knownPaths";
@@ -389,4 +389,5 @@ app.whenReady().then(() => {
   app.on("activate", () => BrowserWindow.getAllWindows().length === 0 && createWindow());
 });
 
+app.on("before-quit", killAllJobs);
 app.on("window-all-closed", () => process.platform !== "darwin" && app.quit());

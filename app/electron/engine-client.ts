@@ -20,7 +20,11 @@ export function runEngine(
   jobId: string, engineArgs: string[], env: Record<string, string>, onEvent: (e: EngineEvent) => void,
 ): Promise<EngineEvent | null> {
   const { cmd, args } = engineCommand();
-  const child = spawn(cmd, [...args, ...engineArgs], { env: { ...process.env, ...env, PYTHONUNBUFFERED: "1" } });
+  const child = spawn(cmd, [...args, ...engineArgs], {
+    env: { ...process.env, ...env, PYTHONUNBUFFERED: "1" },
+    detached: process.platform !== "win32", // own process group on Mac and Linux, so the whole tree (uv and its Python child) can be stopped together
+    windowsHide: true,
+  });
   jobs.set(jobId, child);
   child.stdin.on("error", () => { /* the engine ended before the last audio was sent */ });
   let buf = "", last: EngineEvent | null = null, stderr = "";
@@ -61,4 +65,15 @@ export function writeToJob(jobId: string, data: Uint8Array): boolean { const s =
 export function endJobInput(jobId: string) { jobs.get(jobId)?.stdin?.end(); }
 /** Jobs the user (or the app) asked to stop, so a process ended by the system is not mistaken for a cancel. */
 const cancelled = new Set<string>();
-export function cancelJob(jobId: string) { const j = jobs.get(jobId); if (j) { cancelled.add(jobId); j.kill(); } }
+/** Stop the engine and anything it started: taskkill /T on Windows, a signal to the process group elsewhere. */
+function killTree(child: ChildProcess) {
+  if (!child.pid || child.exitCode !== null || child.signalCode !== null) return;
+  if (process.platform === "win32") {
+    try { spawn("taskkill", ["/pid", String(child.pid), "/T", "/F"], { windowsHide: true, stdio: "ignore" }).on("error", () => child.kill()); } catch { child.kill(); }
+  } else {
+    try { process.kill(-child.pid, "SIGTERM"); } catch { child.kill("SIGTERM"); }
+  }
+}
+export function cancelJob(jobId: string) { const j = jobs.get(jobId); if (j) { cancelled.add(jobId); killTree(j); } }
+/** Called when the app quits, so no engine keeps running (and holding gigabytes of memory) in the background. */
+export function killAllJobs() { for (const [id, j] of jobs) { cancelled.add(id); killTree(j); } }
