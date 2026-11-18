@@ -553,17 +553,34 @@ def _redaction_map(segs, names) -> dict[str, str]:
     return {sp: f"P{i + 1:02d}" for i, sp in enumerate(order)}
 
 
+def _name_pattern(names: dict[str, str]):
+    """One pattern for every typed name and each part of it (first and last name), on word boundaries.
+    Returns (pattern, owner) where owner maps a lower-case match to the typed name it came from; (None, {}) when there are no names."""
+    import re
+    owner: dict[str, str] = {}
+    for n in (v.strip() for v in names.values() if v and v.strip()):
+        owner.setdefault(n.lower(), n)
+        for p in re.split(r"[\s-]+", n):
+            if len(p) >= 2:
+                owner.setdefault(p.lower(), n)
+    if not owner:
+        return None, {}
+    alts = "|".join(re.escape(p) for p in sorted(owner, key=len, reverse=True))
+    return re.compile(rf"(?<!\w)(?:{alts})(?!\w)", re.IGNORECASE), owner  # \w is Unicode-aware in Python 3
+
+
+def _scrub(text: str, pat) -> tuple[str, int]:
+    return pat.subn("[name]", text) if pat else (text, 0)
+
+
 def to_redacted(segs, names=None, options=None):
     """Plain text with every speaker name replaced by P01, P02… and any name the user typed removed from the text."""
     names = names or {}
     codes = _redaction_map(segs, names)
-    real = sorted({n for n in names.values() if n and n.strip()}, key=len, reverse=True)
+    pat, _ = _name_pattern(names)
 
     def scrub(t: str) -> str:
-        import re
-        for n in real:
-            t = re.sub(re.escape(n), "[name]", t, flags=re.IGNORECASE)
-        return t
+        return _scrub(t, pat)[0]
 
     stamp = (options or {}).get("timestamps", True)
     return "\n".join((f"[{_ts(s['start'])[:8]}] " if stamp else "") + f"{codes[s['speaker']]}: {scrub(s['text'])}" for s in segs) + "\n"
@@ -585,16 +602,15 @@ def redaction_report(segs, names=None, language: str | None = None) -> tuple[str
 
     names = names or {}
     codes = _redaction_map(segs, names)
-    real = sorted({n for n in names.values() if n and n.strip()}, key=len, reverse=True)
+    pat, owner = _name_pattern(names)
     removed = Counter()
     candidates: Counter = Counter()
     for s in segs:
         text = s["text"]
-        for n in real:
-            found = len(re.findall(re.escape(n), text, flags=re.IGNORECASE))
-            if found:
-                removed[n] += found
-                text = re.sub(re.escape(n), "[name]", text, flags=re.IGNORECASE)
+        if pat:
+            for m in pat.finditer(text):
+                removed[owner[m.group(0).lower()]] += 1
+            text = _scrub(text, pat)[0]
         for words in _sentence_words(text):
             for w in words[1:]:
                 if len(w) >= 3 and w[0].isupper() and not re.match(r"I['’]", w):  # not the English "I'm", "I've"

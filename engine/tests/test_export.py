@@ -572,3 +572,19 @@ def test_minutes_action_table_headings_follow_the_language():
 
     doc = Document(io.BytesIO(to_minutes([{"start": 0, "end": 1, "speaker": "A", "text": "x"}], {}, lang="de", summary={"actions": [{"text": "Zahlen senden", "owner": "Anna"}]})))
     assert [c.text for c in doc.tables[0].rows[0].cells] == ["Verantwortlich", "Aufgabe", "Fällig bis"]
+
+
+def test_redaction_respects_word_boundaries_and_name_parts():
+    from engine.export import redaction_report, to_redacted
+
+    def one(text, names):
+        return to_redacted([{"start": 0, "end": 1, "speaker": "A", "text": text}], names, {"timestamps": False})
+
+    assert one("Al said it is also annual", {"A": "Al"}) == "P01: [name] said it is also annual\n"
+    assert one("Ann read the Annual report", {"A": "Ann"}) == "P01: [name] read the Annual report\n"
+    assert one("Sarah and Miller met Sarah Miller", {"A": "Sarah Miller"}) == "P01: [name] and [name] met [name]\n"
+    assert one("Anna's idea", {"A": "Anna"}) == "P01: [name]'s idea\n"
+    assert one("Jürgen sagte", {"A": "Jürgen"}) == "P01: [name] sagte\n"
+    segs = [{"start": 0, "end": 1, "speaker": "A", "text": "Sarah met Miller, also Sarah Miller"}]
+    report, key = redaction_report(segs, {"A": "Sarah Miller"}, "en")
+    assert "3 time(s) in 1 name(s)" in report and "Sarah Miller: 3x" in key
