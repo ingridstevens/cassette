@@ -410,9 +410,9 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 @media (prefers-reduced-motion: reduce) { .pv-row-chev { transition: none; } }
 
 /* player: one row on top, "Details" folds the speaker and clip tools out underneath */
-.pv-now { display: flex; align-items: center; gap: 8px; flex: none; max-width: 170px; font: 600 13px var(--font-ui); color: var(--ink2); }
+.pv-now { display: flex; align-items: center; gap: 8px; flex: 0 1 auto; max-width: 170px; font: 600 13px var(--font-ui); color: var(--ink2); }
 .pv-now i { width: 10px; height: 10px; border-radius: 50%; flex: none; background: var(--ink3); }
-.pv-now span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pv-now span { min-width: 0; line-height: 1.25; overflow-wrap: break-word; }
 .btn.pv-more { flex: none; gap: 4px; }
 .btn.pv-more .i { width: 16px; height: 16px; transition: transform .18s; }
 .btn.pv-more[aria-expanded="true"] .i { transform: rotate(180deg); }
