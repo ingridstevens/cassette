@@ -46,7 +46,7 @@ app, no telemetry, no update checks, and it works offline after a one-time model
 **Look and accessibility**
 - *Clean* look by default (calm blue-green, Inter font), or *Fairytale sunset*; light, dark or match your computer.
 - Text size in four steps, High contrast, and an optional *Soft look* (blurred glass, only on computers with plenty of memory). Computers with 4 GB or less get a lighter look by themselves.
-- The interface speaks English, German, French and Spanish (or matches your computer); Arabic and Persian are mostly translated (first run, start sheet, project list, transcript, export menu, review mode, record page, activity list, Settings overview) with right-to-left layout; the Settings pages and the Speakers, Options, Info and Ask tabs are translated, as are the Highlights tab and summary, the export option dialogs and the empty first screen, while the long Privacy page, the speaker setup steps and about 170 smaller project-view messages still show in English for now, and none of the text has been read by a native speaker yet.
+- The interface speaks English, German, French and Spanish (or matches your computer); Arabic and Persian are mostly translated (first run, start sheet, project list, transcript, export menu, review mode, record page, activity list, Settings overview) with right-to-left layout; the Settings pages and the Speakers, Options, Info and Ask tabs are translated, as are the Highlights tab and summary, the export option dialogs and the empty first screen, while only the long Privacy page still shows in English for now, and none of the text has been read by a native speaker yet.
 
 **Private by design**
 - Audio and transcripts never leave your computer; fonts are bundled, nothing loads from the internet to draw a screen.
