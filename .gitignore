@@ -17,3 +17,7 @@ shots/
 
 # local persona digest: keep it on this computer (the shared versions are in docs/personas/)
 PERSONAS.md
+
+# Playwright output
+app/e2e/test-results/
+app/e2e/playwright-report/
