@@ -227,6 +227,11 @@ def cmd_export(a) -> None:
               "redacted": ex.to_redacted, "changes": ex.to_changes}[a.format]
         text = fn(segs, names, opts) if a.format in ("srt", "vtt", "chapters", "changes", "txt", "md", "redacted") else ex.to_json(segs, names, ex.provenance(data)) if a.format == "json" else fn(segs, names)
         Path(a.output).write_text(text, encoding="utf-8", newline="")
+        if a.format == "redacted":  # beside the export: a report to give a reviewer, and the key to keep apart
+            report, key = ex.redaction_report(segs, names, data.get("language"))
+            out = Path(a.output)
+            out.with_name(out.stem + ".anonymisation-report.txt").write_text(report, encoding="utf-8", newline="")
+            out.with_name(out.stem + ".anonymisation-key.txt").write_text(key, encoding="utf-8", newline="")
     emit("done", path=a.output)
 
 

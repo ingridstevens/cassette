@@ -80,7 +80,7 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
   const run = async (f: string, o?: ExportOpts) => {
     const r = await onExport(f, o).catch((e: unknown) => ({ ok: false, error: String(e) } as Res));
     if (r.cancelled) return;
-    setBad(!r.ok); setMsg(r.ok ? t("Exported ✓") : t("Export failed: {reason}", { reason: r.error ?? t("unknown error") }));
+    setBad(!r.ok); setMsg(r.ok ? (f === "redacted" ? t("Exported ✓. A report and a key file were saved next to it. Keep the key apart from the data.") : t("Exported ✓")) : t("Export failed: {reason}", { reason: r.error ?? t("unknown error") }));
     setTimeout(() => setMsg(""), r.ok ? 2800 : 8000);
   };
   const host = trigger.current?.closest(".pview") ?? document.body;

@@ -569,6 +569,60 @@ def to_redacted(segs, names=None, options=None):
     return "\n".join((f"[{_ts(s['start'])[:8]}] " if stamp else "") + f"{codes[s['speaker']]}: {scrub(s['text'])}" for s in segs) + "\n"
 
 
+def _sentence_words(text: str):
+    """Words of each sentence, in order; the first word of a sentence is skipped by the caller (it is capitalised anyway)."""
+    import re
+
+    for sentence in re.split(r"(?<=[.!?…])\s+", text):
+        yield re.findall(r"[^\W\d_]+(?:[-'’][^\W\d_]+)*", sentence)
+
+
+def redaction_report(segs, names=None, language: str | None = None) -> tuple[str, str]:
+    """After an anonymised export: (report, key). The report is safe to give to a reviewer: counts and the words that might still be names,
+    never a real name. The key maps P01, P02… to the speakers' names and counts the removals; keep it apart from the data."""
+    import re
+    from collections import Counter
+
+    names = names or {}
+    codes = _redaction_map(segs, names)
+    real = sorted({n for n in names.values() if n and n.strip()}, key=len, reverse=True)
+    removed = Counter()
+    candidates: Counter = Counter()
+    for s in segs:
+        text = s["text"]
+        for n in real:
+            found = len(re.findall(re.escape(n), text, flags=re.IGNORECASE))
+            if found:
+                removed[n] += found
+                text = re.sub(re.escape(n), "[name]", text, flags=re.IGNORECASE)
+        for words in _sentence_words(text):
+            for w in words[1:]:
+                if len(w) >= 3 and w[0].isupper() and not re.match(r"I['’]", w):  # not the English "I'm", "I've"
+                    candidates[w] += 1
+    german = (language or "").lower().startswith("de")
+    lines = [
+        "Anonymisation report",
+        "",
+        f"Speakers replaced by codes: {len(codes)} ({', '.join(codes.values()) or 'none'})",
+        f"Names you gave to speakers, removed from the text: {sum(removed.values())} time(s) in {len(removed)} name(s)",
+        "",
+        "Words that start with a capital letter inside a sentence and are still in the exported text.",
+        "They may be names of people, places or organisations. Check them by hand.",
+    ]
+    if german:
+        lines.append("German writes every noun with a capital letter, so this list is long for German.")
+    listed = [f"  {w}  ({n}x)" for w, n in sorted(candidates.items(), key=lambda kv: (-kv[1], kv[0]))] or ["  (none found)"]
+    lines += ["", *listed, "",
+              "What this report cannot tell you:",
+              "- It looks only for capitalised words. A name that is not capitalised, or one at the start of a sentence, is not listed.",
+              "- It only removes names you gave to speakers. Other names spoken in the recording stay in the text.",
+              "- It is a help for checking, not proof that the text is anonymous.", ""]
+    key = ["Key for the anonymised export. Keep this file apart from the data.", ""]
+    key += [f"{code} = {names.get(sp) or sp}" for sp, code in codes.items()]
+    key += ["", "Removed from the text:"] + [f"  {n}: {c}x" for n, c in removed.most_common()] + [""]
+    return "\n".join(lines), "\n".join(key)
+
+
 def quote_list(segs, highlights=None):
     """Everything worth quoting, in the order it occurs: each highlight, plus each marked line that holds no highlight of its own.
     Entries are {start, end, text, speaker, reason, ai}."""

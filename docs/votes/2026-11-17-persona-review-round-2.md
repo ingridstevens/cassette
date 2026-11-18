@@ -54,4 +54,6 @@ Also done: **log controls** (Okafor): Settings, Privacy can switch the activity 
 
 Also done: **network tripwire and source column** (Dev): a test that fails when network-capable code or a new web address appears outside the known places, and a "Where in the code" column in Settings, Privacy, Every network call.
 
+Also done: **anonymisation report and key** (Jonas, Okafor): the anonymised export writes a report (counts, and capitalised words still in the text to check by hand; no real names) and a separate key file. Not done: a pseudonym table shared across interviews, finding names by a name detector.
+
 Held back for now: password lock, burned-in captions, share cards, headless command line (each needs a design decision).
