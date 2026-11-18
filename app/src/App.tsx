@@ -15,6 +15,7 @@ import "./styles/shell.css";
 import { setLanguage, t, useT } from "./i18n";
 import { setLlm } from "./components/llmChoice";
 import { IS_MAC, ModelStatus, Options, applyLook, displayName } from "./types";
+import { scrollToTurn } from "./windowing";
 import { useProjects } from "./useProjects";
 
 const DEFAULTS: Options = { model: "small", language: "auto", numSpeakers: "", vad: false, prompt: "", noDiarize: false, device: "auto", autosave: true };
@@ -130,8 +131,7 @@ export default function App() {
   // First thing a keyboard or screen-reader user can tab to: skip the sidebar and the toolbar, and land on the first line of the transcript.
   const skipToTranscript = (e: React.MouseEvent) => {
     e.preventDefault();
-    const first = document.querySelector<HTMLElement>(".pview:not([hidden]) [data-turn] .pv-time");
-    first?.focus(); first?.scrollIntoView({ block: "center" });
+    void scrollToTurn(0, { behavior: "auto" }).then((row) => { const first = row?.querySelector<HTMLElement>(".pv-time"); first?.focus(); first?.scrollIntoView({ block: "center" }); });
   };
 
   return (
