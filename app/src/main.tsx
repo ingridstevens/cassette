@@ -6,6 +6,7 @@ import { applyLook } from "./types";
 import "./styles/fonts.css";
 import "./styles/base.css";
 import "./styles/themes.css";
+import "./styles/print.css";
 
 if (import.meta.env.DEV && !(window as { api?: unknown }).api) await import("./dev-mock");
 

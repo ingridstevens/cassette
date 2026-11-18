@@ -11,6 +11,8 @@ const GROUPS: { title: string; formats: readonly (readonly [string, string, stri
     ["docx", "Word document", ".docx · speakers in bold, with times"],
     ["txt", "Plain text", ".txt · [time] Speaker: text"],
     ["md", "Markdown", ".md"],
+    ["print", "Print / PDF", ".pdf · the transcript only, ready to print"],
+    ["print-large", "Large-print PDF", ".pdf · 150% text size, for easier reading"],
     ["redacted", "Anonymised text", ".txt · speaker names replaced by P01, P02…; other names in the text are not found"],
     ["text", "Text style…", "Keep or remove “um”, mark pauses, show or hide times"],
   ] },
@@ -33,7 +35,7 @@ const GROUPS: { title: string; formats: readonly (readonly [string, string, stri
 ];
 
 /** The few formats most people use, shown first. Everything else sits behind "More formats". */
-const PRIMARY = ["docx", "txt", "srt", "minutes"] as const;
+const PRIMARY = ["docx", "txt", "print", "print-large", "srt", "minutes"] as const;
 const ALL = GROUPS.flatMap((g) => g.formats);
 
 /** Arrow/Home/End navigation between the menu items of the menu that received the key. */

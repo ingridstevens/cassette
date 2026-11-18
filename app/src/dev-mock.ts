@@ -143,6 +143,7 @@ function fake(path = "") {
   tokenSecure: async () => !location.search.includes("nokeyring"),
   token: async (v?: string) => { if (v !== undefined) token = v; return hint(); },
   exportTranscript: async (_p: unknown, f: string, n: string) => { await wait(200); console.log("export", f); return n.includes("fail") ? { ok: false, error: "Disk full" } : { ok: true, path: `/Users/demo/${n}.${f}` }; },
+  printPdf: async (n: string) => { await wait(200); console.log("print pdf"); return { ok: true, path: `/Users/demo/${n}.pdf` }; },
   translateLine: async () => { await wait(500); return { ok: true, text: "(English translation appears here)" }; },
   runLlm: async (kind: string, p: { language?: string; segments: { start: number; end: number; speaker: string; text: string; words: { start: number; end: number; word: string }[] }[] }, o: { clientId: string }) => {
     for (let i = 1; i <= 5; i++) { await wait(300); emit({ source: "llm", clientId: o.clientId, type: "progress", stage: kind, fraction: i / 5, message: "" }); }

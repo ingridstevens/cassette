@@ -289,6 +289,21 @@ app.whenReady().then(() => {
     return res?.type === "done" ? { ok: true, path: r.filePath } : { ok: false, error: String(res?.message ?? "The export failed.").slice(0, 300) };
   });
 
+  // Prints the open transcript to a PDF through the print stylesheet (styles/print.css), which hides everything but the transcript.
+  ipcMain.handle("print-pdf", async (e, name: unknown, large: unknown) => {
+    const base = String(typeof name === "string" && name.trim() ? name : "Transcript").replace(/[\\/:*?"<>|]/g, "-");
+    const r = await dialog.showSaveDialog({ defaultPath: `${base}.pdf`, filters: [{ name: "PDF", extensions: ["pdf"] }] });
+    if (r.canceled || !r.filePath) return { cancelled: true };
+    const root = `document.documentElement.classList.toggle("print-large", ${large === true})`;
+    try {
+      await e.sender.executeJavaScript(root);
+      const pdf = await e.sender.printToPDF({ pageSize: "A4", printBackground: false });
+      fs.writeFileSync(r.filePath, pdf);
+      return { ok: true, path: r.filePath };
+    } catch (err) { return { ok: false, error: String((err as Error).message) }; }
+    finally { await e.sender.executeJavaScript(`document.documentElement.classList.remove("print-large")`).catch(() => {}); }
+  });
+
   const projectsStore = createProjectsStore(app.getPath("userData"), logLine);
   ipcMain.handle("projects-load", () => { const r = projectsStore.load(); known.remember(r.projects); return r; });
   ipcMain.handle("projects-save", (_e, data: unknown) => {
