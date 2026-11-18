@@ -19,6 +19,7 @@ const api = {
   importModels: () => ipcRenderer.invoke("import-models"),
   models: (action: "status" | "download" | "delete" | "check", name?: string) => ipcRenderer.invoke("models", action, name),
   cancelModels: (): Promise<boolean> => ipcRenderer.invoke("cancel-models"),
+  tokenSecure: (): Promise<boolean> => ipcRenderer.invoke("tokenSecure"),
   token: (value?: string): Promise<string> => ipcRenderer.invoke("token", value),
   exportTranscript: (payload: unknown, format: string, name: string): Promise<{ ok?: boolean; cancelled?: boolean; path?: string; error?: string }> => ipcRenderer.invoke("export", { ...(payload as object), lang: document.documentElement.lang || "en" }, format, name),
   translateLine: (p: { input: string; start: number; end: number; model: string; language: string; backend?: string }): Promise<{ ok: boolean; text?: string; error?: string }> => ipcRenderer.invoke("translate-line", p),

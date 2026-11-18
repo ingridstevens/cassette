@@ -239,6 +239,10 @@ app.whenReady().then(() => {
     return true;
   });
 
+  // On Linux without a keyring, safeStorage falls back to "basic_text", which is effectively plain text.
+  const tokenSecure = () => safeStorage.isEncryptionAvailable()
+    && !(process.platform === "linux" && safeStorage.getSelectedStorageBackend() === "basic_text");
+  ipcMain.handle("tokenSecure", () => tokenSecure());
   ipcMain.handle("token", (_e, value?: string) => {
     const hint = () => { const t = readToken(); return t ? "hf_…" + t.slice(-4) : ""; };
     if (value === undefined) return hint();

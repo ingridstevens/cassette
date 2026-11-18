@@ -14,6 +14,8 @@ const Path = ({ p }: { p: string }) => <code>{p.split("/").map((part, i, all) =>
 export default function PrivacySection({ models, opts, set }: Props) {
   const t = useT();
   // The hook has no way to clear its token state, so this section keeps its own copy and re-reads it from the main process.
+  const [secure, setSecure] = useState(true);
+  useEffect(() => { window.api.tokenSecure().then(setSecure).catch(() => {}); }, []);
   const [hint, setHint] = useState<string | null>(models.tokenSet ? models.tokenHint : null);
   const [replacing, setReplacing] = useState(false);
   const [value, setValue] = useState("");
@@ -92,7 +94,7 @@ export default function PrivacySection({ models, opts, set }: Props) {
             <tr><th scope="row">{t("Projects, transcripts, speaker names")}</th><td>{t("The app folder")}</td><td className="act"><button type="button" className="btn small" aria-label={t("Show the app folder")} onClick={() => window.api.reveal("data")}>{t("Show")}</button></td></tr>
             <tr><th scope="row">{t("Backup copies")}</th><td>{t("Next to each recording, if the switch in Saving and export is on")}</td><td className="act" /></tr>
             <tr><th scope="row">{t("Models")}</th><td>{t("The models folder")}</td><td className="act"><button type="button" className="btn small" aria-label={t("Show the models folder")} onClick={() => window.api.reveal("models")}>{t("Show")}</button></td></tr>
-            <tr><th scope="row">{t("Hugging Face token")}</th><td>{hint ? t("Encrypted by your computer's secure storage. Last 4 characters: {hint}", { hint: hint.slice(-4) }) : t("No token is saved.")}</td><td className="act" /></tr>
+            <tr><th scope="row">{t("Hugging Face token")}</th><td>{hint ? (secure ? t("Encrypted by your computer's secure storage. Last 4 characters: {hint}", { hint: hint.slice(-4) }) : t("Not encrypted: this computer has no password keyring. Last 4 characters: {hint}", { hint: hint.slice(-4) })) : t("No token is saved.")}</td><td className="act" /></tr>
             <tr><th scope="row">{t("Activity log")}</th><td>{t("File names and folders. It never contains the text of a transcript.")}</td><td className="act"><button type="button" className="btn small" aria-label={t("Show the activity log")} onClick={() => window.api.reveal("log")}>{t("Show")}</button></td></tr>
           </tbody></table></div>
         <p className="note">{t("The app does not encrypt these files. Turn on {name} so they are protected when the computer is off.", { name: IS_MAC ? "FileVault" : IS_WIN ? "BitLocker" : t("disk encryption") })}</p>
@@ -110,6 +112,7 @@ export default function PrivacySection({ models, opts, set }: Props) {
               ? t("A token is saved in this computer's secure storage and used only to download the speaker model. Only the last 4 characters are shown, so the full token never appears on screen again. Removing it doesn't delete models you already have.")
               : t("No token is saved. You only need one to download the speaker-detection model. A token you add is kept in this computer's secure storage and is never shown in full again.")}</p></div>
           <div className="st-token">
+            {!secure && <p className="err-line" role="note">{t("This computer has no password keyring, so the token would be stored readable. Install and unlock a keyring (GNOME Keyring or KWallet), or paste the token each time.")}</p>}
             {replacing ? (
               <>
                 <label className="field">{t("New token")}

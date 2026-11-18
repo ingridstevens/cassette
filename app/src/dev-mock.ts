@@ -139,6 +139,7 @@ function fake(path = "") {
     return { type: "done" };
   },
   cancelModels: async () => { stopDl = true; return true; },
+  tokenSecure: async () => !location.search.includes("nokeyring"),
   token: async (v?: string) => { if (v !== undefined) token = v; return hint(); },
   exportTranscript: async (_p: unknown, f: string, n: string) => { await wait(200); console.log("export", f); return n.includes("fail") ? { ok: false, error: "Disk full" } : { ok: true, path: `/Users/demo/${n}.${f}` }; },
   translateLine: async () => { await wait(500); return { ok: true, text: "(English translation appears here)" }; },
