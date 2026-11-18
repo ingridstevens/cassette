@@ -515,6 +515,14 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
             <button type="button" className="btn quiet small" onClick={onCancel}>{t("Stop")}</button>
           </div>
         )}
+        {!easy && (highlights.length > 0 || result.segments.some((s) => s.marked)) && (
+          <div className="pv-marklegend" role="note" aria-label={t("What the line badges mean")}>
+            <span className="pv-lg"><span className="pv-flag pv-marked"><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-3-5.4 3 1.1-6L3.2 9.4l6.1-.8z" /></svg>{t("Marked")}</span>
+            <span>{t("a whole line for the minutes and the quote list")}</span></span>
+            <span className="pv-lg"><span className="pv-flag pv-hlflag"><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4" /></svg>{t("Highlighted")}</span>
+            <span>{t("words kept as a clip, shaded in the text")}</span></span>
+          </div>
+        )}
         {!easy && unsure.length > 0 && !unsureLegendSeen && (
           <div className="pv-legend" role="note">
             <span>{t("Dotted words: the model wasn't sure. Press R to check them.")}</span>

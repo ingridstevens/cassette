@@ -1,6 +1,6 @@
 /* Print / PDF: only the transcript, flowing over as many pages as it needs. Used by "Print / PDF" and "Large-print PDF" in the export menu. */
 @media print {
-  .side, .inspector, .pv-dock, .tool, .skip-link, .toast, .pv-sr, .pv-nohit, .pv-replace, .pv-partial, .pv-copy, .pv-edit, .pv-who-btn svg, .pv-flag.pv-marked svg,
+  .side, .inspector, .pv-dock, .tool, .skip-link, .toast, .pv-sr, .pv-nohit, .pv-replace, .pv-partial, .pv-copy, .pv-edit, .pv-marklegend, .pv-who-btn svg, .pv-flag.pv-marked svg,
   .pv-menu, .pv-pop, .menu, .setup-overlay { display: none !important; }
   html, body { background: #fff !important; height: auto !important; overflow: visible !important; }
   .shell, .main, .main-body, .pview, .pview-main, .pv-scroll { display: block !important; height: auto !important; min-height: 0 !important; overflow: visible !important; position: static !important; background: none !important; padding: 0 !important; margin: 0 !important; }
