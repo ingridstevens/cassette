@@ -92,6 +92,8 @@ export default function App() {
   }, []);
 
   const addFiles = useCallback((paths: string[]) => { if (paths.length) { setAddError(P.add(paths)); setPage("main"); } }, [P]);
+  // Files opened from the Dock, Finder or Explorer. The main process has already registered them as known recordings.
+  useEffect(() => window.api.onOpenFiles(addFiles), [addFiles]);
   const pick = async () => addFiles(await window.api.pickFiles());
   function onDrop(e: DragEvent) {
     e.preventDefault(); setDragging(false);
