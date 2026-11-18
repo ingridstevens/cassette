@@ -4,7 +4,7 @@ import { currentLang, t } from "./i18n";
 import { DraftLine, FitAsk, JobProgress, MEDIA_EXT, Options, Project, Result, RunMeta, Segment, baseName, displayName, stripExt } from "./types";
 
 type Range = [number, number] | null;
-const persisted = (p: Project) => ({ id: p.id, path: p.path, name: p.name, addedAt: p.addedAt, result: p.result, names: p.names, opts: p.opts, meta: p.meta, trial: p.trial, previous: p.previous });
+const persisted = (p: Project) => ({ id: p.id, path: p.path, name: p.name, addedAt: p.addedAt, openedAt: p.openedAt, editedAt: p.editedAt, result: p.result, names: p.names, opts: p.opts, meta: p.meta, trial: p.trial, previous: p.previous });
 
 /** Replace the segments overlapping a re-transcribed range, keep the rest. */
 /** `line` is set when one line is transcribed again in a chosen language: the new text keeps that line's speaker and gets the language. */
@@ -180,6 +180,8 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     }
   }), [patch]);
 
-  return { projects, notice, saveError, dismissNotice: () => setNotice(""), activeId, setActiveId, progress, drafts, add, addAndTranscribe, remove, rename: (id: string, name: string) => patch(id, { name }), patch, transcribe, cancel,
+  const open = useCallback((id: string | null) => { setActiveId(id); if (id) patch(id, { openedAt: Date.now() }); }, [patch]);
+  const edit = useCallback((id: string, p: Partial<Project>) => patch(id, { ...p, editedAt: Date.now() }), [patch]);
+  return { projects, notice, saveError, dismissNotice: () => setNotice(""), activeId, setActiveId: open, edit, progress, drafts, add, addAndTranscribe, remove, rename: (id: string, name: string) => patch(id, { name }), patch, transcribe, cancel,
     transcribeAll: () => projectsRef.current.filter((p) => p.status === "idle" || p.status === "error").forEach((p) => transcribe(p.id)) };
 }
