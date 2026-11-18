@@ -44,6 +44,15 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
       }
       const list = (raw.projects as Project[]).map((p) => ({ ...p, status: (p.result ? "done" : "idle") as Project["status"] }));
       setProjects(list); setActiveId(list[0]?.id ?? null); setLoaded(true);
+      // Recordings a crash cut short: they are now WAV files, so add them as projects (the saved list is already loaded, so nothing is overwritten).
+      window.api.liveRecover().then((rec) => {
+        const fresh = (rec ?? []).filter((path) => !list.some((p) => p.path === path));
+        if (!fresh.length) return;
+        const projs: Project[] = fresh.map((path) => ({ id: crypto.randomUUID(), path, name: stripExt(baseName(path)), addedAt: Date.now(), result: null, names: {}, status: "idle" }));
+        setProjects((l) => [...projs, ...l]); setActiveId(projs[0].id);
+        const msg = t("Recovered {count} recording(s) that were interrupted.", { count: projs.length });
+        setNotice((n) => (n ? `${n} ${msg}` : msg));
+      }).catch(() => {});
     }).catch(() => setLoaded(true));
   }, []);
   // debounced save (only after the first load, so we never overwrite saved projects with an empty list)
