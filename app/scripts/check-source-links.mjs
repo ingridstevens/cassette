@@ -36,3 +36,17 @@ assert.equal(parseTime("12:75"), null, "seconds over 59");
 assert.equal(parseTime("soon"), null);
 assert.equal(parseTime(""), null);
 console.log("go to a time: all checks pass");
+
+// dueForRetention (ask-before-deleting old projects)
+const out3 = join(dir, "retention.mjs");
+await build({ entryPoints: ["src/retention.ts"], outfile: out3, bundle: true, format: "esm", logLevel: "silent" });
+const { dueForRetention, ageDays } = await import(pathToFileURL(out3).href);
+const NOW = Date.UTC(2026, 10, 18), D = 86_400_000;
+const proj = (id, daysAgo, status = "done") => ({ id, name: id, addedAt: NOW - daysAgo * D, status });
+assert.deepEqual(dueForRetention([proj("a", 10), proj("b", 40), proj("c", 400)], 30, NOW).map((p) => p.id), ["b", "c"]);
+assert.deepEqual(dueForRetention([proj("a", 40)], undefined, NOW), [], "off means nothing is due");
+assert.deepEqual(dueForRetention([proj("a", 40)], 0, NOW), []);
+assert.deepEqual(dueForRetention([proj("run", 400, "running"), proj("q", 400, "queued"), proj("idle", 400, "idle")], 30, NOW).map((p) => p.id), ["idle"], "never ask about a project that is being worked on");
+assert.deepEqual(dueForRetention([proj("edge", 30)], 30, NOW), [], "exactly 30 days is not older than 30 days");
+assert.equal(ageDays(NOW - 45.9 * D, NOW), 45);
+console.log("retention: all checks pass");

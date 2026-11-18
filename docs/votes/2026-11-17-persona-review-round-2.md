@@ -50,7 +50,7 @@ Personas guess. I checked what I could:
 
 Also done after the list: **provenance in the JSON export** (Jonas, Dev). The JSON file's `meta` was always empty; it now carries a schema version, the app and engine versions, the language, the model and devices, and the number of edited lines, with no date so exports stay identical for the same input. Not done: model checksums, and a header in CSV or text exports (it would change their columns).
 
-Also done: **log controls** (Okafor): Settings, Privacy can switch the activity log off and clear the file. Later: a **Hide file and folder names** switch for new log entries (best effort: it recognises paths and audio or video file names, checked by `npm run links:check`, which CI now runs). Not done: retention timers.
+Also done: **log controls** (Okafor): Settings, Privacy can switch the activity log off and clear the file. Later: a **Hide file and folder names** switch for new log entries (best effort: it recognises paths and audio or video file names, checked by `npm run links:check`, which CI now runs). Later: **old projects** (Okafor): a Privacy setting that makes the app ask, when it opens, about projects older than 30, 90, 180 or 365 days. It never deletes without a yes, shows a list and one receipt. Not done: an automatic delete, deleting exports or clips, a retention rule for the log.
 
 Also done: **network tripwire and source column** (Dev): a test that fails when network-capable code or a new web address appears outside the known places, and a "Where in the code" column in Settings, Privacy, Every network call.
 
