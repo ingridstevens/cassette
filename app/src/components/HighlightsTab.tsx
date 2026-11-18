@@ -143,16 +143,19 @@ export default function HighlightsTab({ project, visible, job, error, onSuggest,
                 <p className="pv-hl-text">“{h.text}”</p>
                 {h.reason && <p className="note">{h.reason}</p>}
                 <div className="pv-hl-acts">
-                  <button type="button" className="btn small" onClick={() => onPlay(h.start, h.end)} aria-label={t("Play the highlight at {time}", { time: fmt(h.start) })}>{t("Play")}</button>
+                  {/* One primary per state (Keep / Play); every other action shares the plain outlined style. */}
                   {h.suggested ? (
-                    <>
-                      <button type="button" className="btn sun small" onClick={() => onKeep(h.id)}>{t("Keep")}</button>
-                      <button type="button" className="btn quiet small" onClick={() => onRemove(h.id)}>{t("Dismiss")}</button>
-                    </>
+                    <button type="button" className="btn sun small" onClick={() => onKeep(h.id)}>{t("Keep")}</button>
+                  ) : (
+                    <button type="button" className="btn sun small" onClick={() => onPlay(h.start, h.end)} aria-label={t("Play the highlight at {time}", { time: fmt(h.start) })}>{t("Play")}</button>
+                  )}
+                  {h.suggested && <button type="button" className="btn small" onClick={() => onPlay(h.start, h.end)} aria-label={t("Play the highlight at {time}", { time: fmt(h.start) })}>{t("Play")}</button>}
+                  {h.suggested ? (
+                    <button type="button" className="btn small" onClick={() => onRemove(h.id)}>{t("Dismiss")}</button>
                   ) : (
                     <>
                       <button type="button" className="btn small" onClick={() => onSaveOne(h)} aria-label={t("Save the highlight at {time} as an audio clip", { time: fmt(h.start) })} title={t("Save only this highlight as an audio file")}>{t("Save clip")}</button>
-                      <button type="button" className="btn quiet small" onClick={() => onRemove(h.id)} aria-label={t("Remove the highlight at {time}", { time: fmt(h.start) })}>{t("Remove")}</button>
+                      <button type="button" className="btn small" onClick={() => onRemove(h.id)} aria-label={t("Remove the highlight at {time}", { time: fmt(h.start) })}>{t("Remove")}</button>
                     </>
                   )}
                 </div>
