@@ -5,6 +5,7 @@ import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { BrowserWindow, app, dialog, ipcMain, powerMonitor, safeStorage, session, shell } from "electron";
 import { EngineEvent, cancelJob, runEngine } from "./engine-client";
+import { redactNames } from "./logRedact";
 import { registerLive } from "./live";
 
 // Show "Cassette" as the app name (menus, About, Dock) instead of "Electron" when run from source.
@@ -59,15 +60,19 @@ const logFile = () => path.join(app.getPath("userData"), "activity.log");
 /** The log is on unless the marker file exists. A file, not a setting in the window, so the main process (which writes the log) never has to ask. */
 const logOffFile = () => path.join(app.getPath("userData"), "activity-log-off");
 const logOn = () => !fs.existsSync(logOffFile());
+/** Marker: when present, file and folder names it recognises are replaced before a line is written (new lines only). */
+const logHideFile = () => path.join(app.getPath("userData"), "activity-log-hide-names");
+const logHides = () => fs.existsSync(logHideFile());
+const logText = (message: string) => (logHides() ? redactNames(message) : message);
 const logLine = (level: string, message: string) => {
   if (!logOn()) return;
-  try { fs.appendFileSync(logFile(), `${new Date().toISOString()} [${level}] ${message}\n`); } catch { /* best effort */ }
+  try { fs.appendFileSync(logFile(), `${new Date().toISOString()} [${level}] ${logText(message)}\n`); } catch { /* best effort */ }
 };
 const send = (channel: string, payload: unknown) => {
   if (win && !win.isDestroyed()) win.webContents.send(channel, payload); // the window can be closed while an engine job still runs (macOS keeps the app alive)
   const e = payload as { type?: string; level?: string; message?: string; stage?: string };
   if (channel === "engine-event" && (e.type === "log" || e.type === "error") && logOn()) {
-    try { fs.appendFileSync(logFile(), `${new Date().toISOString()} [${e.level ?? e.type}] ${e.message}\n`); } catch { /* best effort */ }
+    try { fs.appendFileSync(logFile(), `${new Date().toISOString()} [${e.level ?? e.type}] ${logText(String(e.message))}\n`); } catch { /* best effort */ }
   }
 };
 
@@ -209,9 +214,12 @@ app.whenReady().then(() => {
     shell.showItemInFolder(logFile());
   });
   // Activity log controls: is it on, how big is it, switch it, empty it. Nothing here reads the log's text.
-  ipcMain.handle("log-state", () => { let bytes = 0; try { bytes = fs.statSync(logFile()).size; } catch { /* no log yet */ } return { on: logOn(), bytes }; });
+  ipcMain.handle("log-state", () => { let bytes = 0; try { bytes = fs.statSync(logFile()).size; } catch { /* no log yet */ } return { on: logOn(), bytes, hideNames: logHides() }; });
   ipcMain.handle("log-set", (_e, on: unknown) => {
     try { if (on) fs.rmSync(logOffFile(), { force: true }); else fs.writeFileSync(logOffFile(), ""); return { ok: true }; } catch (e) { return { ok: false, error: String((e as Error).message) }; }
+  });
+  ipcMain.handle("log-hide-names", (_e, hide: unknown) => {
+    try { if (hide) fs.writeFileSync(logHideFile(), ""); else fs.rmSync(logHideFile(), { force: true }); return { ok: true }; } catch (e) { return { ok: false, error: String((e as Error).message) }; }
   });
   ipcMain.handle("log-clear", () => { try { fs.writeFileSync(logFile(), ""); return { ok: true }; } catch (e) { return { ok: false, error: String((e as Error).message) }; } });
   ipcMain.handle("paths", () => ({

@@ -13,7 +13,7 @@
     "package": "npm run build && electron-builder",
     "typecheck": "tsc --noEmit",
     "i18n:check": "node scripts/check-i18n.mjs",
-    "links:check": "node scripts/check-source-links.mjs",
+    "links:check": "node scripts/check-source-links.mjs && node scripts/check-log-redact.mjs",
     "contrast:check": "node scripts/contrast-check.mjs",
     "built:check": "node scripts/check-built-app.mjs"
   },

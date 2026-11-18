@@ -1,5 +1,9 @@
 export default {
   de: {
+    "Hide file and folder names in the log": "Datei- und Ordnernamen im Protokoll ausblenden",
+    "New entries show [file] or [path] instead of the paths and audio or video file names the app recognises. Best effort: a name inside ordinary text may remain, so check the log before you share it. Entries already written are not changed.": "Neue Einträge zeigen [file] oder [path] statt der Pfade und Audio- oder Videodateinamen, die die App erkennt. Nach bestem Bemühen: Ein Name mitten im Text kann bleiben, prüfe das Protokoll also, bevor du es weitergibst. Bereits geschriebene Einträge ändern sich nicht.",
+    "File names are hidden in new log entries.": "Dateinamen werden in neuen Protokolleinträgen ausgeblendet.",
+    "File names are shown in new log entries.": "Dateinamen werden in neuen Protokolleinträgen angezeigt.",
     "Clip start marked at {time}": "Clipanfang bei {time} markiert",
     "Clip marked from {from} to {to}. Press S to save it.": "Clip von {from} bis {to} markiert. Zum Speichern S drücken.",
     "Mark a clip first: [ for the start, ] for the end": "Markiere zuerst einen Clip: [ für den Anfang, ] für das Ende",
@@ -91,6 +95,10 @@ export default {
     "No microphone was found. You can still transcribe files; to record, connect one and allow access.": "Es wurde kein Mikrofon gefunden. Dateien kannst du weiterhin transkribieren; zum Aufnehmen schließe eines an und erlaube den Zugriff.",
   },
   fr: {
+    "Hide file and folder names in the log": "Masquer les noms de fichiers et de dossiers dans le journal",
+    "New entries show [file] or [path] instead of the paths and audio or video file names the app recognises. Best effort: a name inside ordinary text may remain, so check the log before you share it. Entries already written are not changed.": "Les nouvelles entrées affichent [file] ou [path] à la place des chemins et des noms de fichiers audio ou vidéo reconnus par l’app. Au mieux : un nom au milieu d’un texte peut subsister, vérifiez donc le journal avant de le partager. Les entrées déjà écrites ne changent pas.",
+    "File names are hidden in new log entries.": "Les noms de fichiers sont masqués dans les nouvelles entrées du journal.",
+    "File names are shown in new log entries.": "Les noms de fichiers sont affichés dans les nouvelles entrées du journal.",
     "Clip start marked at {time}": "Début du clip marqué à {time}",
     "Clip marked from {from} to {to}. Press S to save it.": "Clip marqué de {from} à {to}. Appuyez sur S pour l’enregistrer.",
     "Mark a clip first: [ for the start, ] for the end": "Marquez d’abord un clip : [ pour le début, ] pour la fin",
@@ -182,6 +190,10 @@ export default {
     "No microphone was found. You can still transcribe files; to record, connect one and allow access.": "Aucun micro trouvé. Vous pouvez toujours transcrire des fichiers ; pour enregistrer, branchez-en un et autorisez l’accès.",
   },
   es: {
+    "Hide file and folder names in the log": "Ocultar nombres de archivos y carpetas en el registro",
+    "New entries show [file] or [path] instead of the paths and audio or video file names the app recognises. Best effort: a name inside ordinary text may remain, so check the log before you share it. Entries already written are not changed.": "Las entradas nuevas muestran [file] o [path] en lugar de las rutas y los nombres de archivos de audio o vídeo que la app reconoce. En la medida de lo posible: un nombre dentro de un texto normal puede quedar, así que revisa el registro antes de compartirlo. Las entradas ya escritas no cambian.",
+    "File names are hidden in new log entries.": "Los nombres de archivo se ocultan en las entradas nuevas del registro.",
+    "File names are shown in new log entries.": "Los nombres de archivo se muestran en las entradas nuevas del registro.",
     "Clip start marked at {time}": "Inicio del clip marcado en {time}",
     "Clip marked from {from} to {to}. Press S to save it.": "Clip marcado de {from} a {to}. Pulsa S para guardarlo.",
     "Mark a clip first: [ for the start, ] for the end": "Marca primero un clip: [ para el inicio, ] para el final",
