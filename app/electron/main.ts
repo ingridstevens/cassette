@@ -8,6 +8,7 @@ import { EngineEvent, cancelJob, runEngine } from "./engine-client";
 import { redactNames } from "./logRedact";
 import { registerLive } from "./live";
 import { createKnownPaths } from "./knownPaths";
+import { isAppNavigation } from "./navGuard";
 import { createProjectsStore } from "./projectsStore";
 
 // Show "Cassette" as the app name (menus, About, Dock) instead of "Electron" when run from source.
@@ -45,7 +46,7 @@ function createWindow() {
   const appUrl = dev ?? pathToFileURL(path.join(__dirname, "..", "dist")).href;
   // Hardening: the window never navigates away from the app, and no web permission is granted except writing to the
   // clipboard, which the Copy buttons need. Reading the clipboard stays refused.
-  win.webContents.on("will-navigate", (e, url) => { if (!url.startsWith(appUrl)) e.preventDefault(); });
+  win.webContents.on("will-navigate", (e, url) => { if (!isAppNavigation(appUrl, url, !!dev)) e.preventDefault(); });
   // The microphone is allowed only as audio-only capture (the Record page); the camera and everything else stay refused.
   const micOnly = (perm: string, details?: { mediaTypes?: string[] }) => perm === "media" && !!details?.mediaTypes?.length && details.mediaTypes.every((m) => m === "audio");
   session.defaultSession.setPermissionRequestHandler((_wc, perm, cb, details) => cb(perm === "clipboard-sanitized-write" || micOnly(perm, details as { mediaTypes?: string[] })));
