@@ -9,7 +9,7 @@ const persisted = (p: Project) => ({ id: p.id, path: p.path, name: p.name, added
 /** Replace the segments overlapping a re-transcribed range, keep the rest. */
 /** `line` is set when one line is transcribed again in a chosen language: the new text keeps that line's speaker and gets the language. */
 export interface LineRedo { language: string; speaker: string }
-function mergeRange(prev: Result, next: Result, [a, b]: [number, number], line?: LineRedo): Result {
+export function mergeRange(prev: Result, next: Result, [a, b]: [number, number], line?: LineRedo): Result {
   const keep = prev.segments.filter((s) => s.end <= a || s.start >= b);
   const fresh = line ? next.segments.map((s) => ({ ...s, speaker: line.speaker, lang: line.language, words: s.words.map((w) => ({ ...w, speaker: line.speaker })) })) : next.segments;
   const segments: Segment[] = [...keep, ...fresh].sort((x, y) => x.start - y.start);
