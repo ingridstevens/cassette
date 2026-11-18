@@ -36,7 +36,9 @@ export default function ProjectSidebar({ projects, activeId, progress, blocker, 
       <button type="button" className="btn add-btn rec-btn" onClick={onRecord}>
         <svg className="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" /></svg>{t("Record")}
       </button>
-      <div className="group" id="proj-group">{t("Projects")}</div>
+      <div className="group group-row"><span id="proj-group">{t("Projects")}</span>
+        {todo > 1 && <button type="button" className="btn small" disabled={!!blocker} title={blocker || undefined} onClick={onTranscribeAll}>{t("Transcribe all ({count})", { count: todo })}</button>}
+      </div>
       <div className="plist" role="list" aria-labelledby="proj-group">
         {projects.length === 0 && <p className="note side-note">{t("Each recording you add becomes a project here, with its own transcript and speaker names.")}</p>}
         {projects.map((p) => {
@@ -72,10 +74,8 @@ export default function ProjectSidebar({ projects, activeId, progress, blocker, 
         })}
       </div>
       {doneCount > 1 && <button type="button" className="btn small" onClick={onExportAll} title={t("One spreadsheet with every finished project")}>{t("Export all as CSV ({count})", { count: doneCount })}</button>}
-      {todo > 1 && <button type="button" className="btn small" disabled={!!blocker} title={blocker || undefined} onClick={onTranscribeAll}>{t("Transcribe all ({count})", { count: todo })}</button>}
       <div className="spacer" />
       {activity && <div className="side-activity">{activity}</div>}
-      <div className="pill local"><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2" /><path d="M8 11V8a4 4 0 0 1 8 0v3" /></svg>{t("Everything stays on this computer")}</div>
       <button type="button" className="nav settings-row" onClick={onOpenSettings} aria-keyshortcuts={IS_MAC ? "Meta+," : "Control+,"}>
         <svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /><circle cx="12" cy="12" r="3" /></svg>
         <span className="grow"><b>{t("Settings")}</b><small>{t("For all projects")}</small></span>
