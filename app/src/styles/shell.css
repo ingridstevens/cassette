@@ -24,6 +24,8 @@
 .add-btn { justify-content: center; margin-bottom: 6px; width: 100%; }
 .plist { display: flex; flex-direction: column; gap: 2px; }
 .side-note { padding: 8px 10px; }
+.side-filter { width: auto; flex: none; margin: 0 0 8px; }
+.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .prow { position: relative; }
 .shell button.nav { width: 100%; text-align: left; font: inherit; color: inherit; border: 0; background: transparent; cursor: pointer; border-radius: 11px; padding: 9px 10px; }
 .shell button.nav:hover:not(:disabled) { background: color-mix(in srgb, var(--surface) 60%, transparent); box-shadow: none; }
