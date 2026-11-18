@@ -51,7 +51,7 @@ Inference runs with offline mode on (`HF_HUB_OFFLINE=1`); only `models download`
 ## Where things are in the app
 
 - `app/electron/main.ts`: window, IPC (`pick-file`, `transcribe`, `models`, `export`, `save-image`, `reveal-*`,
-  `disk-free`, `read-audio`, projects load/save). Keep handlers small and validate arguments.
+  `disk-free`, `peaks`, projects load/save). Keep handlers small and validate arguments.
 - `app/electron/preload.ts`: the only bridge (`window.api`).
 - `app/src/useProjects.ts`: project list, persistence, the one-at-a-time queue, engine events.
 - `app/src/components/`: `ProjectView` (transcript, player, toolbar), `Inspector` (Speakers / Highlights / Options / Info), `HighlightsTab` (highlights, suggestions, audio clips, summary),

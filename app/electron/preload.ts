@@ -7,7 +7,10 @@ const api = {
   /** Blocks until the file is written: used when the window closes, where an async save would be lost. */
   saveProjectsSync: (data: unknown): boolean => ipcRenderer.sendSync("projects-save-sync", data),
   saveSidecar: (audioPath: string, data: unknown): Promise<{ ok: boolean; path?: string; error?: string }> => ipcRenderer.invoke("save-sidecar", audioPath, data),
-  readAudio: (path: string): Promise<Uint8Array | null> => ipcRenderer.invoke("read-audio", path),
+  /** The waveform (8000 values, 0 to 1) and length in seconds of a recording, or null when the file is gone. */
+  peaks: (path: string): Promise<{ peaks: number[]; duration: number } | null> => ipcRenderer.invoke("peaks", path),
+  /** Where the player streams a recording from (served by the main process, known recordings only). */
+  mediaUrl: (path: string): string => `media://file/${encodeURIComponent(path)}`,
   transcribe: (opts: Record<string, unknown>): Promise<string> => ipcRenderer.invoke("transcribe", opts),
   liveStart: (o: Record<string, unknown>): Promise<{ ok: boolean; jobId?: string; error?: string }> => ipcRenderer.invoke("live-start", o),
   liveAudio: (jobId: string, pcm: Uint8Array): void => { ipcRenderer.send("live-audio", jobId, pcm); },

@@ -2,19 +2,24 @@ import { randomUUID } from "node:crypto";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
+import { Readable } from "node:stream";
 import { pathToFileURL } from "node:url";
-import { BrowserWindow, app, dialog, ipcMain, powerMonitor, safeStorage, session, shell } from "electron";
+import { BrowserWindow, app, dialog, ipcMain, powerMonitor, protocol, safeStorage, session, shell } from "electron";
 import { EngineEvent, cancelJob, killAllJobs, runEngine } from "./engine-client";
 import { redactNames } from "./logRedact";
 import { registerLive } from "./live";
 import { createKnownPaths } from "./knownPaths";
 import { EXPORT_FORMATS, isNum, modelsOk, safeName, saveClipOk, speakerCount, transcribeProblem } from "./validate";
 import { isAppNavigation } from "./navGuard";
+import { byteRange, mediaPathFromUrl, mimeFor, peaksCacheName } from "./media";
 import { createProjectsStore } from "./projectsStore";
 
 // Show "Cassette" as the app name (menus, About, Dock) instead of "Electron" when run from source.
 // setName also moves the data folder, so keep it exactly where it was: nobody loses their projects or downloaded models.
 { const userData = app.getPath("userData"); app.setName("Cassette"); app.setPath("userData", userData); }
+
+// The player streams recordings from media://file/<encoded path> (served below, known recordings only). Must be registered before the app is ready.
+protocol.registerSchemesAsPrivileged([{ scheme: "media", privileges: { standard: true, secure: true, stream: true, supportFetchAPI: true } }]);
 
 const AUDIO_EXT = new Set([".mp3", ".wav", ".m4a", ".flac", ".ogg", ".opus", ".aac", ".mp4", ".mov", ".mkv", ".webm"]);
 
@@ -137,7 +142,6 @@ app.whenReady().then(() => {
   ipcMain.on("open-files-ready", () => { rendererReady = true; if (pendingOpen.length && win && !win.isDestroyed()) win.webContents.send("open-files", pendingOpen.splice(0)); });
   registerLive(send, baseEnv, known);
   ipcMain.on("renderer-error", (_e, message: unknown) => logLine("renderer", String(message).slice(0, 4000)));
-  // Returns the raw bytes of an audio/video file so the renderer can build a Blob URL (no custom protocol needed).
   /** A recording path from the renderer must be a string, an audio/video extension and an existing regular file. */
   const mediaFile = (p: unknown): p is string => {
     if (typeof p !== "string" || !AUDIO_EXT.has(path.extname(p).toLowerCase())) return false;
@@ -145,11 +149,32 @@ app.whenReady().then(() => {
   };
   /** A recording the app knows about (see knownPaths.ts): the window may only read, reveal or delete those. */
   const knownMedia = (p: unknown): p is string => mediaFile(p) && known.has(p);
-  ipcMain.handle("read-audio", async (_e, p: string) => {
-    if (typeof p !== "string" || !AUDIO_EXT.has(path.extname(p).toLowerCase())) throw new Error("Unsupported file type");
-    if (!knownMedia(p)) return null; // moved, renamed or deleted: a normal situation, so no error: the waveform area says so
-    const buf = await fs.promises.readFile(p);
-    return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
+  // The player's source: media://file/<encoded path>, with Range support so seeking works and nothing is read into memory. Only known recordings are served.
+  protocol.handle("media", async (req) => {
+    const p = mediaPathFromUrl(req.url);
+    if (!p || !knownMedia(p)) return new Response(null, { status: 403 });
+    let size: number;
+    try { size = (await fs.promises.stat(p)).size; } catch { return new Response(null, { status: 404 }); }
+    const r = byteRange(req.headers.get("range"), size);
+    if (r.status === 416) return new Response(null, { status: 416, headers: { "Content-Range": `bytes */${size}` } });
+    const headers: Record<string, string> = { "Content-Type": mimeFor(p), "Content-Length": String(r.end - r.start + 1), "Accept-Ranges": "bytes" };
+    if (r.status === 206) headers["Content-Range"] = `bytes ${r.start}-${r.end}/${size}`;
+    if (size === 0) return new Response(null, { status: 200, headers });
+    const stream = fs.createReadStream(p, { start: r.start, end: r.end });
+    return new Response(Readable.toWeb(stream) as ReadableStream, { status: r.status, headers });
+  });
+  // The waveform of a recording (largest sample in each of 8000 slices) and its length, computed by the engine and cached in userData/peaks.
+  // null when the recording is gone (a normal situation: the waveform area says so).
+  ipcMain.handle("peaks", async (_e, p: unknown) => {
+    if (!knownMedia(p)) return null;
+    const st = fs.statSync(p);
+    const cache = path.join(app.getPath("userData"), "peaks", peaksCacheName(p, st.mtimeMs, st.size));
+    try { const c = JSON.parse(fs.readFileSync(cache, "utf8")); if (Array.isArray(c?.peaks) && typeof c.duration === "number") return c as { peaks: number[]; duration: number }; } catch { /* not cached yet, or unreadable */ }
+    const r = await runEngine(randomUUID(), ["peaks", p, "--points", "8000"], {}, () => {}) as EngineEvent | null;
+    if (r?.type !== "done" || !Array.isArray(r.peaks) || typeof r.duration !== "number") throw new Error(String(r?.message ?? "The waveform could not be made.").slice(0, 300));
+    const out = { peaks: r.peaks as number[], duration: r.duration };
+    try { fs.mkdirSync(path.dirname(cache), { recursive: true }); fs.writeFileSync(cache, JSON.stringify(out)); } catch { /* the cache is only a speed-up */ }
+    return out;
   });
 
   // English translation of one stretch of a recording (the "Translate to English" action on a line).

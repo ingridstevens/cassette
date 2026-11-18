@@ -58,7 +58,8 @@ function fake(path = "") {
 }
 
 (window as any).api = {
-  readAudio: async (p: string) => { if (p.includes("broken")) throw new Error("Error invoking remote method 'read-audio': Error: ENOENT: file not found"); await wait(600); return wav(); },
+  peaks: async (p: string) => { if (p.includes("broken")) return null; await wait(600); const w = wav(), n = 8000; return { peaks: Array.from({ length: n }, (_, i) => Math.abs(Math.sin(i / 40) * Math.sin(i / 700 + 1))), duration: (w.length - 44) / 16000 }; },
+  mediaUrl: (_p: string) => URL.createObjectURL(new Blob([wav() as BlobPart], { type: "audio/wav" })),
   // ?missing adds a recording whose file is gone (to read the missing-file messages)
   pickFiles: async () => ["/Users/demo/Interview 2026.wav", "/Users/demo/Podcast episode 12.m4a", "/Users/demo/Team meeting.wav", ...(location.search.includes("missing") ? ["/Users/demo/broken-recording.wav"] : [])],
   loadProjects: async () => { try { return { projects: JSON.parse(localStorage.getItem("mock-projects") || "[]") }; } catch { return { projects: [] }; } },
