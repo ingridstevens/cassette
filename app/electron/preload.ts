@@ -42,6 +42,13 @@ const api = {
   logError: (message: string): void => { ipcRenderer.send("renderer-error", message); },
   registerPaths: (paths: string[]): Promise<void> => ipcRenderer.invoke("register-paths", paths),
   pathForFile: (f: File): string => webUtils.getPathForFile(f),
+  /** Recordings opened from the Dock, Finder or Explorer. Tells the main process this window is listening, so files that arrived earlier are delivered now. */
+  onOpenFiles: (cb: (paths: string[]) => void) => {
+    const h = (_: unknown, paths: string[]) => cb(paths);
+    ipcRenderer.on("open-files", h);
+    ipcRenderer.send("open-files-ready");
+    return () => { ipcRenderer.removeListener("open-files", h); };
+  },
   onEvent: (cb: (e: any) => void) => {
     const h = (_: unknown, e: any) => cb(e);
     ipcRenderer.on("engine-event", h);

@@ -23,9 +23,25 @@ if (!app.requestSingleInstanceLock()) {
 } else {
   app.on("second-instance", (_e, argv) => {
     if (win) { if (win.isMinimized()) win.restore(); win.focus(); }
-    const files = argv.filter((a) => AUDIO_EXT.has(path.extname(a).toLowerCase()) && fs.existsSync(a));
-    if (files.length) win?.webContents.send("open-files", files);
+    openFiles(argv);
   });
+  // macOS: "Open with Cassette" and dropping a file on the Dock icon arrive here, possibly before the app is ready. Must be registered at the top level.
+  app.on("open-file", (e, p) => { e.preventDefault(); openFiles([p]); });
+}
+
+/** Recordings handed to the app from outside (Dock, "Open with", double-click, command line). Kept until the window's page asks for them. */
+const pendingOpen: string[] = [];
+let rendererReady = false;
+const opened = new Set<string>();
+const known = createKnownPaths();
+/** Keeps only existing audio/video files, tells knownPaths they are the user's own, and sends them to the window (or holds them until it is ready). */
+function openFiles(candidates: string[]) {
+  const isFile = (a: string) => { try { return fs.statSync(a).isFile(); } catch { return false; } };
+  const files = candidates.filter((a) => AUDIO_EXT.has(path.extname(a).toLowerCase()) && isFile(a)).map((a) => path.resolve(a));
+  if (!files.length) return;
+  known.add(files);
+  for (const f of files) opened.add(f);
+  if (win && !win.isDestroyed() && rendererReady) win.webContents.send("open-files", files); else pendingOpen.push(...files);
 }
 
 const modelsDir = () => path.join(app.getPath("userData"), "models");
@@ -37,6 +53,7 @@ let win: BrowserWindow | null = null;
 let modelsJob: string | null = null;
 
 function createWindow() {
+  rendererReady = false;
   win = new BrowserWindow({
     width: 1280, height: 860, minWidth: 1040, minHeight: 600, title: "Cassette", ...(process.platform === "darwin" ? { titleBarStyle: "hiddenInset" as const, trafficLightPosition: { x: 18, y: 18 } } : {}),
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), contextIsolation: true, nodeIntegration: false, sandbox: true },
@@ -113,7 +130,8 @@ app.whenReady().then(() => {
     applicationName: "Cassette", applicationVersion: app.getVersion(), version: app.getVersion(),
     copyright: "Public domain (The Unlicense)", ...(fs.existsSync(devIcon) ? { iconPath: devIcon } : {}),
   });
-  const known = createKnownPaths();
+  openFiles(process.argv.slice(app.isPackaged ? 1 : 2)); // a file the app was launched with (Windows, Linux)
+  ipcMain.on("open-files-ready", () => { rendererReady = true; if (pendingOpen.length && win && !win.isDestroyed()) win.webContents.send("open-files", pendingOpen.splice(0)); });
   registerLive(send, baseEnv, known);
   ipcMain.on("renderer-error", (_e, message: unknown) => logLine("renderer", String(message).slice(0, 4000)));
   // Returns the raw bytes of an audio/video file so the renderer can build a Blob URL (no custom protocol needed).
@@ -305,7 +323,7 @@ app.whenReady().then(() => {
   });
 
   const projectsStore = createProjectsStore(app.getPath("userData"), logLine);
-  ipcMain.handle("projects-load", () => { const r = projectsStore.load(); known.remember(r.projects); return r; });
+  ipcMain.handle("projects-load", () => { const r = projectsStore.load(); known.remember(r.projects); known.add([...opened]); return r; });
   ipcMain.handle("projects-save", (_e, data: unknown) => {
     try { projectsStore.save(data); known.remember(data); return { ok: true }; } catch (e) { return { ok: false, error: String((e as Error).message) }; }
   });

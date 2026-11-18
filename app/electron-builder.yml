@@ -4,6 +4,8 @@ directories: { output: release, buildResources: resources }  # resources/ holds 
 files: [dist/**, dist-electron/**, package.json]
 extraResources:
   - { from: ../engine/dist/engine, to: engine }
+fileAssociations:
+  - { ext: [mp3, wav, m4a, flac, ogg, opus, aac, mp4, mov, mkv, webm], name: Recording, role: Viewer }
 mac: { target: [dmg, zip], category: public.app-category.productivity, extendInfo: { NSMicrophoneUsageDescription: "Cassette records from the microphone to write the words down while you speak. The audio stays on this computer." } }
 linux: { target: [AppImage, deb], category: AudioVideo }
 win: { target: [nsis] }

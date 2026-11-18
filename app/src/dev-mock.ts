@@ -164,5 +164,6 @@ function fake(path = "") {
   fileSize: async (p: string) => (p.includes("broken") ? null : 3_412_907),
   diskFree: async () => (location.search.includes("lowdisk") ? 2.1e9 : 48e9),
   openExternal: async () => true,
+  onOpenFiles: (_cb: (paths: string[]) => void) => () => {},
   onEvent: (cb: Cb) => { listeners.add(cb); return () => { listeners.delete(cb); }; },
 };
