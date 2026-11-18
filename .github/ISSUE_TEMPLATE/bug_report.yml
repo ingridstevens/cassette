@@ -1,0 +1,28 @@
+name: Bug report
+description: Something is broken or behaves in a way you did not expect.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What did you do, what did you expect, and what happened instead? A screenshot helps. Please do not attach recordings or transcripts that are private.
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Your computer
+      options: ["macOS (Apple silicon)", "macOS (Intel)", "Windows", "Linux"]
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: App version
+      description: Settings, About.
+  - type: textarea
+    id: log
+    attributes:
+      label: Activity log (optional)
+      description: Settings, Privacy, Show log file. The log holds file names and folders but never transcript text. Remove anything you do not want to share.
