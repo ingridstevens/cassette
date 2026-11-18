@@ -141,7 +141,6 @@ function OptionsTab({ project, visible, canTranscribe, onAskAgain, onPatch, onOp
   useEffect(() => { if (visible) window.api.models("status").then((r) => { if (alive.current && r) setStatus(r as unknown as ModelStatus); }).catch(() => {}); }, [visible, models.busy]);
   const set = (p: Partial<Options>) => onPatch({ opts: { ...project.opts, ...p } });
   const meta = project.meta;
-  const several = eff.language === "auto" && eff.multilingual === true;
   const foundCodes = project.result && eff.language === "auto" ? (Object.keys(meta?.languages ?? {}).length > 1 ? Object.entries(meta!.languages!).sort((a, b) => b[1] - a[1]).map(([c]) => c) : [project.result.language]) : [];
   const found = foundCodes.map(langName).join(", ");
   const has = !!project.result;

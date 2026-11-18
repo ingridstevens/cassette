@@ -41,7 +41,6 @@ export default function Setup({ opts, set, status, models, compact = false, onCo
   if (allDone) return null;
 
   const dlModel = busy === `download ${opts.model}`;
-  const dlDiar = busy === "download diarization";
   const size = modelSize(opts.model);
   const pct = dl?.fraction != null ? Math.round(dl.fraction * 100) : null;
 

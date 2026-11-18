@@ -1,6 +1,5 @@
 """Live transcription: words are confirmed when two runs agree, and old audio is dropped."""
 import io
-import json
 
 import numpy as np
 
@@ -45,7 +44,8 @@ def test_a_word_is_confirmed_only_when_two_runs_agree():
 
 def test_the_end_flushes_everything_and_confirmed_words_never_come_back():
     t = LiveTranscriber(fake([[w(0, 1, " one")], [w(0, 1, " one"), w(1, 2, " two")]]))
-    t.feed(secs(2)); t.step()
+    t.feed(secs(2))
+    t.step()
     t.feed(secs(1))
     confirmed, _ = t.step(final=True)
     assert [x["word"] for x in confirmed] == [" one", " two"]
@@ -54,8 +54,10 @@ def test_the_end_flushes_everything_and_confirmed_words_never_come_back():
 def test_old_audio_is_dropped_after_it_is_confirmed():
     words = [w(0, 10, " long"), w(10, 20, " talk"), w(20, 30, " here")]
     t = LiveTranscriber(fake([words, words]), max_buffer=25)
-    t.feed(secs(30)); t.step()
-    t.feed(secs(1)); t.step()
+    t.feed(secs(30))
+    t.step()
+    t.feed(secs(1))
+    t.step()
     assert t.base > 0 and len(t.audio) < 16000 * 30
 
 

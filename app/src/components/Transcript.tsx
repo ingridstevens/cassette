@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useT } from "../i18n";
 import { MAIN_LANGS, WHISPER_LANGS, langName } from "../languages";
-import { Highlight, UnsureRef, isUnsure, MOD_KEY, PALETTE, Result, chapterDefault, displayName, fmt, wordIn, wordsInSelection } from "../types";
+import { Highlight, UnsureRef, isUnsure, PALETTE, Result, chapterDefault, displayName, fmt, wordIn, wordsInSelection } from "../types";
 import { onMenuKeyDown } from "./ExportMenu";
 import { FIND_DEFAULTS, FindOpts, matcher } from "../find";
 import "../styles/project.css";

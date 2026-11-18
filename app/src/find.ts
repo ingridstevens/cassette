@@ -39,7 +39,7 @@ export function matcher(query: string, o: FindOpts = FIND_DEFAULTS): Matcher {
     if (!q) return [];
     const hay = fold(text, o.matchCase);
     const out: Array<[number, number]> = [];
-    let at = 0;
+    let at: number;
     for (let i = hay.indexOf(q); i !== -1; i = hay.indexOf(q, at)) {
       if (o.wholeWord && (isWordChar(hay[i - 1]) || isWordChar(hay[i + q.length]))) { at = i + 1; continue; }
       out.push([i, i + q.length]);
