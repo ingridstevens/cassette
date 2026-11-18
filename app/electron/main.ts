@@ -286,7 +286,8 @@ app.whenReady().then(() => {
   }));
 
   ipcMain.handle("open-external", async (_e, url: string) => {
-    if (typeof url !== "string" || !url.startsWith("https://huggingface.co/")) return false;
+    const feedback = "https://github.com/ingridstevens/cassette/issues/new"; // the one GitHub page the app may open: the new-issue form, filled in by the user in their browser
+    if (typeof url !== "string" || !(url.startsWith("https://huggingface.co/") || url === feedback || url.startsWith(feedback + "?"))) return false;
     await shell.openExternal(url);
     return true;
   });

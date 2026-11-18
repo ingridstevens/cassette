@@ -18,7 +18,7 @@ ENGINE_NETWORK_FILES = {
 }
 NETWORK_NAMES = re.compile(r"\b(snapshot_download|hf_hub_download|HfApi|requests\.|urllib|httpx|aiohttp|socket\.|http\.client|urlopen|download_model)\b")
 # Hosts that may appear as a web address in the app's own source (not in translations or licence texts)
-ALLOWED_HOSTS = {"huggingface.co", "download.moonshine.ai", "www.w3.org"}  # w3.org is only the SVG/XML namespace string
+ALLOWED_HOSTS = {"huggingface.co", "download.moonshine.ai", "github.com", "www.w3.org"}  # w3.org is only the SVG/XML namespace string
 BROWSER_CALLS = re.compile(r"\b(fetch\(|XMLHttpRequest|WebSocket\(|net\.request|net\.fetch|https\.get|http\.get|navigator\.sendBeacon|EventSource\()")
 
 
@@ -68,6 +68,12 @@ def test_app_does_not_make_its_own_requests():
 def test_only_huggingface_pages_can_be_opened_from_the_app():
     main = (APP / "electron" / "main.ts").read_text(encoding="utf-8")
     assert 'startsWith("https://huggingface.co/")' in main
+
+
+def test_only_the_new_issue_page_on_github_can_be_opened_from_the_app():
+    main = (APP / "electron" / "main.ts").read_text(encoding="utf-8")
+    assert 'feedback = "https://github.com/ingridstevens/cassette/issues/new"' in main
+    assert main.count("github.com") == 1
 
 
 def test_readme_and_security_name_every_host_the_app_uses():

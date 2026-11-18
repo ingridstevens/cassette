@@ -15,7 +15,8 @@ Only the latest release (and the current main branch) receives security fixes.
 - No account, no sign-in, no analytics, no telemetry, no auto-update check.
 - Audio and transcripts never leave your computer. Transcription and speaker detection run locally.
 - The only network hosts are `huggingface.co`, and `download.moonshine.ai` for Moonshine models: models are
-  downloaded from them, and your token is checked against Hugging Face when you download the speaker models. During transcription the engine runs with
+  downloaded from them, and your token is checked against Hugging Face when you download the speaker models.
+  `github.com` is only ever opened in your own browser, when you press Send feedback (see below). During transcription the engine runs with
   `HF_HUB_OFFLINE=1`.
 - Your Hugging Face token is encrypted with Electron `safeStorage` (OS keychain-backed) and stored as
   `hf-token.bin` in the app's user-data folder. It is only passed to the engine when downloading speaker models.
@@ -25,6 +26,6 @@ Only the latest release (and the current main branch) receives security fixes.
 - Projects, transcripts and models are stored unencrypted in the user-data folder; protect it with disk encryption.
 - The Electron window is hardened: context isolation, renderer sandbox, no Node integration, navigation
   and new windows blocked, all web permission requests denied, and a strict Content-Security-Policy in
-  production builds. Only `https://huggingface.co/` links can be opened in your default browser.
+  production builds. Only `https://huggingface.co/` links and the new-issue page `https://github.com/ingridstevens/cassette/issues/new` (Settings, About, Send feedback; pre-filled with the version, system and memory, which you can edit) can be opened in your default browser.
 - Model repositories are pulled via `huggingface_hub`; some pyannote checkpoints are loaded with
   `TORCH_FORCE_NO_WEIGHTS_ONLY_LOAD=1` because they predate safe loading. Only official repositories are used.

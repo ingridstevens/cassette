@@ -20,10 +20,11 @@ Settings → Privacy says the same in the app, and lets you see or remove your s
 | Downloading the language model (for highlights and summaries) | huggingface.co | Fetches the model files once. No account or token needed. |
 | Downloading Parakeet, or the translation model | huggingface.co | Fetches the model files once. No account or token needed. |
 | Downloading a Moonshine model | **download.moonshine.ai** (Moonshine's own server, not Hugging Face) | Fetches that language's model files once, by the moonshine-voice package, with a checksum check. Nothing about you or your recordings is sent. |
+| Pressing Send feedback (Settings, About) | **github.com**, in your browser only | Your browser opens a new GitHub issue pre-filled with the app version, your system and its memory. You can read and edit it, and nothing is sent unless you submit it. The app itself sends nothing. |
 | Transcribing, exporting, everything else | nothing | Runs fully offline (the engine is started with offline mode on). |
 
 Hugging Face may serve files from its own content hosts, and Moonshine downloads come from download.moonshine.ai; the app does not contact anything else. Links you click
-in the setup steps open in your normal browser, and only huggingface.co links are allowed.
+in the setup steps open in your normal browser, and only huggingface.co links and the one new-issue page on github.com are allowed.
 
 **Check it yourself.** Settings, Privacy lists each call with the file and function in the code that makes it (`engine/src/engine/models.py` for the Hugging Face downloads and the token check, `engine/src/engine/asr_moonshine.py` for Moonshine, `app/electron/main.ts` for opening pages in your browser). A test, `engine/tests/test_network_surface.py`, runs with the rest of the engine tests and fails if code that can reach the network shows up in any other file, if a new web address is written into the app, if the app starts making requests itself, or if a speech-model lookup could download instead of reading the local copy. It reads the source as text, so it cannot see an address built at run time: it is a tripwire, not an audit.
 
