@@ -5,7 +5,7 @@ each have a **first-run test script**: a short list of steps they would take, in
 
 ## Ways to use them
 
-- **Persona test run.** In Claude Code, run `/persona-vote` and ask for test mode, or name a persona. One agent per
+- **Persona test run.** In [Claude Code](https://claude.com/claude-code), run `/persona-vote` (a skill in `.claude/skills/persona-vote`; it does nothing outside Claude Code) and ask for test mode, or name a persona. One agent per
   persona follows its script in the app and reports blockers, friction and nits. Results go to `docs/testing-runs/`.
 - **By hand.** Read a persona file, do its script, and write down where you hesitated. Useful before a release.
 - **Before changing the interface.** Ask the personas to vote on the change ([Votes](votes/README.md)): Hana and Walt tend to catch what the
