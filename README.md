@@ -2,6 +2,11 @@
 
 # Cassette
 
+[![build](https://github.com/ingridstevens/cassette/actions/workflows/build.yml/badge.svg)](https://github.com/ingridstevens/cassette/actions/workflows/build.yml)
+[![Licence: Unlicense](https://img.shields.io/badge/licence-Unlicense-blue.svg)](LICENSE)
+![Platforms: macOS, Windows, Linux](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux-lightgrey)
+![Offline: nothing is uploaded](https://img.shields.io/badge/offline-nothing%20is%20uploaded-2b7a78)
+
 **Turn a recording into a transcript that says who spoke, without uploading it anywhere.**
 
 Drop in an audio or video file and get the words, split by speaker, in German, English, French or Spanish
@@ -46,7 +51,7 @@ app, no telemetry, no update checks, and it works offline after a one-time model
 **Look and accessibility**
 - *Clean* look by default (calm blue-green, Inter font), or *Fairytale sunset*; light, dark or match your computer.
 - Text size in four steps, High contrast, and an optional *Soft look* (blurred glass, only on computers with plenty of memory). Computers with 4 GB or less get a lighter look by themselves.
-- The interface speaks English, German, French and Spanish (or matches your computer); Arabic and Persian are mostly translated (first run, start sheet, project list, transcript, export menu, review mode, record page, activity list, Settings overview) with right-to-left layout; the Settings pages and the Speakers, Options, Info and Ask tabs are translated, as are the Highlights tab and summary, the export option dialogs and the empty first screen, while only the long Privacy page still shows in English for now, and none of the text has been read by a native speaker yet.
+- The interface speaks English, German, French and Spanish (or matches your computer). Arabic and Persian are partly translated, with right-to-left layout; they have not been reviewed by native speakers yet, and the Privacy page is still English.
 
 **Private by design**
 - Audio and transcripts never leave your computer; fonts are bundled, nothing loads from the internet to draw a screen.
