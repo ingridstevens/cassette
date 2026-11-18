@@ -1,4 +1,4 @@
-import { MOD_KEY } from "./types";
+import { IS_MAC, MOD_KEY } from "./types";
 
 type TFn = (s: string, v?: Record<string, string | number>) => string;
 
@@ -18,6 +18,7 @@ export const shortcutList = (t: TFn): [string, string][] => [
   [`${MOD_KEY}F`, t("Find in the transcript")],
   [`${MOD_KEY}E`, t("Open the Export menu")],
   [`${MOD_KEY},`, t("Open Settings")],
+  [`${MOD_KEY}Z / ${MOD_KEY}Shift+Z${IS_MAC ? "" : " / Ctrl+Y"}`, t("Undo or redo a change to the transcript")],
   ["Enter", t("Save an edit")],
   ["Esc", t("Close a menu or dialog, or cancel an edit")],
   ["?", t("Show this list of shortcuts")],

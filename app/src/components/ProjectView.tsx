@@ -3,7 +3,7 @@ import { useT } from "../i18n";
 import FitCard from "./FitCard";
 import ReviewBar from "./ReviewBar";
 import StartSheet, { TRIAL_SECONDS, spanText, useStartEstimate } from "./StartSheet";
-import { acceptWord, addHighlight, fixWord, highlightOf, unsureWords, withSuggestions, ExportOpts, LastExport, Options, DraftLine, JobProgress, MOD_KEY, PALETTE, Project, Result, baseName, displayName, fmt, isUnsure, joinWithPrevious, retext, revertLine, splitSegment } from "../types";
+import { acceptWord, addHighlight, fixWord, highlightOf, unsureWords, withSuggestions, ExportOpts, LastExport, Options, DraftLine, IS_MAC, JobProgress, MOD_KEY, PALETTE, Project, Result, baseName, displayName, fmt, isUnsure, joinWithPrevious, retext, revertLine, splitSegment } from "../types";
 import "../styles/project.css";
 import ExportMenu from "./ExportMenu";
 import { langName } from "../languages";
@@ -17,13 +17,13 @@ import { FIND_DEFAULTS, FindOpts, matcher, nearMisses } from "../find";
 import Waveform, { WaveformHandle } from "./Waveform";
 import { GoToTime, ShortcutSheet } from "./JumpDialogs";
 
-const typing = (t: EventTarget | null) => t instanceof HTMLElement && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName);
+const typing = (t: EventTarget | null) => t instanceof HTMLElement && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable);
 const STAGE_ORDER = ["decode", "diarize", "transcribe", "merge"];
 
 interface Props {
   project: Project; progress?: JobProgress; draft?: DraftLine[]; blocker: string; waiting: number; visible: boolean;
   nowPlayingId?: string | null; stopSignal?: number; onPlayingChange?(playing: boolean): void; onOpenSettings?(section?: string): void; models: Models;
-  onTranscribe(range: [number, number] | null, line?: { language: string; speaker: string }, trial?: boolean, acceptFit?: boolean): void; onCancel(): void; onPatch(p: Partial<Project>): void;
+  onTranscribe(range: [number, number] | null, line?: { language: string; speaker: string }, trial?: boolean, acceptFit?: boolean): void; onCancel(): void; onPatch(p: Partial<Project>, label?: string, merge?: boolean): void; onUndo(): string | null; onRedo(): string | null;
   othersWaiting?: number; onApplyToOthers?(o: Partial<Options>): void; onRemember?(o: Partial<Options>): void;
   /** The Settings default for the first Export menu item, and where to keep the last export (not an edit, so it leaves the retention date alone). */ defaultExport?: string; onExported?(last: LastExport): void; /** The user has dismissed the explanation of dotted words. */ unsureLegendSeen?: boolean;
 }
@@ -58,7 +58,7 @@ function Dialog({ title, children, cancel, confirm, onCancel, onConfirm }: { tit
 }
 
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
-export default function ProjectView({ project, progress, draft, blocker, waiting, visible, nowPlayingId, stopSignal = 0, onPlayingChange, onOpenSettings, models, onTranscribe, onCancel, onPatch, othersWaiting = 0, onApplyToOthers, onRemember, defaultExport, onExported, unsureLegendSeen }: Props) {
+export default function ProjectView({ project, progress, draft, blocker, waiting, visible, nowPlayingId, stopSignal = 0, onPlayingChange, onOpenSettings, models, onTranscribe, onCancel, onPatch, onUndo, onRedo, othersWaiting = 0, onApplyToOthers, onRemember, defaultExport, onExported, unsureLegendSeen }: Props) {
   const [renaming, setRenaming] = useState(false);
   const t = useT();
   const { result, names, path } = project;
@@ -222,7 +222,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
       n += r.n;
       return retext(s, r.text);
     });
-    onPatch({ result: { ...result, segments } });
+    onPatch({ result: { ...result, segments } }, lines.length > 1 ? t("replace all") : t("replace in a line"));
     setConfirmAll(false);
     flash(n === 1 ? t("Replaced 1 time") : t("Replaced {count} times", { count: n }));
   };
@@ -292,7 +292,16 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
     const key = (e: KeyboardEvent) => {
       if (dialog || jumpDialog) return;
       const mod = e.metaKey || e.ctrlKey;
-      if (mod && e.key.toLowerCase() === "e" && showResult) { e.preventDefault(); setExportSignal((n) => n + 1); }
+      if (mod && !e.altKey && showResult && !busy && quietTarget(e.target) && (e.key.toLowerCase() === "z" || (!IS_MAC && !e.shiftKey && e.key.toLowerCase() === "y"))) {
+        // undo and redo of transcript edits; while typing in a field the browser's own undo is left alone
+        e.preventDefault();
+        const redo = e.key.toLowerCase() === "y" || e.shiftKey;
+        const what = redo ? onRedo() : onUndo();
+        if (what === null) { setAnnounce(redo ? t("Nothing to redo") : t("Nothing to undo")); return; }
+        setMoved(null);
+        setAnnounce(what ? (redo ? t("Redone: {what}", { what }) : t("Undone: {what}", { what })) : redo ? t("Redone") : t("Undone"));
+      }
+      else if (mod && e.key.toLowerCase() === "e" && showResult) { e.preventDefault(); setExportSignal((n) => n + 1); }
       else if (mod && e.key.toLowerCase() === "f" && showResult) { e.preventDefault(); findBox.current?.focus(); findBox.current?.select(); }
       else if (!mod && !e.altKey && showResult && !busy && (e.key === "?" || (e.key === "/" && e.shiftKey) || /^[ng]$/i.test(e.key) && !(e.shiftKey && e.key.toLowerCase() === "g")) && quietTarget(e.target)) {
         e.preventDefault();
@@ -333,7 +342,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
   const setSpeaker = (idx: number | null, from: string, to: string) => {
     if (!result) return;
     const segments = result.segments.map((s, k) => (idx === null ? s.speaker === from : k === idx) ? { ...s, speaker: to, words: s.words.map((w) => ({ ...w, speaker: to })) } : s);
-    onPatch({ result: { ...result, segments } });
+    onPatch({ result: { ...result, segments } }, t("change speaker"));
   };
   function reassign(i: number, to: string) {
     if (!result) return;
@@ -345,7 +354,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
   function moveAll() {
     if (!result || !moved) return;
     const segments = result.segments.map((s) => (s.speaker === moved.from ? { ...s, speaker: moved.to, words: s.words.map((w) => ({ ...w, speaker: moved.to })) } : s));
-    onPatch({ result: { ...result, segments, speakers: result.speakers.filter((x) => x !== moved.from) } });
+    onPatch({ result: { ...result, segments, speakers: result.speakers.filter((x) => x !== moved.from) } }, t("move lines to a speaker"));
     flash(t("Moved the remaining lines to {name}", { name: displayName(moved.to, result.speakers, names) }));
     setMoved(null);
   }
@@ -364,7 +373,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
     player.current?.seek(from);
     clipTimer.current = window.setTimeout(() => player.current?.pause(), Math.max(400, ((w.end + 0.3 - from) / rate) * 1000));
   };
-  const patchSeg = (i: number, f: (s: import("../types").Segment) => import("../types").Segment) => result && onPatch({ result: { ...result, segments: result.segments.map((s, k) => (k === i ? f(s) : s)) } });
+  const patchSeg = (i: number, f: (s: import("../types").Segment) => import("../types").Segment) => result && onPatch({ result: { ...result, segments: result.segments.map((s, k) => (k === i ? f(s) : s)) } }, t("review words"));
   const startReview = () => { setReviewTotal(unsure.length); setRpos(0); setReview(true); };
   const endReview = () => { window.clearTimeout(clipTimer.current); player.current?.pause(); setReview(false); };
   useEffect(() => { // bring the word into view and play the bit around it whenever the word under review changes
@@ -382,7 +391,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
     const prev = project.previous;
     if (!prev) return;
     setMoved(null); setQuery("");
-    onPatch({ result: prev.result, names: prev.names, meta: prev.meta, previous: undefined, trial: undefined });
+    onPatch({ result: prev.result, names: prev.names, meta: prev.meta, previous: undefined, trial: undefined }, t("restore the earlier transcript"));
     if (globalOpts().autosave) void window.api.saveSidecar(project.path, { source: baseName(project.path), language: prev.result.language, duration: prev.result.duration, speakers: Object.fromEntries(prev.result.speakers.map((sp) => [sp, displayName(sp, prev.result.speakers, prev.names)])), segments: prev.result.segments.map(({ words: _w, orig: _o, edited: _e, ...s }) => s) });
   };
 
@@ -501,24 +510,24 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
           </div>
         )}
         <Transcript showLang={showLang} result={result} names={names} time={time} query={query} findOpts={findOpts} highlights={highlights} onHighlight={(i, a, b) => { const h = highlightOf(result.segments[i], a, b); if (h) patchResult((x) => ({ ...x, highlights: addHighlight(x.highlights ?? [], h) })); }} matchSeg={matches[mi] ?? -1} onSeek={(t) => player.current?.seek(t)} onReassign={reassign}
-          onEdit={(i, text) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => (k === i ? retext(s, text) : s)) } })}
+          onEdit={(i, text) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => (k === i ? retext(s, text) : s)) } }, t("edit a line"))}
           canRetranscribe={canTranscribe} reviewAt={reviewAt} translatingIndex={translating} playing={playing} onPause={() => player.current?.pause()}
           onTranslate={async (i, remove) => {
             const seg = result.segments[i];
-            const put = (translation?: string) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => { if (k !== i) return s; const { translation: _t, ...rest } = s; return translation ? { ...rest, translation } : rest; }) } });
+            const put = (translation?: string) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => { if (k !== i) return s; const { translation: _t, ...rest } = s; return translation ? { ...rest, translation } : rest; }) } }, t("translation"));
             if (remove) { put(); return; }
             setTranslating(i);
             const r = await window.api.translateLine({ input: path, start: seg.start, end: seg.end, model: ({ ...globalOpts(), ...project.opts }).model, language: seg.lang ?? result.language, backend: globalOpts().whisperEngine }).catch((e: unknown) => ({ ok: false, error: String(e) } as { ok: boolean; text?: string; error?: string }));
             setTranslating(null);
             if (r.ok && r.text) put(r.text); else flash(r.ok ? t("Nothing to translate here") : t("Translation failed: {reason}", { reason: r.error ?? "" }));
           }}
-          onLanguage={(i, lang) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => { if (k !== i) return s; const { lang: _l, ...rest } = s; return lang ? { ...rest, lang } : rest; }) } })}
+          onLanguage={(i, lang) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => { if (k !== i) return s; const { lang: _l, ...rest } = s; return lang ? { ...rest, lang } : rest; }) } }, t("language change"))}
           onRetranscribe={(i, language) => { const s = result.segments[i]; onTranscribe([s.start, s.end], { language, speaker: s.speaker }); }}
-          onSplit={(i, k) => { const parts = splitSegment(result.segments[i], k); if (parts) onPatch({ result: { ...result, segments: [...result.segments.slice(0, i), ...parts, ...result.segments.slice(i + 1)] } }); }}
-          onJoin={(i) => { const segments = joinWithPrevious(result.segments, i); if (segments) onPatch({ result: { ...result, segments } }); }}
-          onMark={(i) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => { if (k !== i) return s; const { marked: _m, ...rest } = s; return s.marked ? rest : { ...rest, marked: true }; }) } })}
-          onChapter={(i, title) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => { if (k !== i) return s; const { chapter: _c, ...rest } = s; return title ? { ...rest, chapter: title } : rest; }) } })}
-          onRevert={(i) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => (k === i ? revertLine(s) : s)) } })} />
+          onSplit={(i, k) => { const parts = splitSegment(result.segments[i], k); if (parts) onPatch({ result: { ...result, segments: [...result.segments.slice(0, i), ...parts, ...result.segments.slice(i + 1)] } }, t("split a line")); }}
+          onJoin={(i) => { const segments = joinWithPrevious(result.segments, i); if (segments) onPatch({ result: { ...result, segments } }, t("join lines")); }}
+          onMark={(i) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => { if (k !== i) return s; const { marked: _m, ...rest } = s; return s.marked ? rest : { ...rest, marked: true }; }) } }, t("mark a line"))}
+          onChapter={(i, title) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => { if (k !== i) return s; const { chapter: _c, ...rest } = s; return title ? { ...rest, chapter: title } : rest; }) } }, t("chapter"))}
+          onRevert={(i) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => (k === i ? revertLine(s) : s)) } }, t("put a line back"))} />
       </div>
     );
   }
