@@ -547,3 +547,28 @@ def test_redaction_report_german_note_and_none_found():
 
     report, _ = redaction_report([{"start": 0, "end": 1, "speaker": "A", "text": "hallo zusammen"}], {}, "de")
     assert "every noun with a capital letter" in report and "(none found)" in report
+
+
+def test_minutes_action_items_are_a_table_with_owner_action_and_an_empty_due_column():
+    import io
+    from docx import Document
+    from engine.export import to_minutes
+
+    segs = [{"start": 0, "end": 1, "speaker": "A", "text": "Budget by Wednesday"}]
+    summary = {"actions": [{"text": "Send the budget numbers", "owner": "Anna"}, {"text": "Chase the access request", "owner": None}]}
+    doc = Document(io.BytesIO(to_minutes(segs, {"A": "Anna"}, summary=summary)))
+    assert len(doc.tables) == 1
+    rows = [[c.text for c in r.cells] for r in doc.tables[0].rows]
+    assert rows[0] == ["Owner", "Action", "Due"]
+    assert rows[1] == ["Anna", "Send the budget numbers", ""]          # owner prefilled; due is left for the reader, never invented
+    assert rows[2] == ["—", "Chase the access request", ""]            # no owner known
+    assert "Send the budget numbers (Anna)" not in "\n".join(p.text for p in doc.paragraphs)  # no longer a bullet
+
+
+def test_minutes_action_table_headings_follow_the_language():
+    import io
+    from docx import Document
+    from engine.export import to_minutes
+
+    doc = Document(io.BytesIO(to_minutes([{"start": 0, "end": 1, "speaker": "A", "text": "x"}], {}, lang="de", summary={"actions": [{"text": "Zahlen senden", "owner": "Anna"}]})))
+    assert [c.text for c in doc.tables[0].rows[0].cells] == ["Verantwortlich", "Aufgabe", "Fällig bis"]

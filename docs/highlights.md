@@ -74,7 +74,7 @@ Long recordings are summarised in pieces first and then combined. You can **edit
 **Copy** the whole summary, **Write it again**, or **Remove** it. The model is told to use only what was said, but it can still make mistakes, so
 read it before you share it.
 
-When you export **Meeting minutes (Word)**, the summary, its topics, decisions and action items come first, then the lines you marked, then the
+When you export **Meeting minutes (Word)**, the action items are a small **table** with three columns, **Owner** (filled from the summary when it names one, otherwise "—"), **Action** and **Due**. The Due column is left empty on purpose: the summary has no dates, and the app never invents one, so you fill it in Word. The summary, its topics, decisions and action items come first, then the lines you marked, then the
 highlights as **Key quotes**, then the full record. The summary is marked in the file as written by a language model.
 
 ## Ask about the transcript

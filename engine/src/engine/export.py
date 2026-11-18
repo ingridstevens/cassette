@@ -18,25 +18,25 @@ def _ts(sec: float, sep: str = ",", hours: bool = True) -> str:
 
 # ---- Words the exports write themselves (everything else is the user's own text) -----------------------------
 _L = {
-    "en": {"summary": "Summary", "topics": "Topics", "actions": "Action items", "keyquotes": "Key quotes", "highlights": "Highlights", "nohighlights": "Nothing was highlighted. Select text in the transcript and choose Highlight.", "aisummary": "Written by a language model on this computer. Check it before you share it.", "aihighlight": "suggested by the language model", "speaker": "speaker", "speakers": "speakers", "participants": "Participants: ", "footer": "Made with Cassette  ·  page ",
+    "en": {"summary": "Summary", "topics": "Topics", "actions": "Action items", "owner": "Owner", "task": "Action", "due": "Due", "keyquotes": "Key quotes", "highlights": "Highlights", "nohighlights": "Nothing was highlighted. Select text in the transcript and choose Highlight.", "aisummary": "Written by a language model on this computer. Check it before you share it.", "aihighlight": "suggested by the language model", "speaker": "speaker", "speakers": "speakers", "participants": "Participants: ", "footer": "Made with Cassette  ·  page ",
            "attendees": "Attendees", "decisions": "Decisions and action items", "nomarks": "No lines were marked. Mark a line in the transcript to list it here.",
            "record": "Record", "minutes": "Meeting minutes", "edited1": "{n} edited line of {m}", "editedN": "{n} edited lines of {m}",
            "original": "original: ", "edited": "edited:   ",
            "cleannote": "Edited copy: hesitations such as “um” and “uh” were removed. This is not a verbatim record.", "pausenote": "Pauses are marked (.) about half a second, (..) about one second, (...) two seconds or more.", "overlap": "overlap",
            "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]},
-    "de": {"summary": "Zusammenfassung", "topics": "Themen", "actions": "Aufgaben", "keyquotes": "Zitate", "highlights": "Highlights", "nohighlights": "Nichts wurde hervorgehoben. Markiere Text im Transkript und wähle Hervorheben.", "aisummary": "Von einem Sprachmodell auf diesem Computer geschrieben. Bitte vor dem Weitergeben prüfen.", "aihighlight": "vom Sprachmodell vorgeschlagen", "speaker": "Sprecher", "speakers": "Sprecher", "participants": "Teilnehmende: ", "footer": "Erstellt mit Cassette  ·  Seite ",
+    "de": {"summary": "Zusammenfassung", "topics": "Themen", "actions": "Aufgaben", "owner": "Verantwortlich", "task": "Aufgabe", "due": "Fällig bis", "keyquotes": "Zitate", "highlights": "Highlights", "nohighlights": "Nichts wurde hervorgehoben. Markiere Text im Transkript und wähle Hervorheben.", "aisummary": "Von einem Sprachmodell auf diesem Computer geschrieben. Bitte vor dem Weitergeben prüfen.", "aihighlight": "vom Sprachmodell vorgeschlagen", "speaker": "Sprecher", "speakers": "Sprecher", "participants": "Teilnehmende: ", "footer": "Erstellt mit Cassette  ·  Seite ",
            "attendees": "Teilnehmende", "decisions": "Beschlüsse und Aufgaben", "nomarks": "Es wurden keine Zeilen markiert. Markiere eine Zeile im Transkript, damit sie hier erscheint.",
            "record": "Protokoll", "minutes": "Besprechungsprotokoll", "edited1": "{n} geänderte Zeile von {m}", "editedN": "{n} geänderte Zeilen von {m}",
            "original": "Original:  ", "edited": "Geändert: ",
            "cleannote": "Bearbeitete Fassung: Füllwörter wie „äh“ und „ähm“ wurden entfernt. Das ist kein wörtliches Protokoll.", "pausenote": "Pausen sind markiert: (.) etwa eine halbe Sekunde, (..) etwa eine Sekunde, (...) zwei Sekunden oder mehr.", "overlap": "überlappend",
            "months": ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]},
-    "fr": {"summary": "Résumé", "topics": "Sujets", "actions": "Actions à mener", "keyquotes": "Citations clés", "highlights": "Moments forts", "nohighlights": "Rien n’a été mis en avant. Sélectionnez du texte dans la transcription et choisissez Mettre en avant.", "aisummary": "Rédigé par un modèle de langage sur cet ordinateur. Vérifiez-le avant de le partager.", "aihighlight": "proposé par le modèle de langage", "speaker": "locuteur", "speakers": "locuteurs", "participants": "Participants : ", "footer": "Créé avec Cassette  ·  page ",
+    "fr": {"summary": "Résumé", "topics": "Sujets", "actions": "Actions à mener", "owner": "Responsable", "task": "Action", "due": "Échéance", "keyquotes": "Citations clés", "highlights": "Moments forts", "nohighlights": "Rien n’a été mis en avant. Sélectionnez du texte dans la transcription et choisissez Mettre en avant.", "aisummary": "Rédigé par un modèle de langage sur cet ordinateur. Vérifiez-le avant de le partager.", "aihighlight": "proposé par le modèle de langage", "speaker": "locuteur", "speakers": "locuteurs", "participants": "Participants : ", "footer": "Créé avec Cassette  ·  page ",
            "attendees": "Participants", "decisions": "Décisions et actions", "nomarks": "Aucune ligne n’a été marquée. Marquez une ligne dans la transcription pour qu’elle apparaisse ici.",
            "record": "Compte rendu", "minutes": "Compte rendu de réunion", "edited1": "{n} ligne modifiée sur {m}", "editedN": "{n} lignes modifiées sur {m}",
            "original": "original : ", "edited": "modifié :  ",
            "cleannote": "Version nettoyée : les hésitations comme « euh » ont été supprimées. Ce n’est pas une transcription littérale.", "pausenote": "Les pauses sont indiquées : (.) environ une demi-seconde, (..) environ une seconde, (...) deux secondes ou plus.", "overlap": "chevauchement",
            "months": ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]},
-    "es": {"summary": "Resumen", "topics": "Temas", "actions": "Tareas", "keyquotes": "Citas clave", "highlights": "Destacados", "nohighlights": "No se destacó nada. Selecciona texto en la transcripción y elige Destacar.", "aisummary": "Escrito por un modelo de lenguaje en este ordenador. Revísalo antes de compartirlo.", "aihighlight": "sugerido por el modelo de lenguaje", "speaker": "hablante", "speakers": "hablantes", "participants": "Participantes: ", "footer": "Creado con Cassette  ·  página ",
+    "es": {"summary": "Resumen", "topics": "Temas", "actions": "Tareas", "owner": "Responsable", "task": "Tarea", "due": "Fecha límite", "keyquotes": "Citas clave", "highlights": "Destacados", "nohighlights": "No se destacó nada. Selecciona texto en la transcripción y elige Destacar.", "aisummary": "Escrito por un modelo de lenguaje en este ordenador. Revísalo antes de compartirlo.", "aihighlight": "sugerido por el modelo de lenguaje", "speaker": "hablante", "speakers": "hablantes", "participants": "Participantes: ", "footer": "Creado con Cassette  ·  página ",
            "attendees": "Asistentes", "decisions": "Decisiones y tareas", "nomarks": "No se marcó ninguna línea. Marca una línea en la transcripción para que aparezca aquí.",
            "record": "Acta", "minutes": "Acta de la reunión", "edited1": "{n} línea editada de {m}", "editedN": "{n} líneas editadas de {m}",
            "original": "original: ", "edited": "editado:  ",
@@ -730,8 +730,16 @@ def to_minutes(segs, names=None, title=None, lang=None, summary=None, highlights
         doc.add_paragraph(L["nomarks"])
     if summary.get("actions"):
         doc.add_heading(L["actions"], 2)
+        table = doc.add_table(rows=1, cols=3)  # owner, action, and an empty due column to fill in (no date is invented)
+        table.style = "Table Grid"
+        for cell, text in zip(table.rows[0].cells, (L["owner"], L["task"], L["due"])):
+            cell.text = text
+            cell.paragraphs[0].runs[0].bold = True
         for a in summary["actions"]:
-            doc.add_paragraph(a["text"] + (f" ({a['owner']})" if a.get("owner") else ""), style="List Bullet")
+            row = table.add_row().cells
+            row[0].text = a.get("owner") or "—"
+            row[1].text = a["text"]
+            row[2].text = ""
     quotes = quote_list([], highlights)
     if quotes:
         doc.add_heading(L["keyquotes"], 2)
