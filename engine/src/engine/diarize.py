@@ -57,3 +57,20 @@ def diarize(wav_path, device: str, num_speakers: int | None, min_speakers: int |
     progress("diarize", 1.0, f"Found {n} speaker" + ("" if n == 1 else "s"))
     log(f"Found {n} speaker(s) in {len(turns)} turns ({time.time() - t0:.1f}s)")
     return turns, {"device": dev}
+
+
+def free_memory() -> None:
+    """Give back what the speaker model used before the speech model is loaded, so a computer with little memory never holds both."""
+    import gc
+
+    gc.collect()
+    try:
+        import torch
+
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        mps = getattr(torch, "mps", None)
+        if mps is not None and getattr(torch.backends, "mps", None) and torch.backends.mps.is_available():
+            mps.empty_cache()
+    except Exception:  # no torch, or a backend without a cache to empty: nothing to give back
+        pass

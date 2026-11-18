@@ -32,10 +32,23 @@ def cmd_transcribe(a) -> None:
         log(f"Decoded to 16 kHz mono, {duration:.1f}s. Nothing leaves this computer.")
         from .asr import check_fit, is_mixed, load_detector, load_model, probe_languages, transcribe_turns, translate_clip
 
-        t0 = time.time()
-        loaded = load_model(a.model, a.device, a.backend, a.vad)
-        model, dev, _compute = loaded
-        seconds_load = time.time() - t0
+        # With a separate (small) language checker and speaker detection on, the speech model is loaded AFTER the speakers are found:
+        # the small checker and the speaker model are never in memory together with the big speech model. Otherwise it is loaded first,
+        # because the checker is the speech model itself.
+        separate_detector = (not a.no_diarize and a.detect_model not in ("same", a.model) and a.detect_model in models.WHISPER_MODELS
+                             and models._cached(models.WHISPER_MODELS[a.detect_model]))
+        loaded = model = dev = None
+        seconds_load = 0.0
+
+        def load_main():
+            nonlocal loaded, model, dev, seconds_load
+            t_load = time.time()
+            loaded = load_model(a.model, a.device, a.backend, a.vad)
+            model, dev, _compute = loaded
+            seconds_load = time.time() - t_load
+
+        if not separate_detector:
+            load_main()
         detector = load_detector(a.detect_model, a.model, a.device, model)
         if a.language == "auto" and not getattr(a, "accept_fit", False):
             # Before the slow parts: if this model is weak for what is spoken, stop here and let the app ask (the run starts again from scratch)
@@ -52,6 +65,11 @@ def cmd_transcribe(a) -> None:
             t0 = time.time()
             turns, speaker_info = diarize(wav, a.device, a.num_speakers, a.min_speakers, a.max_speakers, offset)
             seconds_speakers = round(time.time() - t0, 1)
+            if separate_detector:
+                from .diarize import free_memory
+
+                free_memory()
+                load_main()
         t0 = time.time() - seconds_load  # the time to write the words down includes loading the model
         mixed = False
         if a.language == "auto" and turns and a.mixed_languages != "off":
