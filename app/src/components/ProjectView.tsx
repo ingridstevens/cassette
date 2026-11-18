@@ -112,8 +112,8 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
     const text = `[${fmt(time)}]${nowName ? " " + nowName : ""}`;
     try { await navigator.clipboard.writeText(text); flash(t("Copied {text}", { text })); } catch { flash(text); }
   };
-  const markStart = () => { setClipStart(time); flash(t("Clip start marked")); };
-  const markEnd = () => { if (clipStart === null || time <= clipStart) { flash(t("Mark the clip start first")); return; } player.current?.markClip(clipStart, time); setClipStart(null); };
+  const markStart = () => { setClipStart(time); flash(t("Clip start marked at {time}", { time: fmt(time) })); };
+  const markEnd = () => { if (clipStart === null || time <= clipStart) { flash(t("Mark the clip start first")); return; } player.current?.markClip(clipStart, time); flash(t("Clip marked from {from} to {to}. Press S to save it.", { from: fmt(clipStart), to: fmt(time) })); setClipStart(null); };
 
   // ---- highlights and summary (the language model runs on this computer, in the engine)
   const [llmJob, setLlmJob] = useState<LlmJob | null>(null);
@@ -299,6 +299,16 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
         else if (e.key.toLowerCase() === "g") setJumpDialog("goto");
         else jumpSpeaker(e.key === "N" || e.shiftKey ? -1 : 1);
       }
+      else if (!mod && !e.altKey && showResult && !busy && !e.shiftKey && /^[\[\],.s]$/i.test(e.key) && quietTarget(e.target)) {
+        // clips by keyboard: [ starts a clip at the playhead, ] ends it, S saves it; , and . move the playhead half a second
+        e.preventDefault();
+        if (e.key === "[") markStart();
+        else if (e.key === "]") markEnd();
+        else if (e.key === ",") { player.current?.skip(-0.5); }
+        else if (e.key === ".") { player.current?.skip(0.5); }
+        else if (sel) void window.api.saveClip(path, sel[0], sel[1]).then((ok) => { if (ok) flash(t("Clip saved ✓")); });
+        else flash(t("Mark a clip first: [ for the start, ] for the end"));
+      }
       else if (!mod && !e.altKey && showResult && !busy && /^[omc]$/i.test(e.key) && quietTarget(e.target)) {
         e.preventDefault();
         jumpFlag(e.key.toLowerCase() === "o" ? "overlap" : e.key.toLowerCase() === "m" ? "marked" : "chapter", e.shiftKey ? -1 : 1);
@@ -312,7 +322,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
     };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [visible, showResult, busy, dialog, jumpDialog, time, result]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [visible, showResult, busy, dialog, jumpDialog, time, result, sel, clipStart, path]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const payload = (format = "", options?: ExportOpts) => ({
     segments: result!.segments.map(({ words, orig, edited, ...s }) => (["srt", "vtt", "edl"].includes(format) || (options?.pauseMarks && STYLED.has(format)) ? { ...s, edited, words: words.map(({ start, end, word }) => ({ start, end, word })) } : format === "changes" ? { ...s, orig: orig && { text: orig.text } } : s)),

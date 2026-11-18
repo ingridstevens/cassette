@@ -1,5 +1,11 @@
 export default {
   de: {
+    "Clip start marked at {time}": "Clipanfang bei {time} markiert",
+    "Clip marked from {from} to {to}. Press S to save it.": "Clip von {from} bis {to} markiert. Zum Speichern S drücken.",
+    "Mark a clip first: [ for the start, ] for the end": "Markiere zuerst einen Clip: [ für den Anfang, ] für das Ende",
+    "Mark the start and the end of a clip at the playhead": "Anfang und Ende eines Clips an der Abspielposition markieren",
+    "Save the marked clip": "Den markierten Clip speichern",
+    "Move the playhead back or forward half a second": "Abspielposition eine halbe Sekunde zurück oder vor",
     "No token is saved.": "Es ist kein Token gespeichert.",
     "Saved": "Gespeichert",
     "Not saved": "Nicht gespeichert",
@@ -85,6 +91,12 @@ export default {
     "No microphone was found. You can still transcribe files; to record, connect one and allow access.": "Es wurde kein Mikrofon gefunden. Dateien kannst du weiterhin transkribieren; zum Aufnehmen schließe eines an und erlaube den Zugriff.",
   },
   fr: {
+    "Clip start marked at {time}": "Début du clip marqué à {time}",
+    "Clip marked from {from} to {to}. Press S to save it.": "Clip marqué de {from} à {to}. Appuyez sur S pour l’enregistrer.",
+    "Mark a clip first: [ for the start, ] for the end": "Marquez d’abord un clip : [ pour le début, ] pour la fin",
+    "Mark the start and the end of a clip at the playhead": "Marquer le début et la fin d’un clip à la position de lecture",
+    "Save the marked clip": "Enregistrer le clip marqué",
+    "Move the playhead back or forward half a second": "Reculer ou avancer la position de lecture d’une demi-seconde",
     "No token is saved.": "Aucun jeton n’est enregistré.",
     "Saved": "Enregistré",
     "Not saved": "Non enregistré",
@@ -170,6 +182,12 @@ export default {
     "No microphone was found. You can still transcribe files; to record, connect one and allow access.": "Aucun micro trouvé. Vous pouvez toujours transcrire des fichiers ; pour enregistrer, branchez-en un et autorisez l’accès.",
   },
   es: {
+    "Clip start marked at {time}": "Inicio del clip marcado en {time}",
+    "Clip marked from {from} to {to}. Press S to save it.": "Clip marcado de {from} a {to}. Pulsa S para guardarlo.",
+    "Mark a clip first: [ for the start, ] for the end": "Marca primero un clip: [ para el inicio, ] para el final",
+    "Mark the start and the end of a clip at the playhead": "Marcar el inicio y el final de un clip en la posición de reproducción",
+    "Save the marked clip": "Guardar el clip marcado",
+    "Move the playhead back or forward half a second": "Mover la posición de reproducción medio segundo atrás o adelante",
     "No token is saved.": "No hay ningún token guardado.",
     "Saved": "Guardado",
     "Not saved": "No guardado",
