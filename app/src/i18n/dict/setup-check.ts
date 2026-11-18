@@ -1,5 +1,9 @@
 export default {
   de: {
+    "Where in the code": "Wo im Code",
+    "You press Open the token page or Open the two model pages": "Du drückst auf „Token-Seite öffnen“ oder „Die beiden Modellseiten öffnen“",
+    "Nothing: your browser opens the page. The app opens only huggingface.co pages.": "Nichts: Dein Browser öffnet die Seite. Die App öffnet nur Seiten von huggingface.co.",
+    "A test in the project (engine/tests/test_network_surface.py) fails if code that can reach the network appears in a new place or a new web address is written into the app. It is a tripwire, not an audit.": "Ein Test im Projekt (engine/tests/test_network_surface.py) schlägt fehl, wenn Code, der das Netz erreichen kann, an neuer Stelle auftaucht oder eine neue Webadresse in die App geschrieben wird. Er ist ein Stolperdraht, keine Prüfung.",
     "The log file is empty.": "Die Protokolldatei ist leer.",
     "Keep an activity log": "Aktivitätsprotokoll führen",
     "Off: nothing more is written to the log. Existing entries stay until you clear them. Without a log it is harder to find out what went wrong.": "Aus: Es wird nichts mehr ins Protokoll geschrieben. Vorhandene Einträge bleiben, bis du sie löschst. Ohne Protokoll ist es schwerer, Fehler zu finden.",
@@ -74,6 +78,10 @@ export default {
     "No microphone was found. You can still transcribe files; to record, connect one and allow access.": "Es wurde kein Mikrofon gefunden. Dateien kannst du weiterhin transkribieren; zum Aufnehmen schließe eines an und erlaube den Zugriff.",
   },
   fr: {
+    "Where in the code": "Où dans le code",
+    "You press Open the token page or Open the two model pages": "Vous appuyez sur « Ouvrir la page du jeton » ou « Ouvrir les deux pages de modèles »",
+    "Nothing: your browser opens the page. The app opens only huggingface.co pages.": "Rien : votre navigateur ouvre la page. L’app n’ouvre que des pages de huggingface.co.",
+    "A test in the project (engine/tests/test_network_surface.py) fails if code that can reach the network appears in a new place or a new web address is written into the app. It is a tripwire, not an audit.": "Un test du projet (engine/tests/test_network_surface.py) échoue si du code pouvant accéder au réseau apparaît ailleurs ou si une nouvelle adresse web est écrite dans l’app. C’est un fil-piège, pas un audit.",
     "The log file is empty.": "Le fichier journal est vide.",
     "Keep an activity log": "Tenir un journal d’activité",
     "Off: nothing more is written to the log. Existing entries stay until you clear them. Without a log it is harder to find out what went wrong.": "Désactivé : plus rien n’est écrit dans le journal. Les entrées existantes restent jusqu’à ce que vous les effaciez. Sans journal, il est plus difficile de trouver ce qui a mal tourné.",
@@ -148,6 +156,10 @@ export default {
     "No microphone was found. You can still transcribe files; to record, connect one and allow access.": "Aucun micro trouvé. Vous pouvez toujours transcrire des fichiers ; pour enregistrer, branchez-en un et autorisez l’accès.",
   },
   es: {
+    "Where in the code": "Dónde en el código",
+    "You press Open the token page or Open the two model pages": "Pulsas «Abrir la página del token» o «Abrir las dos páginas de modelos»",
+    "Nothing: your browser opens the page. The app opens only huggingface.co pages.": "Nada: tu navegador abre la página. La app solo abre páginas de huggingface.co.",
+    "A test in the project (engine/tests/test_network_surface.py) fails if code that can reach the network appears in a new place or a new web address is written into the app. It is a tripwire, not an audit.": "Una prueba del proyecto (engine/tests/test_network_surface.py) falla si aparece código capaz de acceder a la red en un lugar nuevo o si se escribe una dirección web nueva en la app. Es una alarma, no una auditoría.",
     "The log file is empty.": "El archivo de registro está vacío.",
     "Keep an activity log": "Mantener un registro de actividad",
     "Off: nothing more is written to the log. Existing entries stay until you clear them. Without a log it is harder to find out what went wrong.": "Desactivado: no se escribe nada más en el registro. Las entradas existentes se quedan hasta que las borres. Sin registro es más difícil saber qué falló.",
