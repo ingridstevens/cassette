@@ -48,9 +48,25 @@ export const SCROLL_EVENT = "cassette:scroll-turn";
 export interface ScrollJob { index: number; block: "center" | "nearest"; behavior: "smooth" | "auto"; handled?: boolean; resolve(el: HTMLElement | null): void }
 export function scrollToTurn(index: number, opts: { block?: "center" | "nearest"; behavior?: "smooth" | "auto" } = {}): Promise<HTMLElement | null> {
   return new Promise((resolve) => {
-    const job: ScrollJob = { index, block: opts.block ?? "center", behavior: opts.behavior ?? "smooth", resolve };
+    const job: ScrollJob = { index, block: opts.block ?? "center", behavior: opts.behavior ?? (prefersReducedMotion() ? "auto" : "smooth"), resolve };
     if (typeof document === "undefined") { resolve(null); return; }
     document.dispatchEvent(new CustomEvent<ScrollJob>(SCROLL_EVENT, { detail: job }));
     if (!job.handled) resolve(null);
   });
+}
+
+/** True when the system asks for less motion: scrolls then jump instead of gliding. */
+export function prefersReducedMotion(): boolean {
+  return typeof window !== "undefined" && typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+/** How long a revealed line stays marked (the pulse is shorter; the marker itself stays as a plain highlight under reduced motion). */
+export const CITED_MS = 3000;
+/** Scroll a line into view and mark it with data-cited (an attribute, not a class: React rewrites the line's class as playback moves). */
+export async function revealTurn(index: number): Promise<HTMLElement | null> {
+  if (typeof document === "undefined") return null;
+  document.querySelectorAll("[data-cited]").forEach((el) => el.removeAttribute("data-cited"));
+  const el = await scrollToTurn(index);
+  if (el) { el.setAttribute("data-cited", ""); window.setTimeout(() => el.removeAttribute("data-cited"), CITED_MS); }
+  return el;
 }

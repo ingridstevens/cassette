@@ -2,7 +2,7 @@ import { sourceTime } from "../sourceLinks";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "../i18n";
 import { Highlight, ModelStatus, PALETTE, Project, Summary, SummaryItem, bytes, displayName, fmt } from "../types";
-import { scrollToTurn } from "../windowing";
+import { revealTurn } from "../windowing";
 import { setLlm, useLlm } from "./llmChoice";
 import Hint from "../Hint";
 import { useModels } from "./useModels";
@@ -55,7 +55,7 @@ export default function HighlightsTab({ project, visible, clip, time, job, error
   const chooseFormat = (f: string) => { setFormat(f); try { localStorage.setItem(FORMAT_KEY, f); } catch { /* same */ } };
   const show = (start: number) => {
     const i = result.segments.findIndex((s) => start < s.end);
-    void scrollToTurn(Math.max(0, i));
+    void revealTurn(Math.max(0, i));
     onSeek(start);
   };
   // A decision or action item links to the line the model named. Summaries saved before that carry no line: those are matched by words (a clear match only).
@@ -63,7 +63,7 @@ export default function HighlightsTab({ project, visible, clip, time, job, error
   const timeOf = (d: string | SummaryItem) => {
     const line = typeof d === "string" ? undefined : d.line;
     const seg = typeof line === "number" ? result.segments[line] : undefined;
-    if (seg) return <><button type="button" className="pv-time" onClick={() => { void scrollToTurn(line as number); onSeek(seg.start); }} aria-label={t("Show the line at {time}", { time: fmt(seg.start) })}>▶ {fmt(seg.start)}</button>{" "}</>;
+    if (seg) return <><button type="button" className="pv-time" onClick={() => { void revealTurn(line as number); onSeek(seg.start); }} aria-label={t("Show the line at {time}", { time: fmt(seg.start) })}>▶ {fmt(seg.start)}</button>{" "}</>;
     if (line === undefined || (typeof line === "number" && !seg)) {
       const at = sourceTime(itemText(d), result.segments);
       if (at != null) return <><button type="button" className="pv-time" onClick={() => show(at)} aria-label={t("Show the line at {time}", { time: fmt(at) })}>{fmt(at)}</button>{" "}</>;
@@ -144,7 +144,9 @@ export default function HighlightsTab({ project, visible, clip, time, job, error
                 <button type="button" className={cls} onClick={() => onPlay(h.start, h.end)} aria-label={t("Play the highlight at {time}", { time: fmt(h.start) })}>{t("Play")}</button>
               );
               return (
-              <li key={h.id} className={"card pv-hl-item" + (h.suggested ? " sug" : "") + (on ? " playing" : "")}>
+              <li key={h.id} className={"card pv-hl-item" + (h.suggested ? " sug" : "") + (on ? " playing" : "")} onClick={(e) => { // a click on the card itself (not a button, field or selected text) shows its passage
+                if (!(e.target as HTMLElement).closest("button, a, input, select, textarea") && !window.getSelection()?.toString()) show(h.start);
+              }}>
                 {on && <span className="pv-hl-fill" aria-hidden style={{ width: `${Math.round(frac * 100)}%` }} />}
                 {on && <span className="pv-sr" role="status" aria-live="polite">{t("Playing the highlight at {time}", { time: fmt(h.start) })}</span>}
                 <div className="pv-hl-head">
