@@ -6,6 +6,7 @@ type TFn = (s: string, v?: Record<string, string | number>) => string;
 export const shortcutList = (t: TFn): [string, string][] => [
   ["Space / K", t("Play or pause")],
   ["J / L", t("Back or forward 10 seconds")],
+  ["< / >", t("Slower or faster playback")],
   ["N / Shift+N", t("Next or previous line from a different speaker")],
   ["O / Shift+O", t("Next or previous overlap, where two people talk at once")],
   ["M / Shift+M", t("Next or previous marked line")],
