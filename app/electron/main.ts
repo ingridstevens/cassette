@@ -7,6 +7,7 @@ import { BrowserWindow, app, dialog, ipcMain, powerMonitor, safeStorage, session
 import { EngineEvent, cancelJob, runEngine } from "./engine-client";
 import { redactNames } from "./logRedact";
 import { registerLive } from "./live";
+import { createKnownPaths } from "./knownPaths";
 import { createProjectsStore } from "./projectsStore";
 
 // Show "Cassette" as the app name (menus, About, Dock) instead of "Electron" when run from source.
@@ -100,7 +101,8 @@ app.whenReady().then(() => {
     applicationName: "Cassette", applicationVersion: app.getVersion(), version: app.getVersion(),
     copyright: "Public domain (The Unlicense)", ...(fs.existsSync(devIcon) ? { iconPath: devIcon } : {}),
   });
-  registerLive(send, baseEnv);
+  const known = createKnownPaths();
+  registerLive(send, baseEnv, known);
   ipcMain.on("renderer-error", (_e, message: unknown) => logLine("renderer", String(message).slice(0, 4000)));
   // Returns the raw bytes of an audio/video file so the renderer can build a Blob URL (no custom protocol needed).
   /** A recording path from the renderer must be a string, an audio/video extension and an existing regular file. */
@@ -108,9 +110,11 @@ app.whenReady().then(() => {
     if (typeof p !== "string" || !AUDIO_EXT.has(path.extname(p).toLowerCase())) return false;
     try { return fs.statSync(p).isFile(); } catch { return false; }
   };
+  /** A recording the app knows about (see knownPaths.ts): the window may only read, reveal or delete those. */
+  const knownMedia = (p: unknown): p is string => mediaFile(p) && known.has(p);
   ipcMain.handle("read-audio", async (_e, p: string) => {
     if (typeof p !== "string" || !AUDIO_EXT.has(path.extname(p).toLowerCase())) throw new Error("Unsupported file type");
-    if (!mediaFile(p)) return null; // moved, renamed or deleted: a normal situation, so no error: the waveform area says so
+    if (!knownMedia(p)) return null; // moved, renamed or deleted: a normal situation, so no error: the waveform area says so
     const buf = await fs.promises.readFile(p);
     return new Uint8Array(buf.buffer, buf.byteOffset, buf.byteLength);
   });
@@ -148,8 +152,11 @@ app.whenReady().then(() => {
   ipcMain.handle("power-state", () => { try { return { onBattery: powerMonitor.isOnBatteryPower() }; } catch { return { onBattery: false }; } });
   ipcMain.handle("pick-file", async () => {
     const r = await dialog.showOpenDialog({ properties: ["openFile", "multiSelections"], filters: [{ name: "Audio / Video", extensions: ["mp3", "wav", "m4a", "flac", "ogg", "opus", "aac", "mp4", "mov", "mkv", "webm"] }] });
+    if (!r.canceled) known.add(r.filePaths);
     return r.canceled ? [] : r.filePaths;
   });
+  // Files dropped on the window (their paths come from webUtils.getPathForFile) become known too.
+  ipcMain.handle("register-paths", (_e, paths: unknown) => { if (Array.isArray(paths)) known.add(paths.filter(mediaFile)); });
 
   ipcMain.handle("transcribe", async (_e, opts: Record<string, unknown>) => {
     if (!mediaFile(opts?.input)) throw new Error("Unsupported or missing recording");
@@ -204,7 +211,7 @@ app.whenReady().then(() => {
     try { fs.writeFileSync(r.filePath, Buffer.from(dataUrl.slice(22), "base64")); return { ok: true, path: r.filePath }; }
     catch (e) { return { ok: false, error: String((e as Error).message) }; }
   });
-  ipcMain.handle("reveal-path", (_e, p: unknown) => { if (mediaFile(p)) shell.showItemInFolder(p); });
+  ipcMain.handle("reveal-path", (_e, p: unknown) => { if (knownMedia(p)) shell.showItemInFolder(p); });
   // Read-only: the size in bytes of a recording the user added (null if it is gone or is not a regular file).
   ipcMain.handle("file-size", (_e, p: unknown) => {
     if (typeof p !== "string") return null;
@@ -261,13 +268,13 @@ app.whenReady().then(() => {
   });
 
   const projectsStore = createProjectsStore(app.getPath("userData"), logLine);
-  ipcMain.handle("projects-load", () => projectsStore.load());
+  ipcMain.handle("projects-load", () => { const r = projectsStore.load(); known.remember(r.projects); return r; });
   ipcMain.handle("projects-save", (_e, data: unknown) => {
-    try { projectsStore.save(data); return { ok: true }; } catch (e) { return { ok: false, error: String((e as Error).message) }; }
+    try { projectsStore.save(data); known.remember(data); return { ok: true }; } catch (e) { return { ok: false, error: String((e as Error).message) }; }
   });
   // Synchronous flush for beforeunload: the 400 ms debounced save would not get to run when the window closes.
   ipcMain.on("projects-save-sync", (e, data: unknown) => {
-    try { projectsStore.save(data); e.returnValue = true; } catch { e.returnValue = false; }
+    try { projectsStore.save(data); known.remember(data); e.returnValue = true; } catch { e.returnValue = false; }
   });
   // Writes <audio name>.transcript.json beside the audio file (optional setting in the app).
   ipcMain.handle("save-sidecar", (_e, audioPath: string, data: unknown) => {
@@ -283,7 +290,7 @@ app.whenReady().then(() => {
   // only when the app made it (inside userData/recordings). A file the user added is never touched. Returns file names only, never a path or text.
   ipcMain.handle("delete-project-files", (_e, audioPath: unknown) => {
     type R = "removed" | "none" | "failed";
-    if (typeof audioPath !== "string" || !AUDIO_EXT.has(path.extname(audioPath).toLowerCase())) return { ok: false as const, error: "Unsupported recording" };
+    if (!knownMedia(audioPath)) return { ok: false as const, error: "Unsupported recording" };
     const dir = path.dirname(audioPath);
     const sidecar = path.join(dir, path.basename(audioPath, path.extname(audioPath)) + ".transcript.json");
     const gone = (f: string): R => { try { if (!fs.existsSync(f)) return "none"; fs.unlinkSync(f); return "removed"; } catch { return "failed"; } };

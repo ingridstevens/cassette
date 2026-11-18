@@ -39,6 +39,7 @@ const api = {
   diskFree: (): Promise<number | null> => ipcRenderer.invoke("disk-free"),
   openExternal: (url: string): Promise<boolean> => ipcRenderer.invoke("open-external", url),
   logError: (message: string): void => { ipcRenderer.send("renderer-error", message); },
+  registerPaths: (paths: string[]): Promise<void> => ipcRenderer.invoke("register-paths", paths),
   pathForFile: (f: File): string => webUtils.getPathForFile(f),
   onEvent: (cb: (e: any) => void) => {
     const h = (_: unknown, e: any) => cb(e);

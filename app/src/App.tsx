@@ -94,7 +94,9 @@ export default function App() {
   const pick = async () => addFiles(await window.api.pickFiles());
   function onDrop(e: DragEvent) {
     e.preventDefault(); setDragging(false);
-    addFiles(Array.from(e.dataTransfer.files).map((f) => window.api.pathForFile(f)).filter(Boolean));
+    const paths = Array.from(e.dataTransfer.files).map((f) => window.api.pathForFile(f)).filter(Boolean);
+    void window.api.registerPaths(paths); // tells the main process these files are the user's own, so they can be opened and revealed
+    addFiles(paths);
   }
 
   const needsDiar = !opts.noDiarize && status && !status.diarization;
