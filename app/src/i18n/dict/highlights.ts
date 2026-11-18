@@ -1,5 +1,6 @@
 export default {
   de: {
+    "Pause the highlight at {time}": "Das Highlight bei {time} pausieren", "Playing the highlight at {time}": "Das Highlight bei {time} wird abgespielt",
     "Finding highlights": "Highlights werden gesucht", "Writing the summary": "Zusammenfassung wird geschrieben", "Cutting audio clips": "Audioclips werden geschnitten",
     "Save the highlight at {time} as an audio clip": "Das Highlight bei {time} als Audioclip speichern", "Save only this highlight as an audio file": "Nur dieses Highlight als Audiodatei speichern", "Save clip": "Clip speichern",
     "Highlight words or mark a line first": "Markiere zuerst Wörter als Highlight oder eine Zeile",
@@ -36,6 +37,7 @@ export default {
     ".docx · summary, attendees, decisions, key quotes, record": ".docx · Zusammenfassung, Teilnehmende, Beschlüsse, Zitate, Protokoll",
   },
   fr: {
+    "Pause the highlight at {time}": "Mettre en pause le moment fort à {time}", "Playing the highlight at {time}": "Lecture du moment fort à {time}",
     "Finding highlights": "Recherche des moments forts", "Writing the summary": "Rédaction du résumé", "Cutting audio clips": "Découpe des clips audio",
     "Save the highlight at {time} as an audio clip": "Enregistrer le moment fort à {time} comme clip audio", "Save only this highlight as an audio file": "Enregistrer uniquement ce moment fort dans un fichier audio", "Save clip": "Enregistrer le clip",
     "Highlight words or mark a line first": "Mettez d’abord des mots en avant ou marquez une ligne",
@@ -72,6 +74,7 @@ export default {
     ".docx · summary, attendees, decisions, key quotes, record": ".docx · résumé, participants, décisions, citations clés, compte rendu",
   },
   es: {
+    "Pause the highlight at {time}": "Pausar el destacado de {time}", "Playing the highlight at {time}": "Reproduciendo el destacado de {time}",
     "Finding highlights": "Buscando destacados", "Writing the summary": "Escribiendo el resumen", "Cutting audio clips": "Cortando los clips de audio",
     "Save the highlight at {time} as an audio clip": "Guardar el destacado de {time} como clip de audio", "Save only this highlight as an audio file": "Guardar solo este destacado como archivo de audio", "Save clip": "Guardar clip",
     "Highlight words or mark a line first": "Primero destaca palabras o marca una línea",

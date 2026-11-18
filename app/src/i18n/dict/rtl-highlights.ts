@@ -1,6 +1,8 @@
 /** Arabic (ar) and Persian (fa): the Highlights tab and summary, the export option dialogs, the empty first screen, the player messages, model download errors, "Check my setup" and the progress step names. Machine-assisted and not yet reviewed by a native speaker. */
 export default {
   ar: {
+    "Pause the highlight at {time}": "إيقاف المقطع المميز عند {time} مؤقتًا",
+    "Playing the highlight at {time}": "جارٍ تشغيل المقطع المميز عند {time}",
     "Decoding audio": "فك ترميز الصوت",
     "Transcribing": "جارٍ النسخ",
     "Assigning speakers": "نسب الكلام إلى المتحدثين",
@@ -114,6 +116,8 @@ export default {
     "Written by a language model on this computer. Check it before you share it.": "كتبه نموذج لغوي على هذا الحاسوب. راجعه قبل مشاركته.",
   },
   fa: {
+    "Pause the highlight at {time}": "مکث بخش برجسته در {time}",
+    "Playing the highlight at {time}": "در حال پخش بخش برجسته در {time}",
     "Decoding audio": "رمزگشایی صدا",
     "Transcribing": "در حال رونویسی",
     "Assigning speakers": "نسبت دادن گفتار به گوینده‌ها",
