@@ -12,5 +12,7 @@ for (const f of walk(root)) {
   for (const re of bad) if (re.test(s)) { console.error(`${f}: matches ${re}`); problems++; }
 }
 if (fonts === 0) { console.error("no font files in dist/: run `npm run build` first"); problems++; }
+// The recorder loads its audio worklet from a bundled file (the content policy allows script-src 'self'), so it must be in the build.
+if (!walk(root).some((f) => /pcm16\.worklet-.*\.js$/.test(f))) { console.error("no pcm16 audio worklet in dist/: the recorder would not start"); problems++; }
 console.log(`${fonts} font files, ${problems} problem(s)`);
 process.exit(problems ? 1 : 0);

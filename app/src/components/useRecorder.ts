@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FitAsk } from "../types";
+import workletUrl from "../worklets/pcm16.worklet.ts?worker&url";
 
 export type RecState = "idle" | "starting" | "recording" | "saving";
 export interface Recorded { path: string; seconds: number; name: string }
@@ -45,17 +46,15 @@ export function useRecorder() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: false, noiseSuppression: false, ...(deviceId ? { deviceId: { exact: deviceId } } : {}) } });
       const ctx = new AudioContext({ sampleRate: 16000 });
       const src = ctx.createMediaStreamSource(stream);
-      const node = ctx.createScriptProcessor(4096, 1, 1); // deprecated, but needs no extra script file under the app's strict content policy
-      node.onaudioprocess = (ev) => {
-        const f = ev.inputBuffer.getChannelData(0), pcm = new Int16Array(f.length);
-        let peak = 0;
-        for (let i = 0; i < f.length; i++) { const v = Math.max(-1, Math.min(1, f[i])); pcm[i] = v < 0 ? v * 32768 : v * 32767; peak = Math.max(peak, Math.abs(v)); }
-        setLevel(peak);
-        if (peak > 0.003) setHeard(true);
-        window.api.liveAudio(job.current, new Uint8Array(pcm.buffer));
+      await ctx.audioWorklet.addModule(workletUrl); // a bundled file, so the app's script-src 'self' allows it
+      const node = new AudioWorkletNode(ctx, "pcm16");
+      node.port.onmessage = ({ data }: MessageEvent<{ pcm: ArrayBuffer; peak: number }>) => {
+        setLevel(data.peak);
+        if (data.peak > 0.003) setHeard(true);
+        window.api.liveAudio(job.current, new Uint8Array(data.pcm));
       };
-      src.connect(node); node.connect(ctx.destination); // the node writes silence; it must be connected to run
-      stopMic.current = () => { node.onaudioprocess = null; try { src.disconnect(); node.disconnect(); } catch { /* already gone */ } stream.getTracks().forEach((t) => t.stop()); void ctx.close(); stopMic.current = () => {}; setLevel(0); };
+      src.connect(node); // the node makes no sound, so it needs no connection to the speakers
+      stopMic.current = () => { node.port.onmessage = null; try { src.disconnect(); node.disconnect(); } catch { /* already gone */ } stream.getTracks().forEach((t) => t.stop()); void ctx.close(); stopMic.current = () => {}; setLevel(0); };
       void listDevices();
       setState("recording");
       return true;
