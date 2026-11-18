@@ -203,6 +203,6 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   /** Each returns the label of the edit it undid or redid (empty when it had none), or null when there was nothing to do. */
   const undo = useCallback((id: string) => step(id, stepBack), [step]);
   const redo = useCallback((id: string) => step(id, stepForward), [step]);
-  return { projects, notice, saveError, dismissNotice: () => setNotice(""), activeId, setActiveId: open, edit, undo, redo, progress, drafts, add, addAndTranscribe, remove, rename: (id: string, name: string) => patch(id, { name }), patch, transcribe, cancel,
+  return { projects, loaded, notice, saveError, dismissNotice: () => setNotice(""), activeId, setActiveId: open, edit, undo, redo, progress, drafts, add, addAndTranscribe, remove, rename: (id: string, name: string) => patch(id, { name }), patch, transcribe, cancel,
     transcribeAll: () => projectsRef.current.filter((p) => p.status === "idle" || p.status === "error").forEach((p) => transcribe(p.id)) };
 }

@@ -2,6 +2,7 @@ import { KeyboardEvent, useEffect, useLayoutEffect, useRef, useState } from "rea
 import { createPortal } from "react-dom";
 import { useT } from "../i18n";
 import { ExportOpts, LastExport } from "../types";
+import { formatsFor } from "../easy";
 import ExportOptions, { OptionsKind, loadExportOpts } from "./ExportOptions";
 import "../styles/project.css";
 
@@ -58,7 +59,7 @@ const WITH_OPTIONS = new Set(["srt", "vtt", "edl", "text"]);
 export const STYLED = new Set(["txt", "md", "docx", "csv", "minutes", "redacted"]);
 /** Options a format needs when it is run without asking (the saved ones for subtitles and styled text, none for the rest). */
 const usualOpts = (f: string): Record<string, unknown> => (WITH_OPTIONS.has(f) || STYLED.has(f) ? { ...loadExportOpts() } : {});
-export default function ExportMenu({ onExport, openSignal = 0, hasChapters = false, markedCount = 0, lastExport, defaultFormat, onRemember }: { onExport(format: string, options?: ExportOpts): Promise<Res>; openSignal?: number; hasChapters?: boolean; markedCount?: number; lastExport?: LastExport; defaultFormat?: string; onRemember?(format: string, options: Record<string, unknown>): void }) {
+export default function ExportMenu({ onExport, openSignal = 0, hasChapters = false, markedCount = 0, lastExport, defaultFormat, onRemember, easy = false }: { easy?: boolean; onExport(format: string, options?: ExportOpts): Promise<Res>; openSignal?: number; hasChapters?: boolean; markedCount?: number; lastExport?: LastExport; defaultFormat?: string; onRemember?(format: string, options: Record<string, unknown>): void }) {
   const t = useT();
   const [asking, setAsking] = useState<OptionsKind | null>(null);
   const [open, setOpen] = useState(false);
@@ -95,7 +96,7 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
   // The first item: what this project was last exported as, or else the default from Settings.
   const again = lastExport ?? (defaultFormat ? { format: defaultFormat, options: usualOpts(defaultFormat) } : null);
   const againRow = again && ALL.find((x) => x[0] === again.format);
-  const againOk = !!againRow && !(again!.format === "chapters" && !hasChapters) && !(["quotes", "highlights"].includes(again!.format) && !markedCount);
+  const againOk = !easy && !!againRow && !(again!.format === "chapters" && !hasChapters) && !(["quotes", "highlights"].includes(again!.format) && !markedCount);
   const againText = (() => {
     if (!again || !againRow) return "";
     const o = again.options as Partial<ExportOpts>, f = again.format;
@@ -133,12 +134,12 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
               </div>
             )}
             <div role="group" aria-label={t("Most used")}>
-              {PRIMARY.map((f) => ALL.find((x) => x[0] === f)!).map(item)}
+              {formatsFor(PRIMARY.map((f) => ALL.find((x) => x[0] === f)!), easy).map(item)}
             </div>
-            <button type="button" role="menuitem" className="menu-more" aria-expanded={more} onClick={() => setMore(!more)}>
+            {!easy && <button type="button" role="menuitem" className="menu-more" aria-expanded={more} onClick={() => setMore(!more)}>
               <b>{more ? t("Fewer formats") : t("More formats…")}</b>
-            </button>
-            {more && GROUPS.map((g) => {
+            </button>}
+            {!easy && more && GROUPS.map((g) => {
               const rest = g.formats.filter(([f]) => !(PRIMARY as readonly string[]).includes(f));
               return rest.length === 0 ? null : (
                 <div key={g.title} role="group" aria-label={t(g.title)}>

@@ -9,11 +9,12 @@ interface Props {
   onOpenSettings(): void;
   activity?: React.ReactNode;
   playingId?: string | null;
+  /** Easy mode: no Record, no Export all, no activity log. */ easy?: boolean;
 }
 
 const DOT: Record<Project["status"], string> = { idle: "idle", queued: "wait", running: "run", done: "done", error: "err" };
 
-export default function ProjectSidebar({ projects, activeId, progress, blocker, onSelect, onAdd, onRecord, onRemove, onRename, onTranscribeAll, onExportAll, doneCount, onOpenSettings, activity, playingId }: Props) {
+export default function ProjectSidebar({ projects, activeId, progress, blocker, onSelect, onAdd, onRecord, onRemove, onRename, onTranscribeAll, onExportAll, doneCount, onOpenSettings, activity, playingId, easy = false }: Props) {
   const t = useT();
   const langName = (c: string) => (c === "de" ? t("German") : c === "en" ? t("English") : c === "fr" ? t("French") : c === "es" ? t("Spanish") : c.toUpperCase());
   const [editing, setEditing] = useState<string | null>(null);
@@ -33,9 +34,9 @@ export default function ProjectSidebar({ projects, activeId, progress, blocker, 
       <button type="button" className="btn sun add-btn" onClick={onAdd}>
         <svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{t("Add recordings")}
       </button>
-      <button type="button" className="btn add-btn rec-btn" onClick={onRecord}>
+      {!easy && <button type="button" className="btn add-btn rec-btn" onClick={onRecord}>
         <svg className="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" /></svg>{t("Record")}
-      </button>
+      </button>}
       <div className="group group-row"><span id="proj-group">{t("Projects")}</span>
         {todo > 1 && <button type="button" className="btn small" disabled={!!blocker} title={blocker || undefined} onClick={onTranscribeAll}>{t("Transcribe all ({count})", { count: todo })}</button>}
       </div>
@@ -74,9 +75,9 @@ export default function ProjectSidebar({ projects, activeId, progress, blocker, 
           );
         })}
       </div>
-      {doneCount > 1 && <button type="button" className="btn small" onClick={onExportAll} title={t("One spreadsheet with every finished project")}>{t("Export all as CSV ({count})", { count: doneCount })}</button>}
+      {!easy && doneCount > 1 && <button type="button" className="btn small" onClick={onExportAll} title={t("One spreadsheet with every finished project")}>{t("Export all as CSV ({count})", { count: doneCount })}</button>}
       <div className="spacer" />
-      {activity && <div className="side-activity">{activity}</div>}
+      {!easy && activity && <div className="side-activity">{activity}</div>}
       <button type="button" className="nav settings-row" onClick={onOpenSettings} aria-keyshortcuts={IS_MAC ? "Meta+," : "Control+,"}>
         <svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" /><circle cx="12" cy="12" r="3" /></svg>
         <span className="grow"><b>{t("Settings")}</b><small>{t("For all projects")}</small></span>

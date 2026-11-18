@@ -27,6 +27,7 @@ interface Props {
   onTranscribe(range: [number, number] | null, line?: { language: string; speaker: string }, trial?: boolean, acceptFit?: boolean): void; onCancel(): void; onPatch(p: Partial<Project>, label?: string, merge?: boolean): void; onUndo(): string | null; onRedo(): string | null;
   othersWaiting?: number; onApplyToOthers?(o: Partial<Options>): void; onRemember?(o: Partial<Options>): void;
   /** The Settings default for the first Export menu item, and where to keep the last export (not an edit, so it leaves the retention date alone). */ defaultExport?: string; onExported?(last: LastExport): void; /** The user has dismissed the explanation of dotted words. */ unsureLegendSeen?: boolean;
+  /** Easy mode: no AI, review, chapters, clips, marks or extra exports. Turning it off brings them all back. */ easy?: boolean;
 }
 
 function Dialog({ title, children, cancel, confirm, onCancel, onConfirm }: { title: string; children: ReactNode; cancel: string; confirm: string; onCancel(): void; onConfirm(): void }) {
@@ -59,7 +60,7 @@ function Dialog({ title, children, cancel, confirm, onCancel, onConfirm }: { tit
 }
 
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
-export default function ProjectView({ project, progress, draft, blocker, waiting, visible, nowPlayingId, stopSignal = 0, onPlayingChange, onOpenSettings, models, onTranscribe, onCancel, onPatch, onUndo, onRedo, othersWaiting = 0, onApplyToOthers, onRemember, defaultExport, onExported, unsureLegendSeen }: Props) {
+export default function ProjectView({ project, progress, draft, blocker, waiting, visible, nowPlayingId, stopSignal = 0, onPlayingChange, onOpenSettings, models, onTranscribe, onCancel, onPatch, onUndo, onRedo, othersWaiting = 0, onApplyToOthers, onRemember, defaultExport, onExported, unsureLegendSeen, easy = false }: Props) {
   const [renaming, setRenaming] = useState(false);
   const t = useT();
   const { result, names, path } = project;
@@ -317,7 +318,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
         else if (e.key.toLowerCase() === "g") setJumpDialog("goto");
         else jumpSpeaker(e.key === "N" || e.shiftKey ? -1 : 1);
       }
-      else if (!mod && !e.altKey && showResult && !busy && !e.shiftKey && /^[[\],.s]$/i.test(e.key) && quietTarget(e.target)) {
+      else if (!mod && !e.altKey && showResult && !busy && !e.shiftKey && (easy ? /^[,.]$/ : /^[[\],.s]$/i).test(e.key) && quietTarget(e.target)) {
         // clips by keyboard: [ starts a clip at the playhead, ] ends it, S saves it; , and . move the playhead half a second
         e.preventDefault();
         if (e.key === "[") markStart();
@@ -327,7 +328,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
         else if (sel) void window.api.saveClip(path, sel[0], sel[1]).then((ok) => { if (ok) flash(t("Clip saved ✓")); });
         else flash(t("Mark a clip first: [ for the start, ] for the end"));
       }
-      else if (!mod && !e.altKey && showResult && !busy && /^[omcr]$/i.test(e.key) && quietTarget(e.target)) {
+      else if (!mod && !e.altKey && showResult && !busy && !easy && /^[omcr]$/i.test(e.key) && quietTarget(e.target)) {
         e.preventDefault();
         if (e.key.toLowerCase() === "r") { if (!review && unsure.length > 0) startReview(); }
         else jumpFlag(e.key.toLowerCase() === "o" ? "overlap" : e.key.toLowerCase() === "m" ? "marked" : "chapter", e.shiftKey ? -1 : 1);
@@ -345,7 +346,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
     };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [visible, showResult, busy, dialog, jumpDialog, time, result, sel, clipStart, path, review, unsure, rate]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [visible, showResult, busy, dialog, jumpDialog, time, result, sel, clipStart, path, review, unsure, rate, easy]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const payload = (format = "", options?: ExportOpts) => ({
     segments: result!.segments.map(({ words, orig, edited, ...s }) => (["srt", "vtt", "edl"].includes(format) || (options?.pauseMarks && STYLED.has(format)) ? { ...s, edited, words: words.map(({ start, end, word }) => ({ start, end, word })) } : format === "changes" ? { ...s, orig: orig && { text: orig.text } } : s)),
@@ -515,13 +516,13 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
             <button type="button" className="btn quiet small" onClick={onCancel}>{t("Stop")}</button>
           </div>
         )}
-        {unsure.length > 0 && !unsureLegendSeen && (
+        {!easy && unsure.length > 0 && !unsureLegendSeen && (
           <div className="pv-legend" role="note">
             <span>{t("Dotted words: the model wasn't sure. Press R to check them.")}</span>
             <button type="button" className="btn quiet small" onClick={() => onRemember?.({ unsureLegendSeen: true })}>{t("Got it")}</button>
           </div>
         )}
-        <Transcript showLang={showLang} result={result} names={names} time={time} query={query} findOpts={findOpts} highlights={highlights} onHighlight={(i, a, b) => { const h = highlightOf(result.segments[i], a, b); if (h) patchResult((x) => ({ ...x, highlights: addHighlight(x.highlights ?? [], h) })); }} matchSeg={matches[mi] ?? -1} onSeek={(t) => player.current?.seek(t)} onReassign={reassign}
+        <Transcript easy={easy} showLang={easy ? false : showLang} result={result} names={names} time={time} query={query} findOpts={findOpts} highlights={highlights} onHighlight={easy ? undefined : (i, a, b) => { const h = highlightOf(result.segments[i], a, b); if (h) patchResult((x) => ({ ...x, highlights: addHighlight(x.highlights ?? [], h) })); }} matchSeg={matches[mi] ?? -1} onSeek={(t) => player.current?.seek(t)} onReassign={reassign}
           onEdit={(i, text) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => (k === i ? retext(s, text) : s)) } }, t("edit a line"))}
           canRetranscribe={canTranscribe} reviewAt={reviewAt} translatingIndex={translating} playing={playing} onPause={() => player.current?.pause()}
           onTranslate={async (i, remove) => {
@@ -551,7 +552,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
   const inspectorId = "pv-inspector-" + project.id;
 
   return (
-    <div hidden={!visible} className={"pview" + (review ? " reviewing" : "") + (drawer ? " insp-open" : "")}>
+    <div hidden={!visible} className={"pview" + (review && !easy ? " reviewing" : "") + (drawer ? " insp-open" : "")}>
       <div className="pv-sr" role="status" aria-live="polite" aria-atomic="true">{announce}</div>
       {jumpDialog === "keys" && visible && <ShortcutSheet onClose={() => setJumpDialog(null)} />}
       {jumpDialog === "goto" && visible && <GoToTime duration={duration || result?.duration || 0} onGo={goToTime} onClose={() => setJumpDialog(null)} />}
@@ -567,7 +568,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
                   onKeyDown={(e) => { if (e.key === "F2") setRenaming(true); }}>{project.name}</h1>}{sub && <div className="sub" title={sub}>{sub}</div>}</div>
           {showResult && (
             <>
-              {unsure.length > 0 && <button type="button" className="btn small pv-review-btn" style={review ? { visibility: "hidden" } : undefined} onClick={startReview} title={t("Step through the words the model was unsure of, with the audio, and fix or confirm each one")}>{unsure.length === 1 ? t("Review 1 unsure word") : t("Review {count} unsure words", { count: unsure.length })}</button>}
+              {!easy && unsure.length > 0 && <button type="button" className="btn small pv-review-btn" style={review ? { visibility: "hidden" } : undefined} onClick={startReview} title={t("Step through the words the model was unsure of, with the audio, and fix or confirm each one")}>{unsure.length === 1 ? t("Review 1 unsure word") : t("Review {count} unsure words", { count: unsure.length })}</button>}
               <div className="search"><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
                 <input ref={findBox} dir="auto" type="search" value={query} aria-label={t("Find in transcript")} placeholder={t("Find in transcript ({key}F)", { key: MOD_KEY })} onChange={(e) => setQuery(e.target.value)}
                   onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); step(e.shiftKey ? -1 : 1); } if (e.key === "Escape") { setQuery(""); findBox.current?.blur(); } }} />
@@ -579,9 +580,9 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
                   <button type="button" className="btn icon quiet" onClick={() => step(1)} disabled={!matches.length} aria-label={t("Next match")} title={t("Next match (Enter)")}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg></button>
                 </>
               )}
-              <button type="button" className={"btn quiet small" + (showLang ? " on" : "")} aria-pressed={showLang} onClick={toggleLang} title={t("Show the language of every line, so a line tagged with the wrong language stands out. Click a tag to change it.")}>{t("Languages")}</button>
-              <button type="button" className={"btn quiet small" + (replaceOpen ? " on" : "")} aria-expanded={replaceOpen} aria-controls="pv-replace" onClick={() => setReplaceOpen(!replaceOpen)} title={t("Replace words in the transcript")}>{t("Replace")}</button>
-              <ExportMenu openSignal={exportSignal} lastExport={project.lastExport} defaultFormat={defaultExport} onRemember={(format, options) => onExported?.({ format, options })} hasChapters={result!.segments.some((s) => !!s.chapter?.trim())} markedCount={result!.segments.filter((s) => s.marked).length + keptHighlights.length} onExport={(f, o) => f === "print" || f === "print-large" ? window.api.printPdf(project.name, f === "print-large") : window.api.exportTranscript(payload(f, o), f, project.name)} />
+              {!easy && <button type="button" className={"btn quiet small" + (showLang ? " on" : "")} aria-pressed={showLang} onClick={toggleLang} title={t("Show the language of every line, so a line tagged with the wrong language stands out. Click a tag to change it.")}>{t("Languages")}</button>}
+              {!easy && <button type="button" className={"btn quiet small" + (replaceOpen ? " on" : "")} aria-expanded={replaceOpen} aria-controls="pv-replace" onClick={() => setReplaceOpen(!replaceOpen)} title={t("Replace words in the transcript")}>{t("Replace")}</button>}
+              <ExportMenu easy={easy} openSignal={exportSignal} lastExport={project.lastExport} defaultFormat={defaultExport} onRemember={(format, options) => onExported?.({ format, options })} hasChapters={result!.segments.some((s) => !!s.chapter?.trim())} markedCount={result!.segments.filter((s) => s.marked).length + keptHighlights.length} onExport={(f, o) => f === "print" || f === "print-large" ? window.api.printPdf(project.name, f === "print-large") : window.api.exportTranscript(payload(f, o), f, project.name)} />
             </>
           )}
           <button ref={drawerBtn} type="button" className={"btn icon quiet pv-insp-toggle" + (drawer ? " on" : "")} aria-expanded={drawer} aria-controls={inspectorId} aria-label={drawer ? t("Hide inspector") : t("Show inspector")} title={drawer ? t("Hide inspector") : t("Show inspector")} onClick={() => (drawer ? closeDrawer() : setDrawer(true))}>
@@ -606,7 +607,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
           </div>
         )}
 
-        {showResult && replaceOpen && (
+        {showResult && !easy && replaceOpen && (
           <div className="pv-replace" id="pv-replace" role="group" aria-label={t("Replace in transcript")}
             onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); setReplaceOpen(false); } }}>
             <div className="pv-rep-fields">
@@ -667,7 +668,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
 
         {body}
 
-        {review && showResult && (
+        {!easy && review && showResult && (
           <ReviewBar segments={result!.segments} list={unsure} pos={rpos} current={reviewTotal - unsure.length + rpos + 1} total={Math.max(reviewTotal, unsure.length)}
             onFix={(text) => reviewAt && patchSeg(reviewAt.seg, (s) => fixWord(s, reviewAt.word, text))}
             onAccept={() => reviewAt && patchSeg(reviewAt.seg, (s) => acceptWord(s, reviewAt.word))}
@@ -694,16 +695,16 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
               <span title={nowName || t("Between speakers")}>{nowName || t("Between speakers")}</span>
             </div>
           )}
-          <button type="button" className="btn quiet small pv-more" aria-expanded={dockOpen} aria-controls="pv-drawer" onClick={toggleDock}>
+          {!easy && <button type="button" className="btn quiet small pv-more" aria-expanded={dockOpen} aria-controls="pv-drawer" onClick={toggleDock}>
             {dockOpen ? t("Less") : t("Details")}
             <svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
-          </button>
-          <div className="pv-dock-side">
+          </button>}
+          {!easy && <div className="pv-dock-side">
             <div className="pv-actions">
               {sel && <button type="button" className="btn quiet small" onClick={async () => { if (await window.api.saveClip(path, sel[0], sel[1])) flash(t("Clip saved ✓")); }}>{t("Save clip")}</button>}
             </div>
-          </div>
-          <div className="pv-drawer" id="pv-drawer" hidden={!dockOpen}>
+          </div>}
+          {!easy && <div className="pv-drawer" id="pv-drawer" hidden={!dockOpen}>
             <div className="pv-tools" role="group">
               <button type="button" className="btn quiet small" onClick={prevTurn} title={t("Previous speaker")}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5v14M19 6v12l-9-6z" /></svg>{t("Previous")}</button>
               <button type="button" className="btn quiet small" onClick={replayTurn} title={t("Replay this turn")}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2M4 4v4h4" /></svg>{t("Replay")}</button>
@@ -717,14 +718,14 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
               <button type="button" className="btn quiet small" disabled={!sel} onClick={async () => { if (sel && await window.api.saveClip(path, sel[0], sel[1])) flash(t("Clip saved ✓")); }}>{t("Save clip")}</button>
             </div>
             <div className="pv-hint pv-keys">{t("Drag the waveform to save a clip · Space or K plays · J / L skip 10 s · Double-click a word to fix it")}</div>
-          </div>
+          </div>}
         </div>
 
         {notice && <div className="toast" role="status"><span>{notice}</span></div>}
       </section>
 
       <div className="pv-insp-scrim" aria-hidden onClick={closeDrawer} />
-      <Inspector id={inspectorId} drawerOpen={drawer} onDrawerClose={closeDrawer} project={project} tab={tab} onTab={setTab} visible={visible} moved={moved} onMoveAll={moveAll} onUndo={undo}
+      <Inspector easy={easy} id={inspectorId} drawerOpen={drawer} onDrawerClose={closeDrawer} project={project} tab={tab} onTab={setTab} visible={visible} moved={moved} onMoveAll={moveAll} onUndo={undo}
         canTranscribe={canTranscribe} onAskAgain={again} onPatch={onPatch} onOpenSettings={onOpenSettings} models={models} onShowLine={showLine}
         askPanel={<AskTab project={project} visible={visible} thread={askThread} job={llmJob} onAsk={runAsk}
           onStop={() => { askStopped.current = true; void window.api.cancel(llmId.current); }} onClear={() => setAskThread([])} onShow={showLine} />}
