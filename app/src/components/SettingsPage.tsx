@@ -83,7 +83,7 @@ export default function SettingsPage({ opts, set, status, models, onBack, onRese
             {section === "Summaries and translation" && <SummariesSection {...props} />}
             {section === "Saving and export" && <SavingSection opts={opts} set={set} />}
             {section === "Text and language" && <TextLanguageSection {...props} />}
-            {section === "Privacy" && <PrivacySection models={models} />}
+            {section === "Privacy" && <PrivacySection models={models} opts={opts} set={set} />}
             {section === "Advanced" && <AdvancedSection {...props} />}
             {section === "About" && <AboutSection />}
             {toast && (

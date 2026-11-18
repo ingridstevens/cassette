@@ -48,6 +48,7 @@ Next to a recording (only if Settings → Saving is on): `name.transcript.json`.
 or moved.
 
 ## Removing things In **Settings, Privacy, Activity log** you can switch **Keep an activity log** off (nothing more is written; existing entries stay) **Hide file and folder names in the log** (new entries show `[file]` or `[path]` instead of paths and audio or video file names the app recognises; best effort, so a name inside ordinary text can remain and the log should be read before it is shared; entries already written are not changed), and **Clear log…** to empty the file. Without a log it is harder to find out what went wrong, so leave it on unless file names are the concern.
+- **Old projects:** Settings, Privacy, **Old projects** lets you choose "Ask about projects older than" 30, 90, 180 or 365 days (the default is never). The app **never deletes by itself**: when you open it and some projects are older, it lists them and asks. **Keep them for now** closes the question until you next open the app; **Delete** removes them as described under "Delete a project" and shows one receipt.
 - **Delete a project:** the **×** on the project in the sidebar opens a dialog that lists what will go and what stays. **Delete** removes the
   project and its transcript and edits from the app, the backup file (`.transcript.json`) next to the recording if there is one, and the
   recording itself only if Cassette made it (a recording made with **Record**). A file you added yourself is never touched, and neither are

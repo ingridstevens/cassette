@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { IS_MAC, IS_WIN } from "../../types";
+import { IS_MAC, IS_WIN, Options } from "../../types";
 import { HF_TOKEN_PAGE, Models } from "../useModels";
 import { useT } from "../../i18n";
 import Dialog, { useReturnFocus } from "./Dialog";
 import { SwitchRow } from "./shared";
 import { bytes } from "../../types";
 
-interface Props { models: Models }
+interface Props { models: Models; opts: Options; set(o: Options): void }
 
 /** A file path that can wrap after a slash instead of in the middle of a word. */
 const Path = ({ p }: { p: string }) => <code>{p.split("/").map((part, i, all) => <span key={i}>{part}{i < all.length - 1 ? <>/<wbr /></> : null}</span>)}</code>;
 
-export default function PrivacySection({ models }: Props) {
+export default function PrivacySection({ models, opts, set }: Props) {
   const t = useT();
   // The hook has no way to clear its token state, so this section keeps its own copy and re-reads it from the main process.
   const [hint, setHint] = useState<string | null>(models.tokenSet ? models.tokenHint : null);
@@ -54,6 +54,18 @@ export default function PrivacySection({ models }: Props) {
         <div className="st-facts">
           <div className="st-inset"><b>{t("Stays on this computer")}</b>{t("Your recordings, transcripts, speaker names and the project list.")}</div>
           <div className="st-inset"><b>{t("Uses the internet")}</b>{t("Model downloads from huggingface.co, once. After that the app works offline.")}</div>
+        </div>
+      </div>
+
+      <div className="card st-card">
+        <div className="st-row">
+          <div className="grow"><h2>{t("Old projects")}</h2>
+            <p className="st-lead">{t("Choose how long to keep projects. The app never deletes anything by itself: when projects are older than this it lists them when you open the app and asks. You see what goes and what stays, and get a receipt.")}</p></div>
+          <label className="field" style={{ width: 200 }}>{t("Ask about projects older than")}
+            <select className="input" value={String(opts.retentionDays ?? 0)} onChange={(e) => { const d = Number(e.target.value); set({ ...opts, retentionDays: d || undefined }); }}>
+              <option value="0">{t("Never ask")}</option>
+              {[30, 90, 180, 365].map((d) => <option key={d} value={d}>{t("{days} days", { days: d })}</option>)}
+            </select></label>
         </div>
       </div>
 

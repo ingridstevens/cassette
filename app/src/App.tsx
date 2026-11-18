@@ -6,6 +6,8 @@ import RecordPage from "./components/RecordPage";
 import SettingsPage from "./components/SettingsPage";
 import RemoveDialog from "./components/RemoveDialog";
 import ImportReport from "./components/ImportReport";
+import RetentionDialog from "./components/RetentionDialog";
+import { dueForRetention } from "./retention";
 import Setup from "./components/Setup";
 import { useModels } from "./components/useModels";
 import "./styles/shell.css";
@@ -105,6 +107,16 @@ export default function App() {
   const noProjects = P.projects.length === 0;
   const [removing, setRemoving] = useState<string | null>(null);
   const removingProject = P.projects.find((p) => p.id === removing);
+  // Old projects: ask once per session, after the saved projects have loaded, and never delete without a yes.
+  const [retention, setRetention] = useState<string[] | null>(null);
+  const askedRetention = useRef(false);
+  useEffect(() => {
+    if (askedRetention.current || P.projects.length === 0) return;
+    askedRetention.current = true;
+    const due = dueForRetention(P.projects, opts.retentionDays);
+    if (due.length) setRetention(due.map((p) => p.id));
+  }, [P.projects.length]); // eslint-disable-line react-hooks/exhaustive-deps
+  const retentionProjects = retention ? P.projects.filter((p) => retention.includes(p.id)) : [];
 
   // First thing a keyboard or screen-reader user can tab to: skip the sidebar and the toolbar, and land on the first line of the transcript.
   const skipToTranscript = (e: React.MouseEvent) => {
@@ -164,6 +176,7 @@ export default function App() {
           {dragging && <div className="drop-veil" aria-hidden>{t("Drop to add recordings")}</div>}
         </section>
       </div>
+      {retention && retentionProjects.length > 0 && opts.retentionDays && <RetentionDialog projects={retentionProjects} days={opts.retentionDays} onClose={() => setRetention(null)} onDelete={(ids) => { ids.forEach((id) => P.remove(id)); setRetention(null); }} />}
       {models.importReport && <ImportReport rows={models.importReport} onClose={models.closeImportReport} />}
       {removingProject && <RemoveDialog project={removingProject} onClose={() => setRemoving(null)} onDone={() => { P.remove(removingProject.id); setRemoving(null); }} />}
       {page === "settings" && <SettingsPage key={settingsSection ?? "default"} initialSection={settingsSection} opts={opts} set={setOpts} status={status} models={models} onBack={() => setPage("main")} onReset={() => { setOpts({ ...DEFAULTS }); setLlm(""); }} />}
