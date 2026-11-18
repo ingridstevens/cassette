@@ -628,3 +628,30 @@ def test_csv_excel_option_adds_bom_and_defuses_formulas():
     assert not to_combined_csv(items).startswith("﻿")
     cx = to_combined_csv(items, {"excel": True})
     assert cx.startswith("﻿project") and "'@p" in cx and "'=1+1" in cx
+
+
+def _times(srt):
+    h = lambda t: sum(float(x.replace(",", ".")) * k for x, k in zip(t.split(":"), (3600, 60, 1)))
+    return [tuple(h(t) for t in b[1].split(" --> ")) for b in _blocks(srt)]
+
+
+def test_timing_rules_min_duration_gap_and_no_overlap():
+    segs = [_seg("Ok", start=0.0), _seg("Yes", start=0.5), _seg("Fine then", start=3.0), _seg("Bye", start=6.0)]
+    cues = _times(to_srt(segs, None, {"speakerNames": False}))
+    assert len(cues) == 4
+    for (a, z), nxt in zip(cues, cues[1:] + [None]):
+        assert z > a
+        if nxt:
+            assert z <= nxt[0] - 0.083 + 1e-6  # gap, hence no overlap
+    assert cues[2][1] - cues[2][0] >= 1.0 and cues[1][1] - cues[1][0] >= 1.0
+
+
+def test_min_duration_is_met_when_there_is_room():
+    cues = _times(to_srt([_seg("Ok", start=0.0), _seg("Yes", start=5.0)], None, {"speakerNames": False, "minDuration": 1.5}))
+    assert all(z - a >= 1.5 - 1e-6 for a, z in cues)
+
+
+def test_long_segment_without_words_is_split_at_max_duration():
+    seg = {"start": 0.0, "end": 20.0, "speaker": "SPEAKER_00", "text": "one two three four five six seven eight nine ten"}
+    cues = _times(to_srt([seg], None, {"speakerNames": False, "maxDuration": 7}))
+    assert len(cues) >= 3 and all(z - a <= 7.001 for a, z in cues)

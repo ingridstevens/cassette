@@ -10,6 +10,14 @@ const FPS = [23.976, 24, 25, 29.97, 30, 50, 59.94, 60];
 const DROP_FPS = [29.97, 59.94];
 const TITLES: Record<OptionsKind, string> = { srt: "Subtitle options", vtt: "Web subtitle options", edl: "Marker options (DaVinci Resolve)", text: "Text style" };
 
+/** Subtitle style presets: they fill the four numbers (characters, lines, shortest and longest time on screen). */
+const PRESETS: Record<string, Pick<ExportOpts, "maxChars" | "maxLines" | "minDuration" | "maxDuration">> = {
+  netflix: { maxChars: 42, maxLines: 2, minDuration: 0.833, maxDuration: 7 },
+  bbc: { maxChars: 37, maxLines: 2, minDuration: 1, maxDuration: 7 },
+  social: { maxChars: 32, maxLines: 1, minDuration: 1, maxDuration: 7 },
+};
+const presetOf = (o: ExportOpts) => Object.keys(PRESETS).find((k) => (Object.keys(PRESETS[k]) as (keyof typeof PRESETS[string])[]).every((f) => PRESETS[k][f] === o[f])) ?? "custom";
+
 export function loadExportOpts(): ExportOpts {
   try { return { ...DEFAULT_EXPORT_OPTS, ...JSON.parse(localStorage.getItem(KEY) ?? "{}") }; } catch { return { ...DEFAULT_EXPORT_OPTS }; }
 }
@@ -36,7 +44,8 @@ export default function ExportOptions({ kind, onCancel, onConfirm }: { kind: Opt
   };
   const submit = () => {
     if (kind === "edl" && !tcOk) return;
-    const clean: ExportOpts = { ...o, maxChars: Math.min(60, Math.max(20, Math.round(o.maxChars) || 42)), offsetSeconds: Number.isFinite(o.offsetSeconds) ? o.offsetSeconds : 0 };
+    const minDuration = Math.min(10, Math.max(0, Number(o.minDuration) || 0));
+    const clean: ExportOpts = { ...o, maxChars: Math.min(60, Math.max(20, Math.round(o.maxChars) || 42)), minDuration, maxDuration: Math.min(30, Math.max(minDuration, 0.5, Number(o.maxDuration) || 7)), minGap: Math.max(0, Number(o.minGap) || 0), offsetSeconds: Number.isFinite(o.offsetSeconds) ? o.offsetSeconds : 0 };
     try { localStorage.setItem(KEY, JSON.stringify(clean)); } catch { /* storage can be unavailable */ }
     onConfirm(clean);
   };
@@ -72,11 +81,26 @@ export default function ExportOptions({ kind, onCancel, onConfirm }: { kind: Opt
           </>
         ) : subs ? (
           <>
+            <label className="field">{t("Preset")}
+              <select value={presetOf(o)} onChange={(e) => { const p = PRESETS[e.target.value]; if (p) setO({ ...o, ...p }); }}>
+                <option value="custom">{t("Custom")}</option>
+                <option value="netflix">{t("Netflix-like (42 characters, 2 lines, 0.833–7 s)")}</option>
+                <option value="bbc">{t("BBC-like (37 characters, 2 lines)")}</option>
+                <option value="social">{t("Social video (32 characters, 1 line)")}</option>
+              </select>
+            </label>
             <label className="field">{t("Max characters per line (20–60)")}
               <input type="number" min={20} max={60} value={o.maxChars} onChange={(e) => setO({ ...o, maxChars: Number(e.target.value) })} />
             </label>
             <label className="field">{t("Max lines per subtitle")}
               <select value={o.maxLines} onChange={(e) => setO({ ...o, maxLines: Number(e.target.value) })}><option value={1}>1</option><option value={2}>2</option></select>
+            </label>
+            <label className="field">{t("Shortest subtitle (seconds)")}
+              <input type="number" step={0.1} min={0} max={10} value={o.minDuration} onChange={(e) => setO({ ...o, minDuration: Number(e.target.value) })} />
+            </label>
+            <label className="field">{t("Longest subtitle (seconds)")}
+              <input type="number" step={0.5} min={1} max={30} value={o.maxDuration} onChange={(e) => setO({ ...o, maxDuration: Number(e.target.value) })} />
+              <span className="note">{t("A subtitle is held on screen at least as long as the shortest time if the next one allows it, split when it runs longer than the longest time, and kept about two frames clear of the next one.")}</span>
             </label>
             <div className="pv-opt-row">
               <span id={id + "sw"}>{t("Put speaker names in subtitles")}</span>

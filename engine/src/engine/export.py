@@ -180,13 +180,25 @@ def _cues(segs, names, options, inline_speaker: bool):
     max_lines = max(1, int(_opt(options, "maxLines", 2)))
     show = bool(_opt(options, "speakerNames", True))
     offset = float(_opt(options, "offsetSeconds", 0))
-    max_dur, min_dur = 7.0, 1.0
+    max_dur = max(0.5, float(_opt(options, "maxDuration", 7.0)))
+    min_dur = min(max(0.0, float(_opt(options, "minDuration", 1.0))), max_dur)
+    gap = max(0.0, float(_opt(options, "minGap", 0.083)))
     raw: list[tuple[float, float, list[str], str | None]] = []  # start, end, lines, speaker label for first cue
     for seg in segs:
         label = _name(seg, names) if show else None
         words = [w for w in (seg.get("words") or []) if str(w.get("word", "")).strip()]
         if not words:
-            raw.append((seg["start"], seg["end"], seg["text"].split("\n"), label))
+            # No word timings: a cue longer than max_dur is cut into equal parts at word boundaries.
+            toks = seg["text"].split()
+            parts = max(1, min(len(toks), -(-int(max(0.0, seg["end"] - seg["start"]) * 1000) // int(max_dur * 1000))))
+            if parts == 1:
+                raw.append((seg["start"], seg["end"], seg["text"].split("\n"), label))
+                continue
+            step, size = (seg["end"] - seg["start"]) / parts, -(-len(toks) // parts)
+            for k in range(parts):
+                chunk = toks[k * size:(k + 1) * size]
+                if chunk:
+                    raw.append((seg["start"] + k * step, seg["start"] + (k + 1) * step, [" ".join(chunk)], label if k == 0 else None))
             continue
         i, first = 0, True
         while i < len(words):
@@ -204,8 +216,11 @@ def _cues(segs, names, options, inline_speaker: bool):
     out = []
     for n, (st, en, lines, who) in enumerate(raw):
         nxt = raw[n + 1][0] if n + 1 < len(raw) else None
+        if nxt is not None and nxt - gap > st:
+            en = min(en, nxt - gap)  # keep a gap before the next cue (and never overlap it)
         if en - st < min_dur:
-            en = st + min_dur if nxt is None else max(en, min(st + min_dur, nxt))
+            en = st + min_dur if nxt is None else max(en, min(st + min_dur, nxt - gap if nxt - gap > st else nxt))
+        en = min(en, st + max_dur)
         st, en = st + offset, en + offset
         if en <= 0:
             continue
