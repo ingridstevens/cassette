@@ -1,8 +1,9 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react";
 import WaveSurfer from "wavesurfer.js";
 import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
+import HoverPlugin from "wavesurfer.js/dist/plugins/hover.esm.js";
 import { useT } from "../i18n";
-import { PALETTE, Result } from "../types";
+import { fmt, PALETTE, Result } from "../types";
 import "../styles/project.css";
 
 export interface WaveformHandle { seek(t: number, play?: boolean): void; toggle(): void; pause(): void; skip(delta: number): void; setRate(rate: number): void; markClip(start: number, end: number): void }
@@ -51,7 +52,7 @@ const Waveform = forwardRef<WaveformHandle, Props>(({ path, result, onTime, onSe
     window.api.peaks(path).then((r) => {
       if (dead) return;
       if (!r) { setState({ kind: "missing" }); return; }
-      w = WaveSurfer.create({ container: box.current!, height: 46, ...waveColors(), cursorWidth: 2, barWidth: 3, barGap: 3, barRadius: 3, plugins: [rp], url: window.api.mediaUrl(path), peaks: [r.peaks], duration: r.duration });
+      w = WaveSurfer.create({ container: box.current!, height: 64, ...waveColors(), cursorWidth: 3, barWidth: 3, barGap: 2, barRadius: 3, plugins: [rp, HoverPlugin.create({ lineColor: "#6a45e8", lineWidth: 1, labelBackground: "#1a1a22", labelColor: "#fff", labelSize: "12px", formatTimeCallback: (sec: number) => fmt(Math.max(0, sec)) })], url: window.api.mediaUrl(path), peaks: [r.peaks], duration: r.duration });
       regions.current = rp; ws.current = w;
       rp.enableDragSelection({ color: "rgba(124, 92, 255, 0.14)" });
       w.on("timeupdate", (t) => cb.current.onTime(t));
