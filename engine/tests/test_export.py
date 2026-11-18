@@ -522,3 +522,28 @@ def test_json_export_says_how_it_was_made_and_is_deterministic():
     one = to_json(data["segments"], NAMES, meta)
     assert one == to_json(data["segments"], NAMES, provenance(data))
     assert json.loads(one)["meta"]["schema"] == 1
+
+
+def test_redaction_report_counts_removals_and_lists_capitalised_leftovers_without_real_names():
+    from engine.export import redaction_report
+
+    segs = [
+        {"start": 0, "end": 4, "speaker": "A", "text": "Hello, I am Anna. I'm sure we moved from Berlin to Hamburg last year, and I've stayed."},
+        {"start": 5, "end": 9, "speaker": "B", "text": "Anna told me. Berlin was loud. Müller from Siemens agrees."},
+    ]
+    report, key = redaction_report(segs, {"A": "Anna", "B": "Ben"}, "en")
+    assert "Speakers replaced by codes: 2 (P01, P02)" in report
+    assert "removed from the text: 2 time(s) in 1 name(s)" in report
+    assert "Anna" not in report and "Ben" not in report            # the report is safe to hand over
+    assert "  Berlin  (1x)" in report and "  Hamburg  (1x)" in report and "  Siemens  (1x)" in report
+    assert "I'm" not in report and "I've" not in report            # English contractions are not names
+    assert "Müller" not in report                                   # sentence-initial: not listed, and the report says so
+    assert "start of a sentence, is not listed" in report
+    assert "P01 = Anna" in key and "P02 = Ben" in key and "Anna: 2x" in key
+
+
+def test_redaction_report_german_note_and_none_found():
+    from engine.export import redaction_report
+
+    report, _ = redaction_report([{"start": 0, "end": 1, "speaker": "A", "text": "hallo zusammen"}], {}, "de")
+    assert "every noun with a capital letter" in report and "(none found)" in report

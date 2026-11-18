@@ -1,5 +1,6 @@
 export default {
   de: {
+    "Exported ✓. A report and a key file were saved next to it. Keep the key apart from the data.": "Exportiert ✓. Ein Bericht und eine Schlüsseldatei wurden daneben gespeichert. Bewahre den Schlüssel getrennt von den Daten auf.",
     "Old projects": "Alte Projekte",
     "Choose how long to keep projects. The app never deletes anything by itself: when projects are older than this it lists them when you open the app and asks. You see what goes and what stays, and get a receipt.": "Wähle, wie lange Projekte aufbewahrt werden. Die App löscht nie von selbst: Sind Projekte älter, listet sie diese beim Öffnen auf und fragt nach. Du siehst, was gelöscht wird und was bleibt, und bekommst einen Beleg.",
     "Ask about projects older than": "Nach Projekten fragen, die älter sind als",
@@ -108,6 +109,7 @@ export default {
     "No microphone was found. You can still transcribe files; to record, connect one and allow access.": "Es wurde kein Mikrofon gefunden. Dateien kannst du weiterhin transkribieren; zum Aufnehmen schließe eines an und erlaube den Zugriff.",
   },
   fr: {
+    "Exported ✓. A report and a key file were saved next to it. Keep the key apart from the data.": "Exporté ✓. Un rapport et un fichier de clés ont été enregistrés à côté. Gardez la clé séparée des données.",
     "Old projects": "Anciens projets",
     "Choose how long to keep projects. The app never deletes anything by itself: when projects are older than this it lists them when you open the app and asks. You see what goes and what stays, and get a receipt.": "Choisissez combien de temps garder les projets. L’app ne supprime jamais rien toute seule : quand des projets sont plus anciens, elle les liste à l’ouverture et demande. Vous voyez ce qui part et ce qui reste, et recevez un reçu.",
     "Ask about projects older than": "Demander pour les projets plus anciens que",
@@ -216,6 +218,7 @@ export default {
     "No microphone was found. You can still transcribe files; to record, connect one and allow access.": "Aucun micro trouvé. Vous pouvez toujours transcrire des fichiers ; pour enregistrer, branchez-en un et autorisez l’accès.",
   },
   es: {
+    "Exported ✓. A report and a key file were saved next to it. Keep the key apart from the data.": "Exportado ✓. Se guardaron al lado un informe y un archivo de claves. Guarda la clave aparte de los datos.",
     "Old projects": "Proyectos antiguos",
     "Choose how long to keep projects. The app never deletes anything by itself: when projects are older than this it lists them when you open the app and asks. You see what goes and what stays, and get a receipt.": "Elige cuánto tiempo conservar los proyectos. La app nunca borra nada por sí sola: cuando hay proyectos más antiguos, los lista al abrirla y pregunta. Ves lo que se elimina y lo que se queda, y recibes un recibo.",
     "Ask about projects older than": "Preguntar por proyectos más antiguos de",
