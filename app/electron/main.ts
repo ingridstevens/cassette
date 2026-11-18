@@ -6,7 +6,8 @@ import { Readable } from "node:stream";
 import { pathToFileURL } from "node:url";
 import { BrowserWindow, app, dialog, ipcMain, powerMonitor, protocol, safeStorage, session, shell } from "electron";
 import { EngineEvent, cancelJob, killAllJobs, runEngine } from "./engine-client";
-import { redactNames } from "./logRedact";
+import { logFile, logHideFile, logHides, logLine, logOffFile, logOn, logText } from "./activityLog";
+import { withTempJson } from "./tempJson";
 import { registerLive } from "./live";
 import { createKnownPaths } from "./knownPaths";
 import { EXPORT_FORMATS, isNum, modelsOk, safeName, saveClipOk, speakerCount, transcribeProblem } from "./validate";
@@ -95,18 +96,6 @@ function createWindow() {
   if (dev) win.loadURL(dev); else win.loadFile(path.join(__dirname, "..", "dist", "index.html"));
 }
 
-const logFile = () => path.join(app.getPath("userData"), "activity.log");
-/** The log is on unless the marker file exists. A file, not a setting in the window, so the main process (which writes the log) never has to ask. */
-const logOffFile = () => path.join(app.getPath("userData"), "activity-log-off");
-const logOn = () => !fs.existsSync(logOffFile());
-/** Marker: when present, file and folder names it recognises are replaced before a line is written (new lines only). */
-const logHideFile = () => path.join(app.getPath("userData"), "activity-log-hide-names");
-const logHides = () => fs.existsSync(logHideFile());
-const logText = (message: string) => (logHides() ? redactNames(message) : message);
-const logLine = (level: string, message: string) => {
-  if (!logOn()) return;
-  try { fs.appendFileSync(logFile(), `${new Date().toISOString()} [${level}] ${logText(message)}\n`); } catch { /* best effort */ }
-};
 const send = (channel: string, payload: unknown) => {
   if (win && !win.isDestroyed()) win.webContents.send(channel, payload); // the window can be closed while an engine job still runs (macOS keeps the app alive)
   const e = payload as { type?: string; level?: string; message?: string; stage?: string };
@@ -117,14 +106,6 @@ const send = (channel: string, payload: unknown) => {
 
 function readToken(): string {
   try { return safeStorage.decryptString(fs.readFileSync(tokenFile())); } catch { return ""; }
-}
-
-// Transcript text handed to the engine as a file lives in a private folder (owner-only), not the shared system temp folder, and is always deleted afterwards.
-const privateTmp = () => { const d = path.join(app.getPath("userData"), "tmp"); fs.mkdirSync(d, { recursive: true, mode: 0o700 }); return d; };
-async function withTempJson<T>(data: unknown, fn: (file: string) => Promise<T>): Promise<T> {
-  const f = path.join(privateTmp(), `${randomUUID()}.json`);
-  fs.writeFileSync(f, JSON.stringify(data), { mode: 0o600 });
-  try { return await fn(f); } finally { fs.rmSync(f, { force: true }); }
 }
 
 app.whenReady().then(() => {
