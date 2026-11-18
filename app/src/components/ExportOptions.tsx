@@ -64,6 +64,11 @@ export default function ExportOptions({ kind, onCancel, onConfirm }: { kind: Opt
               <span id={id + "ts"}>{t("Show times")}</span>
               <button type="button" role="switch" className="switch" aria-checked={o.timestamps} aria-labelledby={id + "ts"} onClick={() => setO({ ...o, timestamps: !o.timestamps })} />
             </div>
+            <div className="pv-opt-row">
+              <span id={id + "xl"}>{t("Spreadsheet opens in Excel")}</span>
+              <button type="button" role="switch" className="switch" aria-checked={o.excel} aria-labelledby={id + "xl"} onClick={() => setO({ ...o, excel: !o.excel })} />
+            </div>
+            <span className="note">{t("For .csv files. Keeps accents like ä and é right in Excel on Windows, and shows a cell that starts with = + - or @ as text. Turn it off if you load the file into other software.")}</span>
           </>
         ) : subs ? (
           <>

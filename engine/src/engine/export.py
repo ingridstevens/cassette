@@ -359,15 +359,27 @@ def to_json(segs, names=None, meta=None):
     )
 
 
-def to_csv(segs, names=None):
-    """Spreadsheet-friendly: seconds for sorting, h:mm:ss for reading. BOM-less UTF-8, CRLF per RFC 4180."""
+_FORMULA = ("=", "+", "-", "@", "\t", "\r")
+
+
+def _xl(v) -> str:
+    """Excel runs a cell that starts with = + - @ as a formula: a leading ' makes it plain text."""
+    s = str(v)
+    return "'" + s if s[:1] in _FORMULA else s
+
+
+def to_csv(segs, names=None, options=None):
+    """Spreadsheet-friendly: seconds for sorting, h:mm:ss for reading. CRLF per RFC 4180.
+    With the "excel" option: a UTF-8 BOM (so Excel on Windows reads ä/é/ñ) and no cell that Excel would run as a formula."""
+    excel = bool(_opt(options, "excel", False))
+    cell = _xl if excel else str
     names = names or {}
     buf = io.StringIO()
     w = csv.writer(buf)
     w.writerow(["start_seconds", "end_seconds", "start", "end", "speaker", "text", "overlap", "language", "translation"])
     for s in segs:
-        w.writerow([f"{s['start']:.2f}", f"{s['end']:.2f}", _ts(s["start"])[:8], _ts(s["end"])[:8], _name(s, names), s["text"], "yes" if s.get("overlap") else "", s.get("lang", ""), s.get("translation", "")])
-    return buf.getvalue()
+        w.writerow([f"{s['start']:.2f}", f"{s['end']:.2f}", _ts(s["start"])[:8], _ts(s["end"])[:8], cell(_name(s, names)), cell(s["text"]), "yes" if s.get("overlap") else "", s.get("lang", ""), cell(s.get("translation", ""))])
+    return ("\ufeff" if excel else "") + buf.getvalue()
 
 
 # Speaker colours, in the same order as the app (bright for rules and bars, darker for text so it stays readable).
@@ -695,16 +707,18 @@ def to_changes(segs, names=None, options=None):
     return head + "\n\n".join(out) + ("\n" if out else "")
 
 
-def to_combined_csv(items):
+def to_combined_csv(items, options=None):
     """items: [{"name": project name, "segments": [...], "speakers": {...}}] → one spreadsheet across projects."""
+    excel = bool(_opt(options, "excel", False))
+    cell = _xl if excel else str
     buf = io.StringIO()
     w = csv.writer(buf)
     w.writerow(["project", "start_seconds", "end_seconds", "start", "end", "speaker", "text"])
     for it in items:
         names = it.get("speakers") or {}
         for s in it["segments"]:
-            w.writerow([it["name"], f"{s['start']:.2f}", f"{s['end']:.2f}", _ts(s["start"])[:8], _ts(s["end"])[:8], _name(s, names), s["text"]])
-    return buf.getvalue()
+            w.writerow([cell(it["name"]), f"{s['start']:.2f}", f"{s['end']:.2f}", _ts(s["start"])[:8], _ts(s["end"])[:8], cell(_name(s, names)), cell(s["text"])])
+    return ("\ufeff" if excel else "") + buf.getvalue()
 
 
 def to_minutes(segs, names=None, title=None, lang=None, summary=None, highlights=None) -> bytes:

@@ -205,7 +205,7 @@ def cmd_models(a) -> None:
 def cmd_export(a) -> None:
     data = json.loads(Path(a.transcript).read_text())
     if a.format == "combined-csv":
-        Path(a.output).write_text(ex.to_combined_csv(data["projects"]), encoding="utf-8", newline="")
+        Path(a.output).write_text(ex.to_combined_csv(data["projects"], data.get("options")), encoding="utf-8", newline="")
         emit("done", path=a.output)
         return
     names = data.get("speakers", {})
@@ -226,7 +226,7 @@ def cmd_export(a) -> None:
     else:
         fn = {"txt": ex.to_txt, "srt": ex.to_srt, "vtt": ex.to_vtt, "md": ex.to_md, "json": ex.to_json, "csv": ex.to_csv, "chapters": ex.to_chapters,
               "redacted": ex.to_redacted, "changes": ex.to_changes}[a.format]
-        text = fn(segs, names, opts) if a.format in ("srt", "vtt", "chapters", "changes", "txt", "md", "redacted") else ex.to_json(segs, names, ex.provenance(data)) if a.format == "json" else fn(segs, names)
+        text = fn(segs, names, opts) if a.format in ("srt", "vtt", "chapters", "changes", "txt", "md", "redacted", "csv") else ex.to_json(segs, names, ex.provenance(data)) if a.format == "json" else fn(segs, names)
         Path(a.output).write_text(text, encoding="utf-8", newline="")
         if a.format == "redacted":  # beside the export: a report to give a reviewer, and the key to keep apart
             report, key = ex.redaction_report(segs, names, data.get("language"))
