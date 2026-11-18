@@ -519,3 +519,11 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 /* Export menu: "More formats" toggle, set apart from the formats above it. */
 .pv-export-menu .menu-more { border-top: 1px solid var(--line); margin-top: 4px; padding-top: 10px; }
 .pv-export-menu .menu-more b { color: var(--link, var(--ink)); }
+
+/* Info tab: the lines the user changed, what the model heard and what it says now. */
+.pv-changes { margin-top: 18px; border-top: 1px solid var(--line); padding-top: 14px; }
+.pv-changes h3 { font-size: 14px; font-weight: 650; margin: 0 0 8px; }
+.pv-changes ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+.pv-changes li { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+.pv-changes li p { margin: 0; font-size: 13px; color: var(--ink2); overflow-wrap: anywhere; }
+.pv-changes li p b { color: var(--ink); }

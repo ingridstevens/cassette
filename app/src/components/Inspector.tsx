@@ -5,7 +5,7 @@ import SpeakerCountField from "./SpeakerCountField";
 import { Models } from "./useModels";
 import { WHISPER_MODELS, modelName } from "./modelInfo";
 import { langName } from "../languages";
-import { FILE_MANAGER, ModelStatus, Options, PALETTE, Project, baseName, bytes, defaultName, displayName, fmt } from "../types";
+import { FILE_MANAGER, ModelStatus, Options, PALETTE, Project, baseName, bytes, defaultName, displayName, fmt, revertLine } from "../types";
 import "../styles/project.css";
 
 export type Tab = "speakers" | "highlights" | "ask" | "options" | "info";
@@ -49,9 +49,11 @@ interface Props {
   canTranscribe: boolean; onAskAgain(): void; onPatch(p: Partial<Project>): void; onOpenSettings?(section?: string): void; models: Models;
   /** The Highlights and Ask tabs (built by the project view, which owns the language-model jobs). */
   highlightsPanel?: ReactNode; askPanel?: ReactNode;
+  /** Scroll to and mark a line of the transcript (used by the list of changes in Info). */
+  onShowLine?(index: number): void;
 }
 
-export default function Inspector({ project, tab, onTab, visible, moved, onMoveAll, onUndo, canTranscribe, onAskAgain, onPatch, onOpenSettings, models, highlightsPanel, askPanel }: Props) {
+export default function Inspector({ project, tab, onTab, visible, moved, onMoveAll, onUndo, canTranscribe, onAskAgain, onPatch, onOpenSettings, models, highlightsPanel, askPanel, onShowLine }: Props) {
   const t = useT();
   const ids = { speakers: useId(), highlights: useId(), ask: useId(), options: useId(), info: useId() };
   const tabs: [Tab, string][] = [["speakers", "Speakers"], ["highlights", "Highlights"], ["ask", "Ask"], ["options", "Options"], ["info", "Info"]];
@@ -73,7 +75,7 @@ export default function Inspector({ project, tab, onTab, visible, moved, onMoveA
         {tab === "highlights" && highlightsPanel}
         {tab === "ask" && askPanel}
         {tab === "options" && <OptionsTab project={project} visible={visible} canTranscribe={canTranscribe} onAskAgain={onAskAgain} onPatch={onPatch} onOpenSettings={onOpenSettings} models={models} />}
-        {tab === "info" && <Info project={project} />}
+        {tab === "info" && <Info project={project} onPatch={onPatch} onShowLine={onShowLine} />}
       </div>
     </aside>
   );
@@ -202,7 +204,7 @@ function OptionRows({ eff, set, status, models, found, speakers, onOpenSettings 
   );
 }
 
-function Info({ project }: { project: Project }) {
+function Info({ project, onPatch, onShowLine }: { project: Project; onPatch(p: Partial<Project>): void; onShowLine?(index: number): void }) {
   const t = useT();
   const { result, meta, path } = project;
   const [size, setSize] = useState<number | null | undefined>(undefined);
@@ -233,6 +235,31 @@ function Info({ project }: { project: Project }) {
         {rows.map(([k, v, act]) => <div key={k} className="pv-info-row"><dt>{k}</dt><dd>{act ? <button type="button" className="pv-info-link" onClick={act} title={t("Show in {app}", { app: FILE_MANAGER })} aria-label={t("{label}: {value}. Show in {app}", { label: k, value: v, app: FILE_MANAGER })}>{v}</button> : v}</dd></div>)}
       </dl>
       <button type="button" className="btn pv-wide" onClick={() => window.api.revealPath(path)}>{t("Show recording in {app}", { app: FILE_MANAGER })}</button>
+      {result && <Changes project={project} onPatch={onPatch} onShowLine={onShowLine} />}
     </div>
+  );
+}
+
+/** Every line the user changed by hand: what the model heard, what it says now, and a way back. The transcript keeps the model's version (`orig`) for each. */
+function Changes({ project, onPatch, onShowLine }: { project: Project; onPatch(p: Partial<Project>): void; onShowLine?(index: number): void }) {
+  const t = useT();
+  const result = project.result!;
+  const changed = result.segments.map((s, i) => ({ s, i })).filter(({ s }) => s.edited && s.orig);
+  const putBack = (i: number) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => (k === i ? revertLine(s) : s)) } });
+  return (
+    <section className="pv-changes" aria-labelledby="pv-changes-h">
+      <h3 id="pv-changes-h">{changed.length === 1 ? t("1 line changed by you") : changed.length ? t("{count} lines changed by you", { count: changed.length }) : t("Changes by you")}</h3>
+      {changed.length === 0 && <p className="note">{t("No line has been changed yet. Every change you make is listed here with what the model heard, and can be put back.")}</p>}
+      <ul>
+        {changed.map(({ s, i }) => (
+          <li key={i}>
+            <button type="button" className="pv-time" onClick={() => onShowLine?.(i)} aria-label={t("Show the line at {time} in the transcript", { time: fmt(s.start) })}>{fmt(s.start)}</button>
+            <p><b>{t("Model heard:")}</b> {s.orig!.text}</p>
+            <p><b>{t("Now:")}</b> {s.text}</p>
+            <button type="button" className="btn quiet small" onClick={() => putBack(i)} aria-label={t("Put the line at {time} back to what the model heard", { time: fmt(s.start) })}>{t("Put back")}</button>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }
