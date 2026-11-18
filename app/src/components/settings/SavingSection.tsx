@@ -1,5 +1,6 @@
 import { Options } from "../../types";
 import { useT } from "../../i18n";
+import { EXPORT_CHOICES } from "../ExportMenu";
 
 interface Props { opts: Options; set(o: Options): void }
 
@@ -34,6 +35,13 @@ export default function SavingSection({ opts, set }: Props) {
       <div className="card st-card">
         <h2>{t("Exporting")}</h2>
         <p className="st-lead">{t("Use Export at the top of a project to save a Word document, plain text, spreadsheet, subtitles, Markdown or JSON, wherever you like.")}</p>
+        <label className="field">{t("First item in the Export menu")}
+          <select value={opts.defaultExport ?? ""} onChange={(e) => set({ ...opts, defaultExport: e.target.value || undefined })}>
+            <option value="">{t("None (only what each project was last exported as)")}</option>
+            {EXPORT_CHOICES.map(([f, label]) => <option key={f} value={f}>{t(label)}</option>)}
+          </select>
+          <span className="note">{t("Each project remembers how you last exported it and offers that first. For a project you have not exported yet, it offers this format.")}</span>
+        </label>
       </div>
     </>
   );

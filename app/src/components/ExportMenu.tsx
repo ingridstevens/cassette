@@ -1,7 +1,7 @@
 import { KeyboardEvent, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useT } from "../i18n";
-import { ExportOpts } from "../types";
+import { ExportOpts, LastExport } from "../types";
 import ExportOptions, { OptionsKind, loadExportOpts } from "./ExportOptions";
 import "../styles/project.css";
 
@@ -37,6 +37,10 @@ const GROUPS: { title: string; formats: readonly (readonly [string, string, stri
 /** The few formats most people use, shown first. Everything else sits behind "More formats". */
 const PRIMARY = ["docx", "txt", "print", "print-large", "srt", "minutes"] as const;
 const ALL = GROUPS.flatMap((g) => g.formats);
+/** Formats that can be chosen as the default in Settings (the text-style dialog only saves settings, it exports nothing). */
+export const EXPORT_CHOICES = ALL.filter(([f]) => f !== "text");
+/** Technical names that are the same in every language; the other formats use their menu label. */
+const SHORT: Record<string, string> = { srt: "SRT", vtt: "VTT", edl: "EDL", csv: "CSV", json: "JSON" };
 
 /** Arrow/Home/End navigation between the menu items of the menu that received the key. */
 export function onMenuKeyDown(e: KeyboardEvent<HTMLElement>) {
@@ -52,7 +56,9 @@ type Res = { ok?: boolean; cancelled?: boolean; path?: string; error?: string };
 const WITH_OPTIONS = new Set(["srt", "vtt", "edl", "text"]);
 /** Formats that follow the "Text style" settings. */
 export const STYLED = new Set(["txt", "md", "docx", "csv", "minutes", "redacted"]);
-export default function ExportMenu({ onExport, openSignal = 0, hasChapters = false, markedCount = 0 }: { onExport(format: string, options?: ExportOpts): Promise<Res>; openSignal?: number; hasChapters?: boolean; markedCount?: number }) {
+/** Options a format needs when it is run without asking (the saved ones for subtitles and styled text, none for the rest). */
+const usualOpts = (f: string): Record<string, unknown> => (WITH_OPTIONS.has(f) || STYLED.has(f) ? { ...loadExportOpts() } : {});
+export default function ExportMenu({ onExport, openSignal = 0, hasChapters = false, markedCount = 0, lastExport, defaultFormat, onRemember }: { onExport(format: string, options?: ExportOpts): Promise<Res>; openSignal?: number; hasChapters?: boolean; markedCount?: number; lastExport?: LastExport; defaultFormat?: string; onRemember?(format: string, options: Record<string, unknown>): void }) {
   const t = useT();
   const [asking, setAsking] = useState<OptionsKind | null>(null);
   const [open, setOpen] = useState(false);
@@ -82,9 +88,22 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
   const run = async (f: string, o?: ExportOpts) => {
     const r = await onExport(f, o).catch((e: unknown) => ({ ok: false, error: String(e) } as Res));
     if (r.cancelled) return;
+    if (r.ok && f !== "text") onRemember?.(f, { ...(o ?? {}) });
     setBad(!r.ok); setMsg(r.ok ? (f === "redacted" ? t("Exported ✓. A report and a key file were saved next to it. Keep the key apart from the data.") : t("Exported ✓")) : t("Export failed: {reason}", { reason: r.error ?? t("unknown error") }));
     setTimeout(() => setMsg(""), r.ok ? 2800 : 8000);
   };
+  // The first item: what this project was last exported as, or else the default from Settings.
+  const again = lastExport ?? (defaultFormat ? { format: defaultFormat, options: usualOpts(defaultFormat) } : null);
+  const againRow = again && ALL.find((x) => x[0] === again.format);
+  const againOk = !!againRow && !(again!.format === "chapters" && !hasChapters) && !(["quotes", "highlights"].includes(again!.format) && !markedCount);
+  const againText = (() => {
+    if (!again || !againRow) return "";
+    const o = again.options as Partial<ExportOpts>, f = again.format;
+    const name = SHORT[f] ?? t(againRow[1]);
+    const details = f === "srt" || f === "vtt" ? (o.maxLines === 1 ? t("1 line, {chars} characters", { chars: o.maxChars ?? 42 }) : t("{lines} lines, {chars} characters", { lines: o.maxLines ?? 2, chars: o.maxChars ?? 42 })) : f === "edl" ? t("{fps} fps", { fps: o.fps ?? 25 }) : "";
+    const label = details ? t("{format} ({details})", { format: name, details }) : name;
+    return lastExport ? t("Again: {what}", { what: label }) : t("Usual: {what}", { what: label });
+  })();
   const host = trigger.current?.closest(".pview") ?? document.body;
   const item = ([f, label, hint]: readonly [string, string, string]) => (
     <button key={f} type="button" role="menuitem" aria-disabled={(f === "chapters" && !hasChapters) || ((f === "quotes" || f === "highlights") && !markedCount) ? true : undefined}
@@ -105,6 +124,14 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
         </button>
         {open && (
           <div className={"menu pv-export-menu" + (flip ? " flip" : "")} role="menu" aria-label={t("Export transcript")} onKeyDown={onMenuKeyDown}>
+            {againOk && again && (
+              <div role="group" aria-label={t("Export again")}>
+                <button type="button" role="menuitem" className="menu-again" onClick={() => {
+                  setOpen(false); trigger.current?.focus();
+                  run(again.format, Object.keys(again.options).length ? (again.options as unknown as ExportOpts) : undefined);
+                }}><b>{againText}</b></button>
+              </div>
+            )}
             <div role="group" aria-label={t("Most used")}>
               {PRIMARY.map((f) => ALL.find((x) => x[0] === f)!).map(item)}
             </div>
