@@ -1,6 +1,8 @@
 import json
 import os
 
+import pytest
+
 from engine.export import to_json, to_md, to_srt, to_txt, to_vtt
 
 SEGS = [
@@ -243,13 +245,13 @@ def test_import_folder_copies_known_models(tmp_path, monkeypatch):
     src = tmp_path / "src" / "models--Systran--faster-whisper-tiny"
     (src / "blobs").mkdir(parents=True)
     (src / "blobs" / "abc").write_text("x")
-    snap = src / "snapshots" / "rev1"
+    snap = src / "snapshots" / models.PINS["Systran/faster-whisper-tiny"]
     snap.mkdir(parents=True)
     (snap / "model.bin").symlink_to(os.path.relpath(src / "blobs" / "abc", snap))  # os.sep-correct, so it also resolves on Windows
     (tmp_path / "src" / "models--someone--unknown" / "snapshots" / "r").mkdir(parents=True)
     got = models.import_folder(tmp_path / "src")
     assert got == ["Systran/faster-whisper-tiny"]
-    assert (dst / "models--Systran--faster-whisper-tiny" / "snapshots" / "rev1" / "model.bin").read_text() == "x"
+    assert (dst / "models--Systran--faster-whisper-tiny" / "snapshots" / models.PINS["Systran/faster-whisper-tiny"] / "model.bin").read_text() == "x"
     assert models.status()["whisper"]["tiny"] is True
 
 
@@ -360,7 +362,9 @@ def test_vtt_escapes_markup_characters_in_speech_and_names():
 
 
 def _fake_repo(root, repo, files=True):
-    d = root / ("models--" + repo.replace("/", "--")) / "snapshots" / "rev1"
+    from engine import models
+
+    d = root / ("models--" + repo.replace("/", "--")) / "snapshots" / models.PINS[repo]
     d.mkdir(parents=True)
     if files:
         (d / "model.bin").write_text("x")
@@ -545,3 +549,15 @@ def test_long_segment_without_words_is_split_at_max_duration():
     seg = {"start": 0.0, "end": 20.0, "speaker": "SPEAKER_00", "text": "one two three four five six seven eight nine ten"}
     cues = _times(to_srt([seg], None, {"speakerNames": False, "maxDuration": 7}))
     assert len(cues) >= 3 and all(z - a <= 7.001 for a, z in cues)
+
+
+def test_a_models_folder_at_another_version_is_not_imported(tmp_path, monkeypatch):
+    from engine import models
+
+    monkeypatch.setenv("ENGINE_MODELS_DIR", str(tmp_path / "dst"))
+    d = tmp_path / "src" / "models--Systran--faster-whisper-tiny" / "snapshots" / "someothercommit"
+    d.mkdir(parents=True)
+    (d / "model.bin").write_text("x")
+    assert models.scan_folder(tmp_path / "src")["Systran/faster-whisper-tiny"] == "incomplete"
+    with pytest.raises(RuntimeError, match="incomplete"):
+        models.import_folder(tmp_path / "src")

@@ -127,12 +127,12 @@ def load_model(model_name: str, device: str, backend: str = "faster", vad: bool 
         from huggingface_hub import snapshot_download
 
         from .asr_parakeet import ParakeetModel, available
-        from .models import models_dir
+        from .models import PINS, models_dir
 
         if not available():
             raise RuntimeError("Parakeet needs a Mac with an Apple chip.")
         progress("transcribe", 0.0, f"Loading {model_name} on the Apple GPU")
-        path = snapshot_download(PARAKEET_MODELS[model_name], cache_dir=models_dir(), local_files_only=True)
+        path = snapshot_download(PARAKEET_MODELS[model_name], revision=PINS[PARAKEET_MODELS[model_name]], cache_dir=models_dir(), local_files_only=True)
         log(f"Speech model {model_name} loaded from {path} (Apple GPU engine, MLX, offline)")
         if vad:
             log("“Skip silence” is not available with Parakeet and is ignored")
@@ -143,10 +143,10 @@ def load_model(model_name: str, device: str, backend: str = "faster", vad: bool 
         from huggingface_hub import snapshot_download
 
         from .asr_mlx import MlxModel
-        from .models import MLX_MODELS, models_dir
+        from .models import MLX_MODELS, PINS, models_dir
 
         progress("transcribe", 0.0, f"Loading {model_name} on the Apple GPU")
-        path = snapshot_download(MLX_MODELS[model_name], cache_dir=models_dir(), local_files_only=True)
+        path = snapshot_download(MLX_MODELS[model_name], revision=PINS[MLX_MODELS[model_name]], cache_dir=models_dir(), local_files_only=True)
         log(f"Whisper model {model_name} loaded from {path} (Apple GPU engine, MLX, offline)")
         if vad:
             log("“Skip silence” is not available on the Apple GPU engine and is ignored")
@@ -155,13 +155,13 @@ def load_model(model_name: str, device: str, backend: str = "faster", vad: bool 
     from faster_whisper import WhisperModel
     from huggingface_hub import snapshot_download
 
-    from .models import WHISPER_MODELS, models_dir
+    from .models import PINS, WHISPER_MODELS, models_dir
 
     dev, compute = pick_device(device)
     if sys.platform == "darwin" and device in ("auto", "mps"):
         log("Whisper runs on the CPU on Mac (its engine has no Apple GPU backend); speaker detection can use the Apple GPU")
     progress("transcribe", 0.0, f"Loading {model_name} on {dev}")
-    path = snapshot_download(WHISPER_MODELS[model_name], cache_dir=models_dir(), local_files_only=True)
+    path = snapshot_download(WHISPER_MODELS[model_name], revision=PINS[WHISPER_MODELS[model_name]], cache_dir=models_dir(), local_files_only=True)
     log(f"Whisper model {model_name} loaded from {path} (device={dev}, compute={compute}, offline)")
     from .threads import thread_budget
 

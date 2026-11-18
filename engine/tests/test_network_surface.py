@@ -44,6 +44,15 @@ def test_local_only_files_never_download():
         assert all("local_files_only=True" in c for c in calls), f"{name} has a snapshot_download that can reach the network"
 
 
+def test_every_download_and_cache_lookup_is_pinned_to_a_commit():
+    for name in ("models.py", "asr.py", "llm.py"):
+        text = (ENGINE / name).read_text(encoding="utf-8")
+        calls = [ln for ln in text.splitlines() if re.search(r"\b(snapshot_download|model_info)\(", ln) and "import" not in ln]
+        assert calls, name
+        assert all("revision=" in c for c in calls), f"{name} has a Hugging Face call that would use main: {[c for c in calls if 'revision=' not in c]}"
+    assert "from_pretrained(" not in (ENGINE / "diarize.py").read_text(encoding="utf-8").replace("from_pretrained(str(diarization_config()))", "")
+
+
 def test_app_source_writes_only_known_web_addresses():
     found = {}
     for p in _files(APP, (".ts", ".tsx", ".css", ".html", ".mjs", ".js")):

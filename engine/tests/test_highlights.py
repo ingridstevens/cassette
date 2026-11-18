@@ -206,7 +206,7 @@ def test_retired_language_models_are_listed_only_for_people_who_have_them(tmp_pa
     monkeypatch.setattr(llm, "backend", lambda: "mlx")
     ids = lambda: [m["id"] for m in models.llm_status()["catalog"]]  # noqa: E731
     assert "small" not in ids() and models.llm_status()["default"] in ids()
-    snap = tmp_path / ("models--" + llm.repo_for("small", "mlx")[0].replace("/", "--")) / "snapshots" / "abc"
+    snap = tmp_path / ("models--" + llm.repo_for("small", "mlx")[0].replace("/", "--")) / "snapshots" / models.PINS[llm.repo_for("small", "mlx")[0]]
     snap.mkdir(parents=True)
     (snap / "model.safetensors").write_bytes(b"x")
     assert "small" in ids()
