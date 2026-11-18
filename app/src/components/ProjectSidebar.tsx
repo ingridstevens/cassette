@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "../styles/shell.css";
 import { useT } from "../i18n";
+import { FILTER_MIN_PROJECTS, filterProjects } from "../projectFilter";
 import { IS_MAC, JobProgress, MOD_KEY, Project, fmt } from "../types";
 
 interface Props {
@@ -20,8 +21,19 @@ export default function ProjectSidebar({ projects, activeId, progress, blocker, 
   const [editing, setEditing] = useState<string | null>(null);
   const todo = projects.filter((p) => p.status === "idle" || p.status === "error").length;
   const queue = projects.filter((p) => p.status === "queued");
+  const [filter, setFilter] = useState("");
+  const [rail, setRail] = useState(false); // the narrow icon rail has no room for the field, so the filter must not stay on unseen
+  const nav = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const el = nav.current; if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setRail(el.clientWidth < 120));
+    ro.observe(el); return () => ro.disconnect();
+  }, []);
+  const canFilter = projects.length > FILTER_MIN_PROJECTS && !rail;
+  const query = canFilter ? filter : "";
+  const shown = filterProjects(projects, query);
   return (
-    <nav className="side" aria-label={t("Projects")}>
+    <nav ref={nav} className="side" aria-label={t("Projects")}>
       <div className={"brand" + (projects.some((p) => p.status === "running") ? " busy" : "")} aria-hidden="true">
         <svg viewBox="0 0 32 32" className="brand-mark"><rect width="32" height="32" rx="7" className="bm-bg" />
           <rect x="2.24" y="6.4" width="27.52" height="19.2" rx="2.88" className="bm-body" /><rect x="5.12" y="8.32" width="21.76" height="5.44" rx=".96" className="bm-label" />
@@ -40,9 +52,15 @@ export default function ProjectSidebar({ projects, activeId, progress, blocker, 
       <div className="group group-row"><span id="proj-group">{t("Projects")}</span>
         {todo > 1 && <button type="button" className="btn small" disabled={!!blocker} title={blocker || undefined} onClick={onTranscribeAll}>{t("Transcribe all ({count})", { count: todo })}</button>}
       </div>
+      {canFilter && <div className="search side-filter"><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+        <input dir="auto" type="search" value={filter} aria-label={t("Filter projects")} placeholder={t("Filter projects")} onChange={(e) => setFilter(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Escape" && filter) { e.preventDefault(); setFilter(""); } }} />
+        <span className="sr-only" role="status">{query.trim() ? (shown.length ? t("Showing {shown} of {total} projects", { shown: shown.length, total: projects.length }) : t("No projects match “{text}”.", { text: query.trim() })) : ""}</span>
+      </div>}
       <div className="plist" role="list" aria-labelledby="proj-group">
+        {projects.length > 0 && shown.length === 0 && <p className="note side-note">{t("No projects match “{text}”.", { text: query.trim() })}</p>}
         {projects.length === 0 && <p className="note side-note">{t("Each recording you add becomes a project here, with its own transcript and speaker names.")}</p>}
-        {projects.map((p) => {
+        {shown.map((p) => {
           const pr = progress[p.id];
           const pct = pr?.fraction != null ? Math.round(pr.fraction * 100) : null;
           const sub = p.status === "done" && p.result

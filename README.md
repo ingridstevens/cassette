@@ -18,7 +18,7 @@ app, no telemetry, no update checks, and it works offline after a one-time model
 ## Features
 
 **Transcribe**
-- Audio and video files; drop them on the window or click *Add recordings*; a queue and a projects sidebar.
+- Audio and video files; drop them on the window or click *Add recordings*; a queue and a projects sidebar (with a filter field once the list is long).
 - Record from the microphone inside the app.
 - Four model sizes from fast to most accurate, with a time estimate before you press Start; engines Whisper, plus Parakeet and Moonshine where they can run.
 - Language detected automatically, one language, or several languages in one recording (each speaker checked, lines tagged, English translation underneath).
