@@ -149,7 +149,7 @@ export default function Transcript({ showLang, result, names, time, onSeek, onRe
       <span ref={anchor} hidden />
       {result.segments.map((seg, i) => (
         <div key={i} ref={i === matchSeg ? matchRef : i === active ? activeRef : undefined}
-          data-turn={i} className={"pv-turn" + (seg.marked ? " marked" : "") + (i === active ? " now" : "") + (i === matchSeg ? " found" : "")}>
+          data-turn={i} className={"pv-turn" + (seg.marked ? " marked" : "") + (i === active ? " now" : "") + (i === matchSeg ? " found" : "") + (i > 0 && result.segments[i - 1].speaker === seg.speaker ? " cont" : "")}>
           <div className="pv-who">
             <button type="button" className="pv-who-btn" data-who={i} aria-haspopup="menu" aria-expanded={menu === i}
               aria-label={t("Change who said the line at {time}. Now: {name}", { time: fmt(seg.start), name: label(seg.speaker) })} onClick={() => setMenu(menu === i ? null : i)}>
