@@ -168,7 +168,7 @@ app.whenReady().then(() => {
     }
     if (opts.device && opts.device !== "auto") a.push("--device", String(opts.device));
     if (opts.vad) a.push("--vad");
-    if (opts.prompt) a.push("--prompt", String(opts.prompt));
+    if (opts.prompt) a.push(`--prompt=${String(opts.prompt).slice(0, 2000)}`); // "=" form: a value starting with "-" would be read as an option
     if (opts.noDiarize) a.push("--no-diarize");
     if (opts.acceptFit) a.push("--accept-fit");
     send("engine-event", { jobId, type: "started", clientId: opts.clientId });
