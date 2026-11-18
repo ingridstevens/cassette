@@ -18,7 +18,7 @@ export const SETTINGS_SECTIONS = ["Overview", "Transcription", "Speakers", "Summ
 type Section = (typeof SETTINGS_SECTIONS)[number];
 /** Names from before the redesign still open the right page. */
 const LEGACY: Record<string, Section> = { "Storage and models": "Transcription", "Models for each job": "Transcription", Language: "Text and language", Display: "Text and language", Saving: "Saving and export", Performance: "Advanced" };
-const GROUPS: [string, Section[]][] = [["Jobs", ["Overview", "Transcription", "Speakers", "Summaries and translation"]], ["App", ["Saving and export", "Text and language", "Privacy", "Advanced"]]];
+const GROUPS: [string, Section[]][] = [["Processing", ["Overview", "Transcription", "Speakers", "Summaries and translation"]], ["App", ["Saving and export", "Text and language", "Privacy", "Advanced"]]];
 
 export default function SettingsPage({ opts, set, status, models, onBack, onReset, initialSection }: Props) {
   const t = useT();

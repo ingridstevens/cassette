@@ -1,6 +1,7 @@
 /** Arabic (ar) and Persian (fa): the Settings pages Transcription, Speakers, Summaries and translation, Saving and export, Text and language, Advanced and About, and the model list. Machine-assisted and not yet reviewed by a native speaker. The long Privacy page is not here yet: its wording makes privacy promises, so it should be translated together with a native reader. */
 export default {
   ar: {
+    "Processing": "المعالجة",
     "Overview": "نظرة عامة",
     "Saving and export": "الحفظ والتصدير",
     "Text and language": "النص واللغة",
@@ -163,6 +164,7 @@ export default {
     "Translates lines into another language, such as German or Arabic. Without it the app can only translate into English. It runs on this computer.": "يترجم الأسطر إلى لغة أخرى مثل الألمانية أو العربية. من دونه لا يستطيع التطبيق الترجمة إلا إلى الإنجليزية. يعمل على هذا الحاسوب.",
   },
   fa: {
+    "Processing": "پردازش",
     "Overview": "نمای کلی",
     "Saving and export": "ذخیره و خروجی",
     "Text and language": "متن و زبان",

@@ -179,7 +179,7 @@ Below that, **Changes by you** lists every line you changed by hand: its time (c
 
 Open with the **Settings** row, or `⌘,` / `Ctrl+,`.
 
-Settings has two groups of pages and a search box. **Jobs:** Overview, Transcription, Speakers, Summaries and translation. **App:**
+Settings has two groups of pages and a search box. **Processing:** Overview, Transcription, Speakers, Summaries and translation. **App:**
 Saving and export, Text and language, Privacy, Advanced. **About** is at the bottom of the list. Press Enter in the search box to open
 the first match.
 
