@@ -158,7 +158,7 @@ function OptionsTab({ project, visible, canTranscribe, onAskAgain, onPatch, onOp
             : <button type="button" className="btn small" onClick={() => onOpenSettings?.("Transcription")}>{t("Download in Settings")}</button>}
         </div>
       )}
-      <OptionRows eff={eff} set={set} status={status} models={models} found={found} speakers={liveSpeakers(project).length} onOpenSettings={onOpenSettings} />
+      <OptionRows eff={eff} set={set} status={status} models={models} found={found} speakers={liveSpeakers(project).length} hasResult={has} onOpenSettings={onOpenSettings} />
       <div className="pv-sticky"><button type="button" className="btn sun pv-wide" disabled={!canTranscribe} onClick={onAskAgain}>{has ? t("Transcribe again…") : t("Transcribe")}</button></div>
     </div>
   );
@@ -167,7 +167,7 @@ function OptionsTab({ project, visible, canTranscribe, onAskAgain, onPatch, onOp
 type RowKey = "lang" | "model" | "speakers" | "extras" | "names";
 
 /** Each setting as one row that shows its current value; a click opens that row's choices and closes the others, so the tab fits on one screen. */
-function OptionRows({ eff, set, status, models, found, speakers, onOpenSettings }: { eff: Options; set(p: Partial<Options>): void; status: ModelStatus | null; models: Models; found: string; speakers: number; onOpenSettings?(section?: string): void }) {
+function OptionRows({ eff, set, status, models, found, speakers, hasResult, onOpenSettings }: { eff: Options; set(p: Partial<Options>): void; status: ModelStatus | null; models: Models; found: string; speakers: number; hasResult: boolean; onOpenSettings?(section?: string): void }) {
   const t = useT();
   const [open, setOpen] = useState<RowKey | null>(null);
   const id = useId();
@@ -177,13 +177,13 @@ function OptionRows({ eff, set, status, models, found, speakers, onOpenSettings 
   const translate = eff.translate ?? false;
   const extras = [translate && (eff.translateTo && eff.translateTo !== "en" ? t("Translation into {language}", { language: langName(eff.translateTo) }) : t("English translation")), eff.verbatim && t("Write hesitations down"), eff.vad && t("Skip silence")].filter(Boolean).join(", ");
   const tag = WHISPER_MODELS.find((m) => m.id === eff.model)?.tag;
-  const fields = { eff, set, status, models, found, onOpenSettings, advanced: true, bare: true };
+  const fields = { eff, set, status, models, found, onOpenSettings, hasResult, advanced: true, bare: true };
   const rows: [RowKey, string, string, string, ReactNode][] = [
     ["lang", t("Languages"), mode === "one" ? langName(eff.language) : mode === "several" ? t("Several languages") : t("Detect automatically"), mode === "auto" && found ? t("Found: {found}.", { found }) : "", <LanguageField {...fields} />],
     ["model", t("Transcription model"), t(modelName(eff.model)), status && !status.whisper[eff.model] ? t("Not downloaded") : tag ? t(tag) : "", <ModelField {...fields} />],
     ["speakers", t("Speakers"), eff.noDiarize ? t("Transcript only") : range ? t("{min} to {max} speakers", { min: eff.minSpeakers ?? "2", max: eff.maxSpeakers ?? "4" }) : n > 0 ? (n === 1 ? t("{count} speaker", { count: n }) : t("{count} speakers", { count: n })) : t("Detect automatically"),
       !eff.noDiarize && !eff.numSpeakers && speakers > 0 ? t("Found {count} last time", { count: speakers }) : "",
-      <><SpeakerCountField eff={eff} set={set} /><TranscriptOnlyField {...fields} /></>],
+      <><SpeakerCountField eff={eff} set={set} hasResult={hasResult} /><TranscriptOnlyField {...fields} /></>],
     ["extras", t("Extras"), extras || t("None"), "", <ExtrasField {...fields} />],
     ["names", t("Names and special words"), eff.prompt.trim() || t("None added"), "", <NamesField {...fields} />],
   ];
