@@ -75,3 +75,17 @@ assert.deepEqual(fresh().store.load(), { projects: [] });
   assert.deepEqual(JSON.parse(readFileSync(join(dir, "projects.json.bak1"), "utf8")), [{ id: "a" }]);
 }
 console.log("projects store: all checks passed");
+
+// retention counts from the last use, not the import date (#66)
+{
+  const o = join(mkdtempSync(join(tmpdir(), "ret-")), "r.mjs");
+  await build({ entryPoints: ["src/retention.ts"], outfile: o, bundle: true, format: "esm", platform: "node", logLevel: "silent" });
+  const { dueForRetention } = await import(pathToFileURL(o).href);
+  const DAY = 86_400_000, now = Date.now(), base = { id: "a", name: "a", status: "done" };
+  const due = (p) => dueForRetention([{ ...base, ...p }], 30, now).length === 1;
+  assert.ok(due({ addedAt: now - 40 * DAY }));                                    // untouched for 40 days: due
+  assert.ok(!due({ addedAt: now - 40 * DAY, openedAt: now - DAY }));              // opened yesterday: not due
+  assert.ok(!due({ addedAt: now - 40 * DAY, editedAt: now - DAY }));              // edited yesterday: not due
+  assert.ok(!due({ addedAt: now - 40 * DAY, meta: { finishedAt: now - DAY } }));  // transcribed yesterday: not due
+  assert.ok(due({ addedAt: now - 90 * DAY, openedAt: now - 40 * DAY }));          // last opened 40 days ago: due
+}

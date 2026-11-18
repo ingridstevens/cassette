@@ -74,7 +74,7 @@ export interface RunMeta {
   model?: string; device?: string; speakerDevice?: string; secondsSpeakers?: number; secondsTranscribe?: number; languageProb?: number; /** Seconds of speech per language, when each speaker turn was detected on its own. */ languages?: Record<string, number>; mixed?: boolean; translated?: number; finishedAt?: number;
 }
 export interface Project {
-  id: string; path: string; name: string; addedAt: number;
+  id: string; path: string; name: string; addedAt: number; /** Last time the project was opened or edited (for retention; older saves have neither). */ openedAt?: number; editedAt?: number;
   result: Result | null; names: Record<string, string>;
   status: ProjectStatus; error?: string;
   /** Per-project overrides of the global options (language, model, number of speakers, skip silence, transcript only, vocabulary). */

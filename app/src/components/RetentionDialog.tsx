@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useT } from "../i18n";
 import { Project } from "../types";
-import { ageDays } from "../retention";
+import { ageDays, lastUsed } from "../retention";
 
 type Row = { id: string; name: string; state: "deleted" | "partly" | "failed" };
 interface Props { projects: Project[]; days: number; onDelete(ids: string[]): void; onClose(): void }
@@ -43,8 +43,8 @@ export default function RetentionDialog({ projects, days, onDelete, onClose }: P
       <div className="dialog" role="alertdialog" aria-modal="true" aria-label={t("Old projects")}>
         {!rows && (<>
           <h2>{projects.length === 1 ? t("Delete 1 old project?") : t("Delete {count} old projects?", { count: projects.length })}</h2>
-          <p>{t("These were added more than {days} days ago. You chose to be asked about projects older than that. Nothing is deleted until you press Delete.", { days })}</p>
-          <ul className="rm-list">{projects.map((p) => <li key={p.id}>{t("{name}, added {n} days ago", { name: p.name, n: ageDays(p.addedAt) })}</li>)}</ul>
+          <p>{t("These were not opened for more than {days} days. You chose to be asked about projects older than that. Nothing is deleted until you press Delete.", { days })}</p>
+          <ul className="rm-list">{projects.map((p) => <li key={p.id}>{t("{name}, not opened for {n} days", { name: p.name, n: ageDays(lastUsed(p)) })}</li>)}</ul>
           <p>{t("Deleting removes each project's transcript and edits, its backup file next to the recording, and the recording only if Cassette made it. Your own audio files are never touched. This cannot be undone.")}</p>
           <div className="row">
             <button type="button" className="btn" ref={first} onClick={onClose} disabled={busy}>{t("Keep them for now")}</button>

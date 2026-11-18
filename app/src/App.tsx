@@ -172,7 +172,7 @@ export default function App() {
                 onTranscribe={(rg, line, trial, acceptFit) => P.transcribe(p.id, rg, line, trial, acceptFit)}
                 othersWaiting={P.projects.filter((x) => x.id !== p.id && !x.result && x.status === "idle").length}
                 onApplyToOthers={(o) => P.projects.filter((x) => x.id !== p.id && !x.result && x.status === "idle").forEach((x) => P.patch(x.id, { opts: { ...x.opts, ...o } }))}
-                onRemember={(o) => setOpts({ ...opts, ...o })} onCancel={() => P.cancel(p.id)} onPatch={(patch) => P.patch(p.id, patch)} />
+                onRemember={(o) => setOpts({ ...opts, ...o })} onCancel={() => P.cancel(p.id)} onPatch={(patch) => P.edit(p.id, patch)} />
             ))}
           </div>
           {dragging && <div className="drop-veil" aria-hidden>{t("Drop to add recordings")}</div>}
