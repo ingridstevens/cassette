@@ -95,6 +95,10 @@ export default function App() {
   // Files opened from the Dock, Finder or Explorer. The main process has already registered them as known recordings.
   useEffect(() => window.api.onOpenFiles(addFiles), [addFiles]);
   const pick = async () => addFiles(await window.api.pickFiles());
+  const trySample = async () => {
+    const r = await window.api.sample();
+    if (r.ok) { setAddError(P.addAndTranscribe([r.path])); setPage("main"); } else setAddError(t("The sample could not be added: {error}", { error: r.error }));
+  };
   function onDrop(e: DragEvent) {
     e.preventDefault(); setDragging(false);
     const paths = Array.from(e.dataTransfer.files).map((f) => window.api.pathForFile(f)).filter(Boolean);
@@ -149,6 +153,7 @@ export default function App() {
                   <h2>{t("Drop recordings here")}</h2>
                   <p className="lead">{t("Interviews, meetings, calls. The app writes down what everyone says and who said it. Best with German, English, French and Spanish; about 100 other languages work too. Nothing leaves this computer.")}</p>
                   <button type="button" className="btn sun big" onClick={pick}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>{t("Choose files…")}</button>
+                  <p><button type="button" className="btn" onClick={trySample}>{t("Try a 30-second sample interview")}</button></p>
                   <p className="note">{t("Works with mp3, wav, m4a, flac, mp4, mov and more. You can add several at once.")}</p>
                   {addError && <p className="alert err" role="alert">{addError}</p>}
                 </div>

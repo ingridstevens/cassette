@@ -40,6 +40,8 @@ const api = {
   diskFree: (): Promise<number | null> => ipcRenderer.invoke("disk-free"),
   openExternal: (url: string): Promise<boolean> => ipcRenderer.invoke("open-external", url),
   logError: (message: string): void => { ipcRenderer.send("renderer-error", message); },
+  /** Copies the bundled sample interview into the app's recordings folder and returns its path. */
+  sample: (): Promise<{ ok: true; path: string } | { ok: false; error: string }> => ipcRenderer.invoke("sample"),
   registerPaths: (paths: string[]): Promise<void> => ipcRenderer.invoke("register-paths", paths),
   pathForFile: (f: File): string => webUtils.getPathForFile(f),
   /** Recordings opened from the Dock, Finder or Explorer. Tells the main process this window is listening, so files that arrived earlier are delivered now. */

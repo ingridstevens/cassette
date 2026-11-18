@@ -65,6 +65,7 @@ function fake(path = "") {
   saveProjects: async (d: unknown) => { try { localStorage.setItem("mock-projects", JSON.stringify(d)); } catch { /* quota */ } return { ok: true }; },
   saveProjectsSync: (d: unknown) => { try { localStorage.setItem("mock-projects", JSON.stringify(d)); return true; } catch { return false; } },
   saveSidecar: async (p: string) => ({ ok: true, path: p + ".transcript.json" }),
+  sample: async () => ({ ok: true as const, path: "/Users/demo/Sample interview.m4a" }),
   registerPaths: async (_paths: string[]) => {},
   pathForFile: (f: File) => "/Users/demo/" + f.name,
   transcribe: async function (o: { clientId?: string; acceptFit?: boolean; model?: string }) {
