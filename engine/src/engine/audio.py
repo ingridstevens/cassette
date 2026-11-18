@@ -27,6 +27,47 @@ def decode(src: str, dst: Path, start: float | None = None, end: float | None = 
     subprocess.run(cmd, check=True, capture_output=True)
 
 
+PEAK_RATE = 8000  # Hz: plenty for a waveform picture
+_PEAK_BLOCK = 80  # samples per fine block (10 ms); the requested points are folded from these
+
+
+def peaks(src: str, points: int = 8000) -> tuple[list[float], float]:
+    """A waveform for the window without decoding the recording there: the largest |sample| (0..1) in each of `points` equal slices, and the duration in seconds.
+    ffmpeg decodes to 8 kHz mono and the output is read in chunks, so a long recording never sits in memory (only one number per 10 ms is kept)."""
+    proc = subprocess.Popen(
+        [ffmpeg_exe(), "-v", "error", "-i", src, "-vn", "-ac", "1", "-ar", str(PEAK_RATE), "-f", "s16le", "-"],
+        stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+    )
+    assert proc.stdout is not None
+    blocks: list[np.ndarray] = []
+    carry = b""
+    total = 0
+    while True:
+        raw = proc.stdout.read(1 << 20)
+        if not raw:
+            break
+        raw = carry + raw
+        usable = len(raw) - len(raw) % (2 * _PEAK_BLOCK)  # whole blocks only; the rest waits for the next chunk
+        carry = raw[usable:]
+        if usable:
+            data = np.frombuffer(raw[:usable], dtype="<i2")
+            blocks.append(np.abs(data.astype(np.int32)).reshape(-1, _PEAK_BLOCK).max(axis=1).astype(np.int16))
+            total += usable // 2
+    if proc.wait() != 0:
+        raise RuntimeError("The audio could not be read from this file")
+    tail = np.frombuffer(carry[: len(carry) - len(carry) % 2], dtype="<i2")
+    if len(tail):
+        blocks.append(np.array([np.abs(tail.astype(np.int32)).max()], dtype=np.int16))
+        total += len(tail)
+    if not total:
+        raise RuntimeError("The recording has no audio")
+    fine = np.concatenate(blocks)
+    points = max(1, min(int(points), len(fine)))
+    edges = np.linspace(0, len(fine), points, endpoint=False).astype(np.int64)
+    folded = np.maximum.reduceat(fine, edges)
+    return [round(float(v) / 32768.0, 4) for v in folded], total / PEAK_RATE
+
+
 def clip(src: str, dst: str, start: float, end: float) -> None:
     """Export a trimmed audio clip, re-encoded to match the destination extension."""
     subprocess.run(

@@ -18,10 +18,6 @@ function waveColors() {
   return { waveColor: v("--wave", "#c3b8de"), progressColor: v("--wave-progress", "#e8467c"), cursorColor: v("--wave-progress", "#e8467c") };
 }
 
-const MIME: Record<string, string> = {
-  mp3: "audio/mpeg", wav: "audio/wav", m4a: "audio/mp4", flac: "audio/flac", ogg: "audio/ogg", opus: "audio/ogg",
-  aac: "audio/aac", mp4: "video/mp4", mov: "video/quicktime", mkv: "video/x-matroska", webm: "video/webm",
-};
 type State = { kind: "loading" } | { kind: "ready" } | { kind: "error"; message: string } | { kind: "missing" };
 
 const Waveform = forwardRef<WaveformHandle, Props>(({ path, result, onTime, onSelection, onPlaying, onDuration }, ref) => {
@@ -48,14 +44,22 @@ const Waveform = forwardRef<WaveformHandle, Props>(({ path, result, onTime, onSe
     let dead = false;
     setState({ kind: "loading" });
     const rp = RegionsPlugin.create();
-    const w = WaveSurfer.create({ container: box.current!, height: 46, ...waveColors(), cursorWidth: 2, barWidth: 3, barGap: 3, barRadius: 3, plugins: [rp] });
-    regions.current = rp; ws.current = w;
-    rp.enableDragSelection({ color: "rgba(124, 92, 255, 0.14)" });
-    w.on("timeupdate", (t) => cb.current.onTime(t));
-    w.on("play", () => cb.current.onPlaying?.(true));
-    w.on("pause", () => cb.current.onPlaying?.(false));
-    w.on("ready", (d) => { if (!dead) { setState({ kind: "ready" }); setDuration(d); cb.current.onDuration?.(d); } });
-    w.on("error", (e) => { if (!dead) setState({ kind: "error", message: String(e instanceof Error ? e.message : e) }); });
+    ws.current = null; regions.current = null;
+    let w: WaveSurfer | null = null;
+    const fail = (e: unknown) => { if (!dead) setState({ kind: "error", message: String(e instanceof Error ? e.message : e).replace(/^Error invoking remote method '[^']+': (Error: )?/, "") }); };
+    // The window never decodes the recording: the main process makes the waveform (cached) and the player streams the file from media://.
+    window.api.peaks(path).then((r) => {
+      if (dead) return;
+      if (!r) { setState({ kind: "missing" }); return; }
+      w = WaveSurfer.create({ container: box.current!, height: 46, ...waveColors(), cursorWidth: 2, barWidth: 3, barGap: 3, barRadius: 3, plugins: [rp], url: window.api.mediaUrl(path), peaks: [r.peaks], duration: r.duration });
+      regions.current = rp; ws.current = w;
+      rp.enableDragSelection({ color: "rgba(124, 92, 255, 0.14)" });
+      w.on("timeupdate", (t) => cb.current.onTime(t));
+      w.on("play", () => cb.current.onPlaying?.(true));
+      w.on("pause", () => cb.current.onPlaying?.(false));
+      w.on("ready", (d) => { if (!dead) { setState({ kind: "ready" }); setDuration(d); cb.current.onDuration?.(d); } });
+      w.on("error", fail);
+    }).catch(fail);
     rp.on("region-created", (r) => {
       if (r.id.startsWith("seg-")) return;
       rp.getRegions().filter((x) => !x.id.startsWith("seg-") && x !== r).forEach((x) => x.remove());
@@ -66,11 +70,7 @@ const Waveform = forwardRef<WaveformHandle, Props>(({ path, result, onTime, onSe
     rp.on("region-updated", changed);
     rp.on("region-removed", (r) => { if (!r.id.startsWith("seg-")) cb.current.onSelection(null); });
 
-    const ext = path.split(".").pop()?.toLowerCase() ?? "";
-    window.api.readAudio(path)
-      .then((bytes) => { if (dead) return; if (!bytes) { setState({ kind: "missing" }); return; } return w.loadBlob(new Blob([bytes as BlobPart], { type: MIME[ext] ?? "audio/mpeg" })); })
-      .catch((e) => { if (!dead) setState({ kind: "error", message: String(e instanceof Error ? e.message : e).replace(/^Error invoking remote method '[^']+': (Error: )?/, "") }); });
-    return () => { dead = true; cb.current.onPlaying?.(false); w.destroy(); };
+    return () => { dead = true; cb.current.onPlaying?.(false); w?.destroy(); };
   }, [path, attempt]);
 
   useEffect(() => {

@@ -292,6 +292,13 @@ def cmd_export_clips(a) -> None:
     emit("done", paths=paths)
 
 
+def cmd_peaks(a) -> None:
+    from .audio import peaks
+
+    values, duration = peaks(a.input, a.points)
+    emit("done", peaks=values, duration=duration)
+
+
 def cmd_clip(a) -> None:
     from .audio import clip
 
@@ -397,6 +404,11 @@ def build_parser() -> argparse.ArgumentParser:
     c.add_argument("--start", type=float, required=True)
     c.add_argument("--end", type=float, required=True)
     c.set_defaults(fn=cmd_clip)
+
+    pk = sub.add_parser("peaks")
+    pk.add_argument("input")
+    pk.add_argument("--points", type=int, default=8000, choices=range(100, 20001), metavar="N", help="how many waveform points (100 to 20000)")
+    pk.set_defaults(fn=cmd_peaks)
     return p
 
 
