@@ -160,6 +160,7 @@ export default function App() {
                 </div>
               </div>
             )}
+            {P.notice && <p className="alert err main-err" role="alert">{P.notice} <button type="button" className="link-btn" onClick={P.dismissNotice}>{t("Dismiss")}</button></p>}
             {addError && !noProjects && <p className="alert err main-err" role="alert">{addError}</p>}
 
             {P.projects.map((p) => (

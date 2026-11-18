@@ -7,6 +7,7 @@ import { BrowserWindow, app, dialog, ipcMain, powerMonitor, safeStorage, session
 import { EngineEvent, cancelJob, runEngine } from "./engine-client";
 import { redactNames } from "./logRedact";
 import { registerLive } from "./live";
+import { createProjectsStore } from "./projectsStore";
 
 // Show "Cassette" as the app name (menus, About, Dock) instead of "Electron" when run from source.
 // setName also moves the data folder, so keep it exactly where it was: nobody loses their projects or downloaded models.
@@ -253,13 +254,10 @@ app.whenReady().then(() => {
     return res?.type === "done" ? { ok: true, path: r.filePath } : { ok: false, error: String(res?.message ?? "The export failed.").slice(0, 300) };
   });
 
-  const projectsFile = () => path.join(app.getPath("userData"), "projects.json");
-  ipcMain.handle("projects-load", () => { try { return JSON.parse(fs.readFileSync(projectsFile(), "utf8")); } catch { return []; } });
+  const projectsStore = createProjectsStore(app.getPath("userData"), logLine);
+  ipcMain.handle("projects-load", () => projectsStore.load());
   ipcMain.handle("projects-save", (_e, data: unknown) => {
-    fs.mkdirSync(app.getPath("userData"), { recursive: true });
-    const tmp = projectsFile() + ".tmp";
-    fs.writeFileSync(tmp, JSON.stringify(data)); fs.renameSync(tmp, projectsFile()); // atomic: never leaves a half-written file
-    return true;
+    try { projectsStore.save(data); return { ok: true }; } catch (e) { return { ok: false, error: String((e as Error).message) }; }
   });
   // Writes <audio name>.transcript.json beside the audio file (optional setting in the app).
   ipcMain.handle("save-sidecar", (_e, audioPath: string, data: unknown) => {
