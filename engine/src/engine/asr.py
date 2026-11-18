@@ -85,10 +85,25 @@ def _whisper_helper(device: str):
     """The smallest downloaded Whisper size, for the things Parakeet cannot do (finding the language, translating). None when there is none."""
     from . import models
 
-    for name in ("tiny", "base", "small", "medium", "large-v3-turbo", "large-v3"):
+    for name in ("tiny", "base", "small", "medium", "large-v3"):  # not large-v3-turbo: it cannot translate
         if models._cached(models.WHISPER_MODELS[name]):
             return load_model(name, device, "faster")[0]
     return None
+
+
+NO_TRANSLATE = {"large-v3-turbo"}  # trained without the translate task: it mostly returns the original language
+
+
+def translation_model(current_name: str, current_model, device: str):
+    """A Whisper model that can translate: the current one, else the best downloaded size other than turbo."""
+    if current_name not in NO_TRANSLATE and not current_name.startswith(("parakeet", "moonshine")):
+        return current_model
+    from . import models
+
+    for name in ("medium", "small", "base", "large-v3", "tiny"):
+        if models._cached(models.WHISPER_MODELS[name]):
+            return load_model(name, device, "faster")[0]
+    raise RuntimeError("Translating needs a Whisper size other than Large v3 turbo. Download Small in Settings, Storage and models.")
 
 
 def load_model(model_name: str, device: str, backend: str = "faster", vad: bool = False):

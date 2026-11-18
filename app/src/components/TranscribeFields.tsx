@@ -120,6 +120,7 @@ export function ExtrasField({ eff, set, advanced, status, onOpenSettings }: Sect
     <>
       <label className="pv-check"><input type="checkbox" checked={translate} onChange={(e) => set({ translate: e.target.checked }, true)} />
         <span><b>{target === "en" ? t("English translation") : t("Translation")}</b><small>{t("Adds a translation under lines in other languages.")}</small></span></label>
+      {translate && !have && eff.model === "large-v3-turbo" && <small className="note">{t("Translation uses a different, smaller model, because Large v3 turbo cannot translate.")}</small>}
       {translate && (
         <label className="field pv-target"><span>{t("Translate into")}</span>
           <select className="input" value={target} disabled={!have} onChange={(e) => set({ translateTo: e.target.value }, true)}>
