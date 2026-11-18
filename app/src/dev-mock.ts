@@ -48,11 +48,11 @@ const lines: [string, string][] = [
 function fake(path = "") {
   const english = /meeting|english/i.test(path);
   let t = 0.5;
-  const segments = (english ? linesEn : lines).map(([speaker, text]) => {
+  const segments = (english ? linesEn : lines).map(([speaker, text], n) => {
     const ws = text.split(" "), start = t;
     const words = ws.map((word, i) => ({ start: start + i * 0.45, end: start + i * 0.45 + 0.4, word: (i === 0 ? "" : " ") + word, speaker, prob: (i === 3 && speaker === "SPEAKER_02") || i % 6 === 4 ? 0.3 : 0.95 }));
     t = start + ws.length * 0.45 + 0.5;
-    return { start, end: t - 0.5, speaker, text, words };
+    return { start, end: t - 0.5, speaker, text, words, ...(n === 4 ? { overlap: true } : {}) }; // one overlap flag, to try the overlap jump key
   });
   return { language: english ? "en" : "de", duration: 24, speakers: ["SPEAKER_00", "SPEAKER_01", "SPEAKER_02"], segments };
 }

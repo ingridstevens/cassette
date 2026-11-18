@@ -266,6 +266,19 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
     for (let i = cur + dir; i >= 0 && i < segs.length; i += dir) if (segs[i].speaker !== segs[cur].speaker) { goToLine(i); return; }
     setAnnounce(dir === 1 ? t("No later line from a different speaker.") : t("No earlier line from a different speaker."));
   };
+  /** Jump to the next or previous line that has a flag: an overlap, a mark or a chapter. */
+  const jumpFlag = (kind: "overlap" | "marked" | "chapter", dir: 1 | -1) => {
+    if (!result) return;
+    const segs = result.segments, cur = currentLine();
+    const has = (s: (typeof segs)[number]) => kind === "overlap" ? !!s.overlap : kind === "marked" ? !!s.marked : !!s.chapter?.trim();
+    for (let i = cur + dir; i >= 0 && i < segs.length; i += dir) if (has(segs[i])) { goToLine(i); return; }
+    const none = {
+      overlap: [t("No later overlap."), t("No earlier overlap."), t("There are no overlaps in this transcript.")],
+      marked: [t("No later marked line."), t("No earlier marked line."), t("No line is marked yet.")],
+      chapter: [t("No later chapter."), t("No earlier chapter."), t("There are no chapters yet.")],
+    }[kind];
+    setAnnounce(segs.some(has) ? (dir === 1 ? none[0] : none[1]) : none[2]);
+  };
   const goToTime = (seconds: number) => {
     setJumpDialog(null);
     if (!result) return;
@@ -286,6 +299,10 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
         else if (e.key.toLowerCase() === "g") setJumpDialog("goto");
         else jumpSpeaker(e.key === "N" || e.shiftKey ? -1 : 1);
       }
+      else if (!mod && !e.altKey && showResult && !busy && /^[omc]$/i.test(e.key) && quietTarget(e.target)) {
+        e.preventDefault();
+        jumpFlag(e.key.toLowerCase() === "o" ? "overlap" : e.key.toLowerCase() === "m" ? "marked" : "chapter", e.shiftKey ? -1 : 1);
+      }
       else if (!mod && !e.altKey && !e.shiftKey && !busy && /^[jkl]$/i.test(e.key) && !typing(e.target) && !document.querySelector("[role=dialog], [role=alertdialog]") && !(e.target instanceof HTMLElement && e.target.closest("[role=menu]"))) {
         e.preventDefault();
         const k = e.key.toLowerCase();
@@ -295,7 +312,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
     };
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [visible, showResult, busy, dialog, jumpDialog, time, result]);
+  }, [visible, showResult, busy, dialog, jumpDialog, time, result]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const payload = (format = "", options?: ExportOpts) => ({
     segments: result!.segments.map(({ words, orig, edited, ...s }) => (["srt", "vtt", "edl"].includes(format) || (options?.pauseMarks && STYLED.has(format)) ? { ...s, edited, words: words.map(({ start, end, word }) => ({ start, end, word })) } : format === "changes" ? { ...s, orig: orig && { text: orig.text } } : s)),
