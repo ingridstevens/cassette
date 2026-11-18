@@ -52,6 +52,14 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     return () => clearTimeout(timer);
   }, [projects, loaded]);
 
+  // flush on close or quit: the debounced save above would not get to run, so a quick edit followed by Cmd+Q was lost
+  const loadedRef = useRef(false); loadedRef.current = loaded;
+  useEffect(() => {
+    const flush = () => { if (loadedRef.current) window.api.saveProjectsSync(projectsRef.current.map(persisted)); };
+    window.addEventListener("beforeunload", flush);
+    return () => window.removeEventListener("beforeunload", flush);
+  }, []);
+
   const add = useCallback((paths: string[]): string => {
     const bad = paths.filter((p) => !MEDIA_EXT.test(p));
     const good = paths.filter((p) => MEDIA_EXT.test(p));
