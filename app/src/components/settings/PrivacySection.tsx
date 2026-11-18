@@ -3,6 +3,8 @@ import { IS_MAC, IS_WIN } from "../../types";
 import { HF_TOKEN_PAGE, Models } from "../useModels";
 import { useT } from "../../i18n";
 import Dialog, { useReturnFocus } from "./Dialog";
+import { SwitchRow } from "./shared";
+import { bytes } from "../../types";
 
 interface Props { models: Models }
 
@@ -15,6 +17,11 @@ export default function PrivacySection({ models }: Props) {
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirm, setConfirm] = useState(false);
+  const [log, setLog] = useState<{ on: boolean; bytes: number } | null>(null);
+  const [clearAsk, setClearAsk] = useState(false);
+  const [logMsg, setLogMsg] = useState("");
+  const refreshLog = () => window.api.logState().then(setLog).catch(() => {});
+  useEffect(() => { void refreshLog(); }, []);
   const input = useRef<HTMLInputElement>(null);
   const back = useReturnFocus();
   const reread = () => window.api.token().then((t) => setHint(t || null));
@@ -112,7 +119,23 @@ export default function PrivacySection({ models }: Props) {
             <p className="st-lead">{t("A text file of what the app did, for troubleshooting. It lists file names and folders, which can themselves be sensitive, but never the text of a transcript. Share it only with people you trust.")}</p></div>
           <button type="button" className="btn" onClick={() => window.api.reveal("log")}>{t("Show log file")}</button>
         </div>
+        {log && (
+          <>
+            <SwitchRow id="log-on" title={t("Keep an activity log")} help={t("Off: nothing more is written to the log. Existing entries stay until you clear them. Without a log it is harder to find out what went wrong.")} on={log.on}
+              onChange={async (on) => { await window.api.setLog(on); setLogMsg(on ? t("The activity log is on.") : t("The activity log is off.")); void refreshLog(); }} />
+            <div className="st-row st-setting"><div className="grow"><b>{t("Clear the log file")}</b><p className="note">{log.bytes === 0 ? t("The log file is empty.") : t("Empties the file ({size} now). The activity list in the app is not affected.", { size: bytes(log.bytes) })}</p></div>
+              <button type="button" className="btn small" disabled={log.bytes === 0} onClick={() => { back.remember(); setClearAsk(true); }}>{t("Clear log…")}</button></div>
+            <p className="st-sr" role="status">{logMsg}</p>
+          </>
+        )}
       </div>
+
+      {clearAsk && (
+        <Dialog title={t("Clear the activity log?")} keepLabel={t("Keep the log")} okLabel={t("Clear log")} onKeep={() => { setClearAsk(false); back.restore(); }}
+          onOk={async () => { await window.api.clearLog(); setClearAsk(false); setLogMsg(t("The activity log was cleared.")); void refreshLog(); back.restore(); }}>
+          <p>{t("The log file is emptied. This cannot be undone. Models, projects and recordings are not touched.")}</p>
+        </Dialog>
+      )}
 
       {confirm && (
         <Dialog title={t("Remove the saved token?")} keepLabel={t("Keep token")} okLabel={t("Remove token")} onKeep={() => { setConfirm(false); back.restore(); }} onOk={remove}>

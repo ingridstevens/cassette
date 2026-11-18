@@ -56,13 +56,17 @@ function createWindow() {
 }
 
 const logFile = () => path.join(app.getPath("userData"), "activity.log");
+/** The log is on unless the marker file exists. A file, not a setting in the window, so the main process (which writes the log) never has to ask. */
+const logOffFile = () => path.join(app.getPath("userData"), "activity-log-off");
+const logOn = () => !fs.existsSync(logOffFile());
 const logLine = (level: string, message: string) => {
+  if (!logOn()) return;
   try { fs.appendFileSync(logFile(), `${new Date().toISOString()} [${level}] ${message}\n`); } catch { /* best effort */ }
 };
 const send = (channel: string, payload: unknown) => {
   if (win && !win.isDestroyed()) win.webContents.send(channel, payload); // the window can be closed while an engine job still runs (macOS keeps the app alive)
   const e = payload as { type?: string; level?: string; message?: string; stage?: string };
-  if (channel === "engine-event" && (e.type === "log" || e.type === "error")) {
+  if (channel === "engine-event" && (e.type === "log" || e.type === "error") && logOn()) {
     try { fs.appendFileSync(logFile(), `${new Date().toISOString()} [${e.level ?? e.type}] ${e.message}\n`); } catch { /* best effort */ }
   }
 };
@@ -204,6 +208,12 @@ app.whenReady().then(() => {
     if (!fs.existsSync(logFile())) fs.writeFileSync(logFile(), "");
     shell.showItemInFolder(logFile());
   });
+  // Activity log controls: is it on, how big is it, switch it, empty it. Nothing here reads the log's text.
+  ipcMain.handle("log-state", () => { let bytes = 0; try { bytes = fs.statSync(logFile()).size; } catch { /* no log yet */ } return { on: logOn(), bytes }; });
+  ipcMain.handle("log-set", (_e, on: unknown) => {
+    try { if (on) fs.rmSync(logOffFile(), { force: true }); else fs.writeFileSync(logOffFile(), ""); return { ok: true }; } catch (e) { return { ok: false, error: String((e as Error).message) }; }
+  });
+  ipcMain.handle("log-clear", () => { try { fs.writeFileSync(logFile(), ""); return { ok: true }; } catch (e) { return { ok: false, error: String((e as Error).message) }; } });
   ipcMain.handle("paths", () => ({
     models: modelsDir(), log: logFile(), token: tokenFile(), data: app.getPath("userData"),
     system: { platform: process.platform, arch: process.arch, chip: os.cpus()[0]?.model ?? "", cores: os.cpus().length, memGB: Math.round(os.totalmem() / 2 ** 30) },

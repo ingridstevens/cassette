@@ -45,8 +45,7 @@ Inside the app's data folder (Settings → Privacy → *Open*, or Settings → S
 Next to a recording (only if Settings → Saving is on): `name.transcript.json`. Your audio file is never changed
 or moved.
 
-## Removing things
-
+## Removing things In **Settings, Privacy, Activity log** you can switch **Keep an activity log** off (nothing more is written; existing entries stay) and **Clear log…** to empty the file. Without a log it is harder to find out what went wrong, so leave it on unless file names are the concern.
 - **Delete a project:** the **×** on the project in the sidebar opens a dialog that lists what will go and what stays. **Delete** removes the
   project and its transcript and edits from the app, the backup file (`.transcript.json`) next to the recording if there is one, and the
   recording itself only if Cassette made it (a recording made with **Record**). A file you added yourself is never touched, and neither are
