@@ -185,8 +185,11 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
   };
   const highlights = result?.highlights ?? [];
   const keptHighlights = highlights.filter((h) => !h.suggested);
+  /** The highlight whose Play was pressed last: its card shows progress while the audio plays. */
+  const [hlClip, setHlClip] = useState<{ start: number; end: number } | null>(null);
   const playRange = (start: number, end: number) => {
     window.clearTimeout(clipTimer.current);
+    setHlClip({ start, end });
     player.current?.seek(Math.max(0, start - 0.2));
     clipTimer.current = window.setTimeout(() => player.current?.pause(), Math.max(400, ((end + 0.2 - start) / rate) * 1000));
   };
@@ -735,7 +738,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
           onRemove={(id) => patchResult((x) => ({ ...x, highlights: (x.highlights ?? []).filter((h) => h.id !== id) }))}
           onKeepAll={() => patchResult((x) => ({ ...x, highlights: (x.highlights ?? []).map((h) => ({ ...h, suggested: undefined })) }))}
           onDismissAll={() => patchResult((x) => ({ ...x, highlights: (x.highlights ?? []).filter((h) => !h.suggested) }))}
-          onPlay={playRange} onSeek={(s) => player.current?.seek(s)} onSaveClips={saveClips}
+          onPlay={playRange} onPause={() => { window.clearTimeout(clipTimer.current); player.current?.pause(); }} clip={playing ? hlClip : null} time={time} onSeek={(s) => player.current?.seek(s)} onSaveClips={saveClips}
           onSaveOne={async (h) => { if (await window.api.saveClip(path, Math.max(0, h.start - 0.3), h.end + 0.3)) flash(t("Clip saved ✓")); }}
           onEditSummary={(text) => patchResult((x) => (x.summary ? { ...x, summary: { ...x.summary, summary: text } } : x))}
           onClearSummary={() => patchResult((x) => { const { summary: _s, ...rest } = x; return rest; })} />} />

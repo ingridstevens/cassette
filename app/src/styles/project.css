@@ -358,6 +358,9 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .pv-hl-item::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #2fc9a0; }
 .pv-hl-item.sug { border: 0; background: color-mix(in srgb, var(--surface) 70%, transparent); box-shadow: inset 0 0 0 1.5px rgba(20, 130, 100, .4); }
 .pv-hl-item.sug::before { background: repeating-linear-gradient(to bottom, #2fc9a0 0 6px, transparent 6px 10px); }
+.pv-hl-fill { position: absolute; left: 0; bottom: 0; height: 3px; background: var(--violet-ink); transition: width .25s linear; pointer-events: none; }
+.pv-hl-list .pv-hl-item.playing { box-shadow: 0 1px 3px rgba(60, 30, 110, .1), inset 0 0 0 1.5px var(--violet-ink); }
+@media (prefers-reduced-motion: reduce) { .pv-hl-fill { transition: none; } }
 .pv-hl-text { font-size: 15px; line-height: 1.5; }
 .pv-hl-head b { font-size: 13px; }
 .pv-hl-head .pv-flag { margin-left: auto; }

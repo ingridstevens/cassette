@@ -14,17 +14,19 @@ const chosenFormat = () => { try { const f = localStorage.getItem(FORMAT_KEY); r
 
 interface Props {
   project: Project; visible: boolean;
+  /** The highlight range being played right now (null when nothing plays) and the playhead time. */
+  clip: { start: number; end: number } | null; time: number;
   job: LlmJob | null; error: string;
   onSuggest(model: string): void; onSummarize(model: string): void; onStop(): void;
   onKeep(id: string): void; onRemove(id: string): void; onKeepAll(): void; onDismissAll(): void;
-  onPlay(start: number, end: number): void; onSeek(start: number): void;
+  onPlay(start: number, end: number): void; onPause(): void; onSeek(start: number): void;
   onSaveClips(format: string): void; onSaveOne(h: Highlight): void; onEditSummary(text: string): void; onClearSummary(): void;
 }
 
 /** Grows the box to its text. A hidden tab measures 0, so it is measured again when the tab is shown. */
 const fit = (el: HTMLTextAreaElement | null) => { if (el && el.offsetParent) { el.style.height = "auto"; el.style.height = `${el.scrollHeight + 2}px`; } };
 
-export default function HighlightsTab({ project, visible, job, error, onSuggest, onSummarize, onStop, onKeep, onRemove, onKeepAll, onDismissAll, onPlay, onSeek, onSaveClips, onSaveOne, onEditSummary, onClearSummary }: Props) {
+export default function HighlightsTab({ project, visible, clip, time, job, error, onSuggest, onSummarize, onStop, onKeep, onRemove, onKeepAll, onDismissAll, onPlay, onPause, onSeek, onSaveClips, onSaveOne, onEditSummary, onClearSummary }: Props) {
   const t = useT();
   const { result, names } = project;
   const [status, setStatus] = useState<ModelStatus | null>(null);
@@ -132,8 +134,19 @@ export default function HighlightsTab({ project, visible, job, error, onSuggest,
         )}
         {all.length === 0 ? <p className="note pv-hl-empty">{t("No highlights yet.")}</p> : (
           <ul className="pv-hl-list">
-            {all.map((h) => (
-              <li key={h.id} className={"card pv-hl-item" + (h.suggested ? " sug" : "")}>
+            {all.map((h) => {
+              // Playing: this card's range is the one being played and the playhead is still inside it (the pause timer may lag a moment).
+              const on = !!clip && clip.start === h.start && clip.end === h.end && time <= h.end + 0.6;
+              const frac = on ? Math.min(1, Math.max(0, (time - h.start) / Math.max(0.1, h.end - h.start))) : 0;
+              const playBtn = (cls: string) => on ? (
+                <button type="button" className={cls} onClick={onPause} aria-label={t("Pause the highlight at {time}", { time: fmt(h.start) })}>{t("Pause")}</button>
+              ) : (
+                <button type="button" className={cls} onClick={() => onPlay(h.start, h.end)} aria-label={t("Play the highlight at {time}", { time: fmt(h.start) })}>{t("Play")}</button>
+              );
+              return (
+              <li key={h.id} className={"card pv-hl-item" + (h.suggested ? " sug" : "") + (on ? " playing" : "")}>
+                {on && <span className="pv-hl-fill" aria-hidden style={{ width: `${Math.round(frac * 100)}%` }} />}
+                {on && <span className="pv-sr" role="status" aria-live="polite">{t("Playing the highlight at {time}", { time: fmt(h.start) })}</span>}
                 <div className="pv-hl-head">
                   <span className="sw" style={{ background: PALETTE[Math.max(0, result.speakers.indexOf(h.speaker)) % PALETTE.length] }} aria-hidden />
                   <b>{who(h)}</b>
@@ -147,9 +160,9 @@ export default function HighlightsTab({ project, visible, job, error, onSuggest,
                   {h.suggested ? (
                     <button type="button" className="btn sun small" onClick={() => onKeep(h.id)}>{t("Keep")}</button>
                   ) : (
-                    <button type="button" className="btn sun small" onClick={() => onPlay(h.start, h.end)} aria-label={t("Play the highlight at {time}", { time: fmt(h.start) })}>{t("Play")}</button>
+                    playBtn("btn sun small")
                   )}
-                  {h.suggested && <button type="button" className="btn small" onClick={() => onPlay(h.start, h.end)} aria-label={t("Play the highlight at {time}", { time: fmt(h.start) })}>{t("Play")}</button>}
+                  {h.suggested && playBtn("btn small")}
                   {h.suggested ? (
                     <button type="button" className="btn small" onClick={() => onRemove(h.id)}>{t("Dismiss")}</button>
                   ) : (
@@ -160,7 +173,8 @@ export default function HighlightsTab({ project, visible, job, error, onSuggest,
                   )}
                 </div>
               </li>
-            ))}
+              );
+            })}
           </ul>
         )}
         {kept.length > 0 && (
