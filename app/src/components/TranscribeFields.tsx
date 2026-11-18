@@ -111,8 +111,12 @@ export function TranscriptOnlyField({ eff, set }: Section) {
   );
 }
 
+/** Parakeet and Moonshine ignore the custom vocabulary and "Skip silence". */
+export const ignoresExtras = (model: string) => /^(parakeet|moonshine)/.test(model);
+
 export function ExtrasField({ eff, set, advanced, status, onOpenSettings }: Section) {
   const t = useT();
+  const limited = ignoresExtras(eff.model);
   const translate = eff.translate ?? currentLang() === "en";
   const model = status?.llm?.translation?.[0], have = !!model && !!status?.llm?.models?.[model.id];
   const target = have ? eff.translateTo ?? "en" : "en";
@@ -131,17 +135,19 @@ export function ExtrasField({ eff, set, advanced, status, onOpenSettings }: Sect
       )}
       <label className="pv-check"><input type="checkbox" checked={!!eff.verbatim} onChange={(e) => set({ verbatim: e.target.checked }, true)} />
         <span><b>{t("Write hesitations down")}</b><small>{t("Keeps “um” and “äh”. A nudge, not a guarantee.")}</small></span></label>
-      {advanced && <label className="pv-check"><input type="checkbox" checked={!!eff.vad} onChange={(e) => set({ vad: e.target.checked })} />
-        <span><b>{t("Skip silence")}</b><small>{t("Ignores long pauses. Faster, but can miss quiet speech.")}</small></span></label>}
+      {advanced && <label className="pv-check"><input type="checkbox" checked={!!eff.vad && !limited} disabled={limited} onChange={(e) => set({ vad: e.target.checked })} />
+        <span><b>{t("Skip silence")}</b><small>{limited ? t("Not used by this model.") : t("Ignores long pauses. Faster, but can miss quiet speech.")}</small></span></label>}
     </>
   );
 }
 
 export function NamesField({ eff, set, bare }: Section) {
   const t = useT();
+  const limited = ignoresExtras(eff.model);
   return (
     <label className="field"><span className={bare ? "pv-sr" : undefined}>{t("Names and special words")}</span>
-      <textarea className="input" placeholder={t("Jonas, Müller GmbH…")} value={eff.prompt} onChange={(e) => set({ prompt: e.target.value })} />
+      <textarea className="input" placeholder={t("Jonas, Müller GmbH…")} value={eff.prompt} disabled={limited} onChange={(e) => set({ prompt: e.target.value })} />
+      {limited && <small className="note">{t("Not used by this model.")}</small>}
     </label>
   );
 }
