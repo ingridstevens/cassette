@@ -17,7 +17,7 @@ jobs:
         run: uv run pytest -q
       - name: App typecheck, translations and build
         working-directory: app
-        run: npm ci && npx tsc --noEmit && npm run i18n:check && npm run build
+        run: npm ci && npx tsc --noEmit && npm run i18n:check && npm run links:check && npm run build
   package:
     if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     needs: test

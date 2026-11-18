@@ -20,7 +20,7 @@ export default function PrivacySection({ models }: Props) {
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(false);
   const [confirm, setConfirm] = useState(false);
-  const [log, setLog] = useState<{ on: boolean; bytes: number } | null>(null);
+  const [log, setLog] = useState<{ on: boolean; bytes: number; hideNames: boolean } | null>(null);
   const [clearAsk, setClearAsk] = useState(false);
   const [logMsg, setLogMsg] = useState("");
   const refreshLog = () => window.api.logState().then(setLog).catch(() => {});
@@ -136,6 +136,8 @@ export default function PrivacySection({ models }: Props) {
           <>
             <SwitchRow id="log-on" title={t("Keep an activity log")} help={t("Off: nothing more is written to the log. Existing entries stay until you clear them. Without a log it is harder to find out what went wrong.")} on={log.on}
               onChange={async (on) => { await window.api.setLog(on); setLogMsg(on ? t("The activity log is on.") : t("The activity log is off.")); void refreshLog(); }} />
+            <SwitchRow id="log-hide" title={t("Hide file and folder names in the log")} help={t("New entries show [file] or [path] instead of the paths and audio or video file names the app recognises. Best effort: a name inside ordinary text may remain, so check the log before you share it. Entries already written are not changed.")} on={log.hideNames}
+              onChange={async (hide) => { await window.api.hideLogNames(hide); setLogMsg(hide ? t("File names are hidden in new log entries.") : t("File names are shown in new log entries.")); void refreshLog(); }} />
             <div className="st-row st-setting"><div className="grow"><b>{t("Clear the log file")}</b><p className="note">{log.bytes === 0 ? t("The log file is empty.") : t("Empties the file ({size} now). The activity list in the app is not affected.", { size: bytes(log.bytes) })}</p></div>
               <button type="button" className="btn small" disabled={log.bytes === 0} onClick={() => { back.remember(); setClearAsk(true); }}>{t("Clear log…")}</button></div>
             <p className="st-sr" role="status">{logMsg}</p>
