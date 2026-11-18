@@ -535,3 +535,13 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .pv-changes li { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
 .pv-changes li p { margin: 0; font-size: 13px; color: var(--ink2); overflow-wrap: anywhere; }
 .pv-changes li p b { color: var(--ink); }
+
+/* start sheet (#103): Start sits right under the summary line, the questions fold away behind "Change settings" */
+.pv-start .pv-summary { margin: 0; font-size: 15px; color: var(--ink2); }
+.pv-start .pv-actions { position: static; margin: 0; padding: 0; background: none; border-top: 0; }
+.pv-start .pv-fold { padding-left: 4px; }
+.pv-start .pv-fold::before { content: "▸"; display: inline-block; margin-right: 6px; transition: transform .15s; }
+.pv-start .pv-fold[aria-expanded="true"]::before { transform: rotate(90deg); }
+@media (prefers-reduced-motion: reduce) { .pv-start .pv-fold::before { transition: none; } }
+.pv-start .pv-start-fields-anchor { margin-top: 10px; }
+.pv-center:has(.pv-start) { padding-bottom: 24px; }

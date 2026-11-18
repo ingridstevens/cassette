@@ -5,12 +5,11 @@ import { ModelStatus, Options, Project, fmt } from "../types";
 import TranscribeFields from "./TranscribeFields";
 import { modelName } from "./modelInfo";
 import { Models } from "./useModels";
+import { loadStartOpen, saveStartOpen, summaryLine } from "../startSummary";
 import "../styles/project.css";
 
 /** The length of the sample run that lets you check the settings before the whole recording. */
 export const TRIAL_SECONDS = 180;
-/** Recordings predicted to take longer than this get the questions; shorter ones only get the estimate. */
-export const ASK_ABOVE_SECONDS = 60;
 
 type TFn = ReturnType<typeof useT>;
 
@@ -55,15 +54,12 @@ interface Props {
 export default function StartSheet({ project, duration, eff, info, set, models, canStart, blocker, othersWaiting, onStart, onTrial, onApplyToOthers, onRemember, onOpenSettings }: Props) {
   const t = useT();
   const { status, onBattery, memGB, engine, est, forModel } = info;
-  const [more, setMore] = useState(false);
-  const asks = !!est && est.mid > ASK_ABOVE_SECONDS;
-  const open = asks || more;
-  // "Change settings" opens the questions below the estimate; bring them into view so the sticky Start bar doesn't leave only the first one showing.
+  // The questions are folded behind "Change settings" and the choice is remembered, so Start stays in view.
+  const [open, setOpen] = useState(loadStartOpen);
   const fields = useRef<HTMLDivElement>(null);
-  useEffect(() => { if (more) fields.current?.scrollIntoView({ block: "start", behavior: "smooth" }); }, [more]);
+  const toggle = () => { const next = !open; setOpen(next); saveStartOpen(next); if (next) setTimeout(() => fields.current?.scrollIntoView({ block: "nearest", behavior: "smooth" }), 0); };
   const choose = (p: Partial<Options>, remember = false) => { set(p); if (remember) onRemember(p); };
 
-  const timeOf = (model: string) => (duration > 0 ? spanText(t, forModel(model, duration)) : "");
   const trialTime = duration > TRIAL_SECONDS * 2 ? spanText(t, forModel(eff.model, TRIAL_SECONDS)) : "";
   const batteryNote = onBattery && !!est && est.mid > 600;
   const share: Partial<Options> = { language: eff.language, multilingual: eff.multilingual, numSpeakers: eff.numSpeakers, minSpeakers: eff.minSpeakers, maxSpeakers: eff.maxSpeakers, noDiarize: eff.noDiarize, model: eff.model, translate: eff.translate, verbatim: eff.verbatim };
@@ -75,24 +71,26 @@ export default function StartSheet({ project, duration, eff, info, set, models, 
         <p className="pv-lead">{project.name}{duration > 0 ? ` · ${fmt(duration)}` : ""}. {t("Everything happens on this computer.")}</p>
       </div>
 
-      <div className="pv-estimate" role="status">
-        <b>{est ? t("Estimated time: {time}", { time: spanText(t, est) }) : t("Estimated time: working it out…")}</b>
-        <span>
-          {est ? (est.rough ? t("A rough guess. The app learns how fast this computer is after your first run.") : t("Based on earlier runs on this computer.")) : t("The length of the recording is being read.")}{" "}
-          {engine === "mlx" ? t("Words are written on the Apple GPU.") : t("Words are written on the CPU.")} {t("Translation and several languages add time.")}
-        </span>
-      </div>
+      <p className="pv-summary">{summaryLine(t, eff)}</p>
+
       {batteryNote && <div className="alert warn" role="status">{t("You're on battery. A job this long uses a lot of power: consider plugging in first.")}</div>}
       {tooBigForMemory(eff.model, !eff.noDiarize, memGB) && <div className="alert warn" role="status">{t("{model} may not fit in this computer's {mem} GB of memory and could stop partway. The {safer} size is safer.", { model: modelName(eff.model), mem: memGB ?? 0, safer: modelName(saferModel(!eff.noDiarize, memGB)) })}</div>}
       {blocker && <div className="alert warn" role="status">{blocker}</div>}
 
-      {open && <div ref={fields} className="pv-start-fields-anchor"><TranscribeFields hasResult={!!project.result} eff={eff} set={choose} status={status} models={models} timeOf={duration > 0 ? timeOf : undefined} onOpenSettings={onOpenSettings} /></div>}
-
       <div className="pv-actions">
         <button type="button" className="btn sun big" disabled={!canStart} onClick={onStart}>{est ? t("Start ({time})", { time: spanText(t, est) }) : t("Start")}</button>
         {trialTime && <button type="button" className="btn big" disabled={!canStart} onClick={onTrial}>{t("Try the first 3 minutes ({time})", { time: trialTime })}</button>}
-        {!open && <button type="button" className="btn quiet" onClick={() => setMore(true)}>{t("Change settings")}</button>}
       </div>
+      <p className="note">
+        {est ? (est.rough ? t("A rough guess. The app learns how fast this computer is after your first run.") : t("Based on earlier runs on this computer.")) : t("The length of the recording is being read.")}{" "}
+        {engine === "mlx" ? t("Words are written on the Apple GPU.") : t("Words are written on the CPU.")} {t("Translation and several languages add time.")}
+      </p>
+
+      <div>
+        <button type="button" className="btn quiet pv-fold" aria-expanded={open} aria-controls="start-settings" onClick={toggle}>{t("Change settings")}</button>
+        {open && <div id="start-settings" ref={fields} className="pv-start-fields-anchor"><TranscribeFields hasResult={!!project.result} eff={eff} set={choose} status={status} models={models} onOpenSettings={onOpenSettings} /></div>}
+      </div>
+
       {trialTime && <p className="note">{t("A short sample shows whether the speakers and languages look right before you spend the whole time.")}</p>}
       {othersWaiting > 0 && (
         <p className="note"><button type="button" className="linkish" onClick={() => onApplyToOthers(share)}>

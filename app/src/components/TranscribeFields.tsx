@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { currentLang, useT } from "../i18n";
 import { MAIN_LANGS, TRANSLATE_LANGS, WHISPER_LANGS, langName } from "../languages";
 import { ModelStatus, Options } from "../types";
@@ -74,11 +75,15 @@ export function ModelField({ eff, set, status, models, timeOf, onOpenSettings, b
   const moon = (status?.moonshine?.catalog ?? []).filter((m) => status?.whisper[m.id]).map((m) => ({ id: m.id, name: moonshineName(m.id), like: "Very fast. This one language only" })); // only the ones already downloaded
   const base: { id: string; name: string; tag?: string; like: string }[] = [...RECOMMENDED, ...engines, ...moon];
   const list = base.some((m) => m.id === eff.model) ? base : [...base, WHISPER_MODELS.find((m) => m.id === eff.model) ?? { id: eff.model, name: eff.model, like: "" }];
+  const [all, setAll] = useState(false);
+  // Only the models that are on this computer (and the chosen one) get a button; "More models…" shows the rest to download.
+  const shown = all || !status ? list : list.filter((m) => status.whisper[m.id] || m.id === eff.model);
+  const hidden = list.length - shown.length;
   const dlPct = models.dl?.fraction != null ? ` ${Math.round(models.dl.fraction * 100)}%` : "";
   return (
     <fieldset className="pv-radios">
       <legend className={bare ? "pv-sr" : undefined}>{t("Transcription model")}</legend>
-      {list.map((m) => {
+      {shown.map((m) => {
         const missing = !!status && !status.whisper[m.id];
         const going = models.busy === `download ${m.id}`;
         const label = t(m.name);
@@ -99,7 +104,10 @@ export function ModelField({ eff, set, status, models, timeOf, onOpenSettings, b
         );
       })}
       {models.err && <p className="alert warn" role="alert">{models.err}</p>}
-      <small className="pv-more">{t("Need another size?")} <button type="button" className="linkish" onClick={() => onOpenSettings?.("Transcription")}>{t("Open Settings, Transcription")}</button></small>
+      {(hidden > 0 || all) && (
+        <small className="pv-more"><button type="button" className="linkish" aria-expanded={all} onClick={() => setAll(!all)}>{t("More models…")}</button>
+          {all && <> {t("Need another size?")} <button type="button" className="linkish" onClick={() => onOpenSettings?.("Transcription")}>{t("Open Settings, Transcription")}</button></>}</small>
+      )}
       <span className="pv-sr" aria-live="polite">{models.busy.startsWith("download ") ? t("Downloading {model}", { model: modelName(models.busy.slice(9)) }) + dlPct : ""}</span>
     </fieldset>
   );

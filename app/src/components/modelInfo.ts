@@ -10,7 +10,7 @@ export const WHISPER_MODELS: { id: string; name: string; tag?: "Fast" | "Balance
 ];
 /** Other speech engines, shown beside the Whisper sizes where they can run (Apple Silicon Macs). */
 export const ENGINE_MODELS: { id: string; name: string; tag?: "Fast" | "Balanced" | "Most accurate"; like: string }[] = [
-  { id: "parakeet-v3", name: "Parakeet v3", like: "Very fast. 25 European languages, not Arabic or Persian" },
+  { id: "parakeet-v3", name: "Parakeet v3", like: "Fast, English and 24 European languages" },
 ];
 export const isEngineModel = (id: string) => ENGINE_MODELS.some((m) => m.id === id);
 /** The tagged sizes the start sheet offers first, Large v3 included. */
