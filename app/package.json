@@ -1,5 +1,5 @@
 {
-  "name": "local-transcriber",
+  "name": "cassette",
   "version": "0.1.0",
   "description": "Local multi-speaker transcriber (de/en/fr/es)",
   "main": "dist-electron/main.cjs",
