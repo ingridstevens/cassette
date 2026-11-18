@@ -19,7 +19,7 @@
   --page: #f8edf1;
   /* the look's accent: current line, found word, selected choice, focus ring, waveform progress */
   --hot: #c8456f; --hot-d: #b8395f; --accent-solid: var(--hot); --focus: #6a45e8; --focus-soft: rgba(106, 69, 232, .2);
-  --wave: #c9b9e6; --wave-progress: var(--hot);
+  --wave: #8e7bb8; --wave-progress: var(--hot);
   /* finished steps: quiet, in the look's own secondary ink, so only the running step stands out. Green stays for "all good" states. */
   --done: var(--ink2); --on-done: var(--surface);
   --violet-ink: #5a3fd6; --err-ink: #8e1c40; --warn-ink: #6a3500; --warn: #a35f00; --ok-ink: #0b6347;
