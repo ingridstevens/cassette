@@ -1,3 +1,4 @@
+import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { dataLocations } from "../electron/dataLocations";
 import { EXPORT_FORMATS, REVEAL_TARGETS, MODEL, MODEL_NAME, modelsOk, safeName, saveClipOk, speakerCount, transcribeProblem } from "../electron/validate";
@@ -76,8 +77,8 @@ describe("reveal targets and data locations", () => {
   });
   it("every place lies inside the app's data folder", () => {
     const d = dataLocations("/u/Cassette");
-    expect(d.recordings).toBe("/u/Cassette/recordings");
-    expect(d.projects).toBe("/u/Cassette/projects.json");
-    for (const p of Object.values(d)) expect(p.startsWith("/u/Cassette")).toBe(true);
+    expect(d.recordings).toBe(path.join("/u/Cassette", "recordings"));
+    expect(d.projects).toBe(path.join("/u/Cassette", "projects.json"));
+    for (const p of Object.values(d)) expect(p.startsWith(path.join("/u/Cassette"))).toBe(true);
   });
 });
