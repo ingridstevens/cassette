@@ -70,8 +70,8 @@ await step("highlight selection", async () => {
 });
 await step("suggestions", async () => { await p.getByRole("button", { name: /Suggest highlights/ }).click(); await p.waitForTimeout(3500); await snap("15-highlights-panel"); });
 await step("summary", async () => {
+  await p.getByRole("tab", { name: "Summary", exact: true }).click(); await p.waitForTimeout(300);
   await p.getByRole("button", { name: /Write a summary/ }).click(); await p.waitForTimeout(3500);
-  await p.evaluate(() => document.querySelectorAll("*").forEach((e) => { if (e.scrollHeight > e.clientHeight + 20 && getComputedStyle(e).overflowY !== "visible" && e.getBoundingClientRect().left > 1000) e.scrollTop = e.scrollHeight; }));
   await snap("16-summary");
 });
 await p.close();

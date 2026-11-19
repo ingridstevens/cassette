@@ -8,7 +8,7 @@ import { langName } from "../languages";
 import { languageShares } from "../languageShares";
 import { FILE_MANAGER, ModelStatus, Options, PALETTE, Project, baseName, bytes, defaultName, displayName, fmt, revertLine } from "../types";
 import Hint from "../Hint";
-import { Tab, TABS, legacyAiPart } from "../hints";
+import { AI_PARTS, AiPart, Tab, TABS, legacyAiPart } from "../hints";
 import "../styles/project.css";
 
 export type { Tab };
@@ -50,8 +50,8 @@ interface Props {
   project: Project; tab: Tab; onTab(t: Tab): void; visible: boolean;
   moved: Moved | null; onMoveAll(): void; onUndo(): void;
   canTranscribe: boolean; onAskAgain(): void; onPatch(p: Partial<Project>, label?: string, merge?: boolean): void; onOpenSettings?(section?: string): void; models: Models;
-  /** The Highlights and Ask tabs (built by the project view, which owns the language-model jobs). */
-  highlightsPanel?: ReactNode; askPanel?: ReactNode;
+  /** The Highlights, Summary and Ask tabs (built by the project view, which owns the language-model jobs). */
+  highlightsPanel?: ReactNode; summaryPanel?: ReactNode; askPanel?: ReactNode;
   /** Scroll to and mark a line of the transcript (used by the list of changes in Info). */
   onShowLine?(index: number): void;
   /** Narrow windows: the inspector is a drawer. `id` lets the toggle button point at it; Esc or the Close button asks to close it. */
@@ -60,13 +60,13 @@ interface Props {
   /** Shown above the tabs (the small video preview of a video project). */ top?: ReactNode;
 }
 
-export default function Inspector({ project, tab, onTab, visible, moved, onMoveAll, onUndo, canTranscribe, onAskAgain, onPatch, onOpenSettings, models, highlightsPanel, askPanel, onShowLine, id, drawerOpen, onDrawerClose, easy = false, top }: Props) {
+export default function Inspector({ project, tab, onTab, visible, moved, onMoveAll, onUndo, canTranscribe, onAskAgain, onPatch, onOpenSettings, models, highlightsPanel, summaryPanel, askPanel, onShowLine, id, drawerOpen, onDrawerClose, easy = false, top }: Props) {
   const t = useT();
   if (easy) tab = "speakers";
   const ids = { speakers: useId(), ai: useId(), details: useId() };
   const labels: Record<Tab, string> = { speakers: "Speakers", ai: "AI", details: "Details" };
   const tabs: [Tab, string][] = TABS.map((id) => [id, labels[id]]);
-  const [part, setPart] = useState<"highlights" | "ask">(() => legacyAiPart(tab));
+  const [part, setPart] = useState<AiPart>(() => legacyAiPart(tab));
   const move = (e: React.KeyboardEvent, i: number) => {
     const n = e.key === "ArrowRight" ? (i + 1) % tabs.length : e.key === "ArrowLeft" ? (i + tabs.length - 1) % tabs.length : -1;
     if (n < 0) return;
@@ -87,7 +87,7 @@ export default function Inspector({ project, tab, onTab, visible, moved, onMoveA
       </div>}
       <div className="pv-tab" id={ids[tab]} role="tabpanel" {...(easy ? { "aria-label": t("Speakers") } : { "aria-labelledby": ids[tab] + "-tab" })}>
         {tab === "speakers" && <Speakers project={project} moved={moved} onMoveAll={onMoveAll} onUndo={onUndo} onPatch={onPatch} />}
-        {tab === "ai" && <AiTab part={part} onPart={setPart} highlightsPanel={highlightsPanel} askPanel={askPanel} />}
+        {tab === "ai" && <AiTab part={part} onPart={setPart} panels={{ highlights: highlightsPanel, summary: summaryPanel, ask: askPanel }} />}
         {tab === "details" && (
           <div className="pv-col pv-details">
             <section aria-labelledby={ids.details + "-opt"}>
@@ -105,11 +105,12 @@ export default function Inspector({ project, tab, onTab, visible, moved, onMoveA
   );
 }
 
-/** Highlights (with the summary) and Ask: optional and run by a language model on this computer. A second, smaller set of tabs switches between them. */
-function AiTab({ part, onPart, highlightsPanel, askPanel }: { part: "highlights" | "ask"; onPart(p: "highlights" | "ask"): void; highlightsPanel?: ReactNode; askPanel?: ReactNode }) {
+/** Highlights, Summary and Ask: optional and run by a language model on this computer. A second, smaller set of tabs switches between them. */
+function AiTab({ part, onPart, panels }: { part: AiPart; onPart(p: AiPart): void; panels: Record<AiPart, ReactNode> }) {
   const t = useT();
   const base = useId();
-  const parts: ["highlights" | "ask", string][] = [["highlights", t("Highlights and summary")], ["ask", t("Ask")]];
+  const labels: Record<AiPart, string> = { highlights: t("Highlights"), summary: t("Summary"), ask: t("Ask") };
+  const parts: [AiPart, string][] = AI_PARTS.map((id) => [id, labels[id]]);
   const move = (e: React.KeyboardEvent, i: number) => {
     const n = e.key === "ArrowRight" ? (i + 1) % parts.length : e.key === "ArrowLeft" ? (i + parts.length - 1) % parts.length : -1;
     if (n < 0) return;
@@ -125,7 +126,7 @@ function AiTab({ part, onPart, highlightsPanel, askPanel }: { part: "highlights"
         ))}
       </div>
       <div id={`${base}-panel`} role="tabpanel" aria-labelledby={`${base}-${part}-tab`}>
-        {part === "highlights" ? highlightsPanel : askPanel}
+        {panels[part]}
       </div>
     </div>
   );

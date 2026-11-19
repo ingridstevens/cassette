@@ -3,7 +3,7 @@
 Use highlights to find soundbites and quotes, then save them as text or as audio. A summary writes the minutes for you. Search and replace
 fixes a word that was misheard everywhere at once.
 
-![Highlights tab with one kept highlight and one suggestion](screenshots/15-highlights-panel.jpg)
+![AI tab, Highlights sub-tab, with one kept highlight and one suggestion](screenshots/15-highlights-panel.jpg)
 
 ## Highlight a passage
 
@@ -35,7 +35,7 @@ names, that suggestion is dropped. The model can still pick passages you find du
 The suggestions and the summary are written by a small language model that **runs on your computer**. Nothing is sent anywhere. It is a one-time
 download, offered when you first press **Suggest highlights** or **Write a summary**, or any time under Settings, **Summaries and translation**,
 **Language model**. There you can download several, delete them, and press **Use** to choose the one every project uses. You can also switch
-in the **Language model** menu of the Highlights tab.
+in the **Language model** menu of the AI tab (Highlights and Summary).
 
 | Model | Download (Mac with an Apple chip / elsewhere) | Use it when |
 | --- | --- | --- |
@@ -51,7 +51,7 @@ been tested yet**. If a build of the app does not include the language model, th
 
 ## Save highlights
 
-- **As audio:** in the Highlights tab, choose MP3, M4A or WAV and press **Save N audio clips…**. Pick a folder; the app makes a subfolder called
+- **As audio:** in the AI tab, on Highlights, choose MP3, M4A or WAV and press **Save N audio clips…**. Pick a folder; the app makes a subfolder called
   *name highlights* with **one file per highlight**, numbered in the order they occur, for example `01 - Anna - 0m12s.mp3`. Each clip has a third of a
   second of room on both sides, so it doesn't start or stop mid-breath. To save just one, press **Save clip** on that highlight.
 - **As text:** **Export → Highlights and marked lines (text)** writes every highlight and every marked line as a quote with the speaker and time.
@@ -61,7 +61,7 @@ Highlights you haven't answered yet (still suggested) are not exported.
 
 ## Summary
 
-**Write a summary** (in the Highlights tab, below the highlights) writes:
+**Write a summary** (in the AI tab, on its own Summary sub-tab next to Highlights and Ask) writes:
 
 - a short summary of what the conversation was about;
 - **Topics** with the time each one starts (click a time to play from there);
