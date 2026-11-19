@@ -16,6 +16,8 @@ export default function PrivacySection({ models, opts, set }: Props) {
   // The hook has no way to clear its token state, so this section keeps its own copy and re-reads it from the main process.
   const [secure, setSecure] = useState(true);
   useEffect(() => { window.api.tokenSecure().then(setSecure).catch(() => {}); }, []);
+  const [paths, setPaths] = useState<Awaited<ReturnType<typeof window.api.paths>> | null>(null);
+  useEffect(() => { window.api.paths().then(setPaths).catch(() => {}); }, []);
   const [hint, setHint] = useState<string | null>(models.tokenSet ? models.tokenHint : null);
   const [replacing, setReplacing] = useState(false);
   const [value, setValue] = useState("");
@@ -88,15 +90,25 @@ export default function PrivacySection({ models, opts, set }: Props) {
 
       <div className="card st-card" role="region" aria-labelledby="pv-store">
         <h2 id="pv-store">{t("What is stored where")}</h2>
+        <p className="st-lead">{t("The real places on this computer, read from the app. Nothing here can be changed; Show opens the place in your file manager.")}</p>
         <div className="tbl-wrap"><table className="st-table"><caption className="st-sr">{t("What is stored where")}</caption>
           <thead><tr><th scope="col">{t("What")}</th><th scope="col">{t("Where")}</th><th scope="col" className="act"><span className="st-sr">{t("Action")}</span></th></tr></thead>
           <tbody>
-            <tr><th scope="row">{t("Your recordings")}</th><td>{t("Where you keep them. Never moved or changed.")}</td><td className="act" /></tr>
-            <tr><th scope="row">{t("Projects, transcripts, speaker names")}</th><td>{t("The app folder")}</td><td className="act"><button type="button" className="btn small" aria-label={t("Show the app folder")} onClick={() => window.api.reveal("data")}>{t("Show")}</button></td></tr>
-            <tr><th scope="row">{t("Backup copies")}</th><td>{t("Next to each recording, if the switch in Saving and export is on")}</td><td className="act" /></tr>
-            <tr><th scope="row">{t("Models")}</th><td>{t("The models folder")}</td><td className="act"><button type="button" className="btn small" aria-label={t("Show the models folder")} onClick={() => window.api.reveal("models")}>{t("Show")}</button></td></tr>
-            <tr><th scope="row">{t("Hugging Face token")}</th><td>{hint ? (secure ? t("Encrypted by your computer's secure storage. Last 4 characters: {hint}", { hint: hint.slice(-4) }) : t("Not encrypted: this computer has no password keyring. Last 4 characters: {hint}", { hint: hint.slice(-4) })) : t("No token is saved.")}</td><td className="act" /></tr>
-            <tr><th scope="row">{t("Activity log")}</th><td>{t("File names and folders. It never contains the text of a transcript.")}</td><td className="act"><button type="button" className="btn small" aria-label={t("Show the activity log")} onClick={() => window.api.reveal("log")}>{t("Show")}</button></td></tr>
+            {([
+              [t("Your recordings"), null, t("Where you keep them. Never moved or changed."), null],
+              [t("Recordings made in the app, and the copy of the sample"), paths?.recordings, t("Deleting the project deletes these."), "recordings"],
+              [t("Projects, transcripts, speaker names"), paths?.projects, t("Plus up to three rolling backups of the project list next to it (projects.json.bak1 to bak3). To erase the project list, delete projects.json and these backups."), "data"],
+              [t("Backup copies"), null, t("Next to each recording, if the switch in Saving and export is on"), null],
+              [t("Waveform cache"), paths?.peaks, t("The shape of each recording's sound, not the words. Safe to delete; it is made again."), "peaks"],
+              [t("Temporary files"), paths?.tmp, t("Transcript text handed to the engine, deleted right after use and emptied when the app starts. Decoded audio is held in your system's temporary folder while a job runs."), "tmp"],
+              [t("Models"), paths?.models, t("Downloaded models. No recordings or transcripts."), "models"],
+              [t("Activity log"), paths?.log, t("File names and folders. It never contains the text of a transcript."), "log"],
+            ] as [string, string | null | undefined, string, "recordings" | "data" | "peaks" | "tmp" | "models" | "log" | null][]).map(([what, where, note, key]) => (
+              <tr key={what}><th scope="row">{what}</th><td>{where ? <><Path p={where} /><br /></> : null}<small>{note}</small></td>
+                <td className="act">{key && <button type="button" className="btn small" aria-label={t("Show {what} in the file manager", { what })} onClick={() => window.api.reveal(key)}>{t("Show")}</button>}</td></tr>
+            ))}
+            <tr><th scope="row">{t("Hugging Face token")}</th><td>{paths?.token ? <><Path p={paths.token} /><br /></> : null}<small>{hint ? (secure ? t("Encrypted by your computer's secure storage. Last 4 characters: {hint}", { hint: hint.slice(-4) }) : t("Not encrypted: this computer has no password keyring. Last 4 characters: {hint}", { hint: hint.slice(-4) })) : t("No token is saved.")}</small></td><td className="act" /></tr>
+            <tr><th scope="row">{t("Exports and the anonymisation key")}</th><td><small>{t("Where you chose to save them. The app keeps no list of them and never deletes them.")}</small></td><td className="act" /></tr>
           </tbody></table></div>
         <p className="note">{t("The app does not encrypt these files. Turn on {name} so they are protected when the computer is off.", { name: IS_MAC ? "FileVault" : IS_WIN ? "BitLocker" : t("disk encryption") })}</p>
       </div>

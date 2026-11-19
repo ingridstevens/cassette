@@ -29,7 +29,7 @@ This comes from reading the code and a command-line test; it has not been tried 
 
 **Why is it slow?** On a Mac, transcription runs on the processor. Use a smaller model, or see [Troubleshooting](troubleshooting.md).
 
-**Where are my files?** Projects and models are in the app's data folder (Settings, Privacy, What is stored where, Show). Your recording is never moved or changed.
+**Where are my files?** Projects and models are in the app's data folder (Settings, Privacy, What is stored where, which shows the real paths and a Show button for each). Your recording is never moved or changed.
 
 **Why does speaker detection need an account?** The speaker models are gated on Hugging Face. You can skip it, or
 have someone else set it up once and [import the models folder](getting-started.md).

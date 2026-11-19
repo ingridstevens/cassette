@@ -36,6 +36,8 @@ Translations into English are done by the local speech model, and translations i
 
 ## What is stored, and where
 
+For a data-protection review, [data-evidence.md](data-evidence.md) maps every data kind to its location, who can read it, how to delete it and which network calls exist, with the source file for each statement.
+
 Inside the app's data folder (Settings → Privacy → *Open*, or Settings → Saving → *Show app folder*):
 
 - **Projects:** names, transcripts, speaker names and your edits (`projects.json`).
