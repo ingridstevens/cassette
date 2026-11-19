@@ -19,6 +19,10 @@ describe("transcribeProblem", () => {
     expect(transcribeProblem({ ...ok, device: "gpu" })).toBeTruthy();
     expect(MODEL.test("small\n")).toBe(false);
   });
+  it("accepts only the known audio cleanup modes", () => {
+    for (const audioCleanup of [undefined, "off", "level", "denoise", "both"]) expect(transcribeProblem({ ...ok, audioCleanup })).toBeNull();
+    for (const audioCleanup of ["loudnorm", "both,x", "", 1]) expect(transcribeProblem({ ...ok, audioCleanup })).toBeTruthy();
+  });
 });
 
 describe("speakerCount", () => {

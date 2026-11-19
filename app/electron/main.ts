@@ -7,10 +7,10 @@ import { pathToFileURL } from "node:url";
 import { BrowserWindow, app, dialog, ipcMain, powerMonitor, protocol, safeStorage, session, shell } from "electron";
 import { EngineEvent, cancelJob, killAllJobs, runEngine } from "./engine-client";
 import { logFile, logHideFile, logHides, logLine, logOffFile, logOn, logText } from "./activityLog";
-import { withTempJson } from "./tempJson";
+import { privateTmp, withTempJson } from "./tempJson";
 import { registerLive } from "./live";
 import { createKnownPaths } from "./knownPaths";
-import { EXPORT_FORMATS, REVEAL_TARGETS, isNum, modelsOk, safeName, saveClipOk, speakerCount, transcribeProblem } from "./validate";
+import { AUDIO_CLEANUP, EXPORT_FORMATS, REVEAL_TARGETS, isNum, modelsOk, safeName, saveClipOk, speakerCount, transcribeProblem } from "./validate";
 import { isAppNavigation } from "./navGuard";
 import { byteRange, mediaPathFromUrl, mimeFor, peaksCacheName } from "./media";
 import { createProjectsStore } from "./projectsStore";
@@ -234,8 +234,12 @@ app.whenReady().then(() => {
     if (opts.prompt) a.push(`--prompt=${String(opts.prompt).slice(0, 2000)}`); // "=" form: a value starting with "-" would be read as an option
     if (opts.noDiarize) a.push("--no-diarize");
     if (opts.acceptFit) a.push("--accept-fit");
+    // Audio cleanup works on a temporary copy of the sound. It lives in the app's private temp folder (swept at start), not the shared one.
+    const cleanup = typeof opts.audioCleanup === "string" && opts.audioCleanup !== "off" && AUDIO_CLEANUP.has(opts.audioCleanup);
+    if (cleanup) a.push("--audio-cleanup", String(opts.audioCleanup));
+    const env = cleanup ? { ...baseEnv(), TMPDIR: privateTmp(), TEMP: privateTmp(), TMP: privateTmp() } : baseEnv();
     send("engine-event", { jobId, type: "started", clientId: opts.clientId });
-    runEngine(jobId, a, baseEnv(), (e) => send("engine-event", { jobId, ...e })).then((r) => { if (r?.type === "error") send("engine-event", { jobId, ...r }); });
+    runEngine(jobId, a, env, (e) => send("engine-event", { jobId, ...e })).then((r) => { if (r?.type === "error") send("engine-event", { jobId, ...r }); });
     return jobId;
   });
   ipcMain.handle("cancel", (_e, jobId: string) => cancelJob(jobId));

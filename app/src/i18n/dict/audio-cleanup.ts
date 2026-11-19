@@ -1,0 +1,14 @@
+export default {
+  de: {
+    "Clean up the sound first": "Ton vorher aufbereiten", "Off (recommended)": "Aus (empfohlen)", "Even out the volume": "Lautstärke angleichen", "Reduce steady noise": "Gleichmäßige Störgeräusche verringern", "Both": "Beides", "cleaned sound": "aufbereiteter Ton",
+    "Quiet or noisy recordings can come out worse. Cleaning the sound first sometimes helps, but it can also blur quiet words and make the text worse, so try it on a short stretch and compare. It works on a temporary copy that is deleted afterwards; your recording is never changed, and playback stays original.": "Leise oder verrauschte Aufnahmen werden oft schlechter erkannt. Den Ton vorher aufzubereiten hilft manchmal, kann aber auch leise Wörter verwischen und den Text verschlechtern. Probiere es daher an einem kurzen Abschnitt aus und vergleiche. Es arbeitet mit einer temporären Kopie, die danach gelöscht wird; deine Aufnahme wird nie verändert, und die Wiedergabe bleibt original.",
+  },
+  fr: {
+    "Clean up the sound first": "Nettoyer le son d'abord", "Off (recommended)": "Désactivé (recommandé)", "Even out the volume": "Égaliser le volume", "Reduce steady noise": "Réduire le bruit constant", "Both": "Les deux", "cleaned sound": "son nettoyé",
+    "Quiet or noisy recordings can come out worse. Cleaning the sound first sometimes helps, but it can also blur quiet words and make the text worse, so try it on a short stretch and compare. It works on a temporary copy that is deleted afterwards; your recording is never changed, and playback stays original.": "Les enregistrements faibles ou bruyants donnent parfois un texte moins bon. Nettoyer le son d'abord aide parfois, mais peut aussi estomper les mots faibles et dégrader le texte : essayez sur un court passage et comparez. Le traitement se fait sur une copie temporaire supprimée ensuite ; votre enregistrement n'est jamais modifié et la lecture reste l'originale.",
+  },
+  es: {
+    "Clean up the sound first": "Limpiar el sonido antes", "Off (recommended)": "Desactivado (recomendado)", "Even out the volume": "Igualar el volumen", "Reduce steady noise": "Reducir el ruido constante", "Both": "Ambos", "cleaned sound": "sonido limpiado",
+    "Quiet or noisy recordings can come out worse. Cleaning the sound first sometimes helps, but it can also blur quiet words and make the text worse, so try it on a short stretch and compare. It works on a temporary copy that is deleted afterwards; your recording is never changed, and playback stays original.": "Las grabaciones bajas o con ruido pueden salir peor. Limpiar el sonido antes a veces ayuda, pero también puede difuminar palabras suaves y empeorar el texto; prueba con un tramo corto y compara. Se trabaja con una copia temporal que se elimina después; tu grabación nunca se modifica y la reproducción sigue siendo la original.",
+  },
+};

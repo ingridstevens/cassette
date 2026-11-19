@@ -15,15 +15,42 @@ def ffmpeg_exe() -> str:
     return imageio_ffmpeg.get_ffmpeg_exe()
 
 
-def decode(src: str, dst: Path, start: float | None = None, end: float | None = None) -> None:
-    """Decode/trim any media file to 16 kHz mono 16-bit wav."""
+CLEANUPS = ("off", "level", "denoise", "both")
+
+# Stock ffmpeg filters only (no models, no downloads). Order matters: cut rumble, reduce steady noise, then even out the level last.
+_HIGHPASS = "highpass=f=80"
+_DENOISE = "afftdn=nr=12:nf=-40"
+_LEVEL = "loudnorm=I=-16:TP=-1.5:LRA=11"
+
+
+def cleanup_filter(mode: str | None) -> str | None:
+    """The ffmpeg -af chain for an audio cleanup mode ("off" or None: no chain). "level" evens out loudness, "denoise" cuts low rumble and
+    steady background noise, "both" does both. Pure, so it can be tested without ffmpeg."""
+    if mode in (None, "off"):
+        return None
+    if mode not in CLEANUPS:
+        raise ValueError(f"Unknown audio cleanup: {mode}")
+    parts = ([_HIGHPASS, _DENOISE] if mode in ("denoise", "both") else []) + ([_LEVEL] if mode in ("level", "both") else [])
+    return ",".join(parts)
+
+
+def decode_command(src: str, dst: Path, start: float | None = None, end: float | None = None, cleanup: str | None = None) -> list[str]:
     cmd = [ffmpeg_exe(), "-y", "-v", "error"]
     if start:
         cmd += ["-ss", str(start)]
     cmd += ["-i", src]
     if end is not None:
         cmd += ["-t", str(end - (start or 0))]
-    cmd += ["-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", str(dst)]
+    chain = cleanup_filter(cleanup)
+    if chain:
+        cmd += ["-af", chain]
+    return cmd + ["-vn", "-ac", "1", "-ar", "16000", "-c:a", "pcm_s16le", str(dst)]
+
+
+def decode(src: str, dst: Path, start: float | None = None, end: float | None = None, cleanup: str | None = None) -> None:
+    """Decode/trim any media file to 16 kHz mono 16-bit wav. `dst` is always a temporary copy; the original is only read.
+    `cleanup` ("level", "denoise", "both") runs the matching ffmpeg filters on that copy."""
+    cmd = decode_command(src, dst, start, end, cleanup)
     subprocess.run(cmd, check=True, capture_output=True)
 
 

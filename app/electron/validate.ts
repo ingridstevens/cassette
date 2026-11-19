@@ -3,6 +3,7 @@
 export const isNum = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 export const MODEL = /^(tiny|base|small|medium|large-v3|large-v3-turbo|parakeet-v3|moonshine-[a-z0-9-]{1,30})$/;
 export const LANG = /^(auto|[a-z]{2,3})$/;
+export const AUDIO_CLEANUP = new Set(["off", "level", "denoise", "both"]);
 export const DEVICE = new Set(["auto", "cpu", "cuda", "mps"]);
 export const MODEL_ACTIONS = new Set(["status", "download", "delete", "check", "verify", "repair"]);
 export const MODEL_NAME = /^(diarization|(mlx-|llm-)?[a-z0-9][a-z0-9.-]{0,40}|moonshine-[a-z0-9-]{1,30})$/;
@@ -23,6 +24,7 @@ export function transcribeProblem(o: Record<string, unknown>): string | null {
   if (typeof o.model !== "string" || !MODEL.test(o.model)) return "Unsupported speech model";
   if (typeof o.language !== "string" || !LANG.test(o.language)) return "Unsupported language";
   if (o.device != null && o.device !== "" && (typeof o.device !== "string" || !DEVICE.has(o.device))) return "Unsupported device";
+  if (o.audioCleanup != null && (typeof o.audioCleanup !== "string" || !AUDIO_CLEANUP.has(o.audioCleanup))) return "Unsupported audio cleanup";
   return null;
 }
 

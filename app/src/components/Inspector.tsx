@@ -233,7 +233,7 @@ function OptionRows({ eff, set, status, models, found, speakers, hasResult, onOp
   const range = eff.numSpeakers === "range";
   const n = Number(eff.numSpeakers);
   const translate = eff.translate ?? false;
-  const extras = [translate && (eff.translateTo && eff.translateTo !== "en" ? t("Translation into {language}", { language: langName(eff.translateTo) }) : t("English translation")), eff.verbatim && t("Write hesitations down"), eff.vad && t("Skip silence")].filter(Boolean).join(", ");
+  const extras = [translate && (eff.translateTo && eff.translateTo !== "en" ? t("Translation into {language}", { language: langName(eff.translateTo) }) : t("English translation")), eff.verbatim && t("Write hesitations down"), eff.audioCleanup && eff.audioCleanup !== "off" && t("Clean up the sound first"), eff.vad && t("Skip silence")].filter(Boolean).join(", ");
   const tag = WHISPER_MODELS.find((m) => m.id === eff.model)?.tag;
   const fields = { eff, set, status, models, found, onOpenSettings, hasResult, advanced: true, bare: true };
   const rows: [RowKey, string, string, string, ReactNode][] = [

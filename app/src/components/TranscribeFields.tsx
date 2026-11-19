@@ -2,6 +2,7 @@ import { useState } from "react";
 import { currentLang, useT } from "../i18n";
 import { MAIN_LANGS, TRANSLATE_LANGS, WHISPER_LANGS, langName } from "../languages";
 import { ModelStatus, Options } from "../types";
+import Hint from "../Hint";
 import SpeakerCountField from "./SpeakerCountField";
 import { ENGINE_MODELS, RECOMMENDED, WHISPER_MODELS, modelName, moonshineName } from "./modelInfo";
 import { Models, modelSize } from "./useModels";
@@ -145,6 +146,19 @@ export function ExtrasField({ eff, set, advanced, status, onOpenSettings }: Sect
       )}
       <label className="pv-check"><input type="checkbox" checked={!!eff.verbatim} onChange={(e) => set({ verbatim: e.target.checked }, true)} />
         <span><b>{t("Write hesitations down")}</b><small>{t("Keeps “um” and “äh”. A nudge, not a guarantee.")}</small></span></label>
+      {advanced && (
+        <div className="field pv-cleanup">
+          <label className="field"><span>{t("Clean up the sound first")}</span>
+            <select className="input" value={eff.audioCleanup ?? "off"} onChange={(e) => set({ audioCleanup: e.target.value as Options["audioCleanup"] }, true)}>
+              <option value="off">{t("Off (recommended)")}</option>
+              <option value="level">{t("Even out the volume")}</option>
+              <option value="denoise">{t("Reduce steady noise")}</option>
+              <option value="both">{t("Both")}</option>
+            </select>
+          </label>
+          <Hint id="audio-cleanup">{t("Quiet or noisy recordings can come out worse. Cleaning the sound first sometimes helps, but it can also blur quiet words and make the text worse, so try it on a short stretch and compare. It works on a temporary copy that is deleted afterwards; your recording is never changed, and playback stays original.")}</Hint>
+        </div>
+      )}
       {advanced && <label className="pv-check"><input type="checkbox" checked={!!eff.vad && !limited} disabled={limited} onChange={(e) => set({ vad: e.target.checked })} />
         <span><b>{t("Skip silence")}</b><small>{limited ? t("Not used by this model.") : t("Ignores long pauses. Faster, but can miss quiet speech.")}</small></span></label>}
     </>
