@@ -239,6 +239,129 @@ def _sha256(path: Path) -> str:
     return h.hexdigest()
 
 
+# What "verified" can mean offline. The Hugging Face cache names every file after its checksum: a SHA-256 for large files (LFS) and a git SHA-1 for
+# small ones. So each file can be re-hashed and compared with its own name, with no network. Two files have a second, stronger check: the
+# SHA-256 pinned in this app (SHA256 above). Nothing here proves the files are what the model's authors published; it finds damaged,
+# cut-short and swapped files, and installs of another version.
+_HEX = {64: "sha256", 40: "sha1"}
+
+
+def _git_sha1(path: Path) -> str:
+    import hashlib
+
+    h = hashlib.sha1(b"blob %d\0" % path.stat().st_size)  # noqa: S324 - git's own object name, used only to compare with the cache's file name
+    with open(path, "rb") as f:
+        for chunk in iter(lambda: f.read(1 << 20), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _verify_repo(repo: str, patterns: list[str] | None = None) -> dict:
+    """Check one repo against its pinned commit and its recorded checksums, locally. Returns
+    {"state": "ok" | "damaged" | "other_version" | "missing", "how": "pinned" | "recorded" | "present", "bad": [snapshot paths to repair]}.
+    how: "pinned" = at least one file was also compared with a SHA-256 built into this app; "recorded" = every file matched the checksum in its
+    cache file name; "present" = some file had no checksum to compare with, so only its presence was checked."""
+    import fnmatch
+    import os
+
+    folder = models_dir() / ("models--" + repo.replace("/", "--"))
+    if not folder.exists():
+        return {"state": "missing", "how": "present", "bad": []}
+    snap = snapshot_dir(repo)
+    if not (snap.is_dir() and any(snap.iterdir())):
+        return {"state": "other_version", "how": "present", "bad": []}
+    bad: list[str] = []
+    files = 0
+    pinned = False
+    unchecked = False
+    for root, _dirs, names in os.walk(snap):
+        for n in names:
+            p = Path(root) / n
+            rel = p.relative_to(snap).as_posix()
+            if patterns and not any(fnmatch.fnmatch(rel, g) for g in patterns):
+                continue
+            files += 1
+            try:
+                if not p.exists():  # a link whose file is gone
+                    bad.append(str(p))
+                    continue
+                want = p.resolve().name  # the cache stores the file under its checksum
+                kind = _HEX.get(len(want)) if all(c in "0123456789abcdef" for c in want) else None
+                got = _sha256(p) if kind == "sha256" else _git_sha1(p) if kind == "sha1" else None
+                if kind is None:
+                    unchecked = True
+                elif got != want:
+                    bad.append(str(p))
+                    continue
+                if f"{repo}/{rel}" in SHA256:
+                    pinned = True
+                    if (got if kind == "sha256" else _sha256(p)) != SHA256[f"{repo}/{rel}"]:
+                        bad.append(str(p))
+            except OSError:
+                bad.append(str(p))
+    if patterns and files == 0:  # the file this model needs is not in the pinned snapshot
+        return {"state": "damaged", "how": "present", "bad": []}
+    return {"state": "damaged" if bad else "ok", "how": "pinned" if pinned else "present" if unchecked else "recorded", "bad": bad}
+
+
+def _model_repos(name: str) -> list[tuple[str, list[str] | None]] | None:
+    """The repos (and file patterns) behind a model name as the app knows it; None for models that do not come from Hugging Face (Moonshine)."""
+    if name == "diarization":
+        return [(r, None) for r in DIARIZATION_REPOS]
+    if name.startswith("mlx-") and name[4:] in MLX_MODELS:
+        return [(MLX_MODELS[name[4:]], None)]
+    if name.startswith("llm-"):
+        from .llm import LLM_MODELS, backend, patterns_for, repo_for
+
+        if name[4:] not in LLM_MODELS or backend() is None:
+            return None
+        return [(repo_for(name[4:])[0], patterns_for(name[4:]))]
+    both = {**WHISPER_MODELS, **PARAKEET_MODELS}
+    return [(both[name], None)] if name in both else None
+
+
+def verify_names() -> list[str]:
+    from .llm import LLM_MODELS, backend
+
+    return [*WHISPER_MODELS, *PARAKEET_MODELS, *("mlx-" + n for n in MLX_MODELS), "diarization", *(("llm-" + n for n in LLM_MODELS) if backend() else ())]
+
+
+def verify(name: str | None = None) -> list[dict]:
+    """Check downloaded models without the network. One row per model: {"id", "state", "how"}; state is ok, damaged, other_version or missing.
+    Progress events say which model is being read, since hashing a large model takes a while."""
+    from .protocol import progress
+
+    names = [name] if name else verify_names()
+    rows = []
+    for i, n in enumerate(names):
+        repos = _model_repos(n)
+        if repos is None:
+            continue
+        progress("verify", i / len(names), n)
+        results = [_verify_repo(r, g) for r, g in repos]
+        order = ["damaged", "other_version", "missing", "ok"]
+        state = min((r["state"] for r in results), key=order.index)
+        if state == "missing" and any(r["state"] != "missing" for r in results):
+            state = "damaged"  # some speaker repos are there and some are not
+        how = "pinned" if any(r["how"] == "pinned" for r in results) else "present" if any(r["how"] == "present" for r in results) else "recorded"
+        rows.append({"id": n, "state": state, "how": how})
+    return rows
+
+
+def remove_damaged(name: str) -> None:
+    """The first step of a repair: remove only the files that failed the check (the link in the pinned snapshot and the file it points to), so the
+    download that follows fetches them again. Nothing else in the models folder is touched."""
+    for repo, patterns in _model_repos(name) or []:
+        res = _verify_repo(repo, patterns)
+        blobs = (models_dir() / ("models--" + repo.replace("/", "--")) / "blobs").resolve()
+        for s in res["bad"]:
+            p = Path(s)
+            target = p.resolve()
+            p.unlink(missing_ok=True)
+            if target != p and target.parent == blobs:
+                target.unlink(missing_ok=True)
+
+
 def diarization_config() -> Path:
     """Check the speaker-model checkpoints against SHA256, then write a pipeline config that points at the pinned local files, so
     pyannote never looks a model up by name (which would mean "main"). Raises RuntimeError if a file is missing or has changed."""

@@ -5,6 +5,7 @@ import { WHISPER_MODELS } from "../modelInfo";
 import { MODEL_BYTES } from "../useModels";
 import Dialog, { useReturnFocus } from "./Dialog";
 import ModelList, { Entry } from "./ModelList";
+import VerifyModels from "./VerifyModels";
 import { SectionProps } from "./shared";
 import { Check, checksText, setupChecks } from "../../setupCheck";
 import type { ModelStatus } from "../../types";
@@ -28,6 +29,11 @@ export default function AdvancedSection({ opts, set, status, models, say, onRese
   const [paths, setPaths] = useState<Paths | null>(null);
   const [free, setFree] = useState<number | null>(null);
   const [copied, setCopied] = useState(false);
+  const [pathCopied, setPathCopied] = useState(false);
+  const copyPath = async () => {
+    try { await navigator.clipboard.writeText(paths?.models ?? ""); } catch { return; }
+    setPathCopied(true); window.setTimeout(() => setPathCopied(false), 2000);
+  };
   const [ask, setAsk] = useState(false);
   const [checks, setChecks] = useState<Check[] | null>(null);
   const [checking, setChecking] = useState(false);
@@ -88,8 +94,10 @@ export default function AdvancedSection({ opts, set, status, models, say, onRese
       <h2 className="grp-h">{t("Storage")}</h2>
       <Acc title={t("Models folder")} value={status?.sizes ? bytes(Object.values(status.sizes.whisper).reduce((a, b) => a + b, 0) + (status.diarization ? status.sizes.diarization : 0)) : undefined}>
         <p><code className="pathb">{paths?.models ?? "…"}</code></p>
-        <div className="row-btns"><button type="button" className="btn small" onClick={() => window.api.reveal("models")}>{t("Show in {app}", { app: FILE_MANAGER })}</button></div>
+        <div className="row-btns"><button type="button" className="btn small" disabled={!paths} onClick={() => void copyPath()}>{pathCopied ? t("Copied ✓") : t("Copy path")}</button>
+          <button type="button" className="btn small" onClick={() => window.api.reveal("models")}>{t("Show in {app}", { app: FILE_MANAGER })}</button></div>
         {free != null && <p className="note">{t("{size} free on this disk.", { size: bytes(free) })}</p>}
+        <VerifyModels models={models} status={status} say={say} />
         <p className="note">{t("Delete models on their own pages, not by hand. Hugging Face keeps a shared folder of data files, so the model folders look small.")}</p>
       </Acc>
       <h2 className="grp-h">{t("Help and reset")}</h2>

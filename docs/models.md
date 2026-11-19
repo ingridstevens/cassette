@@ -71,3 +71,15 @@ Models only need to be downloaded once per team, not once per person.
 2. On the other computer, open **Settings, Transcription** and choose **Use a models folder…**. Pick the folder you copied.
 
 When it is done, a dialog lists every model: **copied from the folder**, **incomplete in the folder** (cut short, for example a copy that stopped halfway or a sync tool that did not finish: nothing is copied for those, ask whoever shared the folder to copy it again) and **not in the folder** (fine if you do not need them). The three speaker-detection parts count as one line, "Speaker detection", and are complete only if all three are there. The app **copies** the models it finds into its own models folder, so the shared folder can be disconnected afterwards. Nothing is downloaded, and nobody needs a Hugging Face account for models that are imported this way.
+
+## Checking that models are intact (Verify models)
+
+After downloads, a copy from a shared folder or a disk problem, open **Settings, Advanced, Models folder** and choose **Verify**. The app reads every downloaded model on this computer (it uses no network) and lists each one as **OK**, **Damaged** (a file is changed, cut short or missing) or **Other version** (installed at a version this app does not pin; it shows as not downloaded elsewhere). Models that are not downloaded are only counted. The same section shows the models folder path with **Copy path** and **Show in Finder**.
+
+What **OK** means, exactly:
+
+- The folder is the pinned version of the model (`PINS` in `engine/src/engine/models.py`), and every file matches the checksum Hugging Face stored with it when it was downloaded (the cache names each file after its SHA-256, or its git SHA-1 for small files). This finds damaged, cut-short and swapped files. It cannot tell you the file is what the model's authors published, because the checksum was recorded at download.
+- The two speaker checkpoints (`pytorch_model.bin` of segmentation-3.0 and wespeaker) are in addition compared with a SHA-256 built into the app (`SHA256`), and are checked again before every load. This is the only check against a value that did not come from the download itself.
+- Moonshine models come from another server and are not covered.
+
+**Repair…** (offered for Damaged and Other version, after you confirm) removes only the files that failed the check, then downloads them again from the pinned version using the normal download (it needs the internet, and for speaker detection your Hugging Face token). Other models, projects and transcripts are never touched. A model that passes is never re-downloaded.

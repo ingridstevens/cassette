@@ -4,7 +4,7 @@ export const isNum = (v: unknown): v is number => typeof v === "number" && Numbe
 export const MODEL = /^(tiny|base|small|medium|large-v3|large-v3-turbo|parakeet-v3|moonshine-[a-z0-9-]{1,30})$/;
 export const LANG = /^(auto|[a-z]{2,3})$/;
 export const DEVICE = new Set(["auto", "cpu", "cuda", "mps"]);
-export const MODEL_ACTIONS = new Set(["status", "download", "delete", "check"]);
+export const MODEL_ACTIONS = new Set(["status", "download", "delete", "check", "verify", "repair"]);
 export const MODEL_NAME = /^(diarization|(mlx-|llm-)?[a-z0-9][a-z0-9.-]{0,40}|moonshine-[a-z0-9-]{1,30})$/;
 export const EXPORT_FORMATS = new Set(["txt", "srt", "vtt", "md", "md-copy", "json", "csv", "docx", "chapters", "edl", "minutes", "highlights", "redacted", "quotes", "changes", "combined-csv"]);
 // eslint-disable-next-line no-control-regex -- control characters are exactly what a file name must not keep
@@ -24,7 +24,8 @@ export function transcribeProblem(o: Record<string, unknown>): string | null {
   return null;
 }
 
+/** "repair" works on one model, so it needs a name; "verify" without a name checks every downloaded model. */
 export const modelsOk = (action: unknown, name: unknown): boolean =>
-  typeof action === "string" && MODEL_ACTIONS.has(action) && (!name || (typeof name === "string" && MODEL_NAME.test(name)));
+  typeof action === "string" && MODEL_ACTIONS.has(action) && (action !== "repair" || !!name) && (!name || (typeof name === "string" && MODEL_NAME.test(name)));
 
 export const saveClipOk = (start: unknown, end: unknown): boolean => isNum(start) && isNum(end) && end > start;

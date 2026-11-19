@@ -176,8 +176,10 @@ def cmd_models(a) -> None:
     models.use_offline_cache()
     if a.action == "status":
         emit("done", **models.status())
-    elif a.action == "download":
+    elif a.action in ("download", "repair"):
         progress("download", None, f"Downloading {a.name}")
+        if a.action == "repair":
+            models.remove_damaged(a.name)  # only the files that failed the check; the download below fetches them again at the pinned commit
         if a.name == "diarization":
             models.download_diarization(a.token or os.environ.get("HF_TOKEN", ""))
         elif a.name.startswith("mlx-"):
@@ -191,6 +193,8 @@ def cmd_models(a) -> None:
         else:
             models.download_whisper(a.name)
         emit("done", **models.status())
+    elif a.action == "verify":
+        emit("done", results=models.verify(a.name))
     elif a.action == "import":
         report = models.folder_report(models.scan_folder(Path(a.name)))  # read before copying: it describes the folder, not our copy
         done = models.import_folder(Path(a.name))
@@ -362,7 +366,7 @@ def build_parser() -> argparse.ArgumentParser:
     tr.set_defaults(fn=cmd_translate)
 
     m = sub.add_parser("models")
-    m.add_argument("action", choices=["status", "download", "delete", "import", "check"])
+    m.add_argument("action", choices=["status", "download", "delete", "import", "check", "verify", "repair"])
     m.add_argument("name", nargs="?", help="whisper size or 'diarization'")
     m.add_argument("--token", help="Hugging Face token (diarization download only)")
     m.set_defaults(fn=cmd_models)

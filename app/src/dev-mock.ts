@@ -9,6 +9,7 @@ const st = { whisper: { tiny: false, base: false, small: false, medium: false, "
 const sizes = { whisper: { tiny: 75e6, base: 145e6, small: 480e6, medium: 1.5e9, "large-v3-turbo": 1.6e9, "large-v3": 3e9, "parakeet-v3": 2.51e9 } as Record<string, number>, diarization: 32e6 };
 let token = "";
 let stopDl = false;
+let repaired = false;
 const mlxSt: Record<string, boolean> = { tiny: false, base: false, small: false, medium: false, "large-v3-turbo": false, "large-v3": false };
 const hint = () => (token ? "hf_…" + token.slice(-4) : "");
 const llmCatalog = [
@@ -127,6 +128,13 @@ function fake(path = "") {
   models: async (action: string, name?: string) => {
     if (action === "check") { await wait(300); return { type: "done", valid: true, kind: "read", username: "demo-user", repos: { "pyannote/speaker-diarization-3.1": true, "pyannote/segmentation-3.0": !location.search.includes("denied"), "pyannote/wespeaker-voxceleb-resnet34-LM": true } }; }
     if (action === "status") return { moonshine: { available: true, source: "download.moonshine.ai", license: "MIT", catalog: [{ id: "moonshine-en", language: "en", name: "English", bytes: 269141623 }, { id: "moonshine-de", language: "de", name: "German", bytes: 121800823 }, { id: "moonshine-ar", language: "ar", name: "Arabic", bytes: 32349411 }] }, fit: { engines: { "parakeet-v3": ["de", "en", "fr", "es", "ru", "uk", "pl", "it"] }, order: ["tiny", "base", "small", "medium", "large-v3-turbo", "large-v3"], floor: { en: "tiny", de: "small", fr: "small", es: "small", fa: "medium", ar: "medium", hi: "medium", sw: "large-v3", am: "large-v3", ha: "large-v3" } }, llm: { available: !location.search.includes("nollm"), backend: "mlx", default: "qwen3-4b", catalog: llmCatalog.filter((m) => llmSt[m.id] || !m.retired).map(({ bytes: _b, retired: _r, ...m }) => m), translation: [{ id: "hy-mt2-1.8b", label: "Hy-MT2 1.8B", like: "Translates between 38 languages, including Arabic and Persian", languages: ["en", "de", "ar"], license: "Apache-2.0" }], models: { ...llmSt, "hy-mt2-1.8b": !!(llmSt as Record<string, boolean>)["hy-mt2-1.8b"] }, bytes: { ...Object.fromEntries(llmCatalog.map((m) => [m.id, m.bytes])), "hy-mt2-1.8b": 1.0175e9 } }, mlxAvailable: true, mlx: mlxSt, mlxSizes: { tiny: 74e6, base: 144e6, small: 481e6, medium: 1525e6, "large-v3-turbo": 1614e6, "large-v3": 3084e6 }, ...st, dir: "/Users/demo/Library/Application Support/Cassette/models", sizes };
+    // ?damaged: one model fails the check until it is repaired
+    if (action === "verify") {
+      await wait(500);
+      const have = Object.entries(st.whisper).filter(([, v]) => v).map(([k]) => k);
+      return { type: "done", results: [...have.map((id) => ({ id, state: location.search.includes("damaged") && id === "small" && !repaired ? "damaged" : "ok", how: "recorded" })), ...(st.diarization ? [{ id: "diarization", state: "ok", how: "pinned" }] : [])].filter((r) => !name || r.id === name) };
+    }
+    if (action === "repair") { await wait(800); repaired = true; return { type: "done" }; }
     if (action === "download") {
       stopDl = false;
       for (let i = 1; i <= 20; i++) {
