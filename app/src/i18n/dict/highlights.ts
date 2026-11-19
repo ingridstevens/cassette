@@ -35,6 +35,10 @@ export default {
     "Highlights and marked lines (text)": "Highlights und markierte Zeilen (Text)", ".txt · your highlights and marked lines as quotes": ".txt · deine Highlights und markierten Zeilen als Zitate",
     "Highlights (Word)": "Highlights (Word)", ".docx · quotes with speaker, time and reason": ".docx · Zitate mit Sprecher, Zeit und Begründung",
     ".docx · summary, attendees, decisions, key quotes, record": ".docx · Zusammenfassung, Teilnehmende, Beschlüsse, Zitate, Protokoll",
+    "Actions for the selected words": "Aktionen für die ausgewählten Wörter",
+    "{count} words selected. Press Tab to reach the actions, Esc to close them.": "{count} Wörter ausgewählt. Mit Tab erreichst du die Aktionen, mit Esc schließt du sie.",
+    "Quote copied": "Zitat kopiert",
+    "Play from selection": "Ab Auswahl abspielen",
   },
   fr: {
     "Pause the highlight at {time}": "Mettre en pause le moment fort à {time}", "Playing the highlight at {time}": "Lecture du moment fort à {time}",
@@ -72,6 +76,10 @@ export default {
     "Highlights and marked lines (text)": "Moments forts et lignes marquées (texte)", ".txt · your highlights and marked lines as quotes": ".txt · vos moments forts et lignes marquées sous forme de citations",
     "Highlights (Word)": "Moments forts (Word)", ".docx · quotes with speaker, time and reason": ".docx · citations avec locuteur, heure et raison",
     ".docx · summary, attendees, decisions, key quotes, record": ".docx · résumé, participants, décisions, citations clés, compte rendu",
+    "Actions for the selected words": "Actions pour les mots sélectionnés",
+    "{count} words selected. Press Tab to reach the actions, Esc to close them.": "{count} mots sélectionnés. Tab pour atteindre les actions, Échap pour les fermer.",
+    "Quote copied": "Citation copiée",
+    "Play from selection": "Lire depuis la sélection",
   },
   es: {
     "Pause the highlight at {time}": "Pausar el destacado de {time}", "Playing the highlight at {time}": "Reproduciendo el destacado de {time}",
@@ -109,5 +117,9 @@ export default {
     "Highlights and marked lines (text)": "Destacados y líneas marcadas (texto)", ".txt · your highlights and marked lines as quotes": ".txt · tus destacados y líneas marcadas como citas",
     "Highlights (Word)": "Destacados (Word)", ".docx · quotes with speaker, time and reason": ".docx · citas con hablante, hora y motivo",
     ".docx · summary, attendees, decisions, key quotes, record": ".docx · resumen, asistentes, decisiones, citas clave, acta",
+    "Actions for the selected words": "Acciones para las palabras seleccionadas",
+    "{count} words selected. Press Tab to reach the actions, Esc to close them.": "{count} palabras seleccionadas. Pulsa Tab para ir a las acciones, Esc para cerrarlas.",
+    "Quote copied": "Cita copiada",
+    "Play from selection": "Reproducir desde la selección",
   },
 };
