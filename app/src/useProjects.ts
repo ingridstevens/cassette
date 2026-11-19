@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { recordSpeed } from "./estimate";
 import { History, emptyHistory, record, stepBack, stepForward } from "./history";
 import { currentLang, t } from "./i18n";
+import { copyName, duplicateProject } from "./projectActions";
 import { DraftLine, FitAsk, JobProgress, MEDIA_EXT, Options, Project, Result, RunMeta, Segment, baseName, displayName, stripExt } from "./types";
 
 type Range = [number, number] | null;
@@ -112,6 +113,15 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     setProjects((l) => { const next = l.filter((p) => p.id !== id); setActiveId((a) => (a === id ? next[0]?.id ?? null : a)); return next; });
   }, []);
 
+  /** Copies a project's app data (not the recording) right after the original; returns the copy's name, or null if the original is gone. */
+  const duplicate = useCallback((id: string): string | null => {
+    const src = projectsRef.current.find((p) => p.id === id); if (!src) return null;
+    const name = copyName(src.name, projectsRef.current.map((p) => p.name), t("copy"));
+    const copy = duplicateProject(src, crypto.randomUUID(), name, Date.now());
+    setProjects((l) => { const i = l.findIndex((p) => p.id === id); return i < 0 ? l : [...l.slice(0, i + 1), copy, ...l.slice(i + 1)]; });
+    return name;
+  }, []);
+
   const transcribe = useCallback((id: string, range: Range = null, line?: LineRedo, trial?: boolean, acceptFit?: boolean) => {
     pending.current.set(id, { range, line, trial, acceptFit });
     patch(id, { status: "queued", error: undefined, fitAsk: undefined, partial: !!range && !!projectsRef.current.find((p) => p.id === id)?.result });
@@ -203,6 +213,6 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   /** Each returns the label of the edit it undid or redid (empty when it had none), or null when there was nothing to do. */
   const undo = useCallback((id: string) => step(id, stepBack), [step]);
   const redo = useCallback((id: string) => step(id, stepForward), [step]);
-  return { projects, loaded, notice, saveError, dismissNotice: () => setNotice(""), activeId, setActiveId: open, edit, undo, redo, progress, drafts, add, addAndTranscribe, remove, rename: (id: string, name: string) => patch(id, { name }), patch, transcribe, cancel,
+  return { projects, loaded, notice, saveError, dismissNotice: () => setNotice(""), activeId, setActiveId: open, edit, undo, redo, progress, drafts, add, addAndTranscribe, remove, rename: (id: string, name: string) => edit(id, { name }), duplicate, patch, transcribe, cancel,
     transcribeAll: () => projectsRef.current.filter((p) => p.status === "idle" || p.status === "error").forEach((p) => transcribe(p.id)) };
 }

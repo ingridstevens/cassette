@@ -3,10 +3,10 @@ import { useT } from "../i18n";
 import { Project } from "../types";
 
 type Receipt = Awaited<ReturnType<typeof window.api.deleteProjectFiles>>;
-interface Props { project: Project; onDone(): void; onClose(): void }
+interface Props { project: Project; /** Another project uses the same recording (a duplicate): its files are kept. */ shared?: boolean; onDone(): void; onClose(): void }
 
 /** Delete a project: first say exactly what goes and what stays, then, after it is done, a receipt of what was removed. Names only, never transcript text. */
-export default function RemoveDialog({ project, onDone, onClose }: Props) {
+export default function RemoveDialog({ project, shared = false, onDone, onClose }: Props) {
   const t = useT();
   const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [busy, setBusy] = useState(false);
@@ -29,6 +29,7 @@ export default function RemoveDialog({ project, onDone, onClose }: Props) {
   });
   const finish = () => { onDone(); };
   const run = async () => {
+    if (shared) { setReceipt({ ok: false, error: "shared" }); return; } // a copy of this project still uses the recording and its backup file
     setBusy(true);
     let r: Receipt;
     try { r = await window.api.deleteProjectFiles(project.path); } catch { r = { ok: false, error: "failed" }; }
@@ -55,6 +56,7 @@ export default function RemoveDialog({ project, onDone, onClose }: Props) {
             <li>{t("Anything you exported or saved as a clip. Cassette does not keep a list of those.")}</li>
             <li>{t("The activity log, which lists file names (Settings, Privacy).")}</li>
           </ul>
+          {shared && <p className="note">{t("Another project (a copy) uses the same recording, so the recording and its backup file stay.")}</p>}
           <p>{t("This cannot be undone.")}</p>
           <div className="row">
             <button type="button" className="btn" ref={first} onClick={onClose} disabled={busy}>{t("Keep it")}</button>
@@ -72,7 +74,8 @@ export default function RemoveDialog({ project, onDone, onClose }: Props) {
               </ul>
               {(receipt.backup === "failed" || receipt.audio === "failed") && <p className="alert warn" role="alert">{t("Some files could not be deleted. Close any program that is using them, then delete them by hand.")}</p>}
             </>
-          ) : <p className="alert warn" role="alert">{t("The files next to the recording could not be checked. The transcript in this app was deleted.")}</p>}
+          ) : shared ? <p className="note">{t("Another project still uses this recording, so the recording and its backup file were kept.")}</p>
+          : <p className="alert warn" role="alert">{t("The files next to the recording could not be checked. The transcript in this app was deleted.")}</p>}
           <p>{t("This receipt is shown once and is not saved anywhere.")}</p>
           <div className="row"><button type="button" className="btn sun" ref={first} onClick={finish}>{t("Done")}</button></div>
         </>)}

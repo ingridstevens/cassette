@@ -1,5 +1,6 @@
 import { DragEvent, useCallback, useEffect, useRef, useState } from "react";
 import Activity, { Live, LogLine } from "./components/Activity";
+import { sharesRecording } from "./projectActions";
 import ProjectSidebar from "./components/ProjectSidebar";
 import ProjectView from "./components/ProjectView";
 import RecordPage from "./components/RecordPage";
@@ -159,7 +160,7 @@ export default function App() {
       {page === "main" && <a href="#transcript" className="skip-link" onClick={skipToTranscript}>{t("Skip to the transcript")}</a>}
       <div className={"shell" + (dragging ? " dragging" : "")} hidden={page === "settings"} onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={(e) => { if (e.currentTarget === e.target) setDragging(false); }} onDrop={onDrop}>
         <ProjectSidebar easy={isEasy(opts)} projects={P.projects} activeId={P.activeId} progress={P.progress} blocker={blocker}
-          onSelect={(id) => { P.setActiveId(id); setPage("main"); }} onAdd={pick} onRecord={() => setPage("record")} onRemove={(id) => setRemoving(id)} onRename={P.rename} onTranscribeAll={P.transcribeAll} doneCount={P.projects.filter((p) => p.result).length} onExportAll={() => window.api.exportTranscript({ projects: P.projects.filter((p) => p.result).map((p) => ({ name: p.name, segments: p.result!.segments.map(({ words: _w, orig: _o, ...s }) => s), speakers: Object.fromEntries(p.result!.speakers.map((s) => [s, displayName(s, p.result!.speakers, p.names)])) })), options: { excel: loadExportOpts().excel } }, "combined-csv", "all-projects")} onOpenSettings={() => openSettings()} playingId={playingId}
+          onSelect={(id) => { P.setActiveId(id); setPage("main"); }} onAdd={pick} onRecord={() => setPage("record")} onRemove={(id) => setRemoving(id)} onRename={P.rename} onDuplicate={P.duplicate} onReveal={(path) => void window.api.revealPath(path)} onTranscribeAll={P.transcribeAll} doneCount={P.projects.filter((p) => p.result).length} onExportAll={() => window.api.exportTranscript({ projects: P.projects.filter((p) => p.result).map((p) => ({ name: p.name, segments: p.result!.segments.map(({ words: _w, orig: _o, ...s }) => s), speakers: Object.fromEntries(p.result!.speakers.map((s) => [s, displayName(s, p.result!.speakers, p.names)])) })), options: { excel: loadExportOpts().excel } }, "combined-csv", "all-projects")} onOpenSettings={() => openSettings()} playingId={playingId}
           activity={<Activity lines={lines} live={live} setupNeeded={!!blocker} onClear={() => setLines([])} onOpenPrivacy={() => openSettings("Privacy")} />} />
         <section className="main">
           <div className="main-body">
@@ -211,7 +212,7 @@ export default function App() {
       </div>
       {retention && retentionProjects.length > 0 && opts.retentionDays && <RetentionDialog projects={retentionProjects} days={opts.retentionDays} onClose={() => setRetention(null)} onDelete={(ids) => { ids.forEach((id) => P.remove(id)); setRetention(null); }} />}
       {models.importReport && <ImportReport rows={models.importReport} onClose={models.closeImportReport} />}
-      {removingProject && <RemoveDialog project={removingProject} onClose={() => setRemoving(null)} onDone={() => { P.remove(removingProject.id); setRemoving(null); }} />}
+      {removingProject && <RemoveDialog project={removingProject} shared={sharesRecording(P.projects, removingProject)} onClose={() => setRemoving(null)} onDone={() => { P.remove(removingProject.id); setRemoving(null); }} />}
       {page === "settings" && <SettingsPage key={settingsSection ?? "default"} initialSection={settingsSection} opts={opts} set={setOpts} status={status} models={models} onBack={() => setPage("main")} onReset={() => { setOpts({ ...DEFAULTS }); setLlm(""); }} />}
       {playingId && (page === "settings" || P.activeId !== playingId) && (() => {
         const playing = P.projects.find((x) => x.id === playingId);
