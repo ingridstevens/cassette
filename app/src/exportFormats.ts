@@ -16,6 +16,7 @@ export const GROUPS: { title: string; formats: readonly (readonly [string, strin
     ["vtt", "Web subtitles (.vtt)", "For web video"],
     ["chapters", "Chapters (text)", "0:00 Title per line · YouTube and podcasts"],
     ["edl", "Markers (DaVinci Resolve .edl)", "Chapters or speaker turns as timeline markers"],
+    ["episode", "Episode folder", "Chapters, a clip per highlight and Resolve markers, in one new folder"],
   ] },
   { title: "Data", formats: [
     ["csv", "Spreadsheet", ".csv · start and end times, speaker, text"],

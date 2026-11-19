@@ -20,12 +20,14 @@ export function onMenuKeyDown(e: KeyboardEvent<HTMLElement>) {
   e.preventDefault(); items[to].focus();
 }
 
-type Res = { ok?: boolean; cancelled?: boolean; path?: string; error?: string };
+type Res = { ok?: boolean; cancelled?: boolean; path?: string; error?: string; clipsSkipped?: boolean };
 const WITH_OPTIONS = new Set(["srt", "vtt", "edl", "text"]);
+/** The episode folder needs something to put in it: a chapter, or a highlight or marked line. */
+const needsNothing = (f: string, hasChapters: boolean, markedCount: number) => f === "episode" && !hasChapters && !markedCount;
 /** Formats that follow the "Text style" settings. */
 export const STYLED = new Set(["txt", "md", "copy-md", "docx", "csv", "minutes", "redacted"]);
 /** Options a format needs when it is run without asking (the saved ones for subtitles and styled text, none for the rest). */
-const usualOpts = (f: string): Record<string, unknown> => (WITH_OPTIONS.has(f) || STYLED.has(f) ? { ...loadExportOpts() } : {});
+const usualOpts = (f: string): Record<string, unknown> => (WITH_OPTIONS.has(f) || STYLED.has(f) || f === "episode" ? { ...loadExportOpts() } : {});
 export default function ExportMenu({ onExport, openSignal = 0, hasChapters = false, markedCount = 0, lastExport, defaultFormat, onRemember, easy = false, shown, onOpenSettings }: { easy?: boolean; /** The formats chosen in Settings to show up front (undefined = the default set). */ shown?: string[]; onOpenSettings?(section?: string): void; onExport(format: string, options?: ExportOpts): Promise<Res>; openSignal?: number; hasChapters?: boolean; markedCount?: number; lastExport?: LastExport; defaultFormat?: string; onRemember?(format: string, options: Record<string, unknown>): void }) {
   const t = useT();
   const [asking, setAsking] = useState<OptionsKind | null>(null);
@@ -33,6 +35,7 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
   const [more, setMore] = useState(false);
   const [msg, setMsg] = useState("");
   const [bad, setBad] = useState(false);
+  const [folder, setFolder] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   useEffect(() => { if (openSignal) setOpen(true); }, [openSignal]);
@@ -54,16 +57,19 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
     return () => { document.removeEventListener("mousedown", close); document.removeEventListener("keydown", esc); };
   }, [open]);
   const run = async (f: string, o?: ExportOpts) => {
+    if (f === "episode") { setBad(false); setFolder(false); setMsg(t("Exporting the episode…")); }
     const r = await onExport(f, o).catch((e: unknown) => ({ ok: false, error: String(e) } as Res));
-    if (r.cancelled) return;
+    if (r.cancelled) { if (f === "episode") setMsg(""); return; }
     if (r.ok && f !== "text" && f !== "copy-md") onRemember?.(f, { ...(o ?? {}) });
-    setBad(!r.ok); setMsg(r.ok ? (f === "copy-md" ? t("Copied as Markdown ✓") : f === "redacted" ? t("Exported ✓. A report and a key file were saved next to it. Keep the key apart from the data.") : t("Exported ✓")) : t("Export failed: {reason}", { reason: r.error ?? t("unknown error") }));
-    setTimeout(() => setMsg(""), r.ok ? 2800 : 8000);
+    setBad(!r.ok); setMsg(r.ok ? (f === "copy-md" ? t("Copied as Markdown ✓") : f === "redacted" ? t("Exported ✓. A report and a key file were saved next to it. Keep the key apart from the data.") : f === "episode" ? (r.clipsSkipped ? t("Episode folder saved ✓. The recording was not found, so no clips were saved.") : t("Episode folder saved ✓")) : t("Exported ✓")) : t("Export failed: {reason}", { reason: r.error ?? t("unknown error") }));
+    const shows = !!r.ok && f === "episode";
+    setFolder(shows);
+    setTimeout(() => { setMsg(""); setFolder(false); }, shows ? 15000 : r.ok ? 2800 : 8000);
   };
   // The first item: what this project was last exported as, or else the default from Settings.
   const again = lastExport ?? (defaultFormat ? { format: defaultFormat, options: usualOpts(defaultFormat) } : null);
   const againRow = again && ALL.find((x) => x[0] === again.format);
-  const againOk = !easy && !!againRow && !(again!.format === "chapters" && !hasChapters) && !(["quotes", "highlights"].includes(again!.format) && !markedCount);
+  const againOk = !easy && !!againRow && !(again!.format === "chapters" && !hasChapters) && !(["quotes", "highlights"].includes(again!.format) && !markedCount) && !needsNothing(again!.format, hasChapters, markedCount);
   const againText = (() => {
     if (!again || !againRow) return "";
     const o = again.options as Partial<ExportOpts>, f = again.format;
@@ -75,13 +81,13 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
   const up = shownFormats(shown, easy);
   const host = trigger.current?.closest(".pview") ?? document.body;
   const item = ([f, label, hint]: readonly [string, string, string]) => (
-    <button key={f} type="button" role="menuitem" aria-disabled={(f === "chapters" && !hasChapters) || ((f === "quotes" || f === "highlights") && !markedCount) ? true : undefined}
+    <button key={f} type="button" role="menuitem" aria-disabled={(f === "chapters" && !hasChapters) || ((f === "quotes" || f === "highlights") && !markedCount) || needsNothing(f, hasChapters, markedCount) ? true : undefined}
       onClick={() => {
-        if ((f === "chapters" && !hasChapters) || ((f === "quotes" || f === "highlights") && !markedCount)) return;
+        if ((f === "chapters" && !hasChapters) || ((f === "quotes" || f === "highlights") && !markedCount) || needsNothing(f, hasChapters, markedCount)) return;
         setOpen(false); trigger.current?.focus();
-        if (WITH_OPTIONS.has(f)) setAsking(f as OptionsKind); else run(f, STYLED.has(f) ? loadExportOpts() : undefined);
+        if (WITH_OPTIONS.has(f)) setAsking(f as OptionsKind); else run(f, STYLED.has(f) || f === "episode" ? loadExportOpts() : undefined);
       }}>
-      <b>{t(label)}</b><small>{f === "chapters" && !hasChapters ? t("Mark chapters first: use “Chapter” on a line") : (f === "quotes" || f === "highlights") && !markedCount ? t("Highlight words or mark a line first") : t(hint)}</small>
+      <b>{t(label)}</b><small>{needsNothing(f, hasChapters, markedCount) ? t("Mark chapters or highlight a passage first") : f === "chapters" && !hasChapters ? t("Mark chapters first: use “Chapter” on a line") : (f === "quotes" || f === "highlights") && !markedCount ? t("Highlight words or mark a line first") : t(hint)}</small>
     </button>
   );
   return (
@@ -129,7 +135,8 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
       {/* The live regions stay in the page and only their text changes: a region inserted together with its text is often not announced. */}
       <div className="pv-sr" role="status" aria-live="polite" aria-atomic="true">{bad ? "" : msg}</div>
       <div className="pv-sr" role="alert" aria-atomic="true">{bad ? msg : ""}</div>
-      {msg && <div className={"toast" + (bad ? " pv-toast-bad" : "")} aria-hidden="true"><span>{msg}</span></div>}
+      {msg && !folder && <div className={"toast" + (bad ? " pv-toast-bad" : "")} aria-hidden="true"><span>{msg}</span></div>}
+      {msg && folder && <div className="toast"><span aria-hidden="true">{msg}</span><button type="button" onClick={() => { void window.api.showEpisodeFolder(); }}>{t("Show in folder")}</button></div>}
     </>
   );
 }
