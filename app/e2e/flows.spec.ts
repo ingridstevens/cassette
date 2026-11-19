@@ -154,3 +154,28 @@ test("screen-reader announcements: a finished transcription and an export are sp
   await page.getByRole("menuitem").first().click();
   await expect(page.getByRole("status").filter({ hasText: /Exported/ })).toHaveCount(1);
 });
+
+test("who said this line: add a new speaker from the menu with the keyboard, then undo in one step", async ({ page }) => {
+  await startFirstRecording(page);
+  const who = page.getByRole("button", { name: /^Change who said the line at 0:00/ });
+  await who.focus();
+  await page.keyboard.press("Enter");
+  const menu = page.getByRole("menu", { name: "Who said this line?" });
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole("menuitemradio", { checked: true })).toBeFocused();
+  await menu.getByRole("menuitem", { name: "+ New speaker…" }).focus();
+  await page.keyboard.press("Enter");
+  const name = page.getByRole("textbox", { name: "Name of the new speaker" });
+  await expect(name).toBeFocused();
+  await page.keyboard.press("Escape"); // back to the menu, which stays open
+  await expect(menu).toBeVisible();
+  await expect(menu.getByRole("menuitem", { name: "+ New speaker…" })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await page.keyboard.type("Mia");
+  await page.keyboard.press("Enter");
+  await expect(menu).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Change who said the line at 0:00. Now: Mia" })).toBeFocused();
+  await expect(page.getByRole("status").filter({ hasText: "Added speaker Mia" })).toBeAttached();
+  await page.keyboard.press("ControlOrMeta+z"); // one step takes back the speaker, the name and the line
+  await expect(page.getByRole("button", { name: /^Change who said the line at 0:00. Now: (?!Mia)/ })).toBeVisible();
+});
