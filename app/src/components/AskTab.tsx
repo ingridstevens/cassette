@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "../i18n";
 import { ModelStatus, Project, bytes, displayName, fmt } from "../types";
 import { LlmJob } from "./HighlightsTab";
-import { setLlm, useLlm } from "./llmChoice";
+import { llmOptionText, setLlm, useLlm } from "./llmChoice";
 import Hint from "../Hint";
 import { useModels } from "./useModels";
 import "../styles/project.css";
@@ -147,7 +147,7 @@ export default function AskTab({ project, visible, thread, job, onAsk, onStop, o
       {llm?.available && (llm.catalog?.length ?? 0) > 1 && (
         <label className="pv-ask-model">{t("Language model")}
           <select value={model} onChange={(e) => setLlm(e.target.value)} disabled={!!job || !!models.busy}>
-            {llm.catalog!.map(({ id, label }) => <option key={id} value={id}>{label}{llm.models?.[id] ? " ✓" : ` (${bytes(llm.bytes?.[id] ?? 0)})`}</option>)}
+            {llm.catalog!.map(({ id, label }) => <option key={id} value={id}>{llmOptionText(t, label, !!llm.models?.[id], llm.bytes?.[id])}</option>)}
           </select>
         </label>
       )}

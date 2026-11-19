@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "../i18n";
 import { Highlight, ModelStatus, PALETTE, Project, Summary, SummaryItem, bytes, displayName, fmt } from "../types";
 import { revealTurn } from "../windowing";
-import { setLlm, useLlm } from "./llmChoice";
+import { llmOptionText, setLlm, useLlm } from "./llmChoice";
 import Hint from "../Hint";
 import { useModels } from "./useModels";
 import "../styles/project.css";
@@ -45,6 +45,7 @@ export default function HighlightsTab({ project, visible, clip, time, job, error
   const llm = status?.llm;
   const catalog = llm?.catalog ?? [];
   const have = !!llm?.models?.[model];
+  const like = catalog.find((m) => m.id === model)?.like;
   const size = llm?.bytes?.[model];
   const all = result.highlights ?? [];
   const kept = all.filter((h) => !h.suggested), suggested = all.filter((h) => h.suggested);
@@ -115,8 +116,9 @@ export default function HighlightsTab({ project, visible, clip, time, job, error
         {llm?.available && (
           <label className="field">{t("Language model")}
             <select className="input" value={model} onChange={(e) => setLlm(e.target.value)} disabled={running}>
-              {catalog.map(({ id, label }) => <option key={id} value={id}>{label}{llm.models?.[id] ? " ✓" : ` (${bytes(llm.bytes?.[id] ?? 0)})`}</option>)}
+              {catalog.map(({ id, label }) => <option key={id} value={id}>{llmOptionText(t, label, !!llm.models?.[id], llm.bytes?.[id])}</option>)}
             </select>
+            {like && <span className="note">{t(like)}</span>}
           </label>
         )}
         {setup}
