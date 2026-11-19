@@ -1,5 +1,6 @@
 export default {
   de: {
+    "Works offline. Your files and transcripts stay on this computer.": "Funktioniert offline. Deine Dateien und Transkripte bleiben auf diesem Computer.",
     "Decoding audio": "Audio wird dekodiert",
     "Finding speakers": "Sprecher werden erkannt",
     "Transcribing": "Transkription läuft",
@@ -141,6 +142,7 @@ export default {
     "Hide setup": "Einrichtung ausblenden",
   },
   fr: {
+    "Works offline. Your files and transcripts stay on this computer.": "Fonctionne hors ligne. Vos fichiers et transcriptions restent sur cet ordinateur.",
     "Decoding audio": "Décodage de l’audio",
     "Finding speakers": "Recherche des locuteurs",
     "Transcribing": "Transcription en cours",
@@ -282,6 +284,7 @@ export default {
     "Hide setup": "Masquer la configuration",
   },
   es: {
+    "Works offline. Your files and transcripts stay on this computer.": "Funciona sin conexión. Tus archivos y transcripciones se quedan en este ordenador.",
     "Decoding audio": "Decodificando audio",
     "Finding speakers": "Buscando hablantes",
     "Transcribing": "Transcribiendo",

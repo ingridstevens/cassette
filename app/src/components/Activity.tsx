@@ -25,9 +25,9 @@ function friendly(l: LogLine): { text: string; kind: "ok" | "error" | "warn" } |
   return null;
 }
 
-interface Props { lines: LogLine[]; live: Live | null; /** True while a download is still missing: the pill must not claim "Ready". */ setupNeeded?: boolean; onClear(): void }
+interface Props { lines: LogLine[]; live: Live | null; /** True while a download is still missing: the pill must not claim "Ready". */ setupNeeded?: boolean; onClear(): void; /** Opens Settings, Privacy from the popover. */ onOpenPrivacy?(): void }
 
-export default function Activity({ lines, live, setupNeeded = false, onClear }: Props) {
+export default function Activity({ lines, live, setupNeeded = false, onClear, onOpenPrivacy }: Props) {
   const t = useT();
   const lang = currentLang();
   const [open, setOpen] = useState(false);
@@ -67,6 +67,7 @@ export default function Activity({ lines, live, setupNeeded = false, onClear }: 
             <button type="button" className="btn quiet small" onClick={onClear} aria-label={t("Clear the activity list")} disabled={lines.length === 0}>{t("Clear list")}</button>
             <button type="button" className="btn icon quiet small" onClick={() => { setOpen(false); pillBtn.current?.focus(); }} aria-label={t("Close activity")}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg></button>
           </h4>
+          <p className="muted small" style={{ margin: "0 0 8px" }}>{t("Works offline. Your files and transcripts stay on this computer.")}{onOpenPrivacy && <> <button type="button" className="linkish" onClick={() => { setOpen(false); onOpenPrivacy(); }}>{t("What is stored where")}</button></>}</p>
           <div className="ac-events">
             {live && <div className="ac-ev now"><i className="g" /><div className="grow"><p><b>{live.label}</b>{live.message ? `. ${live.message}` : ""}</p>
               {live.fraction != null && <div className="prog thin" role="progressbar" aria-label={live.label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={Math.round(live.fraction * 100)}><i style={{ width: `${Math.round(live.fraction * 100)}%` }} /></div>}

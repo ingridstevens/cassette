@@ -142,7 +142,7 @@ export default function App() {
       <div className={"shell" + (dragging ? " dragging" : "")} hidden={page === "settings"} onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={(e) => { if (e.currentTarget === e.target) setDragging(false); }} onDrop={onDrop}>
         <ProjectSidebar easy={isEasy(opts)} projects={P.projects} activeId={P.activeId} progress={P.progress} blocker={blocker}
           onSelect={(id) => { P.setActiveId(id); setPage("main"); }} onAdd={pick} onRecord={() => setPage("record")} onRemove={(id) => setRemoving(id)} onRename={P.rename} onTranscribeAll={P.transcribeAll} doneCount={P.projects.filter((p) => p.result).length} onExportAll={() => window.api.exportTranscript({ projects: P.projects.filter((p) => p.result).map((p) => ({ name: p.name, segments: p.result!.segments.map(({ words: _w, orig: _o, ...s }) => s), speakers: Object.fromEntries(p.result!.speakers.map((s) => [s, displayName(s, p.result!.speakers, p.names)])) })), options: { excel: loadExportOpts().excel } }, "combined-csv", "all-projects")} onOpenSettings={() => openSettings()} playingId={playingId}
-          activity={<Activity lines={lines} live={live} setupNeeded={!!blocker} onClear={() => setLines([])} />} />
+          activity={<Activity lines={lines} live={live} setupNeeded={!!blocker} onClear={() => setLines([])} onOpenPrivacy={() => openSettings("Privacy")} />} />
         <section className="main">
           <div className="main-body">
             {page === "record" && <RecordPage opts={opts} blocker={blocker} onBack={() => setPage("main")} onSaved={(r) => { setAddError(P.addAndTranscribe([r.path])); setPage("main"); }} />}
