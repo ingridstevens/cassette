@@ -1,0 +1,18 @@
+name: Bug report
+description: Something does not work. Please do not attach recordings or transcripts.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+  - type: markdown
+    attributes:
+      value: |
+        Use **Settings, Advanced, Diagnostics and reset, Export diagnostics** to save a zip with your version, system, model status and activity log. The app shows you exactly what is inside before saving, and it contains no transcript text. Attach it here yourself; the app sends nothing. See [docs/diagnostics.md](https://github.com/ingridstevens/cassette/blob/main/docs/diagnostics.md). Please never attach recordings or transcripts.
