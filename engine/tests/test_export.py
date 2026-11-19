@@ -730,3 +730,50 @@ def test_bilingual_formats_never_reach_the_anonymised_export(tmp_path):
     from engine import main
 
     assert "bilingual" in main.build_parser().parse_args(["export", "x", "y", "--format", "bilingual"]).format
+
+
+def _docx_facts(data: bytes):
+    import io
+
+    from docx import Document
+
+    doc = Document(io.BytesIO(data))
+    lang = doc.styles.element.xpath("./w:docDefaults/w:rPrDefault/w:rPr/w:lang/@w:val")
+    return doc, lang
+
+
+def test_every_word_export_declares_its_title_and_language():
+    from engine.export import to_bilingual_docx, to_docx, to_highlights_docx, to_minutes
+
+    outs = {
+        "docx": to_docx(SEGS, NAMES, title="Meeting", lang="de"),
+        "bi": to_bilingual_docx(BI, {}, title="Meeting", lang="de"),
+        "min": to_minutes(SEGS, NAMES, title="Meeting", lang="de"),
+        "hi": to_highlights_docx(SEGS, NAMES, [], title="Meeting", lang="de"),
+    }
+    for name, data in outs.items():
+        doc, lang = _docx_facts(data)
+        assert doc.core_properties.title == "Meeting", name
+        assert doc.core_properties.language == "de", name
+        assert lang == ["de"], name
+    _, lang = _docx_facts(to_docx(SEGS, NAMES))
+    assert lang == ["en"]
+
+
+def test_transcript_docx_has_a_title_and_chapters_are_real_headings():
+    from engine.export import to_docx
+
+    segs = [dict(s) for s in SEGS]
+    segs[0]["chapter"] = "Opening"
+    doc, _ = _docx_facts(to_docx(segs, NAMES, title="Meeting"))
+    assert [p.text for p in doc.paragraphs if p.style.name == "Title"] == ["Meeting"]
+    heads = [p.text.strip() for p in doc.paragraphs if p.style.name == "Heading 2"]
+    assert len(heads) == 1 and heads[0].endswith("Opening")
+
+
+def test_bilingual_docx_has_a_title_and_a_header_row():
+    from engine.export import to_bilingual_docx
+
+    doc, _ = _docx_facts(to_bilingual_docx(BI, {}, title="Meeting"))
+    assert [p.text for p in doc.paragraphs if p.style.name == "Title"] == ["Meeting"]
+    assert doc.tables[0].rows[0]._tr.xpath("./w:trPr/w:tblHeader")
