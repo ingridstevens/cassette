@@ -220,13 +220,19 @@ def cmd_export(a) -> None:
     names = data.get("speakers", {})
     opts = {**(data.get("options") or {}), "lang": data.get("lang"), "fileLanguage": data.get("language")}
     opts.pop("stampText", None)  # only ever built here, from the transcript's own fields
-    if opts.get("stamp") and a.format in ("txt", "md", "md-copy", "csv", "docx", "minutes"):  # opt-in version line; never in subtitles, JSON (has its meta), markers or the anonymised export
+    if opts.get("stamp") and a.format in ("txt", "md", "md-copy", "csv", "docx", "minutes", "bilingual"):  # opt-in version line; never in subtitles, JSON (has its meta), markers or the anonymised export
         opts["stampText"] = ex.stamp_text(data)
     segs = data["segments"]
-    if a.format in ("txt", "md", "md-copy", "csv", "docx", "minutes", "redacted"):
+    if a.format in ("txt", "md", "md-copy", "csv", "docx", "minutes", "redacted", "bilingual"):
         segs = ex.apply_style(segs, opts, data.get("language"))
     if a.format == "docx":
         Path(a.output).write_bytes(ex.to_docx(segs, names, title=Path(a.output).stem, lang=data.get("lang"), options=opts))
+    elif a.format == "bilingual":  # original and translation side by side; real speaker names, so never part of the anonymised export
+        Path(a.output).write_bytes(ex.to_bilingual_docx(segs, names, title=Path(a.output).stem, lang=data.get("lang"), options=opts))
+    elif a.format == "bilingual-srt":
+        Path(a.output).write_text(ex.to_bilingual_srt(segs, names, opts), encoding="utf-8", newline="")
+    elif a.format == "languages":
+        Path(a.output).write_text(ex.to_language_shares(segs, names, opts), encoding="utf-8", newline="")
     elif a.format == "minutes":
         Path(a.output).write_bytes(ex.to_minutes(segs, names, title=Path(a.output).stem, lang=data.get("lang"), summary=data.get("summary"), highlights=data.get("highlights"), stamp=opts.get("stampText")))
     elif a.format == "highlights":
@@ -381,7 +387,7 @@ def build_parser() -> argparse.ArgumentParser:
     e = sub.add_parser("export")
     e.add_argument("transcript")
     e.add_argument("output")
-    e.add_argument("--format", required=True, choices=["txt", "srt", "vtt", "md", "md-copy", "json", "csv", "docx", "chapters", "edl", "minutes", "highlights", "redacted", "quotes", "changes", "combined-csv"])
+    e.add_argument("--format", required=True, choices=["txt", "srt", "vtt", "md", "md-copy", "json", "csv", "docx", "chapters", "edl", "minutes", "highlights", "redacted", "quotes", "changes", "combined-csv", "bilingual", "bilingual-srt", "languages"])
     e.add_argument("--key-output", help="where to write the anonymisation key (default: beside the export)")
     e.set_defaults(fn=cmd_export)
 

@@ -8,6 +8,7 @@ export const GROUPS: { title: string; formats: readonly (readonly [string, strin
     ["copy-md", "Copy as Markdown", "To the clipboard, to paste into a note app · follows the Text style settings"],
     ["print", "Print / PDF", ".pdf · the transcript only, ready to print"],
     ["print-large", "Large-print PDF", ".pdf · 150% text size, for easier reading"],
+    ["bilingual", "Bilingual (Word)", ".docx · original and translation side by side, with the share of each language"],
     ["redacted", "Anonymised text", ".txt · speaker names replaced by P01, P02…; other names in the text are not found"],
     ["text", "Text style…", "Keep or remove “um”, mark pauses, show or hide times"],
   ] },
@@ -15,11 +16,13 @@ export const GROUPS: { title: string; formats: readonly (readonly [string, strin
     ["srt", "Subtitles (.srt)", "Line length, speaker names, time shift"],
     ["vtt", "Web subtitles (.vtt)", "For web video"],
     ["chapters", "Chapters (text)", "0:00 Title per line · YouTube and podcasts"],
+    ["bilingual-srt", "Bilingual subtitles (.srt)", "The original with its translation under it"],
     ["edl", "Markers (DaVinci Resolve .edl)", "Chapters or speaker turns as timeline markers"],
     ["episode", "Episode folder", "Chapters, a clip per highlight and Resolve markers, in one new folder"],
   ] },
   { title: "Data", formats: [
     ["csv", "Spreadsheet", ".csv · start and end times, speaker, text"],
+    ["languages", "Language shares (text)", ".txt · minutes and percent of the speech in each language"],
     ["json", "Everything (JSON)", ".json · all lines, words and speakers"],
     ["changes", "Original vs. edited", ".txt · every line you changed, before and after"],
   ] },
@@ -61,3 +64,7 @@ export const toggleShown = (raw: unknown, format: string, on: boolean): string[]
 
 /** What the menu lists up front: Easy mode's fixed two items (the setting never changes them), else the chosen formats. Everything not listed is under "More formats…". */
 export const shownFormats = (raw: unknown, easy: boolean): string[] => (easy ? [...EASY_FORMATS] : normaliseShown(raw));
+
+/** Formats that show a translation next to the original: greyed out until a line has one (an empty column would only confuse). They always use the real speaker names, so the anonymised export never offers them. */
+export const NEEDS_TRANSLATION: ReadonlySet<string> = new Set(["bilingual", "bilingual-srt"]);
+export const needsTranslation = (format: string, translatedLines: number): boolean => NEEDS_TRANSLATION.has(format) && translatedLines === 0;

@@ -668,3 +668,65 @@ def test_minutes_action_table_first_row_is_flagged_as_the_header_row():
     rows = doc.tables[0].rows
     assert rows[0]._tr.xpath("./w:trPr/w:tblHeader")   # screen readers read the column name with each cell
     assert not rows[1]._tr.xpath("./w:trPr/w:tblHeader")
+
+
+BI = [
+    {"start": 0.0, "end": 30.0, "speaker": "A", "text": "Hallo zusammen.", "lang": "de", "translation": "Hello everyone."},
+    {"start": 30.0, "end": 50.0, "speaker": "B", "text": "Fine, thanks.", "lang": "en"},
+    {"start": 50.0, "end": 60.0, "speaker": "A", "text": "Gut."},
+]
+
+
+def test_language_shares_from_line_tags_add_up_to_100():
+    from engine.export import language_shares, shares_text
+
+    r = language_shares(BI, "de")
+    assert [(x["lang"], x["seconds"], x["percent"]) for x in r] == [("de", 40.0, 67), ("en", 20.0, 33)]
+    assert shares_text(r) == "DE 0:40 (67%), EN 0:20 (33%)"
+    assert sum(x["percent"] for x in language_shares([{"start": i, "end": i + 1, "speaker": "A", "text": "x", "lang": c} for i, c in enumerate("abc")])) == 100
+    assert language_shares([], "de") == [] and language_shares([{"start": 0, "end": 5, "speaker": "A", "text": "x"}]) == []
+
+
+def _bi_export(tmp_path, fmt, **extra):
+    import argparse
+
+    from engine import main
+
+    data = {"app": "0.1.0", "language": "de", "lang": "en", "segments": [{**s} for s in BI], "speakers": {"A": "Anna"}, "options": {}, **extra}
+    t = tmp_path / "t.json"
+    t.write_text(json.dumps(data))
+    out = tmp_path / f"o.{fmt}"
+    main.cmd_export(argparse.Namespace(transcript=str(t), output=str(out), format=fmt, key_output=None))
+    return out
+
+
+def test_bilingual_docx_has_both_columns_a_header_row_and_the_shares(tmp_path):
+    from docx import Document
+
+    d = Document(str(_bi_export(tmp_path, "bilingual")))
+    rows = [[c.text for c in r.cells] for r in d.tables[0].rows]
+    assert rows[0] == ["Time", "Speaker", "Original", "Translation"]
+    assert rows[1][1:] == ["Anna", "Hallo zusammen.", "Hello everyone."]
+    assert rows[2][3] == ""  # no translation: empty cell, the line is still there
+    assert d.tables[0].rows[0]._tr.xpath("./w:trPr/w:tblHeader")
+    assert "DE 0:40 (67%), EN 0:20 (33%)" in "\n".join(p.text for p in d.paragraphs)
+
+
+def test_bilingual_srt_shows_the_translation_under_the_original(tmp_path):
+    s = _bi_export(tmp_path, "bilingual-srt", options={"maxDuration": 60}).read_text(encoding="utf-8")
+    assert "Anna: Hallo zusammen.\nHello everyone.\n" in s
+    assert "1\n00:00:00,000 --> " in s and "Fine, thanks.\n" in s
+
+
+def test_language_shares_file_has_no_names_or_text(tmp_path):
+    t = _bi_export(tmp_path, "languages").read_text(encoding="utf-8")
+    assert "DE\t0:40\t67%" in t and "EN\t0:20\t33%" in t
+    assert "Anna" not in t and "Hallo" not in t
+
+
+def test_bilingual_formats_never_reach_the_anonymised_export(tmp_path):
+    out = _bi_export(tmp_path, "redacted").read_text(encoding="utf-8")
+    assert "Hello everyone." not in out and "Anna" not in out
+    from engine import main
+
+    assert "bilingual" in main.build_parser().parse_args(["export", "x", "y", "--format", "bilingual"]).format

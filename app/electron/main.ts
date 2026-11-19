@@ -351,7 +351,7 @@ app.whenReady().then(() => {
 
   ipcMain.handle("export", async (_e, payload: { segments: unknown[]; speakers: Record<string, string> }, format: string, defaultName: string) => {
     if (typeof format !== "string" || !EXPORT_FORMATS.has(format)) return { ok: false, error: "Unsupported export format." };
-    const ext = ({ chapters: "txt", quotes: "txt", highlights: "docx", changes: "txt", redacted: "txt", minutes: "docx", "combined-csv": "csv" } as Record<string, string>)[format] ?? format; // the engine format id differs from the file extension for chapters
+    const ext = ({ chapters: "txt", quotes: "txt", highlights: "docx", changes: "txt", redacted: "txt", minutes: "docx", "combined-csv": "csv", bilingual: "docx", "bilingual-srt": "srt", languages: "txt" } as Record<string, string>)[format] ?? format; // the engine format id differs from the file extension for chapters
     const r = await dialog.showSaveDialog({ defaultPath: `${safeName(defaultName, "Transcript")}.${ext}`, filters: [{ name: ext.toUpperCase(), extensions: [ext] }] });
     if (r.canceled || !r.filePath) return { cancelled: true };
     const args = ["--format", format];

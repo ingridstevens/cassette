@@ -19,6 +19,9 @@ The menu is grouped: **Read and share** (Word, text, Markdown, anonymised, Text 
 | Highlights | `.docx` | The same quotes in a Word file, with the reason next to each one. |
 | Original vs. edited | `.txt` | Every line you changed, with the original text and your edit, for an audit trail. Says "0 edited lines" if you changed nothing. |
 | Anonymised text | `.txt` | Speakers become `P01`, `P02`… in order of first appearance, and any speaker name you typed is replaced by `[name]` wherever it appears in the text. Other names that are spoken (people, places) are **not** removed: read it before you share it. |
+| Bilingual (Word) | `.docx` | A table with time, speaker, the original and the translation side by side, headed by the share of each language. See [Two languages](#two-languages). |
+| Bilingual subtitles | `.srt` | The same cues as Subtitles (same options), with the translation under the original. |
+| Language shares | `.txt` | One line per language with its minutes and percent of the speech. No names and no transcript text. |
 | Markdown | `.md` | Speaker and time headings with the text under them. |
 | Everything (JSON) | `.json` | All lines (with marks, language, translation and overlap flags), words with timings, and speakers, for other programs. |
 | Chapters (text) | `.txt` | A `0:00 Title` list. Needs at least one chapter; see [Chapters](chapters.md). |
@@ -27,6 +30,23 @@ The menu is grouped: **Read and share** (Word, text, Markdown, anonymised, Text 
 
 **Export all as CSV** (sidebar, shown when two or more projects are finished) writes one spreadsheet with a
 `project` column followed by the usual columns.
+
+## Two languages
+
+For a recording with lines in more than one language, **Bilingual (Word)** and **Bilingual subtitles (.srt)** put the original and the
+translation together, and **Language shares (text)** says how much of the recording was in each language. They are under **More formats…**
+(or tick them in Settings, Saving and export) and only reuse what is already in the project:
+
+- **Translations.** The two bilingual formats need at least one translated line (see [Translation](using-the-app.md)); until then they are greyed
+  out with "Translate some lines first". A line without a translation stays in the table or the subtitles with an empty translation. They show the
+  translation whatever the "translations" Text style option says, since showing it is their point. The Spreadsheet (`.csv`) already has `text`,
+  `language` and `translation` columns if you prefer to work there.
+- **Language shares** come from the language tag of each line (the recording's language where a line has none), counting the seconds of each line. Nothing
+  is detected again, so correcting a wrong tag with **Languages** changes the shares. The same shares are in the **Info** tab (shown when there are two or more languages) and
+  at the top of the bilingual Word file, as `DE 12:30 (63%), EN 7:30 (37%)`.
+- **Anonymised export.** Bilingual formats show the real speaker names, so they are **not** part of the anonymised export, which stays a plain text file with `P01`, `P02`… and no translation.
+  Language shares contain no names or text.
+- The version line (when on) is added to the bilingual Word file; Text style (clean text, pause marks, times) applies to it too. In Easy mode the menu stays Word and Print / PDF.
 
 ## Episode folder
 

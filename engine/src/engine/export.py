@@ -18,25 +18,25 @@ def _ts(sec: float, sep: str = ",", hours: bool = True) -> str:
 
 # ---- Words the exports write themselves (everything else is the user's own text) -----------------------------
 _L = {
-    "en": {"summary": "Summary", "topics": "Topics", "actions": "Action items", "owner": "Owner", "task": "Action", "due": "Due", "keyquotes": "Key quotes", "highlights": "Highlights", "nohighlights": "Nothing was highlighted. Select text in the transcript and choose Highlight.", "aisummary": "Written by a language model on this computer. Check it before you share it.", "aihighlight": "suggested by the language model", "speaker": "speaker", "speakers": "speakers", "participants": "Participants: ", "footer": "Made with Cassette  ·  page ",
+    "en": {"sharesHead": "Language share:", "time": "Time", "speakerCol": "Speaker", "translation": "Translation", "summary": "Summary", "topics": "Topics", "actions": "Action items", "owner": "Owner", "task": "Action", "due": "Due", "keyquotes": "Key quotes", "highlights": "Highlights", "nohighlights": "Nothing was highlighted. Select text in the transcript and choose Highlight.", "aisummary": "Written by a language model on this computer. Check it before you share it.", "aihighlight": "suggested by the language model", "speaker": "speaker", "speakers": "speakers", "participants": "Participants: ", "footer": "Made with Cassette  ·  page ",
            "attendees": "Attendees", "decisions": "Decisions and action items", "nomarks": "No lines were marked. Mark a line in the transcript to list it here.",
            "record": "Record", "minutes": "Meeting minutes", "edited1": "{n} edited line of {m}", "editedN": "{n} edited lines of {m}",
            "original": "original: ", "edited": "edited:   ",
            "cleannote": "Edited copy: hesitations such as “um” and “uh” were removed. This is not a verbatim record.", "pausenote": "Pauses are marked (.) about half a second, (..) about one second, (...) two seconds or more.", "overlap": "overlap",
            "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]},
-    "de": {"summary": "Zusammenfassung", "topics": "Themen", "actions": "Aufgaben", "owner": "Verantwortlich", "task": "Aufgabe", "due": "Fällig bis", "keyquotes": "Zitate", "highlights": "Highlights", "nohighlights": "Nichts wurde hervorgehoben. Markiere Text im Transkript und wähle Hervorheben.", "aisummary": "Von einem Sprachmodell auf diesem Computer geschrieben. Bitte vor dem Weitergeben prüfen.", "aihighlight": "vom Sprachmodell vorgeschlagen", "speaker": "Sprecher", "speakers": "Sprecher", "participants": "Teilnehmende: ", "footer": "Erstellt mit Cassette  ·  Seite ",
+    "de": {"sharesHead": "Sprachanteile:", "time": "Zeit", "speakerCol": "Sprecher", "translation": "Übersetzung", "summary": "Zusammenfassung", "topics": "Themen", "actions": "Aufgaben", "owner": "Verantwortlich", "task": "Aufgabe", "due": "Fällig bis", "keyquotes": "Zitate", "highlights": "Highlights", "nohighlights": "Nichts wurde hervorgehoben. Markiere Text im Transkript und wähle Hervorheben.", "aisummary": "Von einem Sprachmodell auf diesem Computer geschrieben. Bitte vor dem Weitergeben prüfen.", "aihighlight": "vom Sprachmodell vorgeschlagen", "speaker": "Sprecher", "speakers": "Sprecher", "participants": "Teilnehmende: ", "footer": "Erstellt mit Cassette  ·  Seite ",
            "attendees": "Teilnehmende", "decisions": "Beschlüsse und Aufgaben", "nomarks": "Es wurden keine Zeilen markiert. Markiere eine Zeile im Transkript, damit sie hier erscheint.",
            "record": "Protokoll", "minutes": "Besprechungsprotokoll", "edited1": "{n} geänderte Zeile von {m}", "editedN": "{n} geänderte Zeilen von {m}",
            "original": "Original:  ", "edited": "Geändert: ",
            "cleannote": "Bearbeitete Fassung: Füllwörter wie „äh“ und „ähm“ wurden entfernt. Das ist kein wörtliches Protokoll.", "pausenote": "Pausen sind markiert: (.) etwa eine halbe Sekunde, (..) etwa eine Sekunde, (...) zwei Sekunden oder mehr.", "overlap": "überlappend",
            "months": ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]},
-    "fr": {"summary": "Résumé", "topics": "Sujets", "actions": "Actions à mener", "owner": "Responsable", "task": "Action", "due": "Échéance", "keyquotes": "Citations clés", "highlights": "Moments forts", "nohighlights": "Rien n’a été mis en avant. Sélectionnez du texte dans la transcription et choisissez Mettre en avant.", "aisummary": "Rédigé par un modèle de langage sur cet ordinateur. Vérifiez-le avant de le partager.", "aihighlight": "proposé par le modèle de langage", "speaker": "locuteur", "speakers": "locuteurs", "participants": "Participants : ", "footer": "Créé avec Cassette  ·  page ",
+    "fr": {"sharesHead": "Répartition des langues :", "time": "Temps", "speakerCol": "Locuteur", "translation": "Traduction", "summary": "Résumé", "topics": "Sujets", "actions": "Actions à mener", "owner": "Responsable", "task": "Action", "due": "Échéance", "keyquotes": "Citations clés", "highlights": "Moments forts", "nohighlights": "Rien n’a été mis en avant. Sélectionnez du texte dans la transcription et choisissez Mettre en avant.", "aisummary": "Rédigé par un modèle de langage sur cet ordinateur. Vérifiez-le avant de le partager.", "aihighlight": "proposé par le modèle de langage", "speaker": "locuteur", "speakers": "locuteurs", "participants": "Participants : ", "footer": "Créé avec Cassette  ·  page ",
            "attendees": "Participants", "decisions": "Décisions et actions", "nomarks": "Aucune ligne n’a été marquée. Marquez une ligne dans la transcription pour qu’elle apparaisse ici.",
            "record": "Compte rendu", "minutes": "Compte rendu de réunion", "edited1": "{n} ligne modifiée sur {m}", "editedN": "{n} lignes modifiées sur {m}",
            "original": "original : ", "edited": "modifié :  ",
            "cleannote": "Version nettoyée : les hésitations comme « euh » ont été supprimées. Ce n’est pas une transcription littérale.", "pausenote": "Les pauses sont indiquées : (.) environ une demi-seconde, (..) environ une seconde, (...) deux secondes ou plus.", "overlap": "chevauchement",
            "months": ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]},
-    "es": {"summary": "Resumen", "topics": "Temas", "actions": "Tareas", "owner": "Responsable", "task": "Tarea", "due": "Fecha límite", "keyquotes": "Citas clave", "highlights": "Destacados", "nohighlights": "No se destacó nada. Selecciona texto en la transcripción y elige Destacar.", "aisummary": "Escrito por un modelo de lenguaje en este ordenador. Revísalo antes de compartirlo.", "aihighlight": "sugerido por el modelo de lenguaje", "speaker": "hablante", "speakers": "hablantes", "participants": "Participantes: ", "footer": "Creado con Cassette  ·  página ",
+    "es": {"sharesHead": "Reparto de idiomas:", "time": "Tiempo", "speakerCol": "Hablante", "translation": "Traducción", "summary": "Resumen", "topics": "Temas", "actions": "Tareas", "owner": "Responsable", "task": "Tarea", "due": "Fecha límite", "keyquotes": "Citas clave", "highlights": "Destacados", "nohighlights": "No se destacó nada. Selecciona texto en la transcripción y elige Destacar.", "aisummary": "Escrito por un modelo de lenguaje en este ordenador. Revísalo antes de compartirlo.", "aihighlight": "sugerido por el modelo de lenguaje", "speaker": "hablante", "speakers": "hablantes", "participants": "Participantes: ", "footer": "Creado con Cassette  ·  página ",
            "attendees": "Asistentes", "decisions": "Decisiones y tareas", "nomarks": "No se marcó ninguna línea. Marca una línea en la transcripción para que aparezca aquí.",
            "record": "Acta", "minutes": "Acta de la reunión", "edited1": "{n} línea editada de {m}", "editedN": "{n} líneas editadas de {m}",
            "original": "original: ", "edited": "editado:  ",
@@ -418,6 +418,36 @@ def to_csv(segs, names=None, options=None):
     return ("\ufeff" if excel else "") + buf.getvalue()
 
 
+def language_shares(segs, file_language: str | None = None) -> list[dict]:
+    """Seconds and percent of speech per language, from the tags the lines already carry (a line without its own tag has the recording's language).
+    Nothing is detected here. Most spoken language first; percents are whole numbers that add up to 100."""
+    secs: dict[str, float] = {}
+    for s in segs:
+        code = s.get("lang") or file_language
+        if code:
+            secs[code] = secs.get(code, 0.0) + max(0.0, s["end"] - s["start"])
+    total = sum(secs.values())
+    if total <= 0:
+        return []
+    rows = sorted(secs.items(), key=lambda kv: (-kv[1], kv[0]))
+    pct = [int(v / total * 100) for _, v in rows]
+    for i in sorted(range(len(rows)), key=lambda i: -(rows[i][1] / total * 100 - pct[i]))[: 100 - sum(pct)]:  # largest remainders get the missing points
+        pct[i] += 1
+    return [{"lang": c, "seconds": v, "percent": p} for (c, v), p in zip(rows, pct)]
+
+
+def shares_text(shares: list[dict]) -> str:
+    """`DE 12:30 (63%), EN 7:30 (37%)`"""
+    return ", ".join(f"{x['lang'].upper()} {_clock(x['seconds'])} ({x['percent']}%)" for x in shares)
+
+
+def to_language_shares(segs, names=None, options=None):
+    """A small text file: one line per language with its minutes and percent of the speech. Holds no speaker names and no transcript text."""
+    shares = language_shares(segs, (options or {}).get("fileLanguage"))
+    head = _tr((options or {}).get("lang"))["sharesHead"]
+    return head + "\n" + "\n".join(f"{x['lang'].upper()}\t{_clock(x['seconds'])}\t{x['percent']}%" for x in shares) + "\n"
+
+
 # Speaker colours, in the same order as the app (bright for rules and bars, darker for text so it stays readable).
 _BRIGHT = ["ff5f8a", "ff9a52", "a87bff", "4fb3ff", "2fc9a0", "f2b134", "e46bd6", "8a8fb0"]
 _DARK = ["c2285c", "b85a14", "6a45e8", "1d6fb5", "12806a", "9a6b00", "a3329a", "5b6078"]
@@ -592,6 +622,70 @@ def to_docx(segs, names=None, title="Transcript", lang=None, options=None) -> by
     out = io.BytesIO()
     doc.save(out)
     return out.getvalue()
+
+
+def to_bilingual_docx(segs, names=None, title="Transcript", lang=None, options=None) -> bytes:
+    """The original and its translation side by side: a table with time, speaker, original and translation, and a line with the language shares.
+    A line with no translation leaves that cell empty. Speaker names are the real ones, so this format is not offered for the anonymised export."""
+    from docx import Document
+    from docx.shared import Cm
+
+    names = names or {}
+    L = _tr(lang)
+    o = options or {}
+    stamp = o.get("timestamps", True)
+    doc = Document()
+    sec = doc.sections[0]
+    sec.left_margin = sec.right_margin = Cm(1.8)
+    _page_number_footer(sec, lang, o.get("stampText"))
+    p = doc.add_paragraph()
+    _font(p.add_run(title), _SERIF, 22, True, _INK)
+    shares = language_shares(segs, o.get("fileLanguage"))
+    if shares:
+        p = doc.add_paragraph()
+        _font(p.add_run(L["sharesHead"] + " " + shares_text(shares)), _SANS, 9.5, color=_MUTED)
+    note = style_note(o, lang)
+    if note:
+        _font(doc.add_paragraph().add_run(note), _SANS, 8.5, color=_MUTED, italic=True)
+    cols = ([L["time"]] if stamp else []) + [L["speakerCol"], L["original"].strip(" :").capitalize(), L["translation"]]
+    table = doc.add_table(rows=1, cols=len(cols))
+    table.style = "Table Grid"
+    for i, c in enumerate(cols):
+        _font(table.rows[0].cells[i].paragraphs[0].add_run(c), _SANS, 9.5, True, _INK)
+    from docx.oxml import OxmlElement
+    table.rows[0]._tr.get_or_add_trPr().append(OxmlElement("w:tblHeader"))  # screen readers read the column name with each cell
+    for sg in segs:
+        cells = table.add_row().cells
+        vals = ([_ts(sg["start"])[:8]] if stamp else []) + [_name(sg, names) + _flag(sg, lang, o), sg["text"], sg.get("translation") or ""]
+        for i, v in enumerate(vals):
+            _font(cells[i].paragraphs[0].add_run(v), _SANS if i < len(vals) - 2 else _SERIF, 9 if i < len(vals) - 2 else 10.5, color=_MUTED if i < len(vals) - 2 else _INK, italic=(i == len(vals) - 1))
+    out = io.BytesIO()
+    doc.save(out)
+    return out.getvalue()
+
+
+def to_bilingual_srt(segs, names=None, options=None):
+    """Subtitles with both lines: each cue shows the original, and the translation (when the line has one) under it."""
+    names = names or {}
+    max_chars = max(10, int(_opt(options, "maxChars", 42)))
+    max_lines = max(1, int(_opt(options, "maxLines", 2)))
+    gap = max(0.0, float(_opt(options, "minGap", 0.083)))
+    cues = []
+    for seg in segs:
+        mine = _cues([seg], names, options, True)
+        tr = (seg.get("translation") or "").strip()
+        if tr and mine:
+            extra = _wrap(tr.split(), max_chars, max_lines) or [tr]
+            st, en, lines, who = mine[-1]
+            mine[-1] = (st, en, lines + extra, who)
+        cues.extend(mine)
+    cues.sort(key=lambda c: c[0])
+    fixed = []
+    for n, (st, en, lines, who) in enumerate(cues):
+        if n + 1 < len(cues) and cues[n + 1][0] - gap > st:
+            en = min(en, cues[n + 1][0] - gap)
+        fixed.append((st, max(en, st + 0.001), lines))
+    return "\n".join(f"{i}\n{_ts(st)} --> {_ts(en)}\n" + "\n".join(lines) + "\n" for i, (st, en, lines) in enumerate(fixed, 1))
 
 
 # ---- Extra formats -------------------------------------------------------------------------------------------
