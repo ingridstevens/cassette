@@ -359,6 +359,11 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
         else if (sel) void window.api.saveClip(path, sel[0], sel[1]).then((ok) => { if (ok) flash(t("Clip saved ✓")); });
         else flash(t("Mark a clip first: [ for the start, ] for the end"));
       }
+      else if (!mod && !e.altKey && showResult && !busy && !easy && /^[-+=0]$/.test(e.key) && quietTarget(e.target)) {
+        // zoom the waveform: + in, - out, 0 back to the whole recording
+        e.preventDefault();
+        if (e.key === "-") player.current?.zoomOut(); else if (e.key === "0") player.current?.zoomFit(); else player.current?.zoomIn();
+      }
       else if (!mod && !e.altKey && showResult && !busy && !easy && /^[omcrh]$/i.test(e.key) && quietTarget(e.target)) {
         e.preventDefault();
         if (e.key.toLowerCase() === "h") { if (!e.shiftKey) toggleHeardAt(currentLine()); return; }
@@ -754,7 +759,7 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
             <button type="button" className={"pv-speed" + (rate !== 1 ? " on" : "")} dir="ltr" onClick={() => stepRate(1, true)}
               aria-label={t("Playback speed {rate}×. Click to change.", { rate })} title={t("Playback speed: click to change, or press < and >")}>{rate}×</button>
           </div>
-          <Waveform key={project.id} ref={player} path={path} result={result} onTime={setTime} onSelection={setSel} onPlaying={setPlaying} onDuration={setDuration} trim={trimHl ? { id: trimHl.id, start: trimHl.start, end: trimHl.end } : null} onTrim={dragHl} />
+          <Waveform key={project.id} easy={easy} ref={player} path={path} result={result} onTime={setTime} onSelection={setSel} onPlaying={setPlaying} onDuration={setDuration} trim={trimHl ? { id: trimHl.id, start: trimHl.start, end: trimHl.end } : null} onTrim={dragHl} />
           {result && (
             <div className="pv-now" aria-live="off">
               <i style={{ background: nowName ? nowColor : undefined }} aria-hidden />

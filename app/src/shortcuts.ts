@@ -18,6 +18,7 @@ export const shortcutList = (t: TFn): [string, string][] => [
   ["[ / ]", t("Mark the start and the end of a clip at the playhead")],
   ["S", t("Save the marked clip")],
   [", / .", t("Move the playhead back or forward half a second")],
+  ["+ / - / 0", t("Zoom the waveform in, out, or back to the whole recording")],
   [`${MOD_KEY}F`, t("Find in the transcript")],
   [`${MOD_KEY}E`, t("Open the Export menu")],
   [`${MOD_KEY},`, t("Open Settings")],
