@@ -113,3 +113,17 @@ test("?enginefail shows the error card", async ({ page }) => {
   await expect(card.getByRole("button", { name: "Try again" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Export" })).toHaveCount(0);
 });
+
+test("Export > Copy as Markdown puts the text on the clipboard and is not remembered as an export", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  const exported = exportsOf(page);
+  await startFirstRecording(page);
+  await page.getByRole("button", { name: "Export" }).click();
+  await page.getByRole("menuitem", { name: "More formats…" }).click();
+  await page.getByRole("menuitem", { name: /^Copy as Markdown/ }).click();
+  await expect(page.getByText("Copied as Markdown ✓")).toBeVisible();
+  expect(await page.evaluate(() => navigator.clipboard.readText())).toContain("**Anna**");
+  expect(exported).toEqual([]); // nothing was saved to a file
+  await page.getByRole("button", { name: "Export" }).click();
+  await expect(page.getByRole("menuitem", { name: /^Again:/ })).toHaveCount(0);
+});

@@ -561,3 +561,17 @@ def test_a_models_folder_at_another_version_is_not_imported(tmp_path, monkeypatc
     assert models.scan_folder(tmp_path / "src")["Systran/faster-whisper-tiny"] == "incomplete"
     with pytest.raises(RuntimeError, match="incomplete"):
         models.import_folder(tmp_path / "src")
+
+
+def test_md_copy_adds_highlights_as_quotes_and_file_export_is_unchanged():
+    segs = [{"start": 0, "end": 2, "speaker": "S0", "text": "Hello there."}, {"start": 65, "end": 70, "speaker": "S1", "text": "Key point."}]
+    names = {"S0": "Anna", "S1": "Ben"}
+    hl = [{"start": 65, "end": 70, "text": "Key point.", "speaker": "S1"}]
+    plain = to_md(segs, names, {})
+    assert "## Highlights" not in plain and to_md(segs, names, {"highlights": None}) == plain
+    copied = to_md(segs, names, {"highlights": hl})
+    assert copied.startswith(plain)
+    assert "## Highlights\n\n> Key point.\n>\n> — Ben, 1:05\n" in copied
+    assert "Ben, 1:05" not in to_md(segs, names, {"highlights": hl, "timestamps": False})
+    assert to_md(segs, names, {"highlights": []}) == plain
+

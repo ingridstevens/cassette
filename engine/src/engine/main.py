@@ -213,7 +213,7 @@ def cmd_export(a) -> None:
     names = data.get("speakers", {})
     opts = {**(data.get("options") or {}), "lang": data.get("lang"), "fileLanguage": data.get("language")}
     segs = data["segments"]
-    if a.format in ("txt", "md", "csv", "docx", "minutes", "redacted"):
+    if a.format in ("txt", "md", "md-copy", "csv", "docx", "minutes", "redacted"):
         segs = ex.apply_style(segs, opts, data.get("language"))
     if a.format == "docx":
         Path(a.output).write_bytes(ex.to_docx(segs, names, title=Path(a.output).stem, lang=data.get("lang"), options=opts))
@@ -223,6 +223,8 @@ def cmd_export(a) -> None:
         Path(a.output).write_bytes(ex.to_highlights_docx(segs, names, data.get("highlights"), title=Path(a.output).stem, lang=data.get("lang")))
     elif a.format == "quotes":
         Path(a.output).write_text(ex.to_quotes(segs, names, data.get("highlights")), encoding="utf-8", newline="")
+    elif a.format == "md-copy":  # Markdown for the clipboard: the .md export plus the highlights as quotes (names as in the .md export)
+        Path(a.output).write_text(ex.to_md(segs, names, {**opts, "highlights": data.get("highlights") or []}), encoding="utf-8", newline="")
     elif a.format == "edl":
         Path(a.output).write_text(ex.to_edl(segs, names, opts, title=Path(a.output).stem), encoding="utf-8", newline="")
     else:
@@ -368,7 +370,7 @@ def build_parser() -> argparse.ArgumentParser:
     e = sub.add_parser("export")
     e.add_argument("transcript")
     e.add_argument("output")
-    e.add_argument("--format", required=True, choices=["txt", "srt", "vtt", "md", "json", "csv", "docx", "chapters", "edl", "minutes", "highlights", "redacted", "quotes", "changes", "combined-csv"])
+    e.add_argument("--format", required=True, choices=["txt", "srt", "vtt", "md", "md-copy", "json", "csv", "docx", "chapters", "edl", "minutes", "highlights", "redacted", "quotes", "changes", "combined-csv"])
     e.add_argument("--key-output", help="where to write the anonymisation key (default: beside the export)")
     e.set_defaults(fn=cmd_export)
 
