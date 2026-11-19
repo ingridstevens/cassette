@@ -9,6 +9,9 @@ speech engine, the chosen model, speaker detection, memory, free disk space and 
 Warning or Problem, and says what to do. **Copy diagnostics** afterwards includes the result; it has no transcript text,
 file names or token, so it is safe to paste into an email.
 
+**Export diagnostics** (same place) saves a zip for a bug report after showing you exactly what is in it; see
+[diagnostics.md](diagnostics.md).
+
 ## Speaker detection won't download ("Hugging Face said no")
 
 Almost always one of:

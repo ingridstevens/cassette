@@ -6,6 +6,7 @@ import { MODEL_BYTES } from "../useModels";
 import Dialog, { useReturnFocus } from "./Dialog";
 import ModelList, { Entry } from "./ModelList";
 import VerifyModels from "./VerifyModels";
+import ExportDiagnostics from "./ExportDiagnostics";
 import { SectionProps } from "./shared";
 import { Check, checksText, setupChecks } from "../../setupCheck";
 import type { ModelStatus } from "../../types";
@@ -35,6 +36,7 @@ export default function AdvancedSection({ opts, set, status, models, say, onRese
     setPathCopied(true); window.setTimeout(() => setPathCopied(false), 2000);
   };
   const [ask, setAsk] = useState(false);
+  const [bundle, setBundle] = useState(false);
   const [checks, setChecks] = useState<Check[] | null>(null);
   const [checking, setChecking] = useState(false);
   const back = useReturnFocus();
@@ -111,11 +113,14 @@ export default function AdvancedSection({ opts, set, status, models, say, onRese
         )}
         <div className="st-row st-setting"><div className="grow"><b>{t("Copy diagnostics")}</b><p className="note">{t("Version, system and model list for a bug report. It never contains transcript text or your token.")}</p></div>
           <button type="button" className="btn small" onClick={copyDiag}>{copied ? t("Copied ✓") : t("Copy")}</button></div>
+        <div className="st-row st-setting"><div className="grow"><b>{t("Export diagnostics")}</b><p className="note">{t("Saves a zip with the version, system, model status, setup check and activity log, for a bug report. You see exactly what is inside before saving. It never contains transcript text, and nothing is sent.")}</p></div>
+          <button type="button" className="btn small" onClick={() => { back.remember(); setBundle(true); }}>{t("Preview…")}</button></div>
         <div className="st-row st-setting"><div className="grow"><b>{t("Activity log")}</b><p className="note">{t("File names and folders. It never contains transcript text.")}</p></div>
           <button type="button" className="btn small" onClick={() => window.api.reveal("log")}>{t("Show log file")}</button></div>
         <div className="st-row st-setting"><div className="grow"><b>{t("Reset all settings")}</b><p className="note">{t("Models, projects and recordings are not touched.")}</p></div>
           <button type="button" className="btn small" onClick={() => { back.remember(); setAsk(true); }}>{t("Reset…")}</button></div>
       </Acc>
+      {bundle && <ExportDiagnostics opts={opts} status={status} checks={checks} say={say} onClose={() => { setBundle(false); back.restore(); }} />}
       {ask && <Dialog title={t("Reset all settings?")} keepLabel={t("Keep my settings")} okLabel={t("Reset settings")} onKeep={close} onOk={() => { close(); onReset(); say(t("Settings reset to defaults.")); }}><p>{t("Your choices go back to the standard ones. Models, projects and recordings are not touched.")}</p></Dialog>}
     </>
   );

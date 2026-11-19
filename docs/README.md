@@ -18,6 +18,7 @@ your own computer. German, English, French and Spanish are the best tested; abou
 | Save a Word file, minutes, subtitles, a spreadsheet, markers or an anonymised copy | [Exporting](exporting.md) |
 | Know what stays on your computer and what goes online | [Privacy and offline use](privacy-and-offline.md), [Confidentiality](confidentiality.md) |
 | Fix something that isn't working | [Troubleshooting](troubleshooting.md) |
+| Save a diagnostics zip for a bug report | [Export diagnostics](diagnostics.md) |
 | Run on Windows or a weaker computer: what is done and what is next | [Windows and low-spec ideas](windows-and-low-spec.md) |
 | See what has and has not been tested, by system and feature | [Compatibility matrix](compatibility.md) |
 | Match the look, colours, icon and tone of voice | [Brand guide](brand.md) |

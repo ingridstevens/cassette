@@ -230,3 +230,5 @@ kbd { font: 12.5px ui-monospace, Menlo, monospace; padding: 2px 8px; border-radi
 .st-token .st-mask.st-empty { color: var(--ink3); border-style: dashed; font-family: var(--font-ui); font-size: 13px; }
 .st-fmt { border: 0; margin: 14px 0 0; padding: 0; display: grid; gap: 6px; min-width: 0; }
 .st-fmt legend { font-size: 15px; font-weight: 650; padding: 0; margin-bottom: 6px; }
+.st-bundle { list-style: none; margin: 8px 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.st-bundle pre { margin: 6px 0 0; max-height: 220px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; font: 12px ui-monospace, Menlo, monospace; }

@@ -1,0 +1,48 @@
+// Settings > Advanced > Export diagnostics (a zip for a bug report, no transcript text).
+const K = {
+  title: "Export diagnostics",
+  desc: "Saves a zip with the version, system, model status, setup check and activity log, for a bug report. You see exactly what is inside before saving. It never contains transcript text, and nothing is sent.",
+  prev: "Preview…",
+  intro: "This zip contains only the files listed here. No recordings, transcripts, project names, speaker names or token. Nothing is sent anywhere; you choose where to save it and attach it to a bug report yourself.",
+  log: "Include the activity log (file names are hidden as far as the app can recognise them; read it below first)",
+  files: "Files in the zip",
+  prep: "Preparing the list…",
+  ok: "Diagnostics saved. Attach the file to your bug report yourself; nothing was sent.",
+  bad: "The diagnostics could not be saved.",
+  save: "Save zip…", saving: "Saving…", cancel: "Cancel",
+};
+export default {
+  de: {
+    [K.title]: "Diagnose exportieren",
+    [K.desc]: "Speichert eine ZIP-Datei mit Version, System, Modellstatus, Einrichtungsprüfung und Aktivitätsprotokoll für einen Fehlerbericht. Du siehst vor dem Speichern genau, was darin ist. Sie enthält nie Transkripttext, und es wird nichts gesendet.",
+    [K.prev]: "Vorschau …",
+    [K.intro]: "Diese ZIP-Datei enthält nur die hier aufgeführten Dateien. Keine Aufnahmen, Transkripte, Projektnamen, Sprechernamen oder Token. Es wird nichts gesendet; du wählst den Speicherort und hängst sie selbst an einen Fehlerbericht an.",
+    [K.log]: "Aktivitätsprotokoll einschließen (Dateinamen werden verborgen, soweit die App sie erkennt; lies es unten zuerst)",
+    [K.files]: "Dateien in der ZIP-Datei", [K.prep]: "Liste wird vorbereitet …",
+    [K.ok]: "Diagnose gespeichert. Hänge die Datei selbst an deinen Fehlerbericht an; es wurde nichts gesendet.",
+    [K.bad]: "Die Diagnose konnte nicht gespeichert werden.",
+    [K.save]: "ZIP speichern …", [K.saving]: "Wird gespeichert …", [K.cancel]: "Abbrechen",
+  },
+  fr: {
+    [K.title]: "Exporter les diagnostics",
+    [K.desc]: "Enregistre un zip avec la version, le système, l’état des modèles, la vérification de la configuration et le journal d’activité, pour un rapport de bogue. Vous voyez exactement son contenu avant d’enregistrer. Il ne contient jamais de texte de transcription, et rien n’est envoyé.",
+    [K.prev]: "Aperçu…",
+    [K.intro]: "Ce zip ne contient que les fichiers listés ici. Ni enregistrements, ni transcriptions, ni noms de projets, ni noms de locuteurs, ni jeton. Rien n’est envoyé ; vous choisissez où l’enregistrer et vous le joignez vous-même à un rapport de bogue.",
+    [K.log]: "Inclure le journal d’activité (les noms de fichiers sont masqués dans la mesure où l’application les reconnaît ; lisez-le d’abord ci-dessous)",
+    [K.files]: "Fichiers du zip", [K.prep]: "Préparation de la liste…",
+    [K.ok]: "Diagnostics enregistrés. Joignez le fichier vous-même à votre rapport de bogue ; rien n’a été envoyé.",
+    [K.bad]: "Les diagnostics n’ont pas pu être enregistrés.",
+    [K.save]: "Enregistrer le zip…", [K.saving]: "Enregistrement…", [K.cancel]: "Annuler",
+  },
+  es: {
+    [K.title]: "Exportar diagnósticos",
+    [K.desc]: "Guarda un zip con la versión, el sistema, el estado de los modelos, la comprobación de la configuración y el registro de actividad, para un informe de error. Ves exactamente lo que contiene antes de guardar. Nunca incluye texto de transcripciones y no se envía nada.",
+    [K.prev]: "Vista previa…",
+    [K.intro]: "Este zip contiene solo los archivos de la lista. Ni grabaciones, ni transcripciones, ni nombres de proyectos, ni nombres de hablantes, ni token. No se envía nada; eliges dónde guardarlo y lo adjuntas tú mismo a un informe de error.",
+    [K.log]: "Incluir el registro de actividad (los nombres de archivo se ocultan hasta donde la app los reconoce; léelo primero abajo)",
+    [K.files]: "Archivos del zip", [K.prep]: "Preparando la lista…",
+    [K.ok]: "Diagnósticos guardados. Adjunta el archivo tú mismo a tu informe de error; no se envió nada.",
+    [K.bad]: "No se pudieron guardar los diagnósticos.",
+    [K.save]: "Guardar zip…", [K.saving]: "Guardando…", [K.cancel]: "Cancelar",
+  },
+};

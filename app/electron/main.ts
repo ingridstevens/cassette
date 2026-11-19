@@ -15,6 +15,8 @@ import { isAppNavigation } from "./navGuard";
 import { byteRange, mediaPathFromUrl, mimeFor, peaksCacheName } from "./media";
 import { createProjectsStore } from "./projectsStore";
 import { dataLocations } from "./dataLocations";
+import { buildBundle, bundleRequest } from "./supportBundle";
+import { zipStore } from "./zipStore";
 
 // Show "Cassette" as the app name (menus, About, Dock) instead of "Electron" when run from source.
 // setName also moves the data folder, so keep it exactly where it was: nobody loses their projects or downloaded models.
@@ -292,6 +294,31 @@ app.whenReady().then(() => {
     try { if (hide) fs.writeFileSync(logHideFile(), ""); else fs.rmSync(logHideFile(), { force: true }); return { ok: true }; } catch (e) { return { ok: false, error: String((e as Error).message) }; }
   });
   ipcMain.handle("log-clear", () => { try { fs.writeFileSync(logFile(), ""); return { ok: true }; } catch (e) { return { ok: false, error: String((e as Error).message) }; } });
+  // Diagnostics bundle: built here from an allowlist (supportBundle.ts), never from the window's own text. "preview" returns what would be saved; "save" writes it
+  // as a zip to the place the person picks. Nothing is uploaded.
+  const bundleFiles = (req: unknown) => {
+    const r = bundleRequest(req);
+    if (!r) return null;
+    let free: number | null = null;
+    try { const st = fs.statfsSync(app.getPath("userData")); free = st.bavail * st.bsize; } catch { /* unknown */ }
+    let log: string | null = null;
+    if (r.includeLog) { try { log = fs.readFileSync(logFile(), "utf-8"); } catch { log = ""; } }
+    let user = ""; try { user = os.userInfo().username; } catch { /* unknown */ }
+    return buildBundle({
+      appVersion: app.getVersion(), electron: process.versions.electron,
+      os: { platform: process.platform, arch: process.arch, release: os.release(), chip: os.cpus()[0]?.model ?? "", cores: os.cpus().length, memGB: Math.round(os.totalmem() / 2 ** 30) },
+      freeBytes: free, model: r.model, downloaded: r.downloaded, diarization: r.diarization, checks: r.checks, log, scrub: { home: os.homedir(), user },
+    });
+  };
+  ipcMain.handle("bundle-preview", (_e, req: unknown) => bundleFiles(req)?.map((f) => ({ name: f.name, text: f.text, bytes: Buffer.byteLength(f.text) })) ?? null);
+  ipcMain.handle("bundle-save", async (_e, req: unknown) => {
+    const files = bundleFiles(req);
+    if (!files) return { ok: false, error: "Unsupported request." };
+    const r = await dialog.showSaveDialog({ defaultPath: "cassette-diagnostics.zip", filters: [{ name: "ZIP", extensions: ["zip"] }] });
+    if (r.canceled || !r.filePath) return { cancelled: true };
+    try { fs.writeFileSync(r.filePath, zipStore(files.map((f) => ({ name: f.name, data: Buffer.from(f.text, "utf-8") })))); return { ok: true, path: r.filePath }; }
+    catch (e) { return { ok: false, error: String((e as Error).message) }; }
+  });
   ipcMain.handle("paths", () => ({
     models: modelsDir(), log: logFile(), token: tokenFile(), data: app.getPath("userData"),
     ...(({ projects, recordings, peaks, tmp }) => ({ projects, recordings, peaks, tmp }))(dataLocations(app.getPath("userData"))),
