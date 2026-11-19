@@ -1,7 +1,7 @@
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 import { dataLocations } from "../electron/dataLocations";
-import { EXPORT_FORMATS, REVEAL_TARGETS, MODEL, MODEL_NAME, modelsOk, safeName, saveClipOk, speakerCount, transcribeProblem } from "../electron/validate";
+import { EXPORT_FORMATS, episodeFolder, episodeInput, REVEAL_TARGETS, MODEL, MODEL_NAME, modelsOk, safeName, saveClipOk, speakerCount, transcribeProblem } from "../electron/validate";
 
 const ok = { model: "small", language: "auto", device: "auto" };
 
@@ -84,5 +84,28 @@ describe("reveal targets and data locations", () => {
     expect(d.recordings).toBe(path.join("/u/Cassette", "recordings"));
     expect(d.projects).toBe(path.join("/u/Cassette", "projects.json"));
     for (const p of Object.values(d)) expect(path.relative("/u/Cassette", p).startsWith("..")).toBe(false);
+  });
+});
+
+describe("episodeInput", () => {
+  const seg = { start: 0, end: 5, text: "Hi", speaker: "S1" };
+  it("collects chapters and clips, naming speakers", () => {
+    const r = episodeInput({ segments: [{ ...seg, chapter: " Intro " }], highlights: [{ start: 1, end: 4, speaker: "S1" }], speakers: { S1: "Anna" } });
+    expect(r).toEqual({ chapters: true, clips: [{ start: 1, end: 4, speaker: "Anna" }] });
+  });
+  it("works without highlights or chapters", () => {
+    expect(episodeInput({ segments: [seg] })).toEqual({ chapters: false, clips: [] });
+  });
+  it("rejects unusable payloads and bad highlight bounds", () => {
+    for (const p of [null, "x", {}, { segments: [] }, { segments: [1] }, { segments: [seg], highlights: "x" }]) expect(typeof episodeInput(p)).toBe("string");
+    for (const h of [{ start: 4, end: 1 }, { start: 2, end: 2 }, { start: NaN, end: 3 }, { start: 0, end: Infinity }, { start: "1", end: 3 }, null]) expect(typeof episodeInput({ segments: [seg], highlights: [h] })).toBe("string");
+  });
+});
+describe("episodeFolder", () => {
+  it("names the folder safely and numbers repeats", () => {
+    expect(episodeFolder("Show: ep/1", 1)).toBe("Show- ep-1 episode");
+    expect(episodeFolder("Show", 2)).toBe("Show episode (2)");
+    expect(episodeFolder("", 1)).toBe("Episode episode");
+    expect(episodeFolder("../..", 1)).not.toMatch(/[\\/]/);
   });
 });

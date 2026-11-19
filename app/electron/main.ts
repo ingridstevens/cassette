@@ -10,7 +10,7 @@ import { logFile, logHideFile, logHides, logLine, logOffFile, logOn, logText } f
 import { privateTmp, withTempJson } from "./tempJson";
 import { registerLive } from "./live";
 import { createKnownPaths } from "./knownPaths";
-import { AUDIO_CLEANUP, EXPORT_FORMATS, REVEAL_TARGETS, isNum, modelsOk, safeName, saveClipOk, speakerCount, transcribeProblem } from "./validate";
+import { AUDIO_CLEANUP, EXPORT_FORMATS, episodeFolder, episodeInput, REVEAL_TARGETS, isNum, modelsOk, safeName, saveClipOk, speakerCount, transcribeProblem } from "./validate";
 import { isAppNavigation } from "./navGuard";
 import { byteRange, mediaPathFromUrl, mimeFor, peaksCacheName } from "./media";
 import { createProjectsStore } from "./projectsStore";
@@ -367,6 +367,42 @@ app.whenReady().then(() => {
     const res = await withTempJson(payload, (tmp) => runEngine(randomUUID(), ["export", tmp, r.filePath!, ...args], {}, () => {}));
     return res?.type === "done" ? { ok: true, path: r.filePath } : { ok: false, error: String(res?.message ?? "The export failed.").slice(0, 300) };
   });
+
+  // One-button episode export: chapters, a clip per kept highlight and DaVinci Resolve markers, all in one NEW folder inside a folder the user picks.
+  // The window never supplies a path: the parent comes from the dialog, the recording must be a known one, and nothing existing is overwritten (a taken folder name gets " (2)").
+  let lastEpisode = "";
+  ipcMain.handle("export-episode", async (_e, payload: unknown, input: unknown, name: unknown) => {
+    const ep = episodeInput(payload);
+    if (typeof ep === "string") return { ok: false, error: ep };
+    const r = await dialog.showOpenDialog({ title: "Choose where to save the episode folder", properties: ["openDirectory", "createDirectory"] });
+    if (r.canceled || !r.filePaths[0]) return { cancelled: true };
+    let dir = "";
+    for (let n = 1; n <= 999 && !dir; n++) {
+      const d = path.join(r.filePaths[0], episodeFolder(name, n));
+      try { fs.mkdirSync(d); dir = d; } catch (e) { if ((e as NodeJS.ErrnoException).code !== "EEXIST") return { ok: false, error: String((e as Error).message).slice(0, 300) }; }
+    }
+    if (!dir) return { ok: false, error: "The folder could not be created." };
+    const base = safeName(typeof name === "string" ? name.trim() : "", "Episode");
+    const step = async (format: string, file: string) => {
+      const res = await withTempJson(payload, (tmp) => runEngine(randomUUID(), ["export", tmp, path.join(dir, file), "--format", format], {}, () => {})) as EngineEvent | null;
+      if (res?.type !== "done") throw new Error(String(res?.message ?? "The export failed.").slice(0, 300));
+    };
+    try {
+      if (ep.chapters) await step("chapters", `${base} chapters.txt`);
+      await step("edl", `${base} markers.edl`);
+      let clips = 0;
+      const withClips = ep.clips.length > 0 && knownMedia(input);
+      if (withClips) {
+        const res = await withTempJson(ep.clips, (tmp) => runEngine(randomUUID(), ["export-clips", input as string, path.join(dir, "clips"), "--clips", tmp, "--format", "mp3"], {}, () => {})) as EngineEvent | null;
+        if (res?.type !== "done") throw new Error(String(res?.message ?? "The clips could not be saved.").slice(0, 300));
+        clips = (res.paths as string[]).length;
+      }
+      lastEpisode = dir;
+      return { ok: true, path: dir, chapters: ep.chapters, clips, clipsSkipped: ep.clips.length > 0 && !withClips };
+    } catch (err) { lastEpisode = dir; return { ok: false, error: String((err as Error).message).slice(0, 300) }; }
+  });
+  // "Show in folder" for the result: opens the folder the last episode export made (remembered here, never taken from the window).
+  ipcMain.handle("show-episode-folder", () => { if (lastEpisode && fs.existsSync(lastEpisode)) void shell.openPath(lastEpisode); });
 
   // "Copy as Markdown": the engine writes the same Markdown as the .md export to a private temp file; the renderer puts the text on the clipboard.
   ipcMain.handle("export-text", async (_e, payload: unknown) => {

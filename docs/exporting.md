@@ -23,9 +23,25 @@ The menu is grouped: **Read and share** (Word, text, Markdown, anonymised, Text 
 | Everything (JSON) | `.json` | All lines (with marks, language, translation and overlap flags), words with timings, and speakers, for other programs. |
 | Chapters (text) | `.txt` | A `0:00 Title` list. Needs at least one chapter; see [Chapters](chapters.md). |
 | Markers (DaVinci Resolve) | `.edl` | Chapters (or speaker turns) as timeline markers. Has options (below). |
+| Episode folder | folder | Chapters, one audio clip per kept highlight and DaVinci Resolve markers, together in one new folder. See [Episode folder](#episode-folder). |
 
 **Export all as CSV** (sidebar, shown when two or more projects are finished) writes one spreadsheet with a
 `project` column followed by the usual columns.
+
+## Episode folder
+
+**Export, More formats…, Episode folder** writes everything for publishing an episode in one go. You pick a folder; Cassette
+makes a new folder inside it called `<project name> episode` and fills it with:
+
+- `<name> chapters.txt`, the chapter list (only when the project has chapters, see [Chapters](chapters.md)).
+- `<name> markers.edl`, DaVinci Resolve markers, with the frame rate and start timecode from the markers options.
+- `clips/`, one MP3 per kept highlight, using the trimmed start and end of each highlight (see [Highlights](highlights.md)).
+  If the recording can no longer be found, the clips are skipped and the message says so.
+
+It never overwrites anything: if `<name> episode` already exists, the new folder is `<name> episode (2)`, then `(3)`. Files are written
+only inside that new folder. The version line (see below) is not added, since none of these files carries it. It is off in Easy mode's fixed
+menu, greyed out until there is a chapter or a highlight, and, like any export, can be the **Again:** item or the default format. While it
+works, the screen reader hears "Exporting the episode…", then the result; the result has a **Show in folder** button.
 
 ## Choose which formats the menu shows
 

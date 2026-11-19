@@ -33,3 +33,24 @@ export const modelsOk = (action: unknown, name: unknown): boolean =>
   typeof action === "string" && MODEL_ACTIONS.has(action) && (action !== "repair" || !!name) && (!name || (typeof name === "string" && MODEL_NAME.test(name)));
 
 export const saveClipOk = (start: unknown, end: unknown): boolean => isNum(start) && isNum(end) && end > start;
+
+export interface EpisodeClip { start: number; end: number; speaker: string }
+/** What "export-episode" takes from the window's transcript payload: the lines, whether any has a chapter, and the kept highlights as clips (speaker ids turned into names).
+ *  Returns a message when the payload is unusable (no lines, or a highlight whose start/end is not a finite start < end). */
+export function episodeInput(payload: unknown): { chapters: boolean; clips: EpisodeClip[] } | string {
+  const p = payload as { segments?: unknown; highlights?: unknown; speakers?: unknown } | null;
+  if (!p || typeof p !== "object" || !Array.isArray(p.segments) || !p.segments.length || !p.segments.every((s) => !!s && typeof s === "object")) return "There is nothing to export.";
+  const names = p.speakers && typeof p.speakers === "object" ? (p.speakers as Record<string, unknown>) : {};
+  const list = p.highlights == null ? [] : p.highlights;
+  if (!Array.isArray(list)) return "The highlights are not valid.";
+  const clips: EpisodeClip[] = [];
+  for (const h of list as { start?: unknown; end?: unknown; speaker?: unknown }[]) {
+    if (!h || !saveClipOk(h.start, h.end)) return "A highlight has no valid start and end.";
+    const who = typeof h.speaker === "string" ? (typeof names[h.speaker] === "string" ? (names[h.speaker] as string) : h.speaker) : "";
+    clips.push({ start: h.start as number, end: h.end as number, speaker: who.slice(0, 80) });
+  }
+  const chapters = (p.segments as { chapter?: unknown }[]).some((s) => typeof s.chapter === "string" && s.chapter.trim() !== "");
+  return { chapters, clips };
+}
+/** The folder name for the nth try: "Name episode", then "Name episode (2)", so an existing folder is never reused or overwritten. */
+export const episodeFolder = (name: unknown, n: number): string => `${safeName(typeof name === "string" ? name.trim() : "", "Episode")} episode${n > 1 ? ` (${n})` : ""}`;

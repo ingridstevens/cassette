@@ -167,6 +167,8 @@ function fake(path = "") {
     return { type: "done", highlights: [pick(1, 0, 6, 8, "Eine warme, offene Antwort."), pick(4, 1, 6, 7, "Zeigt, wie alles anfing.")] };
   },
   exportClips: async (_i: string, clips: unknown[]) => { await wait(300); return { ok: true, count: clips.length, path: "/Users/demo/Interview highlights" }; },
+  exportEpisode: async () => { await wait(300); return { ok: true, path: "/Users/demo/Interview episode", chapters: true, clips: 2, clipsSkipped: false }; },
+  showEpisodeFolder: async () => {},
   saveClip: async () => "/Users/demo/clip.wav",
   reveal: async () => {},
   paths: async () => ({ models: "/Users/demo/Library/Application Support/Cassette/models", log: "/x/activity.log", token: "/x/t", data: "/x", projects: "/x/projects.json", recordings: "/x/recordings", peaks: "/x/peaks", tmp: "/x/tmp", system: { platform: "darwin", arch: "arm64", chip: "Apple M5 Pro", cores: 18, memGB: location.search.includes("lowmem") ? 4 : 48 } }),
