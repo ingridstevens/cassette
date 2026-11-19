@@ -65,6 +65,7 @@ function fake(path = "") {
   pickFiles: async () => ["/Users/demo/Interview 2026.wav", "/Users/demo/Podcast episode 12.m4a", "/Users/demo/Team meeting.wav", ...(location.search.includes("missing") ? ["/Users/demo/broken-recording.wav"] : [])],
   loadProjects: async () => { try { return { projects: JSON.parse(localStorage.getItem("mock-projects") || "[]") }; } catch { return { projects: [] }; } },
   saveProjects: async (d: unknown) => { try { localStorage.setItem("mock-projects", JSON.stringify(d)); } catch { /* quota */ } return { ok: true }; },
+  savePartial: async () => true, savePartialSync: () => true, dropPartial: async () => {}, loadPartials: async () => ({}),
   saveProjectsSync: (d: unknown) => { try { localStorage.setItem("mock-projects", JSON.stringify(d)); return true; } catch { return false; } },
   saveSidecar: async (p: string) => ({ ok: true, path: p + ".transcript.json" }),
   sample: async () => ({ ok: true as const, path: "/Users/demo/Sample interview.m4a" }),

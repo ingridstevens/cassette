@@ -18,11 +18,17 @@ export function mergeRange(prev: Result, next: Result, [a, b]: [number, number],
   return { ...prev, segments, speakers: line ? prev.speakers : Array.from(new Set([...prev.speakers, ...next.speakers])) };
 }
 
+/** What a run that did not finish left behind: the lines it had written, kept in the data folder. Never saved in projects.json. */
+export interface Interrupted { lines: DraftLine[]; savedAt: number; audioChanged: boolean }
+/** How often the lines written so far are saved while a run goes on (a crash loses at most this much). */
+export const PARTIAL_SAVE_MS = 5000;
+
 export function useProjects(opts: Options, log: (level: string, msg: string) => void) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [progress, setProgress] = useState<Record<string, JobProgress>>({});
   const [drafts, setDrafts] = useState<Record<string, DraftLine[]>>({});
+  const [interrupted, setInterrupted] = useState<Record<string, Interrupted>>({});
   const [loaded, setLoaded] = useState(false);
   const [notice, setNotice] = useState("");  // set once, when the saved project list had to be recovered
   const [saveError, setSaveError] = useState<string | null>(null);  // set while the last save failed; cleared by the next one that works
@@ -31,6 +37,8 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   const jobs = useRef(new Map<string, { pid: string; range: Range; line?: LineRedo; trial?: boolean }>());      // engine jobId -> project
   const pending = useRef(new Map<string, { range: Range; line?: LineRedo; trial?: boolean; acceptFit?: boolean }>());                            // project -> range for its next run
   const projectsRef = useRef(projects); projectsRef.current = projects;
+  const written = useRef(new Map<string, DraftLine[]>());  // project -> lines of the full run in progress (the engine's partial events, in order)
+  const saveTimer = useRef(new Map<string, number>());
   const history = useRef(new Map<string, History>());  // project -> undo and redo steps for transcript edits (kept while the app runs)
 
   const patch = useCallback((id: string, p: Partial<Project>) => setProjects((l) => l.map((x) => (x.id === id ? { ...x, ...p } : x))), []);
@@ -47,6 +55,12 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
       }
       const list = (raw.projects as Project[]).map((p) => ({ ...p, status: (p.result ? "done" : "idle") as Project["status"] }));
       setProjects(list); setActiveId(list[0]?.id ?? null); setLoaded(true);
+      // Runs that did not finish (stopped, failed, or cut off by a crash or sleep): their saved lines come back as an "interrupted" state. Everything else in the folder is deleted.
+      window.api.loadPartials(list.filter((p) => !p.result).map((p) => p.id)).then((found) => {
+        const m: Record<string, Interrupted> = {};
+        for (const [id, f] of Object.entries(found ?? {})) m[id] = { lines: f.lines, savedAt: f.savedAt, audioChanged: f.audioChanged };
+        if (Object.keys(m).length) setInterrupted(m);
+      }).catch(() => {});
       // Recordings a crash cut short: they are now WAV files, so add them as projects (the saved list is already loaded, so nothing is overwritten).
       window.api.liveRecover().then((rec) => {
         const fresh = (rec ?? []).filter((path) => !list.some((p) => p.path === path));
@@ -70,11 +84,44 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
 
   // flush on close or quit: the debounced save above would not get to run, so a quick edit followed by Cmd+Q was lost
   const loadedRef = useRef(false); loadedRef.current = loaded;
+
+  /** Writes the lines of the run in progress to the data folder. Only for a full run of a project with no finished transcript, so a transcript is never touched. */
+  const savePartialNow = useCallback((id: string, sync = false) => {
+    const t0 = saveTimer.current.get(id); if (t0 !== undefined) { clearTimeout(t0); saveTimer.current.delete(id); }
+    const lines = written.current.get(id); const p = projectsRef.current.find((x) => x.id === id);
+    if (!lines?.length || !p || p.result) return;
+    const eff = { ...optsRef.current, ...p.opts };
+    const d = { lines, audio: p.path, model: String(eff.model ?? ""), language: String(eff.language ?? "") };
+    if (sync) { window.api.savePartialSync(id, d); return; }
+    window.api.savePartial(id, d).catch(() => {});
+  }, []);
+  const schedulePartial = useCallback((id: string) => {
+    if (saveTimer.current.has(id)) return;
+    saveTimer.current.set(id, window.setTimeout(() => savePartialNow(id), PARTIAL_SAVE_MS));
+  }, [savePartialNow]);
+  /** The run ended without a transcript (stopped or failed): keep its lines and show them as interrupted. */
+  const keepInterrupted = useCallback((id: string) => {
+    const lines = written.current.get(id);
+    if (lines?.length && projectsRef.current.some((p) => p.id === id)) { savePartialNow(id); setInterrupted((m) => ({ ...m, [id]: { lines, savedAt: Date.now(), audioChanged: false } })); }
+    written.current.delete(id);
+  }, [savePartialNow]);
+  /** The run finished, or the saved lines are no longer wanted: delete them everywhere. */
+  const dropInterrupted = useCallback((id: string) => {
+    const t0 = saveTimer.current.get(id); if (t0 !== undefined) { clearTimeout(t0); saveTimer.current.delete(id); }
+    written.current.delete(id);
+    setInterrupted((m) => { if (!(id in m)) return m; const { [id]: _, ...rest } = m; return rest; });
+    window.api.dropPartial(id).catch(() => {});
+  }, []);
+
   useEffect(() => {
-    const flush = () => { if (loadedRef.current) window.api.saveProjectsSync(projectsRef.current.map(persisted)); };
+    const flush = () => {
+      if (!loadedRef.current) return;
+      window.api.saveProjectsSync(projectsRef.current.map(persisted));
+      for (const id of [...written.current.keys()]) savePartialNow(id, true);  // quitting or reloading: keep what a run had written so far
+    };
     window.addEventListener("beforeunload", flush);
     return () => window.removeEventListener("beforeunload", flush);
-  }, []);
+  }, [savePartialNow]);
 
   const add = useCallback((paths: string[]): string => {
     const bad = paths.filter((p) => !MEDIA_EXT.test(p));
@@ -109,9 +156,9 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
 
   const remove = useCallback((id: string) => {
     const j = jobOf(id); if (j) window.api.cancel(j);
-    pending.current.delete(id); history.current.delete(id);
+    pending.current.delete(id); history.current.delete(id); dropInterrupted(id);
     setProjects((l) => { const next = l.filter((p) => p.id !== id); setActiveId((a) => (a === id ? next[0]?.id ?? null : a)); return next; });
-  }, []);
+  }, [dropInterrupted]);
 
   /** Copies a project's app data (not the recording) right after the original; returns the copy's name, or null if the original is gone. */
   const duplicate = useCallback((id: string): string | null => {
@@ -152,12 +199,14 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     const job = jobs.current.get(e.jobId);
     if (!job) return;
     const { pid, range, line, trial } = job;
+    const hadResult = () => !!projectsRef.current.find((p) => p.id === pid)?.result;
     const dropDraft = () => setDrafts((m) => { const { [pid]: _, ...rest } = m; return rest; });
-    if (e.type === "partial") { if (!range) setDrafts((m) => ({ ...m, [pid]: [...(m[pid] ?? []), ...(e.segments as DraftLine[])] })); }  // a redo of one part keeps the transcript on screen instead
+    if (e.type === "partial") { if (!range && !hadResult()) { written.current.set(pid, [...(written.current.get(pid) ?? []), ...(e.segments as DraftLine[])]); schedulePartial(pid); } if (!range) setDrafts((m) => ({ ...m, [pid]: [...(m[pid] ?? []), ...(e.segments as DraftLine[])] })); }  // a redo of one part keeps the transcript on screen instead
     else if (e.type === "progress") setProgress((m) => ({ ...m, [pid]: { stage: e.stage, fraction: e.fraction, message: e.message } }));
     else if (e.type === "fit") {  // the engine stopped before the slow work: ask whether to use a better model
       jobs.current.delete(e.jobId);
       dropDraft();
+      written.current.delete(pid);  // the engine stopped to ask, before writing anything; lines kept from an earlier run stay
       setProgress((m) => { const { [pid]: _, ...rest } = m; return rest; });
       const had = projectsRef.current.find((p) => p.id === pid)?.result;
       const { type: _t, jobId: _j, ...ask } = e;
@@ -165,12 +214,14 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     } else if (e.type === "error") {
       jobs.current.delete(e.jobId);
       dropDraft();
+      if (!range) keepInterrupted(pid);
       setProgress((m) => { const { [pid]: _, ...rest } = m; return rest; });
       const had = projectsRef.current.find((p) => p.id === pid)?.result;
       patch(pid, e.cancelled ? { status: had ? "done" : "idle", partial: undefined } : { status: "error", error: String(e.message), partial: undefined });
     } else if (e.type === "done") {
       jobs.current.delete(e.jobId);
       dropDraft();
+      if (!range) dropInterrupted(pid);  // finished: the saved lines are no longer needed
       history.current.delete(pid);  // the engine's transcript replaces the one the steps belong to
       setProgress((m) => { const { [pid]: _, ...rest } = m; return rest; });
       const r: Result = { language: e.language, duration: e.duration, speakers: e.speakers, segments: e.segments };
@@ -191,7 +242,7 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
         return { ...p, result, names: keptNames, previous: replaced ? { result: p.result!, names: p.names, meta: p.meta } : p.previous, meta: range && p.meta ? { ...p.meta, ...meta } : meta, status: "done", error: undefined, partial: undefined, trial: trial ? true : range ? p.trial : undefined };
       }));
     }
-  }), [patch]);
+  }), [patch, schedulePartial, keepInterrupted, dropInterrupted]);
 
   const open = useCallback((id: string | null) => { setActiveId(id); if (id) patch(id, { openedAt: Date.now() }); }, [patch]);
   /** Every user edit goes through here. An edit of the transcript or the speaker names can be undone; `label` says what it was, `merge` folds quick repeats (typing a name) into one step. */
@@ -213,6 +264,6 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   /** Each returns the label of the edit it undid or redid (empty when it had none), or null when there was nothing to do. */
   const undo = useCallback((id: string) => step(id, stepBack), [step]);
   const redo = useCallback((id: string) => step(id, stepForward), [step]);
-  return { projects, loaded, notice, saveError, dismissNotice: () => setNotice(""), activeId, setActiveId: open, edit, undo, redo, progress, drafts, add, addAndTranscribe, remove, rename: (id: string, name: string) => edit(id, { name }), duplicate, patch, transcribe, cancel,
+  return { projects, loaded, notice, saveError, dismissNotice: () => setNotice(""), activeId, setActiveId: open, edit, undo, redo, progress, drafts, interrupted, discardInterrupted: dropInterrupted, add, addAndTranscribe, remove, rename: (id: string, name: string) => edit(id, { name }), duplicate, patch, transcribe, cancel,
     transcribeAll: () => projectsRef.current.filter((p) => p.status === "idle" || p.status === "error").forEach((p) => transcribe(p.id)) };
 }

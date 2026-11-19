@@ -26,7 +26,7 @@ const typing = (t: EventTarget | null) => t instanceof HTMLElement && (/^(INPUT|
 const STAGE_ORDER = ["decode", "diarize", "transcribe", "merge"];
 
 interface Props {
-  project: Project; progress?: JobProgress; draft?: DraftLine[]; blocker: string; waiting: number; visible: boolean;
+  project: Project; progress?: JobProgress; draft?: DraftLine[]; /** What an earlier run that did not finish had written down (kept in the data folder). */ interrupted?: { lines: DraftLine[]; audioChanged: boolean }; onDiscardInterrupted?(): void; blocker: string; waiting: number; visible: boolean;
   nowPlayingId?: string | null; stopSignal?: number; onPlayingChange?(playing: boolean): void; onOpenSettings?(section?: string): void; models: Models;
   onTranscribe(range: [number, number] | null, line?: { language: string; speaker: string }, trial?: boolean, acceptFit?: boolean): void; onCancel(): void; onPatch(p: Partial<Project>, label?: string, merge?: boolean): void; onUndo(): string | null; onRedo(): string | null;
   othersWaiting?: number; onApplyToOthers?(o: Partial<Options>): void; onRemember?(o: Partial<Options>): void;
@@ -64,7 +64,7 @@ function Dialog({ title, children, cancel, confirm, onCancel, onConfirm }: { tit
 }
 
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
-export default function ProjectView({ project, progress, draft, blocker, waiting, visible, nowPlayingId, stopSignal = 0, onPlayingChange, onOpenSettings, models, onTranscribe, onCancel, onPatch, onUndo, onRedo, othersWaiting = 0, onApplyToOthers, onRemember, defaultExport, exportShown, onExported, unsureLegendSeen, easy = false }: Props) {
+export default function ProjectView({ project, progress, draft, interrupted, onDiscardInterrupted, blocker, waiting, visible, nowPlayingId, stopSignal = 0, onPlayingChange, onOpenSettings, models, onTranscribe, onCancel, onPatch, onUndo, onRedo, othersWaiting = 0, onApplyToOthers, onRemember, defaultExport, exportShown, onExported, unsureLegendSeen, easy = false }: Props) {
   const [renaming, setRenaming] = useState(false);
   const t = useT();
   const { result, names, path } = project;
@@ -528,8 +528,22 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
       </div></div>
     );
   } else if (!result) {
-    body = failed ? <div className="pv-center"><div className="pv-stack">{errorCard}</div></div> : fitCard ? <div className="pv-center"><div className="pv-stack">{fitCard}</div></div> : (
+    const lastEnd = interrupted?.lines.length ? Math.max(...interrupted.lines.map((l) => l.end)) : 0;
+    const interruptedCard = interrupted?.lines.length ? (
+      <>
+        <div className="card pv-err pv-interrupted" role="status">
+          <h2><span className="pv-tag">{t("Transcription")}</span>{t("An earlier transcription of this recording was interrupted")}</h2>
+          <p>{(interrupted.lines.length === 1 ? t("Cassette kept the 1 line it had written down, up to {time}.", { time: fmt(lastEnd) }) : t("Cassette kept the {count} lines it had written down, up to {time}.", { count: interrupted.lines.length, time: fmt(lastEnd) }))
+            + " " + t("This text is only a safety copy: it cannot be continued yet. Starting again runs the whole recording from the beginning.")}</p>
+          {interrupted.audioChanged && <p>{t("The recording has changed since then, so these lines may not match it.")}</p>}
+          <div className="pv-actions"><button type="button" className="btn" onClick={onDiscardInterrupted}>{t("Delete the saved lines")}</button></div>
+        </div>
+        <DraftList lines={interrupted.lines} names={names} speakers={[...new Set(interrupted.lines.map((l) => l.speaker))]} />
+      </>
+    ) : null;
+    body = failed ? <div className="pv-center"><div className="pv-stack">{errorCard}{interruptedCard}</div></div> : fitCard ? <div className="pv-center"><div className="pv-stack">{fitCard}</div></div> : (
       <div className="pv-center"><div className="pv-stack">
+        {interruptedCard}
         <StartSheet project={project} duration={duration} eff={effOpts} info={startInfo} models={models} set={(p) => onPatch({ opts: { ...project.opts, ...p } })}
           canStart={canTranscribe} blocker={blocker} othersWaiting={othersWaiting}
           onStart={() => onTranscribe(null)} onTrial={() => onTranscribe([0, TRIAL_SECONDS], undefined, true)}
