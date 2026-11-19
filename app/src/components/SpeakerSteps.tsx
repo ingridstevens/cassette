@@ -90,8 +90,8 @@ export default function SpeakerSteps({ models, diarDone }: { models: Models; dia
                   </div>
                 )}
                 <ol className="sp-steps">
-                  <Step n={1} at={now} title={t("Create a free Hugging Face account")} summary={t("Done")}>
-                    <p>{t("The speaker model is published on Hugging Face, and its makers require a free account there. Your recordings are never sent.")}</p>
+                  <Step n={1} at={now} title={t("Create a free account (about 2 minutes)")} summary={t("Done")}>
+                    <p>{t("To put names on speakers, the app needs a free account on the website that hosts the speaker model. Your recordings are never sent.")}</p>
                     <div className="sp-acts">
                       <button type="button" className="btn sun ext" onClick={() => window.api.openExternal(`${HF}join`)}>{t("Create account")}</button>
                       <button type="button" className="btn quiet" onClick={() => setHasAccount(true)}>{t("I already have one")}</button>
@@ -99,34 +99,35 @@ export default function SpeakerSteps({ models, diarDone }: { models: Models; dia
                   </Step>
                   <Step n={2} at={now} title={t("Make an access code and paste it here")}
                     summary={<>{t("Saved as {hint}", { hint: tokenHint || "hf_…" })} <button type="button" className="linkish" onClick={() => setReplacing(true)}>{t("Replace")}</button></>}>
-                    <p>{t("This code (a “token”) lets the app download the model for you.")}</p>
+                    <p>{t("This code lets the app download the speaker model for you.")}</p>
                     <ol className="sp-how">
-                      <li>{t("Open the token page. The Read tab is already chosen.")}</li>
+                      <li>{t("Open the page for access codes. The Read tab is already chosen.")}</li>
                       <li>{t("Name it “{name}” and click Create token.", { name: TOKEN_NAME })}{" "}
                         <button type="button" className="linkish" onClick={copyName}>{copied ? t("Copied ✓") : t("Copy name")}</button></li>
                       <li>{t("Copy the code. It starts with hf_ and is shown only once.")}</li>
                     </ol>
-                    <div className="sp-acts"><button type="button" className="btn ext" onClick={() => window.api.openExternal(HF_TOKEN_PAGE)}>{t("Open token page")}</button></div>
+                    <div className="sp-acts"><button type="button" className="btn ext" onClick={() => window.api.openExternal(HF_TOKEN_PAGE)}>{t("Open the code page")}</button></div>
                     <form className="sp-tok" onSubmit={async (e) => { e.preventDefault(); if (!token.trim()) return; await saveToken(token); setToken(""); setReplacing(false); checked.current = true; }}>
                       <label htmlFor="hf-token" className="st-sr">{t("Access code")}</label>
                       <input id="hf-token" className="input" type="password" autoComplete="off" spellCheck={false} placeholder={t("Paste the code (hf_…)")} value={token} onChange={(e) => setToken(e.target.value)} />
                       <button type="submit" className="btn sun" disabled={!token.trim()}>{t("Save")}</button>
                       {replacing && saved && <button type="button" className="btn quiet" onClick={() => { setReplacing(false); setToken(""); }}>{t("Cancel")}</button>}
                     </form>
-                    {saved && access && !access.valid && <p className="warn-line" role="alert">{t("Hugging Face didn’t accept this token. Check that you copied all of it (it starts with “hf_”), or make a new one.")}</p>}
+                    {saved && access && !access.valid && <p className="warn-line" role="alert">{t("That code wasn’t accepted. Check that you copied all of it (it starts with “hf_”), or make a new one.")}</p>}
                   </Step>
-                  <Step n={3} at={now} title={t("Fill in a short form on two model pages")} summary={t("Both accepted")} upcoming={t("2 free forms, about 1 minute")}>
+                  <Step n={3} at={now} title={t("Fill in a short form on two pages")} summary={t("Both accepted")} upcoming={t("2 free forms, about 1 minute")}>
                     <p>{t("Free. The model’s makers ask for a few details first. Both pages have the same short form:")}</p>
                     <ul className="sp-facts">
                       <li><span className="k">{t("You fill in")}</span><span>{t("Company or university, and Website. Both are required.")}</span></li>
-                      <li><span className="k">{t("No company?")}</span><span>{t("For company, write Freelance, Independent or Personal use. For website, use your Hugging Face profile:")}{" "}
+                      <li><span className="k">{t("No company?")}</span><span>{t("For company, write Freelance, Independent or Personal use. For website, use your profile address on that site:")}{" "}
                         <code>{profileUrl ?? "huggingface.co/your-username"}</code>
                         {profileUrl && <>{" "}<button type="button" className="linkish" onClick={copyProfile}>{copiedProfile ? t("Copied ✓") : t("Copy")}</button></>}</span></li>
-                      <li><span className="k">{t("You share")}</span><span>{t("Your Hugging Face email and username go to the model’s makers (pyannote). They may email you about paid services.")}</span></li>
+                      <li><span className="k">{t("You share")}</span><span>{t("Your account email and username go to the model’s makers. They may email you about paid services.")}</span></li>
                       <li><span className="k">{t("Then")}</span><span>{t("Click “Agree and access repository” at the bottom of the form.")}</span></li>
                     </ul>
                     <div className="sp-pages">
-                      {agreePages.map(([repo, label]) => {
+                      {agreePages.map(([repo, tech]) => {
+                        const label = repo.endsWith("speaker-diarization-3.1") ? t("Speaker model") : repo.endsWith("segmentation-3.0") ? t("Voice-change helper") : tech;
                         const ok = !!access?.valid && !!access.repos[repo];
                         return (
                           <div key={repo} className="sp-page">
@@ -137,11 +138,11 @@ export default function SpeakerSteps({ models, diarDone }: { models: Models; dia
                         );
                       })}
                     </div>
-                    {saved && access?.valid && access.kind === "fineGrained" && <p className="warn-line" role="alert">{t("This is a Fine-grained token. Make a new one on the “Read” tab instead.")}</p>}
+                    {saved && access?.valid && access.kind === "fineGrained" && <p className="warn-line" role="alert">{t("This code is the wrong kind. Make a new one on the “Read” tab instead.")}</p>}
                     <div className="sp-live" role="status">
-                      {checking ? <><span className="pulse" aria-hidden />{t("Checking with Hugging Face…")}</>
+                      {checking ? <><span className="pulse" aria-hidden />{t("Checking your account…")}</>
                         : access?.valid ? <><span className="pulse" aria-hidden />{formsLeft === 1 ? t("1 form left.") : t("{n} forms left.", { n: formsLeft })} {t("The app checks again when you come back to it.")}</>
-                        : t("Couldn't reach Hugging Face to check the forms.")}
+                        : t("Couldn't go online to check the forms.")}
                       {!checking && <button type="button" className="linkish" onClick={() => void checkAccess()}>{t("Check now")}</button>}
                       {!checking && !access && <button type="button" className="linkish" onClick={() => setSkipCheck(true)}>{t("Download anyway")}</button>}
                     </div>
@@ -162,6 +163,13 @@ export default function SpeakerSteps({ models, diarDone }: { models: Models; dia
                     )}
                   </Step>
                 </ol>
+                <details className="detail"><summary>{t("Details for IT")}</summary>
+                  <p>{t("Speaker detection (diarization) uses two gated models published on Hugging Face by pyannote. You need a free Hugging Face account and must accept each model’s terms on its page.")}</p>
+                  <ul>{agreePages.map(([repo]) => <li key={repo}><code>{repo}</code></li>)}</ul>
+                  <p>{t("The access code is a Hugging Face user access token with the Read role (a “Fine-grained” token does not work). It starts with hf_ and is shown only once. Suggested name: “{name}”.", { name: TOKEN_NAME })}</p>
+                  <p>{t("Accepting the terms shares your Hugging Face email and username with pyannote. The app checks the token with huggingface.co (it also learns your username, to show your profile address) and downloads the pinned model files once. Recordings are never sent.")}</p>
+                  <p>pyannote speaker-diarization 3.1 and segmentation 3.0 · MIT licence. {t("The token is kept in your computer’s secure storage and used only for this download.")}</p>
+                </details>
     </>
   );
 }
