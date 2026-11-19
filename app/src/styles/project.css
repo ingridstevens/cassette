@@ -331,6 +331,10 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .pv-hl-text { margin: 0; font-family: var(--font-read, Georgia, "Times New Roman", serif); font-size: 14px; line-height: 1.45; }
 .pv-hl-item .note { margin: 0; }
 .pv-hl-acts { display: flex; gap: 6px; flex-wrap: wrap; }
+.pv-hl-trim { display: flex; flex-direction: column; gap: 6px; padding-top: 6px; border-top: 1px solid var(--line); }
+.pv-hl-trimrow { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+.pv-hl-trimrow > span { min-width: 84px; }
+.pv-hl-trimrow .btn { height: 30px; padding: 0 10px; border-radius: var(--r-ctl); }
 .pv-hl-clips { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; padding-top: 6px; border-top: 1px solid var(--line); }
 .pv-hl-clips .field { width: 100%; }
 .pv-sum { padding-top: 14px; border-top: 1px solid var(--line); }

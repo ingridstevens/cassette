@@ -17,6 +17,7 @@ import Transcript from "./Transcript";
 import { FIND_DEFAULTS, FindOpts, matcher, nearMisses } from "../find";
 import { revealTurn, scrollToTurn } from "../windowing";
 import Waveform, { WaveformHandle } from "./Waveform";
+import { Edge, dragEdge, FINE_STEP, nudgeStep, nudgeWord } from "../highlightBounds";
 import { GoToTime, ShortcutSheet } from "./JumpDialogs";
 
 const typing = (t: EventTarget | null) => t instanceof HTMLElement && (/^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.isContentEditable);
@@ -134,6 +135,27 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
   resultRef.current = result;
   /** Changes the result as it is *now*: a language-model job can finish minutes after it started, and must not undo edits made meanwhile. */
   const patchResult = (f: (r: Result) => Result) => { const r = resultRef.current; if (r) onPatch({ result: f(r) }); };
+  // Trimming a highlight: drag handles on the waveform, or buttons. The saved clip, playback and exports read the highlight, so they follow. Each move can be undone.
+  const [trimId, setTrimId] = useState<string | null>(null);
+  const trimHl = trimId ? (result?.highlights ?? []).find((x) => x.id === trimId) ?? null : null;
+  const moveEdge = (id: string, edge: Edge, f: (h: import("../types").Highlight, segs: import("../types").Segment[], dur: number) => import("../types").Highlight | null, merge: boolean) => {
+    const r = resultRef.current, h = r?.highlights?.find((x) => x.id === id);
+    if (!r || !h) return;
+    const next = f(h, r.segments, duration || r.duration || 0);
+    if (!next) { flash(edge === "start" ? t("The start can't move any further") : t("The end can't move any further")); return; }
+    patchResultLabeled((x) => ({ ...x, highlights: (x.highlights ?? []).map((y) => (y.id === id ? next : y)) }), t("trim a highlight"), merge);
+    flash(edge === "start" ? t("Start moved to {time}", { time: fmt(next.start) }) : t("End moved to {time}", { time: fmt(next.end) }));
+  };
+  const patchResultLabeled = (f: (r: Result) => Result, label: string, merge: boolean) => { const r = resultRef.current; if (r) onPatch({ result: f(r) }, label, merge); };
+  const adjustHl = (id: string, edge: Edge, by: "word" | "fine", dir: -1 | 1) =>
+    moveEdge(id, edge, (h, segs, dur) => (by === "word" ? nudgeWord(segs, h, edge, dir, dur) : nudgeStep(segs, h, edge, dir * FINE_STEP, dur)), false);
+  const dragHl = (id: string, a: number, b: number) => {
+    const h = resultRef.current?.highlights?.find((x) => x.id === id);
+    if (!h) return;
+    const edge: Edge = Math.abs(a - h.start) >= Math.abs(b - h.end) ? "start" : "end";
+    if (Math.abs(a - h.start) < 0.001 && Math.abs(b - h.end) < 0.001) return;
+    moveEdge(id, edge, (x, segs, dur) => dragEdge(segs, x, edge, edge === "start" ? a : b, dur), false);
+  };
   useEffect(() => window.api.onEvent((e) => {
     if (e.source !== "llm" || e.clientId !== project.id || e.type !== "progress") return;
     setLlmJob((j) => (j ? { ...j, fraction: typeof e.fraction === "number" ? e.fraction : null, message: String(e.message ?? "") } : j));
@@ -716,7 +738,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
             <button type="button" className={"pv-speed" + (rate !== 1 ? " on" : "")} dir="ltr" onClick={() => stepRate(1, true)}
               aria-label={t("Playback speed {rate}×. Click to change.", { rate })} title={t("Playback speed: click to change, or press < and >")}>{rate}×</button>
           </div>
-          <Waveform key={project.id} ref={player} path={path} result={result} onTime={setTime} onSelection={setSel} onPlaying={setPlaying} onDuration={setDuration} />
+          <Waveform key={project.id} ref={player} path={path} result={result} onTime={setTime} onSelection={setSel} onPlaying={setPlaying} onDuration={setDuration} trim={trimHl ? { id: trimHl.id, start: trimHl.start, end: trimHl.end } : null} onTrim={dragHl} />
           {result && (
             <div className="pv-now" aria-live="off">
               <i style={{ background: nowName ? nowColor : undefined }} aria-hidden />
@@ -758,7 +780,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
         canTranscribe={canTranscribe} onAskAgain={again} onPatch={onPatch} onOpenSettings={onOpenSettings} models={models} onShowLine={showLine}
         askPanel={<AskTab project={project} visible={visible} thread={askThread} job={llmJob} onAsk={runAsk}
           onStop={() => { askStopped.current = true; void window.api.cancel(llmId.current); }} onClear={() => setAskThread([])} onShow={showLine} />}
-        highlightsPanel={<HighlightsTab project={project} visible={visible} job={llmJob} error={llmError}
+        highlightsPanel={<HighlightsTab project={project} visible={visible} trimId={trimHl ? trimHl.id : null} onTrim={setTrimId} onAdjust={adjustHl} job={llmJob} error={llmError}
           onSuggest={(m) => runLlm("highlights", m)} onSummarize={(m) => runLlm("summarize", m)} onStop={() => { void window.api.cancel(llmId.current); }}
           onKeep={(id) => patchResult((x) => ({ ...x, highlights: (x.highlights ?? []).map((h) => (h.id === id ? { ...h, suggested: undefined } : h)) }))}
           onRemove={(id) => patchResult((x) => ({ ...x, highlights: (x.highlights ?? []).filter((h) => h.id !== id) }))}
