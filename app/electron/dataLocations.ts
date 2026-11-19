@@ -1,8 +1,8 @@
 import path from "node:path";
 
 /** The folders and files the app keeps inside its own data folder (userData). Pure, so Settings > Privacy and the tests use the same names as the code
- *  that writes them: recordings (live.ts, "sample" in main.ts), peaks ("peaks" in main.ts), partials (partialStore.ts), tmp (tempJson.ts, main.ts), projects.json (projectsStore.ts),
- *  activity.log (activityLog.ts), hf-token.bin and models (main.ts). */
+ *  that writes them: recordings (live.ts, "sample" in ipc/mediaFiles.ts), peaks ("peaks" in ipc/mediaFiles.ts), partials (partialStore.ts), tmp (tempJson.ts, ipc/exports.ts, main.ts), projects.json (projectsStore.ts),
+ *  activity.log (activityLog.ts), hf-token.bin and models (main.ts, ipc/models.ts). */
 export function dataLocations(userData: string) {
   return {
     data: userData,

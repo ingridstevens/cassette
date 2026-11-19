@@ -1,8 +1,9 @@
 import fs from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
-import { app, ipcMain, systemPreferences } from "electron";
+import { app, systemPreferences } from "electron";
 import type { KnownPaths } from "./knownPaths";
+import { handle, on, type Send } from "./ipc/typed";
 import { EngineEvent, endJobInput, runEngine, writeToJob } from "./engine-client";
 
 const RATE = 16000;
@@ -32,8 +33,8 @@ let current: Session | null = null;
 
 /** Live recording: the window sends 16 kHz mono 16-bit microphone audio; this feeds it to the engine's `live` command
  *  and also writes it to disk, so a crash or a failing engine never loses the recording. */
-export function registerLive(send: (channel: string, payload: unknown) => void, env: () => Record<string, string>, known: KnownPaths) {
-  ipcMain.handle("live-start", async (_e, o: { model?: unknown; language?: unknown; whisperEngine?: unknown; device?: unknown }) => {
+export function registerLive(send: Send, env: () => Record<string, string>, known: KnownPaths) {
+  handle("live-start", async (_e, o: { model?: unknown; language?: unknown; whisperEngine?: unknown; device?: unknown }) => {
     if (current) return { ok: false, error: "A recording is already running." };
     if (process.platform === "darwin" && !(await systemPreferences.askForMediaAccess("microphone"))) return { ok: false, error: "denied" };
     const dir = path.join(app.getPath("userData"), "recordings");
@@ -50,7 +51,7 @@ export function registerLive(send: (channel: string, payload: unknown) => void, 
     return { ok: true, jobId };
   });
 
-  ipcMain.on("live-audio", (_e, jobId: unknown, data: unknown) => {
+  on("live-audio", (_e, jobId: unknown, data: unknown) => {
     if (!current || jobId !== current.jobId || !(data instanceof Uint8Array)) return;
     current.pcm.write(data);
     current.bytes += data.byteLength;
@@ -59,7 +60,7 @@ export function registerLive(send: (channel: string, payload: unknown) => void, 
   });
 
   /** Ends the recording: the engine finishes its last update, the audio becomes a WAV file, and its path comes back. */
-  ipcMain.handle("live-stop", async (_e, jobId: unknown) => {
+  handle("live-stop", async (_e, jobId: unknown) => {
     const s = current;
     if (!s || jobId !== s.jobId) return { ok: false, error: "No recording is running." };
     current = null;
@@ -73,7 +74,7 @@ export function registerLive(send: (channel: string, payload: unknown) => void, 
     return { ok: true, path: wav, seconds: s.bytes / (RATE * 2), name: s.name };
   });
   /** Recordings a crash left behind as .pcm: turn each into a .wav (skipping the one running now and anything under 1 s) and return the paths. */
-  ipcMain.handle("live-recover", async () => {
+  handle("live-recover", async () => {
     const dir = path.join(app.getPath("userData"), "recordings");
     if (!fs.existsSync(dir)) return [];
     const out: string[] = [];
