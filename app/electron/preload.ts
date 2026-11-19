@@ -6,6 +6,13 @@ const api = {
   saveProjects: (data: unknown): Promise<{ ok: boolean; error?: string }> => ipcRenderer.invoke("projects-save", data),
   /** Blocks until the file is written: used when the window closes, where an async save would be lost. */
   saveProjectsSync: (data: unknown): boolean => ipcRenderer.sendSync("projects-save-sync", data),
+  /** Keep the lines a run has written so far (atomic file in the data folder). false when nothing was saved. */
+  savePartial: (id: string, d: { lines: unknown[]; audio: string; model: string; language: string }): Promise<boolean> => ipcRenderer.invoke("partial-save", id, d),
+  /** Same, but waits for the file: used when the window closes. */
+  savePartialSync: (id: string, d: { lines: unknown[]; audio: string; model: string; language: string }): boolean => ipcRenderer.sendSync("partial-save-sync", id, d),
+  dropPartial: (id: string): Promise<void> => ipcRenderer.invoke("partial-drop", id),
+  /** What interrupted runs left for these projects (and delete everything else). */
+  loadPartials: (ids: string[]): Promise<Record<string, { lines: { start: number; end: number; speaker: string; text: string; lang?: string }[]; savedAt: number; model: string; language: string; audioChanged: boolean }>> => ipcRenderer.invoke("partial-load", ids),
   saveSidecar: (audioPath: string, data: unknown): Promise<{ ok: boolean; path?: string; error?: string }> => ipcRenderer.invoke("save-sidecar", audioPath, data),
   /** The waveform (8000 values, 0 to 1) and length in seconds of a recording, or null when the file is gone. */
   peaks: (path: string): Promise<{ peaks: number[]; duration: number } | null> => ipcRenderer.invoke("peaks", path),

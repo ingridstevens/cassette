@@ -14,6 +14,7 @@ import { AUDIO_CLEANUP, EXPORT_FORMATS, episodeFolder, episodeInput, REVEAL_TARG
 import { isAppNavigation } from "./navGuard";
 import { byteRange, mediaPathFromUrl, mimeFor, peaksCacheName } from "./media";
 import { createProjectsStore } from "./projectsStore";
+import { createPartialStore, validPartialId } from "./partialStore";
 import { dataLocations } from "./dataLocations";
 import { buildBundle, bundleRequest } from "./supportBundle";
 import { zipStore } from "./zipStore";
@@ -433,6 +434,19 @@ app.whenReady().then(() => {
   });
 
   const projectsStore = createProjectsStore(app.getPath("userData"), logLine);
+  // Lines written so far by a run that did not finish (see partialStore.ts). The window only passes project ids and text; the folder is fixed.
+  const partials = createPartialStore(dataLocations(app.getPath("userData")).partials);
+  ipcMain.handle("partial-save", (_e, id: unknown, d: Record<string, unknown>) => { try { return validPartialId(id) && mediaFile(d?.audio) && partials.save(id, d as never); } catch { return false; } });
+  ipcMain.on("partial-save-sync", (e, id: unknown, d: Record<string, unknown>) => { try { e.returnValue = validPartialId(id) && mediaFile(d?.audio) && partials.save(id, d as never); } catch { e.returnValue = false; } });
+  ipcMain.handle("partial-drop", (_e, id: unknown) => { try { if (validPartialId(id)) partials.remove(id); } catch { /* nothing to remove */ } });
+  /** Called once with the ids of the projects that have no finished transcript: returns what was saved for them and deletes every other file. */
+  ipcMain.handle("partial-load", (_e, ids: unknown) => {
+    const list = Array.isArray(ids) ? ids.filter(validPartialId) : [];
+    try { partials.prune(list); } catch { /* best effort */ }
+    const out: Record<string, unknown> = {};
+    for (const id of list) { try { const r = partials.load(id); if (r) out[id] = r; } catch { /* skip */ } }
+    return out;
+  });
   ipcMain.handle("projects-load", () => { const r = projectsStore.load(); known.remember(r.projects); known.add([...opened]); return r; });
   ipcMain.handle("projects-save", (_e, data: unknown) => {
     try { projectsStore.save(data); known.remember(data); return { ok: true }; } catch (e) { return { ok: false, error: String((e as Error).message) }; }
