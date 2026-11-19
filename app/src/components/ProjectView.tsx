@@ -17,6 +17,8 @@ import Transcript from "./Transcript";
 import { FIND_DEFAULTS, FindOpts, matcher, nearMisses } from "../find";
 import { revealTurn, scrollToTurn } from "../windowing";
 import Waveform, { WaveformHandle } from "./Waveform";
+import VideoPreview from "./VideoPreview";
+import { mediaKind } from "../projectActions";
 import { Edge, dragEdge, FINE_STEP, nudgeStep, nudgeWord } from "../highlightBounds";
 import { GoToTime, ShortcutSheet } from "./JumpDialogs";
 
@@ -776,7 +778,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
       </section>
 
       <div className="pv-insp-scrim" aria-hidden onClick={closeDrawer} />
-      <Inspector easy={easy} id={inspectorId} drawerOpen={drawer} onDrawerClose={closeDrawer} project={project} tab={tab} onTab={setTab} visible={visible} moved={moved} onMoveAll={moveAll} onUndo={undo}
+      <Inspector top={showResult && mediaKind(path) === "video" ? <VideoPreview path={path} name={project.name} time={time} playing={playing} rate={rate} /> : undefined} easy={easy} id={inspectorId} drawerOpen={drawer} onDrawerClose={closeDrawer} project={project} tab={tab} onTab={setTab} visible={visible} moved={moved} onMoveAll={moveAll} onUndo={undo}
         canTranscribe={canTranscribe} onAskAgain={again} onPatch={onPatch} onOpenSettings={onOpenSettings} models={models} onShowLine={showLine}
         askPanel={<AskTab project={project} visible={visible} thread={askThread} job={llmJob} onAsk={runAsk}
           onStop={() => { askStopped.current = true; void window.api.cancel(llmId.current); }} onClear={() => setAskThread([])} onShow={showLine} />}
