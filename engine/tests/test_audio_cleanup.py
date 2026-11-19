@@ -35,7 +35,7 @@ def test_unknown_mode_is_refused():
 def test_command_reads_the_original_and_writes_only_the_temporary_copy():
     cmd = decode_command("/rec/in.m4a", Path("/tmp/x/audio.wav"), 5.0, 20.0, "both")
     assert cmd[cmd.index("-i") + 1] == "/rec/in.m4a"
-    assert cmd[-1] == "/tmp/x/audio.wav"
+    assert cmd[-1] == str(Path("/tmp/x/audio.wav"))
     assert cmd[cmd.index("-af") + 1] == cleanup_filter("both")
     assert cmd.index("-af") > cmd.index("-i")  # an output filter, applied after the input is opened
     assert cmd.count("/rec/in.m4a") == 1
