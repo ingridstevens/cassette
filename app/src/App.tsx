@@ -16,8 +16,9 @@ import { useModels } from "./components/useModels";
 import "./styles/shell.css";
 import { setLanguage, t, useT } from "./i18n";
 import { setLlm } from "./components/llmChoice";
-import { IS_MAC, ModelStatus, Options, applyLook, displayName } from "./types";
+import { IS_MAC, ModelStatus, Options, ProjectStatus, applyLook, displayName } from "./types";
 import { scrollToTurn } from "./windowing";
+import { finishAnnouncement, progressAnnouncement, ProgressMark } from "./jobAnnounce";
 import { useProjects } from "./useProjects";
 
 const DEFAULTS: Options = { model: "small", language: "auto", numSpeakers: "", vad: false, prompt: "", noDiarize: false, device: "auto", autosave: true };
@@ -52,6 +53,9 @@ export default function App() {
   const [addError, setAddError] = useState("");
   const [lines, setLines] = useState<LogLine[]>([]);
   const [live, setLive] = useState<Live | null>(null);
+  // Polite screen-reader announcements for jobs: stage changes, each quarter, finished and failed.
+  const [spoken, setSpoken] = useState("");
+  const mark = useRef<ProgressMark | null>(null);
   const addLog = useCallback((level: string, message: string) => setLines((l) => [...l.slice(-499), { t: Date.now(), level, message }]), []);
 
   const refresh = useCallback(() => { window.api.models("status").then((r) => r && setStatus(r as unknown as ModelStatus)); }, []);
@@ -74,11 +78,24 @@ export default function App() {
   useEffect(() => window.api.onEvent((e) => {
     const label = e.source === "models" ? t("Downloading model") : stageLabel(e.stage);
     if (e.type === "log") addLog(e.level === "stderr" ? "stderr" : e.level === "error" ? "error" : "info", e.message);
-    else if (e.type === "progress") setLive((p) => ({ label, fraction: e.fraction, message: e.message, since: p && p.label === label ? p.since : Date.now() }));
-    else if (e.type === "error") { setLive(null); addLog("error", e.cancelled ? "Cancelled" : e.message); }
-    else if ((e.type === "done" || e.type === "fit") && e.jobId !== undefined) setLive(null);
+    else if (e.type === "progress") {
+      const a = progressAnnouncement(mark.current, label, e.fraction ?? null, (stage, pct) => (pct == null ? stage : t("{stage}: {percent} percent", { stage, percent: pct })));
+      mark.current = a.mark; if (a.text) setSpoken(a.text);
+      setLive((p) => ({ label, fraction: e.fraction, message: e.message, since: p && p.label === label ? p.since : Date.now() }));
+    } else if (e.type === "error") { mark.current = null; setLive(null); addLog("error", e.cancelled ? "Cancelled" : e.message); }
+    else if ((e.type === "done" || e.type === "fit") && e.jobId !== undefined) { mark.current = null; setLive(null); }
     else if (e.type === "started") addLog("info", "Started transcription");
   }), [addLog]);
+
+  const lastStatus = useRef<Map<string, { status: ProjectStatus; result: unknown }>>(new Map());
+  useEffect(() => {
+    const seen = lastStatus.current;
+    for (const p of P.projects) {
+      const say = finishAnnouncement(seen.get(p.id)?.status, p.status === "done" && seen.get(p.id)?.result === p.result ? "idle" : p.status, () => t("Finished transcribing “{name}”.", { name: p.name }), () => t("Transcribing “{name}” did not finish. Open it for details.", { name: p.name }));
+      if (say) setSpoken(say);
+      seen.set(p.id, { status: p.status, result: p.result });
+    }
+  }, [P.projects]);
 
   // Speaker names just became available (here or in Settings): stop skipping them.
   const prevDiar = useRef<boolean | null>(null);
@@ -138,6 +155,7 @@ export default function App() {
 
   return (
     <>
+      <div className="pv-sr" role="status" aria-live="polite" aria-atomic="true">{spoken}</div>
       {page === "main" && <a href="#transcript" className="skip-link" onClick={skipToTranscript}>{t("Skip to the transcript")}</a>}
       <div className={"shell" + (dragging ? " dragging" : "")} hidden={page === "settings"} onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={(e) => { if (e.currentTarget === e.target) setDragging(false); }} onDrop={onDrop}>
         <ProjectSidebar easy={isEasy(opts)} projects={P.projects} activeId={P.activeId} progress={P.progress} blocker={blocker}

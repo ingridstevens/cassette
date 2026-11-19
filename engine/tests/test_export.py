@@ -656,3 +656,15 @@ def test_stamp_never_goes_into_subtitles_json_edl_or_the_anonymised_export(tmp_p
 def test_stamp_cannot_be_injected_through_the_options(tmp_path):
     out = _stamp_export(tmp_path, "txt", stamp=False, options={"stampText": "evil", "stamp": False})
     assert "evil" not in out.read_text(encoding="utf-8")
+
+
+def test_minutes_action_table_first_row_is_flagged_as_the_header_row():
+    import io
+    from docx import Document
+    from engine.export import to_minutes
+
+    segs = [{"start": 0, "end": 1, "speaker": "A", "text": "Budget by Wednesday"}]
+    doc = Document(io.BytesIO(to_minutes(segs, {"A": "Anna"}, summary={"actions": [{"text": "Send it", "owner": "Anna"}]})))
+    rows = doc.tables[0].rows
+    assert rows[0]._tr.xpath("./w:trPr/w:tblHeader")   # screen readers read the column name with each cell
+    assert not rows[1]._tr.xpath("./w:trPr/w:tblHeader")

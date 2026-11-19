@@ -728,7 +728,8 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
           </div>}
         </div>
 
-        {notice && <div className="toast" role="status"><span>{notice}</span></div>}
+        <div className="pv-sr" role="status" aria-live="polite" aria-atomic="true">{notice}</div>
+        {notice && <div className="toast" aria-hidden="true"><span>{notice}</span></div>}
       </section>
 
       <div className="pv-insp-scrim" aria-hidden onClick={closeDrawer} />
