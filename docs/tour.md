@@ -74,9 +74,9 @@ Select words and choose **Highlight this passage**. → [Highlights](highlights.
 
 Let the local language model suggest more (with a reason for each), keep the ones you like, and save each as an audio clip.
 
-![The Highlights tab with a kept highlight and a suggestion](screenshots/15-highlights-panel.jpg)
+![The AI tab, Highlights sub-tab, with a kept highlight and a suggestion](screenshots/15-highlights-panel.jpg)
 
-**Write a summary** adds topics, decisions and action items, which also go into the meeting minutes. → [Summary](highlights.md#summary)
+On the **Summary** sub-tab, **Write a summary** adds topics, decisions and action items, which also go into the meeting minutes. → [Summary](highlights.md#summary)
 
 ![A summary with topics, decisions and action items](screenshots/16-summary.jpg)
 

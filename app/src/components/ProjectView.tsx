@@ -11,6 +11,7 @@ import { langName } from "../languages";
 import { STYLED } from "./ExportMenu";
 import AskTab, { AskItem } from "./AskTab";
 import HighlightsTab, { LlmJob } from "./HighlightsTab";
+import SummaryTab from "./SummaryTab";
 import Inspector, { Moved, Tab, globalOpts, liveSpeakers } from "./Inspector";
 import { Models } from "./useModels";
 import Transcript from "./Transcript";
@@ -802,13 +803,14 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
         askPanel={<AskTab project={project} visible={visible} thread={askThread} job={llmJob} onAsk={runAsk}
           onStop={() => { askStopped.current = true; void window.api.cancel(llmId.current); }} onClear={() => setAskThread([])} onShow={showLine} />}
         highlightsPanel={<HighlightsTab project={project} visible={visible} trimId={trimHl ? trimHl.id : null} onTrim={setTrimId} onAdjust={adjustHl} job={llmJob} error={llmError}
-          onSuggest={(m) => runLlm("highlights", m)} onSummarize={(m) => runLlm("summarize", m)} onStop={() => { void window.api.cancel(llmId.current); }}
+          onSuggest={(m) => runLlm("highlights", m)} onStop={() => { void window.api.cancel(llmId.current); }}
           onKeep={(id) => patchResult((x) => ({ ...x, highlights: (x.highlights ?? []).map((h) => (h.id === id ? { ...h, suggested: undefined } : h)) }))}
           onRemove={(id) => patchResult((x) => ({ ...x, highlights: (x.highlights ?? []).filter((h) => h.id !== id) }))}
           onKeepAll={() => patchResult((x) => ({ ...x, highlights: (x.highlights ?? []).map((h) => ({ ...h, suggested: undefined })) }))}
           onDismissAll={() => patchResult((x) => ({ ...x, highlights: (x.highlights ?? []).filter((h) => !h.suggested) }))}
           onPlay={playRange} onPause={() => { window.clearTimeout(clipTimer.current); player.current?.pause(); }} clip={playing ? hlClip : null} time={time} onSeek={(s) => player.current?.seek(s)} onSaveClips={saveClips}
-          onSaveOne={async (h) => { if (await window.api.saveClip(path, Math.max(0, h.start - 0.3), h.end + 0.3)) flash(t("Clip saved ✓")); }}
+          onSaveOne={async (h) => { if (await window.api.saveClip(path, Math.max(0, h.start - 0.3), h.end + 0.3)) flash(t("Clip saved ✓")); }} />}
+        summaryPanel={<SummaryTab project={project} visible={visible} job={llmJob} error={llmError} onSummarize={(m) => runLlm("summarize", m)} onStop={() => { void window.api.cancel(llmId.current); }} onSeek={(s) => player.current?.seek(s)}
           onEditSummary={(text) => patchResult((x) => (x.summary ? { ...x, summary: { ...x.summary, summary: text } } : x))}
           onClearSummary={() => patchResult((x) => { const { summary: _s, ...rest } = x; return rest; })} />} />
 

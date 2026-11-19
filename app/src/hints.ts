@@ -15,8 +15,11 @@ export const TABS: Tab[] = ["speakers", "ai", "details"];
 /** Older versions had five tabs (and may have saved one): map any saved id to its new home, falling back to Speakers. */
 export function normalizeTab(id: unknown): Tab {
   if (id === "speakers" || id === "ai" || id === "details") return id;
-  if (id === "highlights" || id === "ask") return "ai";
+  if (id === "highlights" || id === "summary" || id === "ask") return "ai";
   if (id === "options" || id === "info") return "details";
   return "speakers";
 }
-export const legacyAiPart = (id: unknown): "highlights" | "ask" => (id === "ask" ? "ask" : "highlights");
+export type AiPart = "highlights" | "summary" | "ask";
+export const AI_PARTS: AiPart[] = ["highlights", "summary", "ask"];
+/** Which AI sub-tab an old saved tab id (or a saved sub-tab) opens: Ask stays Ask, Summary stays Summary, everything else is Highlights. */
+export const legacyAiPart = (id: unknown): AiPart => (id === "ask" ? "ask" : id === "summary" ? "summary" : "highlights");

@@ -343,7 +343,6 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .pv-hl-trimrow .btn { height: 30px; padding: 0 10px; border-radius: var(--r-ctl); }
 .pv-hl-clips { display: flex; flex-direction: column; gap: 8px; align-items: flex-start; padding-top: 6px; border-top: 1px solid var(--line); }
 .pv-hl-clips .field { width: 100%; }
-.pv-sum { padding-top: 14px; border-top: 1px solid var(--line); }
 .pv-sum-body { display: flex; flex-direction: column; gap: 6px; }
 .pv-sum-body textarea { font: inherit; font-weight: 400; line-height: 1.45; resize: vertical; }
 .pv-sum-list { margin: 0; padding-left: 18px; font-size: 13px; line-height: 1.5; }
