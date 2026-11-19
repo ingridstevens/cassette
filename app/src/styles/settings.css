@@ -23,7 +23,7 @@
 .st-root .alert { border: 0; margin: 0; }
 .st-root .alert svg { margin-top: 2px; }
 
-.st-scroll { flex: 1; overflow: auto; padding: 4px 56px 30px; display: flex; justify-content: center; }
+.st-scroll { flex: 1; overflow: auto; padding: 4px 56px 30px; display: flex; justify-content: center; align-items: flex-start; }
 .st-col { width: 100%; max-width: 760px; display: flex; flex-direction: column; gap: 20px; align-content: flex-start; }
 .st-col.wide { max-width: 800px; gap: 18px; }
 .st-card h2 { font-size: 19px; font-weight: 650; letter-spacing: -.01em; }
