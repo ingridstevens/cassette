@@ -79,6 +79,6 @@ describe("reveal targets and data locations", () => {
     const d = dataLocations("/u/Cassette");
     expect(d.recordings).toBe(path.join("/u/Cassette", "recordings"));
     expect(d.projects).toBe(path.join("/u/Cassette", "projects.json"));
-    for (const p of Object.values(d)) expect(p.startsWith(path.join("/u/Cassette"))).toBe(true);
+    for (const p of Object.values(d)) expect(path.relative("/u/Cassette", p).startsWith("..")).toBe(false);
   });
 });
