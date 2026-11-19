@@ -12,6 +12,7 @@ const GROUPS: { title: string; formats: readonly (readonly [string, string, stri
     ["docx", "Word document", ".docx · speakers in bold, with times"],
     ["txt", "Plain text", ".txt · [time] Speaker: text"],
     ["md", "Markdown", ".md"],
+    ["copy-md", "Copy as Markdown", "To the clipboard, to paste into a note app · follows the Text style settings"],
     ["print", "Print / PDF", ".pdf · the transcript only, ready to print"],
     ["print-large", "Large-print PDF", ".pdf · 150% text size, for easier reading"],
     ["redacted", "Anonymised text", ".txt · speaker names replaced by P01, P02…; other names in the text are not found"],
@@ -39,7 +40,7 @@ const GROUPS: { title: string; formats: readonly (readonly [string, string, stri
 const PRIMARY = ["docx", "txt", "print", "print-large", "srt", "minutes"] as const;
 const ALL = GROUPS.flatMap((g) => g.formats);
 /** Formats that can be chosen as the default in Settings (the text-style dialog only saves settings, it exports nothing). */
-export const EXPORT_CHOICES = ALL.filter(([f]) => f !== "text");
+export const EXPORT_CHOICES = ALL.filter(([f]) => f !== "text" && f !== "copy-md");
 /** Technical names that are the same in every language; the other formats use their menu label. */
 const SHORT: Record<string, string> = { srt: "SRT", vtt: "VTT", edl: "EDL", csv: "CSV", json: "JSON" };
 
@@ -56,7 +57,7 @@ export function onMenuKeyDown(e: KeyboardEvent<HTMLElement>) {
 type Res = { ok?: boolean; cancelled?: boolean; path?: string; error?: string };
 const WITH_OPTIONS = new Set(["srt", "vtt", "edl", "text"]);
 /** Formats that follow the "Text style" settings. */
-export const STYLED = new Set(["txt", "md", "docx", "csv", "minutes", "redacted"]);
+export const STYLED = new Set(["txt", "md", "copy-md", "docx", "csv", "minutes", "redacted"]);
 /** Options a format needs when it is run without asking (the saved ones for subtitles and styled text, none for the rest). */
 const usualOpts = (f: string): Record<string, unknown> => (WITH_OPTIONS.has(f) || STYLED.has(f) ? { ...loadExportOpts() } : {});
 export default function ExportMenu({ onExport, openSignal = 0, hasChapters = false, markedCount = 0, lastExport, defaultFormat, onRemember, easy = false }: { easy?: boolean; onExport(format: string, options?: ExportOpts): Promise<Res>; openSignal?: number; hasChapters?: boolean; markedCount?: number; lastExport?: LastExport; defaultFormat?: string; onRemember?(format: string, options: Record<string, unknown>): void }) {
@@ -89,8 +90,8 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
   const run = async (f: string, o?: ExportOpts) => {
     const r = await onExport(f, o).catch((e: unknown) => ({ ok: false, error: String(e) } as Res));
     if (r.cancelled) return;
-    if (r.ok && f !== "text") onRemember?.(f, { ...(o ?? {}) });
-    setBad(!r.ok); setMsg(r.ok ? (f === "redacted" ? t("Exported ✓. A report and a key file were saved next to it. Keep the key apart from the data.") : t("Exported ✓")) : t("Export failed: {reason}", { reason: r.error ?? t("unknown error") }));
+    if (r.ok && f !== "text" && f !== "copy-md") onRemember?.(f, { ...(o ?? {}) });
+    setBad(!r.ok); setMsg(r.ok ? (f === "copy-md" ? t("Copied as Markdown ✓") : f === "redacted" ? t("Exported ✓. A report and a key file were saved next to it. Keep the key apart from the data.") : t("Exported ✓")) : t("Export failed: {reason}", { reason: r.error ?? t("unknown error") }));
     setTimeout(() => setMsg(""), r.ok ? 2800 : 8000);
   };
   // The first item: what this project was last exported as, or else the default from Settings.

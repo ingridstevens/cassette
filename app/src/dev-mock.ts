@@ -145,6 +145,7 @@ function fake(path = "") {
   tokenSecure: async () => !location.search.includes("nokeyring"),
   token: async (v?: string) => { if (v !== undefined) token = v; return hint(); },
   exportTranscript: async (_p: unknown, f: string, n: string) => { await wait(200); console.log("export", f); return n.includes("fail") ? { ok: false, error: "Disk full" } : { ok: true, path: `/Users/demo/${n}.${f}` }; },
+  exportText: async () => { await wait(100); return { ok: true, text: "**Anna** _0:00:00_\nHello.\n" }; },
   printPdf: async (n: string) => { await wait(200); console.log("print pdf"); return { ok: true, path: `/Users/demo/${n}.pdf` }; },
   translateLine: async () => { await wait(500); return { ok: true, text: "(English translation appears here)" }; },
   runLlm: async (kind: string, p: { language?: string; segments: { start: number; end: number; speaker: string; text: string; words: { start: number; end: number; word: string }[] }[] }, o: { clientId: string }) => {

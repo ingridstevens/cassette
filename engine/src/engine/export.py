@@ -334,13 +334,23 @@ def to_edl(segs, names=None, options=None, title="Transcript"):
     return "\n".join(lines)
 
 
+def _md_highlights(segs, names, highlights, stamp: bool) -> str:
+    """A "Highlights" section of block quotes for the copied Markdown. Empty unless highlights are passed, so the .md file export is unchanged."""
+    if highlights is None:
+        return ""
+    quotes = quote_list(segs, highlights)
+    if not quotes:
+        return ""
+    return "\n## Highlights\n\n" + "\n\n".join(f"> {q['text']}\n>\n> — {names.get(q['speaker'], q['speaker'])}" + (f", {_clock(q['start'])}" if stamp else "") for q in quotes) + "\n"
+
+
 def to_md(segs, names=None, options=None):
     names = names or {}
     o = options or {}
     stamp = o.get("timestamps", True)
     note = style_note(o, o.get("lang"))
     body = "\n\n".join(f"**{_name(s, names)}**{_flag(s, o.get('lang'), o)}" + (f" _{_ts(s['start'])[:8]}_" if stamp else "") + f"\n{s['text']}" + (f"\n\n> {s['translation']}" if s.get("translation") and o.get("translations", True) else "") for s in segs) + "\n"
-    return (f"_{note}_\n\n" if note else "") + body
+    return (f"_{note}_\n\n" if note else "") + body + _md_highlights(segs, names, o.get("highlights"), stamp)
 
 
 JSON_SCHEMA = 1  # bump when a key is renamed or removed; adding keys does not change it

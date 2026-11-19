@@ -25,6 +25,7 @@ const api = {
   tokenSecure: (): Promise<boolean> => ipcRenderer.invoke("tokenSecure"),
   token: (value?: string): Promise<string> => ipcRenderer.invoke("token", value),
   exportTranscript: (payload: unknown, format: string, name: string): Promise<{ ok?: boolean; cancelled?: boolean; path?: string; error?: string }> => ipcRenderer.invoke("export", { ...(payload as object), lang: document.documentElement.lang || "en" }, format, name),
+  exportText: (payload: unknown): Promise<{ ok?: boolean; text?: string; error?: string }> => ipcRenderer.invoke("export-text", { ...(payload as object), lang: document.documentElement.lang || "en" }),
   printPdf: (name: string, large: boolean): Promise<{ ok?: boolean; cancelled?: boolean; path?: string; error?: string }> => ipcRenderer.invoke("print-pdf", name, large),
   translateLine: (p: { input: string; start: number; end: number; model: string; language: string; backend?: string }): Promise<{ ok: boolean; text?: string; error?: string }> => ipcRenderer.invoke("translate-line", p),
   runLlm: (kind: "highlights" | "summarize" | "ask", payload: unknown, o: { jobId: string; clientId: string; model: string; count?: number }): Promise<{ type: string; message?: string; cancelled?: boolean; highlights?: unknown[]; summary?: unknown; answer?: unknown } | null> => ipcRenderer.invoke("llm-run", kind, payload, o),

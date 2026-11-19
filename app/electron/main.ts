@@ -333,6 +333,17 @@ app.whenReady().then(() => {
     return res?.type === "done" ? { ok: true, path: r.filePath } : { ok: false, error: String(res?.message ?? "The export failed.").slice(0, 300) };
   });
 
+  // "Copy as Markdown": the engine writes the same Markdown as the .md export to a private temp file; the renderer puts the text on the clipboard.
+  ipcMain.handle("export-text", async (_e, payload: unknown) => {
+    const dir = path.join(app.getPath("userData"), "tmp"); fs.mkdirSync(dir, { recursive: true, mode: 0o700 });
+    const out = path.join(dir, `${randomUUID()}.md`);
+    try {
+      const res = await withTempJson(payload, (tmp) => runEngine(randomUUID(), ["export", tmp, out, "--format", "md-copy"], {}, () => {}));
+      return res?.type === "done" ? { ok: true, text: fs.readFileSync(out, "utf-8") } : { ok: false, error: String(res?.message ?? "The export failed.").slice(0, 300) };
+    } catch (err) { return { ok: false, error: String((err as Error).message) }; }
+    finally { fs.rmSync(out, { force: true }); }
+  });
+
   // Prints the open transcript to a PDF through the print stylesheet (styles/print.css), which hides everything but the transcript.
   ipcMain.handle("print-pdf", async (e, name: unknown, large: unknown) => {
     const base = String(typeof name === "string" && name.trim() ? name : "Transcript").replace(/[\\/:*?"<>|]/g, "-");
