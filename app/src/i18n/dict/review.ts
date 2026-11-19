@@ -1,5 +1,6 @@
 export default {
   de: {
+    "While reviewing unsure words: save and go on, play again, skip, go back": "Beim Prüfen unsicherer Wörter: sichern und weiter, erneut abspielen, überspringen, zurück",
     "All unsure words are checked ✓": "Alle unsicheren Wörter sind geprüft ✓", "{count} unsure words left unchecked": "{count} unsichere Wörter bleiben ungeprüft",
     "Go through them again": "Noch einmal durchgehen", "Done": "Fertig", "Review unsure words": "Unsichere Wörter prüfen", "Close review": "Prüfung schließen",
     "Unsure word {current} of {total}": "Unsicheres Wort {current} von {total}", "The word as it should read. Leave it empty to remove the word.": "Das Wort, wie es lauten soll. Leer lassen, um das Wort zu entfernen.",
@@ -9,6 +10,7 @@ export default {
     "Review 1 unsure word": "1 unsicheres Wort prüfen", "Review {count} unsure words": "{count} unsichere Wörter prüfen",
   },
   fr: {
+    "While reviewing unsure words: save and go on, play again, skip, go back": "Pendant la vérification des mots incertains : enregistrer et continuer, réécouter, passer, revenir",
     "All unsure words are checked ✓": "Tous les mots incertains sont vérifiés ✓", "{count} unsure words left unchecked": "{count} mots incertains restent non vérifiés",
     "Go through them again": "Les repasser", "Done": "Terminé", "Review unsure words": "Vérifier les mots incertains", "Close review": "Fermer la vérification",
     "Unsure word {current} of {total}": "Mot incertain {current} sur {total}", "The word as it should read. Leave it empty to remove the word.": "Le mot tel qu’il doit être écrit. Laissez vide pour supprimer le mot.",
@@ -18,6 +20,7 @@ export default {
     "Review 1 unsure word": "Vérifier 1 mot incertain", "Review {count} unsure words": "Vérifier {count} mots incertains",
   },
   es: {
+    "While reviewing unsure words: save and go on, play again, skip, go back": "Al revisar palabras dudosas: guardar y seguir, reproducir otra vez, saltar, volver",
     "All unsure words are checked ✓": "Todas las palabras dudosas están revisadas ✓", "{count} unsure words left unchecked": "{count} palabras dudosas sin revisar",
     "Go through them again": "Repasarlas otra vez", "Done": "Listo", "Review unsure words": "Revisar palabras dudosas", "Close review": "Cerrar la revisión",
     "Unsure word {current} of {total}": "Palabra dudosa {current} de {total}", "The word as it should read. Leave it empty to remove the word.": "La palabra como debe leerse. Déjalo vacío para quitarla.",
