@@ -316,6 +316,7 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .pv-w.hl { background: rgba(47, 201, 160, .3); border-radius: 4px; box-shadow: 0 2px 0 rgba(20, 130, 100, .55); }
 .pv-w.hl.sug { background: rgba(47, 201, 160, .12); box-shadow: 0 2px 0 rgba(20, 130, 100, .45); text-decoration: underline dashed rgba(20, 130, 100, .7); text-underline-offset: 5px; }
 .pv-w.hl.cur { background: var(--sun-btn); box-shadow: none; }
+.pv-w.sel { background: Highlight; color: HighlightText; border-radius: 4px; }
 .pv-picked { position: fixed; z-index: 30; display: flex; align-items: center; flex-wrap: wrap; gap: 6px; max-width: calc(100vw - 16px); padding: 6px 8px; border-radius: 14px; background: var(--surface); color: var(--ink); border: 1px solid var(--line); box-shadow: 0 6px 24px rgba(0,0,0,.18); }
 .pv-hl h3 { margin: 0; font-size: 14px; }
 .pv-hl h4 { margin: 10px 0 4px; font-size: 12.5px; color: var(--ink2); }

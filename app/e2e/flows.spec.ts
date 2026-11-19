@@ -198,3 +198,18 @@ test("project actions menu: keyboard, Duplicate, Escape returns focus, audio bad
   await expect(page.getByRole("status").filter({ hasText: "Duplicated as “Interview 2026 copy”" })).toBeAttached();
   await expect(list.getByText("Interview 2026 copy")).toBeVisible();
 });
+
+test("keyboard-only word selection: Shift+Right selects, Shift+Down reaches the toolbar, Esc cancels", async ({ page }) => {
+  await startFirstRecording(page);
+  await page.getByRole("button", { name: /^Edit the text of the line/ }).first().focus();
+  await page.keyboard.press("Shift+ArrowRight");
+  await page.keyboard.press("Shift+ArrowRight");
+  const bar = page.getByRole("toolbar", { name: "Actions for the selected words" });
+  await expect(bar).toBeVisible();
+  await expect(page.getByText(/2 words selected, from/).first()).toBeAttached();
+  await page.keyboard.press("Shift+ArrowDown");
+  await expect(bar.getByRole("button", { name: "Highlight this passage" })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(bar).toBeHidden();
+  await expect(page.getByRole("button", { name: /^Edit the text of the line/ }).first()).toBeFocused();
+});

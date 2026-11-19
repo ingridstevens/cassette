@@ -4,9 +4,10 @@ import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.esm.js";
 import HoverPlugin from "wavesurfer.js/dist/plugins/hover.esm.js";
 import { useT } from "../i18n";
 import { fmt, PALETTE, Result } from "../types";
+import { RangeStop } from "../playRange";
 import "../styles/project.css";
 
-export interface WaveformHandle { seek(t: number, play?: boolean): void; toggle(): void; pause(): void; skip(delta: number): void; setRate(rate: number): void; markClip(start: number, end: number): void }
+export interface WaveformHandle { seek(t: number, play?: boolean): void; toggle(): void; pause(): void; skip(delta: number): void; setRate(rate: number): void; playRange(start: number, end: number): void; markClip(start: number, end: number): void }
 /** A highlight whose two ends are draggable handles on the waveform. */
 export interface TrimRange { id: string; start: number; end: number }
 interface Props {
@@ -31,24 +32,27 @@ const Waveform = forwardRef<WaveformHandle, Props>(({ path, result, onTime, onSe
   const regions = useRef<ReturnType<typeof RegionsPlugin.create> | null>(null);
   const cb = useRef({ onTime, onSelection, onPlaying, onDuration, onTrim });
   cb.current = { onTime, onSelection, onPlaying, onDuration, onTrim };
+  /** Where a "play from selection" ends; any pause, seek, skip or click on the waveform forgets it. */
+  const stop = useRef(new RangeStop());
   const [duration, setDuration] = useState(0);
   const [state, setState] = useState<State>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
 
   useImperativeHandle(ref, () => ({
-    seek: (t, play = true) => { const w = ws.current; if (w && w.getDuration()) { w.setTime(t); if (play) w.play(); } },
-    toggle: () => ws.current?.playPause(),
+    seek: (t, play = true) => { stop.current.clear(); const w = ws.current; if (w && w.getDuration()) { w.setTime(t); if (play) w.play(); } },
+    playRange: (a, b) => { const w = ws.current; if (!w || !w.getDuration() || !(b > a)) return; w.setTime(a); stop.current.arm(b); w.play(); },
+    toggle: () => { stop.current.clear(); ws.current?.playPause(); },
     markClip: (a, b) => { regions.current?.addRegion({ start: a, end: b, color: "rgba(124, 92, 255, 0.14)" }); },
     setRate: (r) => { ws.current?.setPlaybackRate(r, true); },
-    pause: () => { if (ws.current?.isPlaying()) ws.current.pause(); },
-    skip: (d) => { const w = ws.current; if (w && w.getDuration()) w.setTime(Math.min(Math.max(0, w.getCurrentTime() + d), w.getDuration())); },
+    pause: () => { stop.current.clear(); if (ws.current?.isPlaying()) ws.current.pause(); },
+    skip: (d) => { stop.current.clear(); const w = ws.current; if (w && w.getDuration()) w.setTime(Math.min(Math.max(0, w.getCurrentTime() + d), w.getDuration())); },
   }));
 
   useEffect(() => {
     let dead = false;
     setState({ kind: "loading" });
     const rp = RegionsPlugin.create();
-    ws.current = null; regions.current = null;
+    ws.current = null; regions.current = null; stop.current.clear();
     let w: WaveSurfer | null = null;
     const fail = (e: unknown) => { if (!dead) setState({ kind: "error", message: String(e instanceof Error ? e.message : e).replace(/^Error invoking remote method '[^']+': (Error: )?/, "") }); };
     // The window never decodes the recording: the main process makes the waveform (cached) and the player streams the file from media://.
@@ -58,9 +62,10 @@ const Waveform = forwardRef<WaveformHandle, Props>(({ path, result, onTime, onSe
       w = WaveSurfer.create({ container: box.current!, height: 64, ...waveColors(), cursorWidth: 3, barWidth: 3, barGap: 2, barRadius: 3, plugins: [rp, HoverPlugin.create({ lineColor: "#6a45e8", lineWidth: 1, labelBackground: "#1a1a22", labelColor: "#fff", labelSize: "12px", formatTimeCallback: (sec: number) => fmt(Math.max(0, sec)) })], url: window.api.mediaUrl(path), peaks: [r.peaks], duration: r.duration });
       regions.current = rp; ws.current = w;
       rp.enableDragSelection({ color: "rgba(124, 92, 255, 0.14)" });
-      w.on("timeupdate", (t) => cb.current.onTime(t));
+      w.on("timeupdate", (t) => { cb.current.onTime(t); if (stop.current.tick(t)) w?.pause(); });
       w.on("play", () => cb.current.onPlaying?.(true));
-      w.on("pause", () => cb.current.onPlaying?.(false));
+      w.on("pause", () => { stop.current.clear(); cb.current.onPlaying?.(false); });
+      w.on("interaction", () => stop.current.clear());
       w.on("ready", (d) => { if (!dead) { setState({ kind: "ready" }); setDuration(d); cb.current.onDuration?.(d); } });
       w.on("error", fail);
     }).catch(fail);

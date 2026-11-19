@@ -5,13 +5,15 @@ import { Highlight, UnsureRef, isUnsure, PALETTE, Result, chapterDefault, displa
 import { onMenuKeyDown } from "./ExportMenu";
 import { FIND_DEFAULTS, FindOpts, matcher } from "../find";
 import { quoteText, toolbarPosition } from "../selectionToolbar";
+import { rangeOfWords } from "../playRange";
+import { WordSel, extendSel, selBounds, startSel } from "../wordSelection";
 import { FILTER_AT, filterSpeakers } from "../speakerMenu";
 import { SCROLL_EVENT, ScrollJob, renderIndices, rowOffsets, spacerHeight, visibleRange } from "../windowing";
 import "../styles/project.css";
 
 interface Props {
   result: Result; names: Record<string, string>; time: number;
-  onSeek(t: number): void; onReassign(index: number, speaker: string): void; /** Give the line to a new speaker with this name (empty: the usual default name). */ onNewSpeaker(index: number, name: string): void;
+  onSeek(t: number): void; /** Play from the start of the range and stop at its end. */ onPlayRange?(start: number, end: number): void; onReassign(index: number, speaker: string): void; /** Give the line to a new speaker with this name (empty: the usual default name). */ onNewSpeaker(index: number, name: string): void;
   onEdit(index: number, text: string): void; onRevert(index: number): void; onChapter(index: number, title: string | null): void; onMark(index: number): void; onHeard(index: number): void; onSplit(index: number, wordIndex: number): void; onLanguage(index: number, lang: string | null): void; onRetranscribe(index: number, language: string): void; onTranslate(index: number, remove?: boolean): void; playing: boolean; onPause(): void; reviewAt?: UnsureRef | null; translatingIndex?: number | null; canRetranscribe: boolean; onJoin(index: number): void;
   highlights?: Highlight[]; onHighlight?(index: number, from: number, to: number): void;
   /** Show the language of every line, not only lines that differ from the recording. */ showLang?: boolean;
@@ -24,7 +26,7 @@ const DOUBLE_CLICK_MS = 260;
 /** Space between two lines (the .pv-rows gap), and how far past the visible area lines stay drawn, in px. */
 const GAP = 2, OVERSCAN = 700;
 
-export default function Transcript({ easy = false, showLang, result, names, time, onSeek, onReassign, onNewSpeaker, onEdit, onRevert, onChapter, onMark, onHeard, onSplit, onJoin, onLanguage, onRetranscribe, onTranslate, playing, onPause, reviewAt = null, translatingIndex = null, canRetranscribe, highlights = [], onHighlight, query = "", findOpts = FIND_DEFAULTS, matchSeg = -1 }: Props) {
+export default function Transcript({ easy = false, showLang, result, names, time, onSeek, onPlayRange, onReassign, onNewSpeaker, onEdit, onRevert, onChapter, onMark, onHeard, onSplit, onJoin, onLanguage, onRetranscribe, onTranslate, playing, onPause, reviewAt = null, translatingIndex = null, canRetranscribe, highlights = [], onHighlight, query = "", findOpts = FIND_DEFAULTS, matchSeg = -1 }: Props) {
   const t = useT();
   const color = (sp: string) => PALETTE[Math.max(0, result.speakers.indexOf(sp)) % PALETTE.length];
   const label = (sp: string) => displayName(sp, result.speakers, names);
@@ -55,6 +57,7 @@ export default function Transcript({ easy = false, showLang, result, names, time
       const w = document.createRange(); w.selectNodeContents(el);
       if (r.compareBoundaryPoints(Range.END_TO_START, w) < 0 && r.compareBoundaryPoints(Range.START_TO_END, w) > 0) idx.push(Number(el.dataset.w));
     });
+    setKb(null);
     setPicked(idx.length >= 2 ? { seg: i, from: idx[0], to: idx[idx.length - 1] } : null);
   };
   useEffect(() => { // clicking elsewhere or collapsing the selection hides the offer
@@ -63,11 +66,23 @@ export default function Transcript({ easy = false, showLang, result, names, time
     document.addEventListener("selectionchange", gone);
     return () => document.removeEventListener("selectionchange", gone);
   }, [picked]);
-  const highlight = (i: number, from: number, to: number) => { onHighlight?.(i, from, to); setPicked(null); window.getSelection()?.removeAllRanges(); };
+  useEffect(() => { if (!picked && kb) setKb(null); }, [picked]); // eslint-disable-line react-hooks/exhaustive-deps
+  const highlight = (i: number, from: number, to: number) => { onHighlight?.(i, from, to); setPicked(null); setKb(null); window.getSelection()?.removeAllRanges(); };
   /** The floating toolbar above the selection: placed in the viewport (position: fixed) and moved when the page scrolls or resizes. It stays in the line's own markup, so Tab from the selection reaches it. */
   const bar = useRef<HTMLDivElement>(null);
   const [barAt, setBarAt] = useState<{ top: number; left: number } | null>(null);
   const [said, setSaid] = useState("");
+  /** A selection made with the keyboard (Shift+Left or Right in a line): the line and the two ends. The words are also selected in the page, so the toolbar and copying work as with the mouse. */
+  const [kb, setKb] = useState<(WordSel & { seg: number }) | null>(null);
+  /** The control that had focus when the keyboard selection began, so Esc can give focus back to it. */
+  const origin = useRef<HTMLElement | null>(null);
+  const cancelPick = () => {
+    const inBar = !!bar.current?.contains(document.activeElement);
+    if (kb) window.getSelection()?.removeAllRanges();
+    setPicked(null); setKb(null);
+    setSaid(kb ? t("Selection cancelled") : "");
+    if (inBar && origin.current?.isConnected) origin.current.focus();
+  };
   useLayoutEffect(() => {
     if (!picked) { setBarAt(null); return; }
     const place = () => {
@@ -82,11 +97,11 @@ export default function Transcript({ easy = false, showLang, result, names, time
   }, [picked]);
   useEffect(() => { // Esc closes the toolbar (and keeps the selection, so it can still be copied)
     if (!picked) return;
-    const esc = (e: KeyboardEvent) => { if (e.key === "Escape" && !e.defaultPrevented) { setPicked(null); setSaid(""); } };
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape" && !e.defaultPrevented) cancelPick(); };
     document.addEventListener("keydown", esc);
     return () => document.removeEventListener("keydown", esc);
-  }, [picked]);
-  useEffect(() => { setSaid(picked ? t("{count} words selected. Press Tab to reach the actions, Esc to close them.", { count: picked.to - picked.from + 1 }) : ""); }, [picked?.seg, picked?.from, picked?.to]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [picked]); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (!kb && picked) setSaid(t("{count} words selected. Press Tab to reach the actions, Esc to close them.", { count: picked.to - picked.from + 1 })); }, [picked?.seg, picked?.from, picked?.to]); // eslint-disable-line react-hooks/exhaustive-deps
   /** Left and right arrows move between the toolbar's buttons. */
   const arrowKeys = (e: ReactKeyEvent<HTMLElement>) => {
     const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
@@ -99,6 +114,31 @@ export default function Transcript({ easy = false, showLang, result, names, time
     const seg = result.segments[i];
     navigator.clipboard.writeText(quoteText(label(seg.speaker), fmt(seg.words[from]?.start ?? seg.start), seg.words, from, to));
     setSaid(t("Quote copied"));
+  };
+  /** Shift+Left or Right in a line selects words (starting at the playing word, or the first or last word), Shift+Down goes to the toolbar. Plain arrows and Tab are left alone. */
+  const wordKeys = (e: ReactKeyEvent<HTMLElement>, i: number) => {
+    if (easy || !e.shiftKey || e.ctrlKey || e.metaKey || e.altKey || e.nativeEvent.isComposing) return;
+    if (e.key !== "ArrowLeft" && e.key !== "ArrowRight" && e.key !== "ArrowDown") return;
+    const target = e.target as HTMLElement;
+    if (target.closest("input, textarea, select, [role=menu], [role=dialog], [role=toolbar]") || editing === i || splitting === i) return;
+    const seg = result.segments[i];
+    if (e.key === "ArrowDown") {
+      if (kb?.seg !== i) return;
+      e.preventDefault(); bar.current?.querySelector<HTMLElement>("button")?.focus();
+      return;
+    }
+    const dir = e.key === "ArrowRight" ? 1 : -1;
+    e.preventDefault();
+    const starting = kb?.seg !== i;
+    const next = starting ? startSel(seg.words, time, dir) : extendSel(kb!, dir, seg.words.length);
+    if (!next) return;
+    if (starting) origin.current = target;
+    const [from, to] = selBounds(next);
+    const els = e.currentTarget.querySelectorAll<HTMLElement>(".pv-read [data-w]"), a = els[from], b = els[to];
+    if (a && b) { const r = document.createRange(); r.setStartBefore(a); r.setEndAfter(b); const sel = window.getSelection(); sel?.removeAllRanges(); sel?.addRange(r); }
+    setKb({ ...next, seg: i }); setPicked({ seg: i, from, to });
+    const word = (j: number) => seg.words[j]?.word.trim() ?? "";
+    setSaid(starting ? t("Selecting words from “{word}”. Shift+Right or Shift+Left extends, Shift+Down goes to the actions, Esc cancels.", { word: word(from) }) : t("{count} words selected, from “{first}” to “{last}”", { count: to - from + 1, first: word(from), last: word(to) }));
   };
   /** Which part of the text to select when the editor opens (the word that was double-clicked). */
   const editSel = useRef<[number, number] | null>(null);
@@ -315,7 +355,7 @@ export default function Transcript({ easy = false, showLang, result, names, time
         if ("gap" in it) return <div key={it.key} className="pv-gap" aria-hidden style={{ height: it.gap, flex: "none" }} />;
         const i = it.i, seg = result.segments[i], spk = menu === i ? listed(seg.speaker) : [];
         return (
-        <div key={i} role="listitem" aria-posinset={i + 1} aria-setsize={n} onFocus={() => setFocusRow(i)}
+        <div key={i} role="listitem" aria-posinset={i + 1} aria-setsize={n} onFocus={() => setFocusRow(i)} onKeyDown={(e) => wordKeys(e, i)}
           data-turn={i} className={"pv-turn" + (seg.marked ? " marked" : "") + (i === active ? " now" : "") + (i === matchSeg ? " found" : "") + (i > 0 && result.segments[i - 1].speaker === seg.speaker ? " cont" : "")}>
           <div className="pv-who">
             <button type="button" className="pv-who-btn" data-who={i} aria-haspopup="menu" aria-expanded={menu === i}
@@ -463,18 +503,18 @@ export default function Transcript({ easy = false, showLang, result, names, time
               startEdit(i, w === undefined ? undefined : Number(w));
             }}>
             {seg.words.map((w, j) => (
-              <span key={j} className={"pv-w" + (time >= w.start && time < w.end ? " cur" : "") + (isUnsure(w) ? " weak" : "") + (reviewAt && reviewAt.seg === i && reviewAt.word === j ? " rv" : "") + (q && fm.test(w.word) ? " hit" : "") + hlClass(w)} data-w={j} aria-describedby={isUnsure(w) ? "pv-unsure-label" : undefined} title={isUnsure(w) ? t("The model was not sure about this word. Listen to check it.") : undefined} onClick={(e) => playFrom(e, w.start)}>{w.word}</span>
+              <span key={j} className={"pv-w" + (time >= w.start && time < w.end ? " cur" : "") + (isUnsure(w) ? " weak" : "") + (reviewAt && reviewAt.seg === i && reviewAt.word === j ? " rv" : "") + (q && fm.test(w.word) ? " hit" : "") + hlClass(w) + (kb?.seg === i && j >= Math.min(kb.anchor, kb.head) && j <= Math.max(kb.anchor, kb.head) ? " sel" : "")} data-w={j} aria-describedby={isUnsure(w) ? "pv-unsure-label" : undefined} title={isUnsure(w) ? t("The model was not sure about this word. Listen to check it.") : undefined} onClick={(e) => playFrom(e, w.start)}>{w.word}</span>
             ))}
           </p>
           )
           )}
           {!easy && picked?.seg === i && editing !== i && splitting !== i && (
             <div ref={bar} className="pv-picked" role="toolbar" aria-label={t("Actions for the selected words")} style={barAt ? { top: barAt.top, left: barAt.left } : { visibility: "hidden" }}
-              onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); setPicked(null); setSaid(""); } else arrowKeys(e); }}>
+              onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); cancelPick(); } else arrowKeys(e); }}>
               <button type="button" className="btn sun small" onMouseDown={(e) => e.preventDefault()} onClick={() => highlight(i, picked.from, picked.to)}>{t("Highlight this passage")}</button>
               <button type="button" className="btn small" onMouseDown={(e) => e.preventDefault()} onClick={() => copyPicked(i, picked.from, picked.to)} title={t("Copy as a quote, with speaker and time")}>{t("Copy quote")}</button>
               <button type="button" className="btn small" aria-pressed={!!seg.marked} onMouseDown={(e) => e.preventDefault()} onClick={() => onMark(i)} title={t("Mark this line as a decision, action item or quote. Marked lines go into the meeting minutes and the quote list.")}>{seg.marked ? t("Marked ✓") : t("Mark")}</button>
-              <button type="button" className="btn small" onMouseDown={(e) => e.preventDefault()} onClick={() => onSeek(seg.words[picked.from]?.start ?? seg.start)}>{t("Play from selection")}</button>
+              <button type="button" className="btn small" onMouseDown={(e) => e.preventDefault()} onClick={() => { const r = rangeOfWords(seg.words, picked.from, picked.to); if (r && onPlayRange) onPlayRange(r.start, r.end); else onSeek(seg.words[picked.from]?.start ?? seg.start); }}>{t("Play from selection")}</button>
               <span className="note">{t("{count} words selected", { count: picked.to - picked.from + 1 })}</span>
             </div>
           )}
