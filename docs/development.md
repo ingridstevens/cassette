@@ -185,7 +185,7 @@ packages when they are installed; that bundle has **not been built or run**.
 ## Continuous integration
 
 `.github/workflows/build.yml`: every push and pull request runs the engine tests, the typecheck, the translation check and the
-build on macOS, Linux and Windows. Packaging (all four targets) runs only for `v*` tags or by hand. Neither has been run yet.
+build on macOS, Linux and Windows. Packaging (all four targets) runs only for `v*` tags or by hand. CI runs the automated checks only (it does not start the app); the packaging job has not been run. See the [Compatibility matrix](compatibility.md).
 
 ## Known limits
 
@@ -193,7 +193,7 @@ build on macOS, Linux and Windows. Packaging (all four targets) runs only for `v
 - Language is detected once per file unless Mixed languages finds several (Automatic checks the language of the longest speaker turns first; "Always" skips the check): then each diarization turn is transcribed on its own with its own language (turns under 0.35 s are skipped, no switch inside a turn). Verified on one 29 s, 3-speaker, 4-language recording only.
 - NVIDIA GPU use for Whisper is chosen through ctranslate2 and has never run on this project (no NVIDIA hardware); Windows and Linux builds are untested.
 - Overlapping speech is flagged (words keep one speaker, the louder one); the flag has only been unit-tested, not tried on real crosstalk.
-- Windows and Linux builds are untested; the build workflow has not been run.
+- Windows and Linux builds are untested: CI runs the automated checks only and the packaging job has not run ([Compatibility matrix](compatibility.md)).
 
 ## Checks that keep the look and privacy claims true
 

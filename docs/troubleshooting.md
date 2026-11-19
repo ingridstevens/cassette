@@ -69,7 +69,7 @@ recovered. If **Saving** was on, the previous backup file next to the recording 
 
 ## Windows and Linux
 
-These are not tested yet. Please report what you find. What to expect, and what to try:
+These are not tested yet (see the [Compatibility matrix](compatibility.md)). Please report what you find. What to expect, and what to try:
 
 - **`setup.ps1` is "not digitally signed" or "running scripts is disabled":** run `powershell -ExecutionPolicy Bypass -File .\setup.ps1`.
 - **`uv`, `node` or `npm` "is not recognized" right after `winget install`:** close PowerShell and open a new window; the new window sees the new programs.

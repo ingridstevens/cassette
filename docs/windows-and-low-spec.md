@@ -1,7 +1,7 @@
 # Windows and weaker computers: ideas and status
 
 Goal: Cassette should be pleasant on a Windows laptop with 4 to 8 GB of memory and no graphics card. Nobody has timed it
-on one yet, so every speed idea below is untested until someone runs it.
+on one yet, so every speed idea below is untested until someone runs it (see the [Compatibility matrix](compatibility.md)).
 
 ## Done
 

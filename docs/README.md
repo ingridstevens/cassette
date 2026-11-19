@@ -19,6 +19,7 @@ your own computer. German, English, French and Spanish are the best tested; abou
 | Know what stays on your computer and what goes online | [Privacy and offline use](privacy-and-offline.md), [Confidentiality](confidentiality.md) |
 | Fix something that isn't working | [Troubleshooting](troubleshooting.md) |
 | Run on Windows or a weaker computer: what is done and what is next | [Windows and low-spec ideas](windows-and-low-spec.md) |
+| See what has and has not been tested, by system and feature | [Compatibility matrix](compatibility.md) |
 | Match the look, colours, icon and tone of voice | [Brand guide](brand.md) |
 | Change the code | [Development](development.md) (also see [CONTRIBUTING](../CONTRIBUTING.md)) |
 | See who the app is for, or vote on features and test as those users | [Personas](personas/README.md), [Votes](votes/README.md), [Testing with personas](testing.md) |

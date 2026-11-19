@@ -25,7 +25,7 @@ app does (checked from the command line: closing its output ends it within secon
 reopen the app the recording is back as "Not transcribed", so you start again. Waiting recordings in the queue are forgotten too. On macOS the
 red window button does **not** quit the app: the engine keeps working in the background, but with the window closed there is nowhere to
 deliver the result, so the finished transcript is lost as well. Leave the window open (minimise it instead) until the transcription is done.
-This comes from reading the code and a command-line test; it has not been tried in the packaged desktop app.
+This comes from reading the code and a command-line test; it has not been tried in the packaged desktop app ([Compatibility matrix](compatibility.md)).
 
 **Why is it slow?** On a Mac, transcription runs on the processor. Use a smaller model, or see [Troubleshooting](troubleshooting.md).
 

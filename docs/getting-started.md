@@ -1,6 +1,6 @@
 # Getting started
 
-> Only macOS (Apple silicon) has been tested. Windows and Linux builds exist in the build setup but have not been tried.
+> Only macOS (Apple silicon) has been tested. Windows and Linux builds exist in the build setup but have not been tried. See the [Compatibility matrix](compatibility.md).
 
 The app opens in your computer's language if it has it (English, Deutsch, Français, Español); change it under Settings, Text and language.
 
