@@ -27,7 +27,7 @@ python -m engine transcribe <file> --model small --language auto [--num-speakers
 python -m engine transcribe … [--backend auto|faster|mlx]   # speech engine: auto = Apple GPU (MLX) when installed and downloaded
 python -m engine translate <file> --start s --end s [--language xx] [--model small]   # English translation of one stretch
 python -m engine models status | download <name> | delete <name> | import <folder> | check   # <name> may be mlx-small etc. (Apple GPU versions)
-python -m engine export <transcript.json> <out> --format docx|txt|csv|srt|vtt|md|json|chapters|edl|minutes|highlights|redacted|quotes|changes|combined-csv
+python -m engine export <transcript.json> <out> --format docx|txt|csv|srt|vtt|md|json|chapters|edl|minutes|highlights|redacted|quotes|changes|combined-csv|bilingual|bilingual-srt|languages
 python -m engine clip <input> <output> --start s --end s
 python -m engine highlights <transcript.json> [--model qwen3-4b] [--count N]   # suggest quotable passages (local language model)
 python -m engine summarize <transcript.json> [--model qwen3-4b]                 # summary, topics, decisions, action items

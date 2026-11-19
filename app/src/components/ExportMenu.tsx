@@ -2,7 +2,7 @@ import { KeyboardEvent, useEffect, useLayoutEffect, useRef, useState } from "rea
 import { createPortal } from "react-dom";
 import { useT } from "../i18n";
 import { ExportOpts, LastExport } from "../types";
-import { ALL, EXPORT_CHOICES, GROUPS, shownFormats } from "../exportFormats";
+import { ALL, EXPORT_CHOICES, GROUPS, needsTranslation, shownFormats } from "../exportFormats";
 import ExportOptions, { OptionsKind, loadExportOpts } from "./ExportOptions";
 import "../styles/project.css";
 
@@ -25,10 +25,10 @@ const WITH_OPTIONS = new Set(["srt", "vtt", "edl", "text"]);
 /** The episode folder needs something to put in it: a chapter, or a highlight or marked line. */
 const needsNothing = (f: string, hasChapters: boolean, markedCount: number) => f === "episode" && !hasChapters && !markedCount;
 /** Formats that follow the "Text style" settings. */
-export const STYLED = new Set(["txt", "md", "copy-md", "docx", "csv", "minutes", "redacted"]);
+export const STYLED = new Set(["txt", "md", "copy-md", "docx", "csv", "minutes", "redacted", "bilingual"]);
 /** Options a format needs when it is run without asking (the saved ones for subtitles and styled text, none for the rest). */
-const usualOpts = (f: string): Record<string, unknown> => (WITH_OPTIONS.has(f) || STYLED.has(f) || f === "episode" ? { ...loadExportOpts() } : {});
-export default function ExportMenu({ onExport, openSignal = 0, hasChapters = false, markedCount = 0, lastExport, defaultFormat, onRemember, easy = false, shown, onOpenSettings }: { easy?: boolean; /** The formats chosen in Settings to show up front (undefined = the default set). */ shown?: string[]; onOpenSettings?(section?: string): void; onExport(format: string, options?: ExportOpts): Promise<Res>; openSignal?: number; hasChapters?: boolean; markedCount?: number; lastExport?: LastExport; defaultFormat?: string; onRemember?(format: string, options: Record<string, unknown>): void }) {
+const usualOpts = (f: string): Record<string, unknown> => (WITH_OPTIONS.has(f) || STYLED.has(f) || f === "episode" || f === "bilingual-srt" ? { ...loadExportOpts() } : {});
+export default function ExportMenu({ onExport, openSignal = 0, hasChapters = false, markedCount = 0, translatedCount = 0, lastExport, defaultFormat, onRemember, easy = false, shown, onOpenSettings }: { easy?: boolean; /** The formats chosen in Settings to show up front (undefined = the default set). */ shown?: string[]; onOpenSettings?(section?: string): void; onExport(format: string, options?: ExportOpts): Promise<Res>; openSignal?: number; hasChapters?: boolean; markedCount?: number; /** Lines that have a translation (the bilingual formats need one). */ translatedCount?: number; lastExport?: LastExport; defaultFormat?: string; onRemember?(format: string, options: Record<string, unknown>): void }) {
   const t = useT();
   const [asking, setAsking] = useState<OptionsKind | null>(null);
   const [open, setOpen] = useState(false);
@@ -69,25 +69,25 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
   // The first item: what this project was last exported as, or else the default from Settings.
   const again = lastExport ?? (defaultFormat ? { format: defaultFormat, options: usualOpts(defaultFormat) } : null);
   const againRow = again && ALL.find((x) => x[0] === again.format);
-  const againOk = !easy && !!againRow && !(again!.format === "chapters" && !hasChapters) && !(["quotes", "highlights"].includes(again!.format) && !markedCount) && !needsNothing(again!.format, hasChapters, markedCount);
+  const againOk = !easy && !!againRow && !(again!.format === "chapters" && !hasChapters) && !(["quotes", "highlights"].includes(again!.format) && !markedCount) && !needsNothing(again!.format, hasChapters, markedCount) && !needsTranslation(again!.format, translatedCount);
   const againText = (() => {
     if (!again || !againRow) return "";
     const o = again.options as Partial<ExportOpts>, f = again.format;
     const name = SHORT[f] ?? t(againRow[1]);
-    const details = f === "srt" || f === "vtt" ? (o.maxLines === 1 ? t("1 line, {chars} characters", { chars: o.maxChars ?? 42 }) : t("{lines} lines, {chars} characters", { lines: o.maxLines ?? 2, chars: o.maxChars ?? 42 })) : f === "edl" ? t("{fps} fps", { fps: o.fps ?? 25 }) : "";
+    const details = f === "srt" || f === "vtt" || f === "bilingual-srt" ? (o.maxLines === 1 ? t("1 line, {chars} characters", { chars: o.maxChars ?? 42 }) : t("{lines} lines, {chars} characters", { lines: o.maxLines ?? 2, chars: o.maxChars ?? 42 })) : f === "edl" ? t("{fps} fps", { fps: o.fps ?? 25 }) : "";
     const label = details ? t("{format} ({details})", { format: name, details }) : name;
     return lastExport ? t("Again: {what}", { what: label }) : t("Usual: {what}", { what: label });
   })();
   const up = shownFormats(shown, easy);
   const host = trigger.current?.closest(".pview") ?? document.body;
   const item = ([f, label, hint]: readonly [string, string, string]) => (
-    <button key={f} type="button" role="menuitem" aria-disabled={(f === "chapters" && !hasChapters) || ((f === "quotes" || f === "highlights") && !markedCount) || needsNothing(f, hasChapters, markedCount) ? true : undefined}
+    <button key={f} type="button" role="menuitem" aria-disabled={(f === "chapters" && !hasChapters) || ((f === "quotes" || f === "highlights") && !markedCount) || needsNothing(f, hasChapters, markedCount) || needsTranslation(f, translatedCount) ? true : undefined}
       onClick={() => {
-        if ((f === "chapters" && !hasChapters) || ((f === "quotes" || f === "highlights") && !markedCount) || needsNothing(f, hasChapters, markedCount)) return;
+        if ((f === "chapters" && !hasChapters) || ((f === "quotes" || f === "highlights") && !markedCount) || needsNothing(f, hasChapters, markedCount) || needsTranslation(f, translatedCount)) return;
         setOpen(false); trigger.current?.focus();
         if (WITH_OPTIONS.has(f)) setAsking(f as OptionsKind); else run(f, STYLED.has(f) || f === "episode" ? loadExportOpts() : undefined);
       }}>
-      <b>{t(label)}</b><small>{needsNothing(f, hasChapters, markedCount) ? t("Mark chapters or highlight a passage first") : f === "chapters" && !hasChapters ? t("Mark chapters first: use “Chapter” on a line") : (f === "quotes" || f === "highlights") && !markedCount ? t("Highlight words or mark a line first") : t(hint)}</small>
+      <b>{t(label)}</b><small>{needsTranslation(f, translatedCount) ? t("Translate some lines first") : needsNothing(f, hasChapters, markedCount) ? t("Mark chapters or highlight a passage first") : f === "chapters" && !hasChapters ? t("Mark chapters first: use “Chapter” on a line") : (f === "quotes" || f === "highlights") && !markedCount ? t("Highlight words or mark a line first") : t(hint)}</small>
     </button>
   );
   return (

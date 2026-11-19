@@ -9,7 +9,7 @@ export const MODEL_ACTIONS = new Set(["status", "download", "delete", "check", "
 export const MODEL_NAME = /^(diarization|(mlx-|llm-)?[a-z0-9][a-z0-9.-]{0,40}|moonshine-[a-z0-9-]{1,30})$/;
 /** The folders "reveal" may open. A closed list: the window names a place, never a path. */
 export const REVEAL_TARGETS = new Set(["models", "log", "data", "recordings", "peaks", "tmp"]);
-export const EXPORT_FORMATS = new Set(["txt", "srt", "vtt", "md", "md-copy", "json", "csv", "docx", "chapters", "edl", "minutes", "highlights", "redacted", "quotes", "changes", "combined-csv"]);
+export const EXPORT_FORMATS = new Set(["txt", "srt", "vtt", "md", "md-copy", "json", "csv", "docx", "chapters", "edl", "minutes", "highlights", "redacted", "quotes", "changes", "combined-csv", "bilingual", "bilingual-srt", "languages"]);
 // eslint-disable-next-line no-control-regex -- control characters are exactly what a file name must not keep
 export const safeName = (s: unknown, fallback: string): string => String(s || fallback).replace(/[\\/:*?"<>|\x00-\x1f]/g, "-").slice(0, 120);
 

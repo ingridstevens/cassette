@@ -5,6 +5,7 @@ import SpeakerCountField from "./SpeakerCountField";
 import { Models } from "./useModels";
 import { WHISPER_MODELS, modelName } from "./modelInfo";
 import { langName } from "../languages";
+import { languageShares } from "../languageShares";
 import { FILE_MANAGER, ModelStatus, Options, PALETTE, Project, baseName, bytes, defaultName, displayName, fmt, revertLine } from "../types";
 import Hint from "../Hint";
 import { Tab, TABS, legacyAiPart } from "../hints";
@@ -280,6 +281,8 @@ function Info({ project, onPatch, onShowLine }: { project: Project; onPatch(p: P
     const mix = Object.entries(meta?.languages ?? {}).sort((a, b) => b[1] - a[1]);
     const lang = mix.length > 1 ? mix.map(([c]) => langName(c)).join(", ") : langName(result.language);
     rows.push([t("Language"), mix.length < 2 && meta?.languageProb != null ? t("{language}, {percent}% sure", { language: lang, percent: Math.round(meta.languageProb * 100) }) : lang]);
+    const shares = languageShares(result.segments, result.language);
+    if (shares.length > 1) rows.push([t("Language share"), shares.map((x) => `${langName(x.lang)} ${x.percent}% (${fmt(x.seconds)})`).join(", ")]);
     rows.push([t("Speakers"), t("{count} found", { count: live })]);
     rows.push([t("Models"), meta?.model ? `Whisper ${meta.model}${meta.speakerDevice ? " · pyannote 3.1" : ""}` : "—", meta?.model ? () => window.api.reveal("models") : undefined]);
     rows.push([t("Finding speakers"), meta ? (meta.speakerDevice ? `${deviceName(meta.speakerDevice)}${meta.secondsSpeakers != null ? ` · ${secs(meta.secondsSpeakers, t)}` : ""}` : t("Skipped")) : "—"]);

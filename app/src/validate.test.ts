@@ -53,6 +53,7 @@ describe("export", () => {
   it("knows every engine format and no others", () => {
     expect(EXPORT_FORMATS.has("combined-csv")).toBe(true);
     expect(EXPORT_FORMATS.has("md-copy")).toBe(true);
+    for (const f of ["bilingual", "bilingual-srt", "languages"]) expect(EXPORT_FORMATS.has(f)).toBe(true);
     expect(EXPORT_FORMATS.has("exe")).toBe(false);
   });
   it("cleans the default file name", () => {

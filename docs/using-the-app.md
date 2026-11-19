@@ -177,7 +177,7 @@ These apply the next time you transcribe that project:
 
 ![The Info tab](screenshots/12-info.jpg)
 
-File name, location (click to show it in your file manager), file size, length, language (or the languages found), how many speakers
+File name, location (click to show it in your file manager), file size, length, language (or the languages found, with the share of each when there are two or more), how many speakers
 were found, which models ran, how long each step took, whether a backup file was saved, and when you added it.
 
 Below that, **Changes by you** lists every line you changed by hand: its time (click it to jump to the line), **Model heard** (what the speech model wrote), **Now** (what the line says), and **Put back**, which restores the model's version of that line. The same list is in the *Original vs. edited* export. Words you confirmed with *It's right* in review mode are not changes, so they are not listed.

@@ -1,0 +1,32 @@
+export default {
+  de: {
+    "Bilingual (Word)": "Zweisprachig (Word)",
+    ".docx · original and translation side by side, with the share of each language": ".docx · Original und Übersetzung nebeneinander, mit dem Anteil jeder Sprache",
+    "Bilingual subtitles (.srt)": "Zweisprachige Untertitel (.srt)",
+    "The original with its translation under it": "Das Original mit der Übersetzung darunter",
+    "Language shares (text)": "Sprachanteile (Text)",
+    ".txt · minutes and percent of the speech in each language": ".txt · Minuten und Prozent der Sprache je Sprache",
+    "Translate some lines first": "Übersetze zuerst einige Zeilen",
+    "Language share": "Sprachanteile",
+  },
+  fr: {
+    "Bilingual (Word)": "Bilingue (Word)",
+    ".docx · original and translation side by side, with the share of each language": ".docx · original et traduction côte à côte, avec la part de chaque langue",
+    "Bilingual subtitles (.srt)": "Sous-titres bilingues (.srt)",
+    "The original with its translation under it": "L’original avec sa traduction en dessous",
+    "Language shares (text)": "Répartition des langues (texte)",
+    ".txt · minutes and percent of the speech in each language": ".txt · minutes et pourcentage de parole dans chaque langue",
+    "Translate some lines first": "Traduisez d’abord quelques lignes",
+    "Language share": "Répartition des langues",
+  },
+  es: {
+    "Bilingual (Word)": "Bilingüe (Word)",
+    ".docx · original and translation side by side, with the share of each language": ".docx · original y traducción lado a lado, con el porcentaje de cada idioma",
+    "Bilingual subtitles (.srt)": "Subtítulos bilingües (.srt)",
+    "The original with its translation under it": "El original con su traducción debajo",
+    "Language shares (text)": "Reparto de idiomas (texto)",
+    ".txt · minutes and percent of the speech in each language": ".txt · minutos y porcentaje del habla en cada idioma",
+    "Translate some lines first": "Traduce primero algunas líneas",
+    "Language share": "Reparto de idiomas",
+  },
+};
