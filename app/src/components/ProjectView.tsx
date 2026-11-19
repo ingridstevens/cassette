@@ -588,7 +588,7 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
             <button type="button" className="btn quiet small" onClick={() => onRemember?.({ unsureLegendSeen: true })}>{t("Got it")}</button>
           </div>
         )}
-        <Transcript easy={easy} showLang={easy ? false : showLang} result={result} names={names} time={time} query={query} findOpts={findOpts} highlights={highlights} onHighlight={easy ? undefined : (i, a, b) => { const h = highlightOf(result.segments[i], a, b); if (h) patchResult((x) => ({ ...x, highlights: addHighlight(x.highlights ?? [], h) })); }} matchSeg={matches[mi] ?? -1} onSeek={(t) => player.current?.seek(t)} onReassign={reassign} onNewSpeaker={newSpeaker}
+        <Transcript easy={easy} showLang={easy ? false : showLang} result={result} names={names} time={time} query={query} findOpts={findOpts} highlights={highlights} onHighlight={easy ? undefined : (i, a, b) => { const h = highlightOf(result.segments[i], a, b); if (h) patchResult((x) => ({ ...x, highlights: addHighlight(x.highlights ?? [], h) })); }} matchSeg={matches[mi] ?? -1} onSeek={(t) => player.current?.seek(t)} onPlayRange={(a, b) => { window.clearTimeout(clipTimer.current); player.current?.playRange(a, b); }} onReassign={reassign} onNewSpeaker={newSpeaker}
           onEdit={(i, text) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => (k === i ? retext(s, text) : s)) } }, t("edit a line"))}
           canRetranscribe={canTranscribe} reviewAt={reviewAt} translatingIndex={translating} playing={playing} onPause={() => player.current?.pause()}
           onTranslate={async (i, remove) => {
