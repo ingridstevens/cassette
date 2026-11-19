@@ -14,8 +14,8 @@ for (const cls of ["side", "inspector", "pv-dock", "tool", "pv-copy", "pv-edit"]
 if (!/html\.print-large/.test(css)) fail("print.css has no html.print-large rule");
 if (!/\.pv-turn\s*{[^}]*break-inside:\s*avoid/.test(css)) fail("print.css lets a turn break across pages");
 
-const main = readFileSync("electron/main.ts", "utf8");
-if (!/ipcMain\.handle\("print-pdf"/.test(main) || !/printToPDF/.test(main)) fail("main.ts has no print-pdf handler");
+const main = readFileSync("electron/ipc/exports.ts", "utf8"); // the handlers moved out of main.ts (issue 116)
+if (!/handle\("print-pdf"/.test(main) || !/printToPDF/.test(main)) fail("electron/ipc/exports.ts has no print-pdf handler");
 if (!/printPdf/.test(readFileSync("electron/preload.ts", "utf8"))) fail("preload.ts does not expose printPdf");
 const menu = readFileSync("src/components/ExportMenu.tsx", "utf8");
 if (!/DEFAULT_SHOWN[^=]*= \[[^\]]*"print"[^\]]*"print-large"/.test(readFileSync("src/exportFormats.ts", "utf8"))) fail("the export menu does not list the print formats in the most-used group");
