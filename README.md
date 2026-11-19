@@ -66,14 +66,14 @@ app, no telemetry, no update checks, and it works offline after a one-time model
 | Graphics card | Not needed | Apple silicon or NVIDIA speeds things up |
 | Internet | For the install and the model downloads, once | |
 
-The app warns before a run when the chosen size will probably not fit in memory, starts new installs on the smaller *Base* size under 6 GB, and has a **Check my setup** button (Settings, Advanced). See [Windows and weaker computers](docs/windows-and-low-spec.md). No speed table yet: nobody has timed the app on a low-end Windows laptop. Without a graphics card, expect transcription to
+The app warns before a run when the chosen size will probably not fit in memory, starts new installs on the smaller *Base* size under 6 GB, and has a **Check my setup** button (Settings, Advanced). See [Windows and weaker computers](docs/windows-and-low-spec.md). No speed table yet: it has not been timed on a low-end computer (see the [Compatibility matrix](docs/compatibility.md)). Without a graphics card, expect transcription to
 take longer than the recording on the *Small* size; the app shows an estimate before you press Start.
 
 ## Install
 
 There is no installer to download yet, so you run Cassette from this repository. It takes about 10 minutes, most of it
 downloads. You need **Git**, **Node.js 22.12 or newer** and **[uv](https://docs.astral.sh/uv/)** (uv also installs the right Python).
-A Windows installer is configured (one click, current user, no administrator password) but has never been built or run on Windows.
+A Windows installer is configured but has never been built or run. What has been checked on which system: [Compatibility matrix](docs/compatibility.md).
 
 ### Install on Mac
 
@@ -103,7 +103,7 @@ Next time, only step 4 (from the `app` folder).
 
 ### Install on Windows
 
-Not tried yet: nobody has run the app on Windows so far. Please
+Not tested: see the [Compatibility matrix](docs/compatibility.md). Please
 [open an issue](https://github.com/ingridstevens/cassette/issues) if something goes wrong.
 
 **Easiest:** download this repository (the green *Code* button, then *Download ZIP*, and unzip it), open the folder in
@@ -172,6 +172,7 @@ Start at [docs/README.md](docs/README.md). Every page:
 | [Getting started](docs/getting-started.md) | Install and the first-run setup, step by step |
 | [A tour of the app](docs/tour.md) | Every screen, in order, with pictures |
 | [Using the app](docs/using-the-app.md) | What every part of the screen does, and every setting |
+| [Compatibility matrix](docs/compatibility.md) | What has and has not been tested, by system and feature |
 | [Which model size?](docs/models.md) | Choosing between the model sizes |
 | [Recipes](docs/recipes.md) | Interview, podcast, meeting, research, several languages |
 | [Chapters](docs/chapters.md) | Marking where topics start |
@@ -199,17 +200,17 @@ Face hub in offline mode. Your token is stored encrypted with Electron `safeStor
 
 | Part | Technology |
 | --- | --- |
-| Words | [faster-whisper](https://github.com/SYSTRAN/faster-whisper) (tiny to large-v3, including large-v3-turbo) on the CPU; on an Apple chip's graphics chip via MLX-Whisper; an NVIDIA GPU path exists for Windows and Linux (untested) |
+| Words | [faster-whisper](https://github.com/SYSTRAN/faster-whisper) (tiny to large-v3, including large-v3-turbo) on the CPU; on an Apple chip's graphics chip via MLX-Whisper; an NVIDIA GPU path exists for Windows and Linux (never run; see the [Compatibility matrix](docs/compatibility.md)) |
 | Speakers | [pyannote](https://github.com/pyannote/pyannote-audio) 3.1, on the Apple GPU or CUDA when available |
 | Highlights and summaries | A small local language model you choose (Qwen3, Gemma 3 or Qwen2.5): MLX on Apple chips, llama.cpp elsewhere |
 | Window | Electron and React |
 
 ## Honest limits
 
-- Only tested on macOS (Apple silicon). Windows and Linux builds are set up in CI, but that workflow has not been run yet, and there is no installer to download. The new look, fonts and text sizes have been checked in a browser preview, not with a screen reader or on Windows.
+- Only run by hand on macOS (Apple silicon). On Windows and Linux CI runs the automated checks (not the app), the packaging job has not run, and there is no installer to download. The new look, fonts and text sizes have been checked in a browser preview, not with a screen reader or on Windows. Full status: [Compatibility matrix](docs/compatibility.md).
 - On Windows and Linux, highlights and summaries are an opt-in install (`uv sync --extra llm`) because llama.cpp must be compiled.
 - Whisper runs on the CPU on a Mac unless you download the Apple GPU version of a model size (Settings → Advanced → Apple GPU models);
-  large models on the CPU are slow. On Windows and Linux it is meant to use an NVIDIA GPU, which has never been tried.
+  large models on the CPU are slow. On Windows and Linux it is meant to use an NVIDIA GPU, which has never been tried ([Compatibility matrix](docs/compatibility.md)).
   Use `small` or `turbo` for speed.
 - Language is detected once per file by default. For recordings with several languages the app checks each speaker and
   detects the language per speaker turn (tried on one short test recording); it cannot follow a switch inside one
