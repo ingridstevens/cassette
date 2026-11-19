@@ -4,7 +4,7 @@ import { t } from "./i18n";
 declare global { interface Window { api: Api } const __APP_VERSION__: string }
 
 export interface Word { start: number; end: number; word: string; speaker: string; prob?: number; /** The user confirmed this word is right (review mode), so it is no longer marked as unsure. */ checked?: boolean }
-export interface Segment { start: number; end: number; speaker: string; text: string; words: Word[]; edited?: boolean; /** Translation of a line in another language (English unless `translationLang` says otherwise). */ translation?: string; translationLang?: string; marked?: boolean; overlap?: boolean; /** Language of this line when it differs from the recording (set by hand). */ lang?: string; chapter?: string; orig?: { text: string; words: Word[] } }
+export interface Segment { start: number; end: number; speaker: string; text: string; words: Word[]; edited?: boolean; /** Translation of a line in another language (English unless `translationLang` says otherwise). */ translation?: string; translationLang?: string; marked?: boolean; /** The user listened to this line against the audio and vouches for it ("heard it myself"). Absent on projects saved before this existed. */ heard?: boolean; overlap?: boolean; /** Language of this line when it differs from the recording (set by hand). */ lang?: string; chapter?: string; orig?: { text: string; words: Word[] } }
 /** A passage worth quoting, as a stretch of the recording (so it survives editing, splitting and joining lines). `suggested` ones come from the language model and wait for the user to keep or dismiss them. */
 export interface Highlight { id: string; start: number; end: number; text: string; speaker: string; ai?: boolean; suggested?: boolean; reason?: string }
 /** What the language model wrote about the recording. The user can edit `summary`. */
@@ -192,6 +192,11 @@ export function joinWithPrevious(segs: Segment[], i: number): Segment[] | null {
   const { orig: _o, ...rest } = prev;
   const joined: Segment = { ...rest, end: cur.end, words, text: joinText(words), ...(prev.edited || cur.edited ? { edited: true } : {}) };
   return [...segs.slice(0, i - 1), joined, ...segs.slice(i + 1)];
+}
+
+/** Turns the "heard it myself" mark of one line on or off; off removes the field, so old and new projects look alike. */
+export function toggleHeard(segs: Segment[], i: number): Segment[] {
+  return segs.map((s, k) => { if (k !== i) return s; const { heard: _h, ...rest } = s; return s.heard ? rest : { ...rest, heard: true }; });
 }
 
 /** Words the model was unsure of and the user has not checked yet. */

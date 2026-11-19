@@ -3,7 +3,7 @@ import { useT } from "../i18n";
 import FitCard from "./FitCard";
 import ReviewBar from "./ReviewBar";
 import StartSheet, { TRIAL_SECONDS, spanText, useStartEstimate } from "./StartSheet";
-import { acceptWord, addHighlight, fixWord, highlightOf, unsureWords, withSuggestions, ExportOpts, LastExport, Options, DraftLine, IS_MAC, JobProgress, MOD_KEY, PALETTE, Project, Result, baseName, displayName, fmt, isUnsure, joinWithPrevious, retext, revertLine, splitSegment } from "../types";
+import { toggleHeard, acceptWord, addHighlight, fixWord, highlightOf, unsureWords, withSuggestions, ExportOpts, LastExport, Options, DraftLine, IS_MAC, JobProgress, MOD_KEY, PALETTE, Project, Result, baseName, displayName, fmt, isUnsure, joinWithPrevious, retext, revertLine, splitSegment } from "../types";
 import "../styles/project.css";
 import ExportMenu from "./ExportMenu";
 import { langName } from "../languages";
@@ -276,6 +276,13 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
     setAnnounce(dir === 1 ? t("No later line from a different speaker.") : t("No earlier line from a different speaker."));
   };
   /** Jump to the next or previous line that has a flag: an overlap, a mark or a chapter. */
+  /** Mark or unmark line `i` as heard against the audio (one undo step), and say so for screen readers. */
+  const toggleHeardAt = (i: number) => {
+    if (!result || !result.segments[i]) return;
+    const on = !result.segments[i].heard;
+    onPatch({ result: { ...result, segments: toggleHeard(result.segments, i) } }, on ? t("mark a line as heard") : t("unmark a line as heard"));
+    setAnnounce(on ? t("Line at {time} marked as heard", { time: fmt(result.segments[i].start) }) : t("Line at {time} no longer marked as heard", { time: fmt(result.segments[i].start) }));
+  };
   const jumpFlag = (kind: "overlap" | "marked" | "chapter", dir: 1 | -1) => {
     if (!result) return;
     const segs = result.segments, cur = currentLine();
@@ -327,8 +334,9 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
         else if (sel) void window.api.saveClip(path, sel[0], sel[1]).then((ok) => { if (ok) flash(t("Clip saved ✓")); });
         else flash(t("Mark a clip first: [ for the start, ] for the end"));
       }
-      else if (!mod && !e.altKey && showResult && !busy && !easy && /^[omcr]$/i.test(e.key) && quietTarget(e.target)) {
+      else if (!mod && !e.altKey && showResult && !busy && !easy && /^[omcrh]$/i.test(e.key) && quietTarget(e.target)) {
         e.preventDefault();
+        if (e.key.toLowerCase() === "h") { if (!e.shiftKey) toggleHeardAt(currentLine()); return; }
         if (e.key.toLowerCase() === "r") { if (!review && unsure.length > 0) startReview(); }
         else jumpFlag(e.key.toLowerCase() === "o" ? "overlap" : e.key.toLowerCase() === "m" ? "marked" : "chapter", e.shiftKey ? -1 : 1);
       }
@@ -545,7 +553,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
           onRetranscribe={(i, language) => { const s = result.segments[i]; onTranscribe([s.start, s.end], { language, speaker: s.speaker }); }}
           onSplit={(i, k) => { const parts = splitSegment(result.segments[i], k); if (parts) onPatch({ result: { ...result, segments: [...result.segments.slice(0, i), ...parts, ...result.segments.slice(i + 1)] } }, t("split a line")); }}
           onJoin={(i) => { const segments = joinWithPrevious(result.segments, i); if (segments) onPatch({ result: { ...result, segments } }, t("join lines")); }}
-          onMark={(i) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => { if (k !== i) return s; const { marked: _m, ...rest } = s; return s.marked ? rest : { ...rest, marked: true }; }) } }, t("mark a line"))}
+          onHeard={toggleHeardAt} onMark={(i) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => { if (k !== i) return s; const { marked: _m, ...rest } = s; return s.marked ? rest : { ...rest, marked: true }; }) } }, t("mark a line"))}
           onChapter={(i, title) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => { if (k !== i) return s; const { chapter: _c, ...rest } = s; return title ? { ...rest, chapter: title } : rest; }) } }, t("chapter"))}
           onRevert={(i) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => (k === i ? revertLine(s) : s)) } }, t("put a line back"))} />
       </div>
@@ -676,7 +684,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
         {body}
 
         {!easy && review && showResult && (
-          <ReviewBar segments={result!.segments} list={unsure} pos={rpos} current={reviewTotal - unsure.length + rpos + 1} total={Math.max(reviewTotal, unsure.length)}
+          <ReviewBar segments={result!.segments} onHeard={() => reviewAt && toggleHeardAt(reviewAt.seg)} list={unsure} pos={rpos} current={reviewTotal - unsure.length + rpos + 1} total={Math.max(reviewTotal, unsure.length)}
             onFix={(text) => reviewAt && patchSeg(reviewAt.seg, (s) => fixWord(s, reviewAt.word, text))}
             onAccept={() => reviewAt && patchSeg(reviewAt.seg, (s) => acceptWord(s, reviewAt.word))}
             onSkip={() => setRpos((p) => p + 1)} onBack={() => setRpos((p) => Math.max(0, p - 1))}

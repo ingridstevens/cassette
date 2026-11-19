@@ -4,7 +4,7 @@ import { Segment, UnsureRef } from "../types";
 
 interface Props {
   segments: Segment[]; list: UnsureRef[]; pos: number; current: number; total: number;
-  onFix(text: string): void; onAccept(): void; onSkip(): void; onBack(): void; onReplay(): void; onTyping(): void; onRestart(): void; onExit(): void;
+  onHeard(): void; onFix(text: string): void; onAccept(): void; onSkip(): void; onBack(): void; onReplay(): void; onTyping(): void; onRestart(): void; onExit(): void;
 }
 
 /** The input for one word. It is created fresh for every word (see the `key` below: the word's own time and text, not its position, because positions are reused when a neighbour is removed), so it can never show the previous word's text, and it starts with the word selected. */
@@ -33,7 +33,7 @@ function WordRow({ word, atStart, onFix, onReplay, onBack, onSkip, onTyping, onE
 }
 
 /** Review mode: the unsure words one at a time, the word in its sentence, the audio around it, and a box to fix it. */
-export default function ReviewBar({ segments, list, pos, current, total, onFix, onSkip, onBack, onReplay, onTyping, onRestart, onExit }: Props) {
+export default function ReviewBar({ segments, onHeard, list, pos, current, total, onFix, onSkip, onBack, onReplay, onTyping, onRestart, onExit }: Props) {
   const t = useT();
   const cur = list[pos];
   const seg = cur ? segments[cur.seg] : undefined;
@@ -62,6 +62,7 @@ export default function ReviewBar({ segments, list, pos, current, total, onFix, 
       </div>
       <p className="pv-rv-context">{before}{before ? " " : ""}<mark>{word.word.trim()}</mark>{after ? " " : ""}{after}</p>
       <WordRow key={`${cur.seg}:${word.start}:${word.word}`} word={word.word.trim()} atStart={pos === 0} onFix={onFix} onReplay={onReplay} onBack={onBack} onSkip={onSkip} onTyping={onTyping} onExit={onExit} />
+      <button type="button" className="btn quiet small" aria-pressed={!!seg.heard} onClick={onHeard} title={t("Mark this line as heard by you against the audio. Press H.")}>{seg.heard ? t("Heard ✓") : t("Heard it")}</button>
       <p className="pv-rv-keys">{t("Enter saves and goes on · Shift+Enter plays again · ↓ skips · ↑ goes back · Esc closes")}</p>
     </div>
   );

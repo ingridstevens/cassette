@@ -63,3 +63,21 @@ describe("undo history", () => {
     expect(h.past).toHaveLength(1);
   });
 });
+
+import { toggleHeard } from "./types";
+import type { Segment } from "./types";
+describe("toggleHeard", () => {
+  const seg = (text: string): Segment => ({ start: 0, end: 1, speaker: "A", text, words: [] });
+  it("sets and clears the mark on one line only, without touching the input", () => {
+    const segs = [seg("a"), seg("b")];
+    const on = toggleHeard(segs, 1);
+    expect(on[1].heard).toBe(true);
+    expect(on[0]).toBe(segs[0]);
+    expect(segs[1].heard).toBeUndefined();
+    const off = toggleHeard(on, 1);
+    expect("heard" in off[1]).toBe(false);
+  });
+  it("leaves a project saved without the field alone", () => {
+    expect(toggleHeard([seg("a")], 5)).toEqual([seg("a")]);
+  });
+});

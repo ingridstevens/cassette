@@ -10,7 +10,7 @@ import "../styles/project.css";
 interface Props {
   result: Result; names: Record<string, string>; time: number;
   onSeek(t: number): void; onReassign(index: number, speaker: string): void;
-  onEdit(index: number, text: string): void; onRevert(index: number): void; onChapter(index: number, title: string | null): void; onMark(index: number): void; onSplit(index: number, wordIndex: number): void; onLanguage(index: number, lang: string | null): void; onRetranscribe(index: number, language: string): void; onTranslate(index: number, remove?: boolean): void; playing: boolean; onPause(): void; reviewAt?: UnsureRef | null; translatingIndex?: number | null; canRetranscribe: boolean; onJoin(index: number): void;
+  onEdit(index: number, text: string): void; onRevert(index: number): void; onChapter(index: number, title: string | null): void; onMark(index: number): void; onHeard(index: number): void; onSplit(index: number, wordIndex: number): void; onLanguage(index: number, lang: string | null): void; onRetranscribe(index: number, language: string): void; onTranslate(index: number, remove?: boolean): void; playing: boolean; onPause(): void; reviewAt?: UnsureRef | null; translatingIndex?: number | null; canRetranscribe: boolean; onJoin(index: number): void;
   highlights?: Highlight[]; onHighlight?(index: number, from: number, to: number): void;
   /** Show the language of every line, not only lines that differ from the recording. */ showLang?: boolean;
   /** Easy mode: only the speaker, the time and Edit stay on each line. */ easy?: boolean;
@@ -22,7 +22,7 @@ const DOUBLE_CLICK_MS = 260;
 /** Space between two lines (the .pv-rows gap), and how far past the visible area lines stay drawn, in px. */
 const GAP = 2, OVERSCAN = 700;
 
-export default function Transcript({ easy = false, showLang, result, names, time, onSeek, onReassign, onEdit, onRevert, onChapter, onMark, onSplit, onJoin, onLanguage, onRetranscribe, onTranslate, playing, onPause, reviewAt = null, translatingIndex = null, canRetranscribe, highlights = [], onHighlight, query = "", findOpts = FIND_DEFAULTS, matchSeg = -1 }: Props) {
+export default function Transcript({ easy = false, showLang, result, names, time, onSeek, onReassign, onEdit, onRevert, onChapter, onMark, onHeard, onSplit, onJoin, onLanguage, onRetranscribe, onTranslate, playing, onPause, reviewAt = null, translatingIndex = null, canRetranscribe, highlights = [], onHighlight, query = "", findOpts = FIND_DEFAULTS, matchSeg = -1 }: Props) {
   const t = useT();
   const color = (sp: string) => PALETTE[Math.max(0, result.speakers.indexOf(sp)) % PALETTE.length];
   const label = (sp: string) => displayName(sp, result.speakers, names);
@@ -271,6 +271,7 @@ export default function Transcript({ easy = false, showLang, result, names, time
             </button>
             <button type="button" className="pv-time" onClick={() => onSeek(seg.start)} title={t("Play from here")} aria-label={t("Play from {time}", { time: fmt(seg.start) })}>{fmt(seg.start)}</button>
             {seg.marked && <span className="pv-flag pv-marked" title={t("Marked: goes into the meeting minutes and the quote list")}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.7 5.6 6.1.8-4.5 4.2 1.1 6-5.4-3-5.4 3 1.1-6L3.2 9.4l6.1-.8z" /></svg>{t("Marked")}</span>}
+            {!easy && seg.heard && <span className="pv-flag pv-heard" title={t("Heard: you listened to this line against the audio")}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>{t("Heard")}</span>}
             {(() => { // a highlighted passage in this line gets its own badge (a pen, not the marked line's star) so the two never look alike
               const inLine = highlights.filter((h) => h.start < seg.end && h.end > seg.start), kept = inLine.some((h) => !h.suggested);
               return inLine.length > 0 && <span className="pv-flag pv-hlflag" title={kept ? t("Highlighted: a passage in this line is kept in the Highlights tab") : t("Suggested: a passage in this line is a suggested highlight you have not kept yet")}><svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4" /></svg>{kept ? t("Highlighted") : t("Suggested")}</span>;
@@ -282,6 +283,7 @@ export default function Transcript({ easy = false, showLang, result, names, time
             )}
             {seg.overlap && <span className="pv-flag pv-overlap" title={t("More than one person was talking here. The words are assigned to the louder speaker.")}>{t("Overlap")}</span>}
             {!easy && <button type="button" className="pv-copy pv-edit" aria-pressed={!!seg.marked} onClick={() => onMark(i)} title={t("Mark this line as a decision, action item or quote. Marked lines go into the meeting minutes and the quote list.")}>{seg.marked ? t("Marked ✓") : t("Mark")}</button>}
+            {!easy && <button type="button" className="pv-copy pv-edit" aria-pressed={!!seg.heard} onClick={() => onHeard(i)} title={t("Mark this line as heard by you against the audio. Press H.")}>{seg.heard ? t("Heard ✓") : t("Heard it")}</button>}
             {!easy && <button type="button" className="pv-copy pv-edit" data-chap={i} onClick={() => startChap(i)} aria-label={seg.chapter ? t("Change the chapter at the line at {time}", { time: fmt(seg.start) }) : t("Add a chapter at the line at {time}", { time: fmt(seg.start) })} title={t("Mark where a new topic starts. Chapters can be exported as a list for YouTube or podcast show notes.")}>{t("Chapter")}</button>}
             {!easy && <button type="button" className="pv-copy pv-edit" aria-pressed={splitting === i} onClick={() => setSplitting(splitting === i ? null : i)} title={t("Split this line in two, for example when several people spoke in turn and the app put them in one line.")}>{t("Split")}</button>}
             <button type="button" className="pv-copy pv-edit-btn" onClick={() => startEdit(i)} aria-label={t("Edit the text of the line at {time}", { time: fmt(seg.start) })} title={t("Fix the words of this line")}>{t("Edit")}</button>
