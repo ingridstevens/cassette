@@ -127,3 +127,21 @@ test("Export > Copy as Markdown puts the text on the clipboard and is not rememb
   await page.getByRole("button", { name: "Export" }).click();
   await expect(page.getByRole("menuitem", { name: /^Again:/ })).toHaveCount(0);
 });
+
+test("Settings > Formats in the Export menu changes what the menu lists first, and More formats still reaches the rest", async ({ page }) => {
+  await startFirstRecording(page);
+  await page.getByRole("button", { name: /^Settings/ }).click();
+  await page.getByRole("button", { name: "Saving and export" }).click();
+  const csv = page.getByRole("checkbox", { name: /^Spreadsheet/ });
+  await csv.focus(); await page.keyboard.press("Space"); // keyboard operable
+  await page.getByRole("checkbox", { name: /^Plain text/ }).uncheck();
+  await page.getByRole("button", { name: "Back to projects" }).click();
+  await page.getByRole("button", { name: "Export" }).click();
+  const first = page.getByRole("group", { name: "Most used" });
+  await expect(first.getByRole("menuitem", { name: /^Spreadsheet/ })).toBeVisible();
+  await expect(first.getByRole("menuitem", { name: /^Plain text/ })).toHaveCount(0);
+  await page.getByRole("menuitem", { name: "More formats…" }).click();
+  await expect(page.getByRole("menuitem", { name: /^Plain text/ })).toBeVisible();
+  await page.getByRole("menuitem", { name: "Choose which formats to show…" }).click();
+  await expect(page.getByRole("button", { name: "Reset to the default set" })).toBeEnabled();
+});

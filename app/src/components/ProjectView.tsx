@@ -26,7 +26,7 @@ interface Props {
   nowPlayingId?: string | null; stopSignal?: number; onPlayingChange?(playing: boolean): void; onOpenSettings?(section?: string): void; models: Models;
   onTranscribe(range: [number, number] | null, line?: { language: string; speaker: string }, trial?: boolean, acceptFit?: boolean): void; onCancel(): void; onPatch(p: Partial<Project>, label?: string, merge?: boolean): void; onUndo(): string | null; onRedo(): string | null;
   othersWaiting?: number; onApplyToOthers?(o: Partial<Options>): void; onRemember?(o: Partial<Options>): void;
-  /** The Settings default for the first Export menu item, and where to keep the last export (not an edit, so it leaves the retention date alone). */ defaultExport?: string; onExported?(last: LastExport): void; /** The user has dismissed the explanation of dotted words. */ unsureLegendSeen?: boolean;
+  /** The Settings default for the first Export menu item, and where to keep the last export (not an edit, so it leaves the retention date alone). */ defaultExport?: string; /** The formats the Export menu shows up front (Settings). */ exportShown?: string[]; onExported?(last: LastExport): void; /** The user has dismissed the explanation of dotted words. */ unsureLegendSeen?: boolean;
   /** Easy mode: no AI, review, chapters, clips, marks or extra exports. Turning it off brings them all back. */ easy?: boolean;
 }
 
@@ -60,7 +60,7 @@ function Dialog({ title, children, cancel, confirm, onCancel, onConfirm }: { tit
 }
 
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
-export default function ProjectView({ project, progress, draft, blocker, waiting, visible, nowPlayingId, stopSignal = 0, onPlayingChange, onOpenSettings, models, onTranscribe, onCancel, onPatch, onUndo, onRedo, othersWaiting = 0, onApplyToOthers, onRemember, defaultExport, onExported, unsureLegendSeen, easy = false }: Props) {
+export default function ProjectView({ project, progress, draft, blocker, waiting, visible, nowPlayingId, stopSignal = 0, onPlayingChange, onOpenSettings, models, onTranscribe, onCancel, onPatch, onUndo, onRedo, othersWaiting = 0, onApplyToOthers, onRemember, defaultExport, exportShown, onExported, unsureLegendSeen, easy = false }: Props) {
   const [renaming, setRenaming] = useState(false);
   const t = useT();
   const { result, names, path } = project;
@@ -589,7 +589,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
               )}
               {!easy && <button type="button" className={"btn quiet small" + (showLang ? " on" : "")} aria-pressed={showLang} onClick={toggleLang} title={t("Show the language of every line, so a line tagged with the wrong language stands out. Click a tag to change it.")}>{t("Languages")}</button>}
               {!easy && <button type="button" className={"btn quiet small" + (replaceOpen ? " on" : "")} aria-expanded={replaceOpen} aria-controls="pv-replace" onClick={() => setReplaceOpen(!replaceOpen)} title={t("Replace words in the transcript")}>{t("Replace")}</button>}
-              <ExportMenu easy={easy} openSignal={exportSignal} lastExport={project.lastExport} defaultFormat={defaultExport} onRemember={(format, options) => onExported?.({ format, options })} hasChapters={result!.segments.some((s) => !!s.chapter?.trim())} markedCount={result!.segments.filter((s) => s.marked).length + keptHighlights.length} onExport={async (f, o) => { if (f === "copy-md") { const r = await window.api.exportText(payload("md", o)); if (!r.ok) return { ok: false, error: r.error }; try { await navigator.clipboard.writeText(r.text ?? ""); return { ok: true }; } catch { return { ok: false, error: t("The clipboard is not available.") }; } } return f === "print" || f === "print-large" ? window.api.printPdf(project.name, f === "print-large") : window.api.exportTranscript(payload(f, o), f, project.name); }} />
+              <ExportMenu easy={easy} shown={exportShown} onOpenSettings={onOpenSettings} openSignal={exportSignal} lastExport={project.lastExport} defaultFormat={defaultExport} onRemember={(format, options) => onExported?.({ format, options })} hasChapters={result!.segments.some((s) => !!s.chapter?.trim())} markedCount={result!.segments.filter((s) => s.marked).length + keptHighlights.length} onExport={async (f, o) => { if (f === "copy-md") { const r = await window.api.exportText(payload("md", o)); if (!r.ok) return { ok: false, error: r.error }; try { await navigator.clipboard.writeText(r.text ?? ""); return { ok: true }; } catch { return { ok: false, error: t("The clipboard is not available.") }; } } return f === "print" || f === "print-large" ? window.api.printPdf(project.name, f === "print-large") : window.api.exportTranscript(payload(f, o), f, project.name); }} />
             </>
           )}
           <button ref={drawerBtn} type="button" className={"btn icon quiet pv-insp-toggle" + (drawer ? " on" : "")} aria-expanded={drawer} aria-controls={inspectorId} aria-label={drawer ? t("Hide inspector") : t("Show inspector")} title={drawer ? t("Hide inspector") : t("Show inspector")} onClick={() => (drawer ? closeDrawer() : setDrawer(true))}>

@@ -41,6 +41,7 @@ app, no telemetry, no update checks, and it works offline after a one-time model
 
 **Export**
 - Word, meeting minutes, CSV, SRT, VTT, TXT, Markdown, JSON, chapters, DaVinci Resolve markers, highlights, a quote list, original-versus-edited, and anonymised text.
+- Choose which formats the Export menu lists up front in Settings; the rest stay under "More formats…".
 - Text exports can keep or remove "um", mark pauses and hide times; an optional backup file sits next to each recording.
 
 **Look and accessibility**

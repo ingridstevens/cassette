@@ -1,12 +1,14 @@
 import { Options } from "../../types";
 import { useT } from "../../i18n";
 import { EXPORT_CHOICES } from "../ExportMenu";
+import { GROUPS, isDefaultShown, normaliseShown, toggleShown } from "../../exportFormats";
 
 interface Props { opts: Options; set(o: Options): void }
 
 export default function SavingSection({ opts, set }: Props) {
   const t = useT();
   const on = !!opts.autosave;
+  const shown = normaliseShown(opts.exportShown);
   return (
     <>
       <div className="card st-card">
@@ -42,6 +44,26 @@ export default function SavingSection({ opts, set }: Props) {
           </select>
           <span className="note">{t("Each project remembers how you last exported it and offers that first. For a project you have not exported yet, it offers this format.")}</span>
         </label>
+      </div>
+
+      <div className="card st-card">
+        <h2 id="st-export-formats">{t("Formats in the Export menu")}</h2>
+        <p className="st-lead">{t("Tick the formats you use and the Export menu lists them first. All the others stay one step away under “More formats…”, so nothing is lost. This only changes the menu: the Export shortcut and Export all still work, and a format that is not listed can still be chosen from “More formats…”.")}</p>
+        {GROUPS.map((g) => (
+          <fieldset key={g.title} className="st-fmt">
+            <legend>{t(g.title)}</legend>
+            {g.formats.map(([f, label, hint]) => (
+              <label key={f} className="pv-check">
+                <input type="checkbox" checked={shown.includes(f)} onChange={(e) => set({ ...opts, exportShown: toggleShown(opts.exportShown, f, e.target.checked) })} />
+                <span><b>{t(label)}</b><small>{t(hint)}</small></span>
+              </label>
+            ))}
+          </fieldset>
+        ))}
+        <div className="row-btns">
+          <button type="button" className="btn small" disabled={isDefaultShown(opts.exportShown)} onClick={() => set({ ...opts, exportShown: undefined })}>{t("Reset to the default set")}</button>
+        </div>
+        <p className="note" role="status">{shown.length === 0 ? t("No format is listed up front. Use “More formats…” in the Export menu.") : t("{count} of {total} formats listed up front.", { count: shown.length, total: GROUPS.reduce((n, g) => n + g.formats.length, 0) })}{isDefaultShown(opts.exportShown) ? " " + t("This is the default set.") : ""}</p>
       </div>
     </>
   );
