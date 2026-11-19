@@ -5,6 +5,7 @@ import { ModelStatus, Options, Project, fmt } from "../types";
 import TranscribeFields from "./TranscribeFields";
 import { modelName } from "./modelInfo";
 import { Models } from "./useModels";
+import { loadDismissed, saveDismissed, suggest } from "../recommend";
 import { loadStartOpen, saveStartOpen, summaryLine } from "../startSummary";
 import "../styles/project.css";
 
@@ -28,11 +29,12 @@ export function useStartEstimate(eff: Options, duration: number, refreshKey: unk
   const [status, setStatus] = useState<ModelStatus | null>(null);
   const [onBattery, setOnBattery] = useState(false);
   const [memGB, setMemGB] = useState<number | undefined>(undefined);
+  const [sys, setSys] = useState<{ platform: string; arch: string } | null>(null);
   useEffect(() => {
     let alive = true;
     window.api.models("status").then((r) => { if (alive && r) setStatus(r as unknown as ModelStatus); }).catch(() => {});
     window.api.powerState().then((p) => { if (alive) setOnBattery(!!p?.onBattery); }).catch(() => {});
-    window.api.paths().then((p) => { if (alive) setMemGB(p?.system?.memGB); }).catch(() => {});
+    window.api.paths().then((p) => { if (alive) { setMemGB(p?.system?.memGB); if (p?.system) setSys({ platform: p.system.platform, arch: p.system.arch }); } }).catch(() => {});
     return () => { alive = false; };
   }, [refreshKey]);
   const gpuSpeakers = eff.device !== "cpu";
@@ -41,7 +43,7 @@ export function useStartEstimate(eff: Options, duration: number, refreshKey: unk
   const est = useMemo(() => (duration > 0 ? forModel(eff.model, duration) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [duration, eff.model, eff.noDiarize, eff.whisperEngine, eff.device, eff.vad, status]);
-  return { status, onBattery, memGB, engine, est, forModel };
+  return { status, onBattery, memGB, sys, engine, est, forModel };
 }
 export type StartInfo = ReturnType<typeof useStartEstimate>;
 
@@ -53,7 +55,13 @@ interface Props {
 
 export default function StartSheet({ project, duration, eff, info, set, models, canStart, blocker, othersWaiting, onStart, onTrial, onApplyToOthers, onRemember, onOpenSettings }: Props) {
   const t = useT();
-  const { status, onBattery, memGB, engine, est, forModel } = info;
+  const { status, onBattery, memGB, sys, engine, est, forModel } = info;
+  // #187: a suggestion inside this sheet (never a second first-run card). One click accepts it; "No thanks" is remembered.
+  const [dismissed, setDismissed] = useState(loadDismissed);
+  const [accepted, setAccepted] = useState("");
+  const startBtn = useRef<HTMLButtonElement>(null);
+  const sug = sys ? suggest(eff.model, { ...sys, memGB }, !eff.noDiarize, status) : null;
+  const showSug = !!sug && dismissed !== sug.model;
   // The questions are folded behind "Change settings" and the choice is remembered, so Start stays in view.
   const [open, setOpen] = useState(loadStartOpen);
   const fields = useRef<HTMLDivElement>(null);
@@ -73,12 +81,28 @@ export default function StartSheet({ project, duration, eff, info, set, models, 
 
       <p className="pv-summary">{summaryLine(t, eff)}</p>
 
+      <div role="status" aria-live="polite">
+        {accepted && !showSug && <p className="note">{t("Now using the {model} size.", { model: modelName(accepted) })}</p>}
+        {showSug && sug && (
+          <div className="pv-suggest">
+            <p><b>{t("Suggested for this computer: the {model} size.", { model: modelName(sug.model) })}</b>{" "}
+              {sug.reason === "memory" ? t("{model} may not fit in this computer's memory, and this size does.", { model: modelName(eff.model) }) : t("It is the usual balance for most interviews and meetings; {model} makes more mistakes.", { model: modelName(eff.model) })}
+              {" "}{sug.tested ? "" : t("Cassette has not been tested on this kind of computer, so this is a cautious guess from its memory alone.")}
+              {sug.appleGpuMissing ? " " + t("An Apple GPU version of this size can be downloaded under Settings, Advanced.") : ""}</p>
+            <div className="pv-suggest-actions">
+              <button type="button" className="btn" onClick={() => { choose({ model: sug.model }, true); setAccepted(sug.model); startBtn.current?.focus(); }}>{t("Use {model}", { model: modelName(sug.model) })}</button>
+              <button type="button" className="btn quiet" onClick={() => { saveDismissed(sug.model); setDismissed(sug.model); }}>{t("No thanks")}</button>
+            </div>
+          </div>
+        )}
+      </div>
+
       {batteryNote && <div className="alert warn" role="status">{t("You're on battery. A job this long uses a lot of power: consider plugging in first.")}</div>}
       {tooBigForMemory(eff.model, !eff.noDiarize, memGB) && <div className="alert warn" role="status">{t("{model} may not fit in this computer's {mem} GB of memory and could stop partway. The {safer} size is safer.", { model: modelName(eff.model), mem: memGB ?? 0, safer: modelName(saferModel(!eff.noDiarize, memGB)) })}</div>}
       {blocker && <div className="alert warn" role="status">{blocker}</div>}
 
       <div className="pv-actions">
-        <button type="button" className="btn sun big" disabled={!canStart} onClick={onStart}>{est ? t("Start ({time})", { time: spanText(t, est) }) : t("Start")}</button>
+        <button type="button" ref={startBtn} className="btn sun big" disabled={!canStart} onClick={onStart}>{est ? t("Start ({time})", { time: spanText(t, est) }) : t("Start")}</button>
         {trialTime && <button type="button" className="btn big" disabled={!canStart} onClick={onTrial}>{t("Try the first 3 minutes ({time})", { time: trialTime })}</button>}
       </div>
       <p className="note">

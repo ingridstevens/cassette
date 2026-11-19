@@ -282,6 +282,10 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .pv-radio > span, .pv-check > span { display: flex; flex-direction: column; gap: 3px; min-width: 0; font-size: 14px; }
 .pv-radio small, .pv-check small { color: var(--ink2); font-size: 12.5px; }
 .pv-radio select { margin-top: 4px; height: 36px; max-width: 100%; }
+.pv-start .pv-suggest { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.pv-start .pv-suggest p { margin: 0; font-size: 13.5px; color: var(--ink2); }
+.pv-start .pv-suggest b { color: var(--ink); }
+.pv-start .pv-suggest-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .pv-start .pv-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 @media (max-width: 900px) { .pv-start-fields { grid-template-columns: 1fr; } }
 .pv-trial { flex-wrap: wrap; }
