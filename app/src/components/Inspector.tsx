@@ -56,9 +56,10 @@ interface Props {
   /** Narrow windows: the inspector is a drawer. `id` lets the toggle button point at it; Esc or the Close button asks to close it. */
   id?: string; drawerOpen?: boolean; onDrawerClose?(): void;
   /** Easy mode: only the Speakers panel (renaming), no tabs. */ easy?: boolean;
+  /** Shown above the tabs (the small video preview of a video project). */ top?: ReactNode;
 }
 
-export default function Inspector({ project, tab, onTab, visible, moved, onMoveAll, onUndo, canTranscribe, onAskAgain, onPatch, onOpenSettings, models, highlightsPanel, askPanel, onShowLine, id, drawerOpen, onDrawerClose, easy = false }: Props) {
+export default function Inspector({ project, tab, onTab, visible, moved, onMoveAll, onUndo, canTranscribe, onAskAgain, onPatch, onOpenSettings, models, highlightsPanel, askPanel, onShowLine, id, drawerOpen, onDrawerClose, easy = false, top }: Props) {
   const t = useT();
   if (easy) tab = "speakers";
   const ids = { speakers: useId(), ai: useId(), details: useId() };
@@ -76,6 +77,7 @@ export default function Inspector({ project, tab, onTab, visible, moved, onMoveA
     <aside id={id} className={"inspector pv-inspector" + (drawerOpen ? " drawer-open" : "")} aria-label={t("Inspector")}
       onKeyDown={(e) => { if (e.key === "Escape" && drawerOpen && !e.defaultPrevented) { e.preventDefault(); onDrawerClose?.(); } }}>
       {onDrawerClose && <button type="button" className="btn quiet small pv-insp-close" onClick={onDrawerClose}>{t("Close inspector")}</button>}
+      {top}
       {!easy && <div className="tabs" role="tablist" aria-label={t("Inspector sections")}>
         {tabs.map(([id, label], i) => (
           <button key={id} id={ids[id] + "-tab"} role="tab" type="button" aria-selected={tab === id} aria-controls={ids[id]} tabIndex={tab === id ? 0 : -1}
