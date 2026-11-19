@@ -503,6 +503,24 @@ def _shade(paragraph, fill):
     ppr.append(shd)
 
 
+def _a11y(doc, title: str | None, lang: str | None) -> None:
+    """What assistive technology reads first: the document title (Word's File > Info, and what a screen reader says on opening) and the
+    document language (so a screen reader picks the right voice and Word does not spell-check in the wrong language)."""
+    from docx.oxml import OxmlElement
+    from docx.oxml.ns import qn
+
+    if title:
+        doc.core_properties.title = title
+    code = (lang or "en").strip()[:2].lower() or "en"
+    doc.core_properties.language = code
+    rpr = doc.styles.element.find(qn("w:docDefaults")).find(qn("w:rPrDefault")).find(qn("w:rPr"))
+    el = rpr.find(qn("w:lang"))
+    if el is None:
+        el = OxmlElement("w:lang")
+        rpr.append(el)
+    el.set(qn("w:val"), code)
+
+
 def _page_number_footer(section, lang=None, stamp=None):
     from docx.oxml import OxmlElement
     from docx.oxml.ns import qn
@@ -550,6 +568,7 @@ def to_docx(segs, names=None, title="Transcript", lang=None, options=None) -> by
     present = [sp for sp in order if sp in talk]
 
     doc = Document()
+    _a11y(doc, title, lang)
     sec = doc.sections[0]
     sec.left_margin = sec.right_margin = Cm(2.4)
     sec.top_margin, sec.bottom_margin = Cm(2.2), Cm(2.0)
@@ -558,8 +577,8 @@ def to_docx(segs, names=None, title="Transcript", lang=None, options=None) -> by
     normal.font.size = Pt(11.5)
     _page_number_footer(sec, lang, (options or {}).get("stampText"))
 
-    # title block
-    p = doc.add_paragraph()
+    # title block (the Title style, so it is announced as the title and appears in the navigation pane)
+    p = doc.add_paragraph(style="Title")
     p.paragraph_format.space_after = Pt(2)
     _font(p.add_run(title), _SERIF, 28, True, _INK)
     p = doc.add_paragraph()
@@ -592,7 +611,7 @@ def to_docx(segs, names=None, title="Transcript", lang=None, options=None) -> by
     for sg in segs:
         sp = sg["speaker"]
         if sg.get("chapter"):
-            c = doc.add_paragraph()
+            c = doc.add_paragraph(style="Heading 2")  # chapters are real headings: a screen reader can jump between them
             c.paragraph_format.space_before = Pt(16)
             c.paragraph_format.space_after = Pt(6)
             c.paragraph_format.keep_with_next = True
@@ -635,10 +654,11 @@ def to_bilingual_docx(segs, names=None, title="Transcript", lang=None, options=N
     o = options or {}
     stamp = o.get("timestamps", True)
     doc = Document()
+    _a11y(doc, title, lang)
     sec = doc.sections[0]
     sec.left_margin = sec.right_margin = Cm(1.8)
     _page_number_footer(sec, lang, o.get("stampText"))
-    p = doc.add_paragraph()
+    p = doc.add_paragraph(style="Title")
     _font(p.add_run(title), _SERIF, 22, True, _INK)
     shares = language_shares(segs, o.get("fileLanguage"))
     if shares:
@@ -811,6 +831,7 @@ def to_highlights_docx(segs, names=None, highlights=None, title=None, lang=None)
     names = names or {}
     L = _tr(lang)
     doc = Document()
+    _a11y(doc, title or L["highlights"], lang)
     doc.add_heading(title or L["highlights"], 0)
     quotes = quote_list(segs, highlights)
     if not quotes:
@@ -870,6 +891,7 @@ def to_minutes(segs, names=None, title=None, lang=None, summary=None, highlights
     names = names or {}
     L = _tr(lang)
     doc = Document()
+    _a11y(doc, title or L["minutes"], lang)
     doc.add_heading(title or L["minutes"], 0)
     people = []
     for s in segs:
