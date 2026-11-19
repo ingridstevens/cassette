@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 // The compiler checks the types of every channel (electron/ipcChannels.ts). This checks the part types cannot: that the map, the window side and the main side
 // list exactly the same channel names, so a channel cannot be added to one side only or left behind in the map after it is removed.
-const read = (f: string) => readFileSync(`electron/${f}`, "utf8");
+const read = (f: string) => readFileSync(`electron/${f}`, "utf8").replace(/\r\n/g, "\n"); // Windows checkouts may use CRLF
 const handlerSources = ["main.ts", "live.ts", ...readdirSync("electron/ipc").filter((f) => f.endsWith(".ts") && f !== "typed.ts").map((f) => `ipc/${f}`)].map(read).join("\n");
 const preload = read("preload.ts");
 const map = read("ipcChannels.ts");
