@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import "../styles/shell.css";
 import { useT } from "../i18n";
+import { FILTER_MIN, filterProjects } from "../projectFilter";
 import { IS_MAC, JobProgress, MOD_KEY, Project, fmt } from "../types";
 
 interface Props {
@@ -20,6 +21,19 @@ export default function ProjectSidebar({ projects, activeId, progress, blocker, 
   const [editing, setEditing] = useState<string | null>(null);
   const todo = projects.filter((p) => p.status === "idle" || p.status === "error").length;
   const queue = projects.filter((p) => p.status === "queued");
+  // Filter field: only for long lists. In the icon rail (below 900px) the field is hidden, so a leftover query must not keep hiding projects.
+  const [q, setQ] = useState("");
+  const [fieldShown, setFieldShown] = useState(true);
+  const fieldRef = useRef<HTMLInputElement>(null);
+  const canFilter = projects.length > FILTER_MIN;
+  useEffect(() => {
+    const el = fieldRef.current; if (!el || typeof ResizeObserver === "undefined") return;
+    const ro = new ResizeObserver(() => setFieldShown(el.offsetWidth > 0));
+    ro.observe(el.closest("nav") ?? el); setFieldShown(el.offsetWidth > 0); return () => ro.disconnect();
+  }, [canFilter]);
+  const query = canFilter && fieldShown ? q : "";
+  const shown = filterProjects(projects, query);
+  const live = query.trim() ? (shown.length === 0 ? t("No projects match “{text}”.", { text: q.trim() }) : shown.length === 1 ? t("1 project shown") : t("{count} projects shown", { count: shown.length })) : "";
   return (
     <nav className="side" aria-label={t("Projects")}>
       <div className={"brand" + (projects.some((p) => p.status === "running") ? " busy" : "")} aria-hidden="true">
@@ -40,9 +54,19 @@ export default function ProjectSidebar({ projects, activeId, progress, blocker, 
       <div className="group group-row"><span id="proj-group">{t("Projects")}</span>
         {todo > 1 && <button type="button" className="btn small" disabled={!!blocker} title={blocker || undefined} onClick={onTranscribeAll}>{t("Transcribe all ({count})", { count: todo })}</button>}
       </div>
+      {canFilter && (
+        <div className="pf" role="search">
+          <label htmlFor="proj-filter" className="pf-sr">{t("Filter projects")}</label>
+          <input id="proj-filter" ref={fieldRef} className="input" type="search" placeholder={t("Filter projects")} value={q} autoComplete="off" spellCheck={false}
+            onChange={(e) => setQ(e.target.value)} onKeyDown={(e) => { if (e.key === "Escape" && q) { e.preventDefault(); e.stopPropagation(); setQ(""); } }} />
+          {q && <button type="button" className="pf-clear" aria-label={t("Clear filter")} title={t("Clear filter")} onClick={() => { setQ(""); fieldRef.current?.focus(); }}>×</button>}
+        </div>
+      )}
+      <div className="pf-sr" role="status" aria-live="polite" aria-atomic="true">{live}</div>
       <div className="plist" role="list" aria-labelledby="proj-group">
         {projects.length === 0 && <p className="note side-note">{t("Each recording you add becomes a project here, with its own transcript and speaker names.")}</p>}
-        {projects.map((p) => {
+        {query.trim() && shown.length === 0 && <p className="note side-note" aria-hidden="true">{t("No projects match “{text}”.", { text: q.trim() })}</p>}
+        {shown.map((p) => {
           const pr = progress[p.id];
           const pct = pr?.fraction != null ? Math.round(pr.fraction * 100) : null;
           const sub = p.status === "done" && p.result

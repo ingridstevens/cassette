@@ -235,6 +235,12 @@ details.detail[open] > summary { margin-bottom: 4px; }
 @keyframes reel-turn { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .brand.busy .reel { animation: none; } }
 
+.side .pf { position: relative; flex: none; }
+.side .pf .input { width: 100%; height: 34px; box-sizing: border-box; padding-inline: 12px 30px; }
+.side .pf .input::-webkit-search-cancel-button { display: none; }
+.side .pf-clear { position: absolute; inset-block: 0; inset-inline-end: 4px; width: 26px; border: 0; background: none; color: var(--ink); font-size: 16px; cursor: pointer; border-radius: 50%; }
+.side .pf-clear:focus-visible { outline: 2px solid var(--violet); outline-offset: -2px; }
+.side .pf-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 .side .group-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
 /* Small windows and large text. The text size is a body zoom, so the shell's own width (the container) is the room the layout really has:
@@ -257,6 +263,7 @@ details.detail[open] > summary { margin-bottom: 4px; }
   .side .brand { padding: 2px 0 10px; justify-content: center; }
   .side .brand > span, .side .group-row > span, .side .side-note { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .side .group-row { padding: 0; min-height: 4px; }
+  .side .pf { display: none; }
   .side .group-row .btn, .side > .btn.small { font-size: 0; gap: 0; padding: 0; width: 100%; justify-content: center; }
   .side > .btn.small::before { content: "CSV" / ""; font-size: 11px; }
   .side .group-row .btn::before { content: "↻" / ""; font-size: 15px; }
