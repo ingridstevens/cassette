@@ -216,13 +216,16 @@ def cmd_export(a) -> None:
         return
     names = data.get("speakers", {})
     opts = {**(data.get("options") or {}), "lang": data.get("lang"), "fileLanguage": data.get("language")}
+    opts.pop("stampText", None)  # only ever built here, from the transcript's own fields
+    if opts.get("stamp") and a.format in ("txt", "md", "md-copy", "csv", "docx", "minutes"):  # opt-in version line; never in subtitles, JSON (has its meta), markers or the anonymised export
+        opts["stampText"] = ex.stamp_text(data)
     segs = data["segments"]
     if a.format in ("txt", "md", "md-copy", "csv", "docx", "minutes", "redacted"):
         segs = ex.apply_style(segs, opts, data.get("language"))
     if a.format == "docx":
         Path(a.output).write_bytes(ex.to_docx(segs, names, title=Path(a.output).stem, lang=data.get("lang"), options=opts))
     elif a.format == "minutes":
-        Path(a.output).write_bytes(ex.to_minutes(segs, names, title=Path(a.output).stem, lang=data.get("lang"), summary=data.get("summary"), highlights=data.get("highlights")))
+        Path(a.output).write_bytes(ex.to_minutes(segs, names, title=Path(a.output).stem, lang=data.get("lang"), summary=data.get("summary"), highlights=data.get("highlights"), stamp=opts.get("stampText")))
     elif a.format == "highlights":
         Path(a.output).write_bytes(ex.to_highlights_docx(segs, names, data.get("highlights"), title=Path(a.output).stem, lang=data.get("lang")))
     elif a.format == "quotes":

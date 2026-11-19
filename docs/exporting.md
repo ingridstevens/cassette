@@ -11,7 +11,7 @@ The menu is grouped: **Read and share** (Word, text, Markdown, anonymised, Text 
 | --- | --- | --- |
 | Word document | `.docx` | A designed page: title, date, who talked how much (coloured bars), then each line with a coloured rule for the speaker, the name and the time. Chapters become shaded headings. Opens in Word, Pages and Google Docs. |
 | Plain text | `.txt` | `[00:00:03] Anna: text`, one line per speaker turn. |
-| Spreadsheet | `.csv` | Start and end as seconds and as `h:mm:ss`, speaker, text, and flag columns (see below). Opens in Excel, Numbers and Sheets. |
+| Spreadsheet | `.csv` | Start and end as seconds and as `h:mm:ss`, speaker, text, and flag columns (see below); optionally a last version row. Opens in Excel, Numbers and Sheets. |
 | Subtitles | `.srt` | Subtitle cues for video editors and players. Has options (below). |
 | Web subtitles | `.vtt` | The same cues in WebVTT, for web video. Has the same options. |
 | Meeting minutes | `.docx` | The summary (if you wrote one, see [Highlights](highlights.md#summary)) with topics, attendees, a "Decisions and action items" list made from the lines you **Mark** (plus the summary's decisions and action items), your highlights as "Key quotes", then the full record with chapter headings. |
@@ -61,7 +61,18 @@ The **Text style…** item at the bottom of the menu is not an export; it sets h
 | `languageProb`, `languages`, `mixed`, `translated` | How sure the language check was, the seconds of speech per language when several were found, whether lines were checked one by one, and how many were translated |
 | `secondsTranscribe`, `secondsSpeakers` | How long the run took |
 
-There is no date and no file path in the file, so the same transcript always exports to identical bytes. The spreadsheet (`.csv`) and text formats have no such header: a header would change their columns, which scripts depend on. Their columns will not change without a note in the release notes.
+There is no date and no file path in the file, so the same transcript always exports to identical bytes. The spreadsheet (`.csv`) and text formats have no such header by default: a header would change their columns, which scripts depend on. Their columns will not change without a note in the release notes. To trace those files too, see the version line below.
+
+## The version line (optional)
+
+**Export, Text style…, Add a version line** (off by default) adds one last line to Word, text, Markdown, minutes and spreadsheet exports, built from the same fields as the JSON's `meta`:
+
+`Cassette 0.1.0 (export format 1, engine 0.1.0, language de, model small)`
+
+- **Where it goes.** Text: the last line. Markdown: the last line in italics. Word: the page footer, above the page number. Minutes: the last paragraph. Spreadsheet: a **last row** whose `speaker` column holds `#` and whose `text` column holds the line; the other cells are empty. The header, the columns and their order and every data row are unchanged, so a script can skip the row where `speaker` is `#`. A comment row at the top was not used because it would shift the header row that importers and `pandas.read_csv` expect, and a second sheet or file does not fit in a `.csv`. Because that last row has an empty `start_seconds`, a numeric column still imports as numbers (with one empty cell).
+- **What it contains.** The versions of Cassette and its engine, the export format number (`schema` in the JSON), the recording's language and the speech model of the run. No date, no file path, no speaker name and no computer or user name, so the same transcript with the same settings still exports to identical bytes.
+- **What it leaves out.** Subtitles (`.srt`, `.vtt`) and markers (`.edl`) never get it, so players and editors read them as before. The JSON already has `meta`. The **anonymised** text does not get it either: it is meant to carry nothing but the coded text, and a reviewer can read the report beside it. **Export all as CSV** is not stamped because it mixes projects.
+- Turning it on applies to every export until you turn it off, and is remembered.
 
 ## The anonymised export's report and key
 

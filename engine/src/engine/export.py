@@ -144,7 +144,7 @@ def to_txt(segs, names=None, options=None):
     stamp = o.get("timestamps", True)
     note = style_note(o, o.get("lang"))
     body = "\n".join((f"[{_ts(s['start'])[:8]}] " if stamp else "") + f"{_name(s, names)}{_flag(s, o.get('lang'), o)}: {s['text']}" + _trans_txt(s, o) for s in segs) + "\n"
-    return (note + "\n\n" if note else "") + body
+    return (note + "\n\n" if note else "") + body + (f"\n{o['stampText']}\n" if o.get("stampText") else "")
 
 
 def _opt(options: dict | None, key: str, default):
@@ -350,7 +350,7 @@ def to_md(segs, names=None, options=None):
     stamp = o.get("timestamps", True)
     note = style_note(o, o.get("lang"))
     body = "\n\n".join(f"**{_name(s, names)}**{_flag(s, o.get('lang'), o)}" + (f" _{_ts(s['start'])[:8]}_" if stamp else "") + f"\n{s['text']}" + (f"\n\n> {s['translation']}" if s.get("translation") and o.get("translations", True) else "") for s in segs) + "\n"
-    return (f"_{note}_\n\n" if note else "") + body + _md_highlights(segs, names, o.get("highlights"), stamp)
+    return (f"_{note}_\n\n" if note else "") + body + _md_highlights(segs, names, o.get("highlights"), stamp) + (f"\n_{o['stampText']}_\n" if o.get("stampText") else "")
 
 
 JSON_SCHEMA = 1  # bump when a key is renamed or removed; adding keys does not change it
@@ -373,6 +373,15 @@ def provenance(data: dict) -> dict:
         "lines": len(segs), "edited_lines": sum(1 for s in segs if s.get("edited")),
         **{k: run[k] for k in keep if k in run},
     }
+
+
+def stamp_text(data: dict) -> str:
+    """One line saying which versions and settings made an export, built from the same fields as the JSON's `meta` (schema, app, engine, language,
+    model) so the two always agree. Fixed English wording, like the JSON keys. No date, no path, no name: the same transcript gives the same line."""
+    m = provenance(data)
+    parts = [("export format", m["schema"]), ("engine", m["engine"]), ("language", m["language"]), ("model", m.get("model"))]
+    inner = ", ".join(f"{k} {v}" for k, v in parts if v)
+    return "Cassette" + (f" {m['app']}" if m.get("app") else "") + (f" ({inner})" if inner else "")
 
 
 def to_json(segs, names=None, meta=None):
@@ -404,6 +413,8 @@ def to_csv(segs, names=None, options=None):
     w.writerow(["start_seconds", "end_seconds", "start", "end", "speaker", "text", "overlap", "language", "translation"])
     for s in segs:
         w.writerow([f"{s['start']:.2f}", f"{s['end']:.2f}", _ts(s["start"])[:8], _ts(s["end"])[:8], cell(_name(s, names)), cell(s["text"]), "yes" if s.get("overlap") else "", s.get("lang", ""), cell(s.get("translation", ""))])
+    if (options or {}).get("stampText"):  # a last row, nothing before it moves: only the text column is filled, and a "#" marks it as a note
+        w.writerow(["", "", "", "", "#", cell(options["stampText"]), "", "", ""])
     return ("\ufeff" if excel else "") + buf.getvalue()
 
 
@@ -462,13 +473,17 @@ def _shade(paragraph, fill):
     ppr.append(shd)
 
 
-def _page_number_footer(section, lang=None):
+def _page_number_footer(section, lang=None, stamp=None):
     from docx.oxml import OxmlElement
     from docx.oxml.ns import qn
     from docx.enum.text import WD_ALIGN_PARAGRAPH
 
     p = section.footer.paragraphs[0]
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
+    if stamp:
+        _font(p.add_run(stamp), _SANS, 8, color=_MUTED)
+        p = section.footer.add_paragraph()
+        p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     r = p.add_run(_tr(lang)["footer"])
     _font(r, _SANS, 8.5, color=_MUTED)
     r2 = p.add_run()
@@ -511,7 +526,7 @@ def to_docx(segs, names=None, title="Transcript", lang=None, options=None) -> by
     normal = doc.styles["Normal"]
     normal.font.name = _SERIF
     normal.font.size = Pt(11.5)
-    _page_number_footer(sec, lang)
+    _page_number_footer(sec, lang, (options or {}).get("stampText"))
 
     # title block
     p = doc.add_paragraph()
@@ -753,7 +768,7 @@ def _with_time(item, segs) -> str:
     return f"[{_clock(segs[line]['start'])}] {text}" if isinstance(line, int) and 0 <= line < len(segs) else text
 
 
-def to_minutes(segs, names=None, title=None, lang=None, summary=None, highlights=None) -> bytes:
+def to_minutes(segs, names=None, title=None, lang=None, summary=None, highlights=None, stamp=None) -> bytes:
     """Word document laid out as minutes: attendees, decisions and action items (lines the user marked), then the record."""
     from docx import Document
     from docx.shared import Pt
@@ -816,6 +831,10 @@ def to_minutes(segs, names=None, title=None, lang=None, summary=None, highlights
         r.bold = True
         r.font.size = Pt(9)
         p.add_run(s["text"])
+    if stamp:  # the optional version line, last
+        note = doc.add_paragraph(stamp)
+        note.runs[0].italic = True
+        note.runs[0].font.size = Pt(8)
     buf = io.BytesIO()
     doc.save(buf)
     return buf.getvalue()
