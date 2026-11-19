@@ -20,13 +20,15 @@ interface Props {
   onSuggest(model: string): void; onSummarize(model: string): void; onStop(): void;
   onKeep(id: string): void; onRemove(id: string): void; onKeepAll(): void; onDismissAll(): void;
   onPlay(start: number, end: number): void; onPause(): void; onSeek(start: number): void;
+  /** The highlight whose ends are shown as drag handles on the waveform (null = none), and moving one of its ends by a word or a fine step. */
+  trimId: string | null; onTrim(id: string | null): void; onAdjust(id: string, edge: "start" | "end", by: "word" | "fine", dir: -1 | 1): void;
   onSaveClips(format: string): void; onSaveOne(h: Highlight): void; onEditSummary(text: string): void; onClearSummary(): void;
 }
 
 /** Grows the box to its text. A hidden tab measures 0, so it is measured again when the tab is shown. */
 const fit = (el: HTMLTextAreaElement | null) => { if (el && el.offsetParent) { el.style.height = "auto"; el.style.height = `${el.scrollHeight + 2}px`; } };
 
-export default function HighlightsTab({ project, visible, clip, time, job, error, onSuggest, onSummarize, onStop, onKeep, onRemove, onKeepAll, onDismissAll, onPlay, onPause, onSeek, onSaveClips, onSaveOne, onEditSummary, onClearSummary }: Props) {
+export default function HighlightsTab({ project, visible, clip, time, job, error, onSuggest, onSummarize, onStop, onKeep, onRemove, onKeepAll, onDismissAll, onPlay, onPause, onSeek, trimId, onTrim, onAdjust, onSaveClips, onSaveOne, onEditSummary, onClearSummary }: Props) {
   const t = useT();
   const { result, names } = project;
   const [status, setStatus] = useState<ModelStatus | null>(null);
@@ -167,6 +169,7 @@ export default function HighlightsTab({ project, visible, clip, time, job, error
                     playBtn("btn sun small")
                   )}
                   {h.suggested && playBtn("btn small")}
+                  <button type="button" className="btn small" aria-pressed={trimId === h.id} onClick={() => onTrim(trimId === h.id ? null : h.id)} title={t("Show handles on the waveform, or use the buttons, to start and end this highlight earlier or later")}>{t("Trim")}</button>
                   {h.suggested ? (
                     <button type="button" className="btn small" onClick={() => onRemove(h.id)}>{t("Dismiss")}</button>
                   ) : (
@@ -176,6 +179,24 @@ export default function HighlightsTab({ project, visible, clip, time, job, error
                     </>
                   )}
                 </div>
+                {trimId === h.id && (
+                  <div className="pv-hl-trim" role="group" aria-label={t("Trim the highlight at {time}", { time: fmt(h.start) })}>
+                    <p className="note">{t("Drag the handles on the waveform, or use the buttons. Shift-click moves by a tenth of a second.")}</p>
+                    {(["start", "end"] as const).map((edge) => (
+                      <div key={edge} className="pv-hl-trimrow">
+                        <span>{edge === "start" ? t("Start") : t("End")} <span dir="ltr">{fmt(edge === "start" ? h.start : h.end)}</span></span>
+                        {([-1, 1] as const).map((dir) => (
+                          <button key={dir} type="button" className="btn small" onClick={(e) => onAdjust(h.id, edge, e.shiftKey ? "fine" : "word", dir)}
+                            aria-label={edge === "start" ? (dir < 0 ? t("Start one word earlier") : t("Start one word later")) : (dir < 0 ? t("End one word earlier") : t("End one word later"))}>{dir < 0 ? t("Earlier") : t("Later")}</button>
+                        ))}
+                        {([-1, 1] as const).map((dir) => (
+                          <button key={"f" + dir} type="button" className="btn quiet small" onClick={() => onAdjust(h.id, edge, "fine", dir)}
+                            aria-label={edge === "start" ? (dir < 0 ? t("Start 0.1 seconds earlier") : t("Start 0.1 seconds later")) : (dir < 0 ? t("End 0.1 seconds earlier") : t("End 0.1 seconds later"))}>{dir < 0 ? "−0.1 s" : "+0.1 s"}</button>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </li>
               );
             })}

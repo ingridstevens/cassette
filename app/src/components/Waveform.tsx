@@ -7,9 +7,12 @@ import { fmt, PALETTE, Result } from "../types";
 import "../styles/project.css";
 
 export interface WaveformHandle { seek(t: number, play?: boolean): void; toggle(): void; pause(): void; skip(delta: number): void; setRate(rate: number): void; markClip(start: number, end: number): void }
+/** A highlight whose two ends are draggable handles on the waveform. */
+export interface TrimRange { id: string; start: number; end: number }
 interface Props {
   path: string; result: Result | null;
   onTime(t: number): void; onSelection(range: [number, number] | null): void; onPlaying?(p: boolean): void; onDuration?(d: number): void;
+  trim?: TrimRange | null; onTrim?(id: string, start: number, end: number): void;
 }
 
 /** Waveform colours come from the current look (CSS variables on <html>) so the looks can recolour them. */
@@ -21,13 +24,13 @@ function waveColors() {
 
 type State = { kind: "loading" } | { kind: "ready" } | { kind: "error"; message: string } | { kind: "missing" };
 
-const Waveform = forwardRef<WaveformHandle, Props>(({ path, result, onTime, onSelection, onPlaying, onDuration }, ref) => {
+const Waveform = forwardRef<WaveformHandle, Props>(({ path, result, onTime, onSelection, onPlaying, onDuration, trim, onTrim }, ref) => {
   const t = useT();
   const box = useRef<HTMLDivElement>(null);
   const ws = useRef<WaveSurfer | null>(null);
   const regions = useRef<ReturnType<typeof RegionsPlugin.create> | null>(null);
-  const cb = useRef({ onTime, onSelection, onPlaying, onDuration });
-  cb.current = { onTime, onSelection, onPlaying, onDuration };
+  const cb = useRef({ onTime, onSelection, onPlaying, onDuration, onTrim });
+  cb.current = { onTime, onSelection, onPlaying, onDuration, onTrim };
   const [duration, setDuration] = useState(0);
   const [state, setState] = useState<State>({ kind: "loading" });
   const [attempt, setAttempt] = useState(0);
@@ -62,17 +65,33 @@ const Waveform = forwardRef<WaveformHandle, Props>(({ path, result, onTime, onSe
       w.on("error", fail);
     }).catch(fail);
     rp.on("region-created", (r) => {
-      if (r.id.startsWith("seg-")) return;
-      rp.getRegions().filter((x) => !x.id.startsWith("seg-") && x !== r).forEach((x) => x.remove());
+      if (r.id.startsWith("seg-") || r.id.startsWith("trim-")) return;
+      rp.getRegions().filter((x) => !x.id.startsWith("seg-") && !x.id.startsWith("trim-") && x !== r).forEach((x) => x.remove());
       // a drag-selection is announced only here (when the drag ends); "region-updated" fires only for later drags and resizes
       cb.current.onSelection([r.start, r.end]);
     });
-    const changed = (r: { id: string; start: number; end: number }) => { if (!r.id.startsWith("seg-")) cb.current.onSelection([r.start, r.end]); };
+    const changed = (r: { id: string; start: number; end: number }) => {
+      if (r.id.startsWith("trim-")) cb.current.onTrim?.(r.id.slice(5), r.start, r.end);
+      else if (!r.id.startsWith("seg-")) cb.current.onSelection([r.start, r.end]);
+    };
     rp.on("region-updated", changed);
-    rp.on("region-removed", (r) => { if (!r.id.startsWith("seg-")) cb.current.onSelection(null); });
+    rp.on("region-removed", (r) => { if (!r.id.startsWith("seg-") && !r.id.startsWith("trim-")) cb.current.onSelection(null); });
 
     return () => { dead = true; cb.current.onPlaying?.(false); w?.destroy(); };
   }, [path, attempt]);
+
+  // The highlight being trimmed: one region with drag handles on both ends (the middle does not move). It follows the highlight when a button moves an end.
+  const trimId = trim?.id, trimStart = trim?.start, trimEnd = trim?.end;
+  useEffect(() => {
+    const rp = regions.current;
+    if (!rp || state.kind !== "ready") return;
+    const old = rp.getRegions().filter((x) => x.id.startsWith("trim-"));
+    const mine = trimId ? old.find((x) => x.id === "trim-" + trimId) : undefined;
+    old.filter((x) => x !== mine).forEach((x) => x.remove());
+    if (trimId === undefined || trimStart === undefined || trimEnd === undefined) return;
+    if (!mine) rp.addRegion({ id: "trim-" + trimId, start: trimStart, end: trimEnd, drag: false, resize: true, color: "rgba(232, 70, 124, 0.18)", minLength: 0.1 });
+    else if (Math.abs(mine.start - trimStart) > 0.001 || Math.abs(mine.end - trimEnd) > 0.001) mine.setOptions({ start: trimStart, end: trimEnd });
+  }, [trimId, trimStart, trimEnd, state.kind]);
 
   useEffect(() => {
     const apply = () => ws.current?.setOptions(waveColors());
