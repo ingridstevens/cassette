@@ -179,3 +179,22 @@ test("who said this line: add a new speaker from the menu with the keyboard, the
   await page.keyboard.press("ControlOrMeta+z"); // one step takes back the speaker, the name and the line
   await expect(page.getByRole("button", { name: /^Change who said the line at 0:00. Now: (?!Mia)/ })).toBeVisible();
 });
+
+test("project actions menu: keyboard, Duplicate, Escape returns focus, audio badge", async ({ page }) => {
+  await startFirstRecording(page);
+  const list = page.getByRole("list", { name: "Projects" });
+  await expect(list.getByText("Audio").first()).toBeVisible();
+  const trigger = page.getByRole("button", { name: "Actions for Interview 2026" });
+  await trigger.focus();
+  await page.keyboard.press("Enter");
+  const menu = page.getByRole("menu", { name: "Actions for Interview 2026" });
+  await expect(menu.getByRole("menuitem", { name: "Rename" })).toBeFocused();
+  await page.keyboard.press("Escape");
+  await expect(menu).toHaveCount(0);
+  await expect(trigger).toBeFocused();
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("ArrowDown");
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("status").filter({ hasText: "Duplicated as “Interview 2026 copy”" })).toBeAttached();
+  await expect(list.getByText("Interview 2026 copy")).toBeVisible();
+});
