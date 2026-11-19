@@ -12,6 +12,10 @@ approximate downloads (Windows shows slightly smaller numbers; see [file sizes](
 | large-v3-turbo | about 1.6 GB | Near the best quality, faster than large-v3. |
 | large-v3 | about 3 GB | Best quality, slowest. |
 
+## Suggestion on the start sheet
+
+Before a transcription starts, the start sheet may say "Suggested for this computer" with a button to use that size. It looks only at this computer's memory (read locally; nothing is sent anywhere) and the sizes above: Small, or a smaller one when the chosen size may not fit. It never changes a setting or downloads anything by itself, and "No thanks" is remembered. It does not promise a speed. On anything other than an Apple silicon Mac it says that Cassette has not been tested on that kind of computer ([compatibility](compatibility.md)).
+
 ## Models for each job
 
 Three different models do three jobs. In Settings, **Transcription** turns speech into text (Whisper, Parakeet or Moonshine: pick an engine, then press **Use** on a downloaded model). **Speakers** sets up speaker detection. **Summaries and translation** chooses the language model for highlights and summaries, and the translation model.
