@@ -39,14 +39,14 @@ one-line summary with a tick, and a bar shows how many are done and roughly how 
 
 ![The speaker detection setup, one step at a time](screenshots/03-speaker-setup.jpg)
 
-1. **Create a free Hugging Face account.** **Create account** opens the sign-up page. Already have one? Click
+1. **Create a free account (about 2 minutes).** The account is on Hugging Face, the website that hosts the speaker model. **Create account** opens the sign-up page. Already have one? Click
    **I already have one**.
-2. **Make an access code (a token) and paste it here.** **Open token page** opens Hugging Face with the **Read** tab
+2. **Make an access code and paste it here.** The code is a Hugging Face token. **Open the code page** opens Hugging Face with the **Read** tab
    already chosen. Name the token “Cassette” (**Copy name** puts that on your clipboard), click
    **Create token**, copy the code (it starts with `hf_` and is shown only once) and paste it into the app.
    Once saved, the step shows **Saved as hf_…abcd** with a **Replace** link.
-3. **Fill in a short form on two model pages.** The makers of the speaker model (pyannote) ask for a few details before
-   you can download it. Both pages (`speaker-diarization 3.1` and `segmentation 3.0`) have the same free form:
+3. **Fill in a short form on two pages.** The makers of the speaker model (pyannote) ask for a few details before
+   you can download it. Both pages (in the app: **Speaker model** and **Voice-change helper**; on Hugging Face `speaker-diarization 3.1` and `segmentation 3.0`) have the same free form:
    - **Company or university** and **Website** are required. No company? Write *Freelance*, *Independent* or
      *Personal use*. For the website, the app shows your own Hugging Face profile address
      (`https://huggingface.co/your-username`) with a **Copy** button.
@@ -60,7 +60,9 @@ one-line summary with a tick, and a bar shows how many are done and roughly how 
 4. **Download the speaker detection model** (about 60 MB, once). After that it works offline.
 
 The token is stored with your operating system's secure storage and used only for this download. The app also
-tells you if Hugging Face rejects the token, or if you made a Fine-grained token instead of a Read token.
+tells you if the code isn't accepted, or if you made a Fine-grained token instead of a Read token.
+All the technical names (Hugging Face, token, pyannote, the two model pages) are also listed in a **Details for IT**
+fold under the steps.
 If something goes wrong see [Troubleshooting](troubleshooting.md).
 
 **Someone else can do this for you.** Ask a friend or your IT team to set up speaker detection once on their computer and

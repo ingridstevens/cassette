@@ -11,6 +11,7 @@ import { langName } from "../languages";
 import { STYLED } from "./ExportMenu";
 import AskTab, { AskItem } from "./AskTab";
 import HighlightsTab, { LlmJob } from "./HighlightsTab";
+import SummaryTab from "./SummaryTab";
 import Inspector, { Moved, Tab, globalOpts, liveSpeakers } from "./Inspector";
 import { Models } from "./useModels";
 import Transcript from "./Transcript";
@@ -359,6 +360,11 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
         else if (sel) void window.api.saveClip(path, sel[0], sel[1]).then((ok) => { if (ok) flash(t("Clip saved ✓")); });
         else flash(t("Mark a clip first: [ for the start, ] for the end"));
       }
+      else if (!mod && !e.altKey && showResult && !busy && !easy && /^[-+=0]$/.test(e.key) && quietTarget(e.target)) {
+        // zoom the waveform: + in, - out, 0 back to the whole recording
+        e.preventDefault();
+        if (e.key === "-") player.current?.zoomOut(); else if (e.key === "0") player.current?.zoomFit(); else player.current?.zoomIn();
+      }
       else if (!mod && !e.altKey && showResult && !busy && !easy && /^[omcrh]$/i.test(e.key) && quietTarget(e.target)) {
         e.preventDefault();
         if (e.key.toLowerCase() === "h") { if (!e.shiftKey) toggleHeardAt(currentLine()); return; }
@@ -588,7 +594,7 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
             <button type="button" className="btn quiet small" onClick={() => onRemember?.({ unsureLegendSeen: true })}>{t("Got it")}</button>
           </div>
         )}
-        <Transcript easy={easy} showLang={easy ? false : showLang} result={result} names={names} time={time} query={query} findOpts={findOpts} highlights={highlights} onHighlight={easy ? undefined : (i, a, b) => { const h = highlightOf(result.segments[i], a, b); if (h) patchResult((x) => ({ ...x, highlights: addHighlight(x.highlights ?? [], h) })); }} matchSeg={matches[mi] ?? -1} onSeek={(t) => player.current?.seek(t)} onReassign={reassign} onNewSpeaker={newSpeaker}
+        <Transcript easy={easy} showLang={easy ? false : showLang} result={result} names={names} time={time} query={query} findOpts={findOpts} highlights={highlights} onHighlight={easy ? undefined : (i, a, b) => { const h = highlightOf(result.segments[i], a, b); if (h) patchResult((x) => ({ ...x, highlights: addHighlight(x.highlights ?? [], h) })); }} matchSeg={matches[mi] ?? -1} onSeek={(t) => player.current?.seek(t)} onPlayRange={(a, b) => { window.clearTimeout(clipTimer.current); player.current?.playRange(a, b); }} onReassign={reassign} onNewSpeaker={newSpeaker}
           onEdit={(i, text) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => (k === i ? retext(s, text) : s)) } }, t("edit a line"))}
           canRetranscribe={canTranscribe} reviewAt={reviewAt} translatingIndex={translating} playing={playing} onPause={() => player.current?.pause()}
           onTranslate={async (i, remove) => {
@@ -754,7 +760,7 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
             <button type="button" className={"pv-speed" + (rate !== 1 ? " on" : "")} dir="ltr" onClick={() => stepRate(1, true)}
               aria-label={t("Playback speed {rate}×. Click to change.", { rate })} title={t("Playback speed: click to change, or press < and >")}>{rate}×</button>
           </div>
-          <Waveform key={project.id} ref={player} path={path} result={result} onTime={setTime} onSelection={setSel} onPlaying={setPlaying} onDuration={setDuration} trim={trimHl ? { id: trimHl.id, start: trimHl.start, end: trimHl.end } : null} onTrim={dragHl} />
+          <Waveform key={project.id} easy={easy} ref={player} path={path} result={result} onTime={setTime} onSelection={setSel} onPlaying={setPlaying} onDuration={setDuration} trim={trimHl ? { id: trimHl.id, start: trimHl.start, end: trimHl.end } : null} onTrim={dragHl} />
           {result && (
             <div className="pv-now" aria-live="off">
               <i style={{ background: nowName ? nowColor : undefined }} aria-hidden />
@@ -797,13 +803,14 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
         askPanel={<AskTab project={project} visible={visible} thread={askThread} job={llmJob} onAsk={runAsk}
           onStop={() => { askStopped.current = true; void window.api.cancel(llmId.current); }} onClear={() => setAskThread([])} onShow={showLine} />}
         highlightsPanel={<HighlightsTab project={project} visible={visible} trimId={trimHl ? trimHl.id : null} onTrim={setTrimId} onAdjust={adjustHl} job={llmJob} error={llmError}
-          onSuggest={(m) => runLlm("highlights", m)} onSummarize={(m) => runLlm("summarize", m)} onStop={() => { void window.api.cancel(llmId.current); }}
+          onSuggest={(m) => runLlm("highlights", m)} onStop={() => { void window.api.cancel(llmId.current); }}
           onKeep={(id) => patchResult((x) => ({ ...x, highlights: (x.highlights ?? []).map((h) => (h.id === id ? { ...h, suggested: undefined } : h)) }))}
           onRemove={(id) => patchResult((x) => ({ ...x, highlights: (x.highlights ?? []).filter((h) => h.id !== id) }))}
           onKeepAll={() => patchResult((x) => ({ ...x, highlights: (x.highlights ?? []).map((h) => ({ ...h, suggested: undefined })) }))}
           onDismissAll={() => patchResult((x) => ({ ...x, highlights: (x.highlights ?? []).filter((h) => !h.suggested) }))}
           onPlay={playRange} onPause={() => { window.clearTimeout(clipTimer.current); player.current?.pause(); }} clip={playing ? hlClip : null} time={time} onSeek={(s) => player.current?.seek(s)} onSaveClips={saveClips}
-          onSaveOne={async (h) => { if (await window.api.saveClip(path, Math.max(0, h.start - 0.3), h.end + 0.3)) flash(t("Clip saved ✓")); }}
+          onSaveOne={async (h) => { if (await window.api.saveClip(path, Math.max(0, h.start - 0.3), h.end + 0.3)) flash(t("Clip saved ✓")); }} />}
+        summaryPanel={<SummaryTab project={project} visible={visible} job={llmJob} error={llmError} onSummarize={(m) => runLlm("summarize", m)} onStop={() => { void window.api.cancel(llmId.current); }} onSeek={(s) => player.current?.seek(s)}
           onEditSummary={(text) => patchResult((x) => (x.summary ? { ...x, summary: { ...x.summary, summary: text } } : x))}
           onClearSummary={() => patchResult((x) => { const { summary: _s, ...rest } = x; return rest; })} />} />
 

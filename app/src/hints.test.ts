@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
-import { legacyAiPart, markSeen, normalizeTab, readSeen } from "./hints";
+import { AI_PARTS, legacyAiPart, markSeen, normalizeTab, readSeen } from "./hints";
 
 const store: Record<string, string> = {};
 beforeEach(() => {
@@ -10,11 +10,12 @@ beforeEach(() => {
 describe("normalizeTab", () => {
   it("keeps the new ids", () => { expect(["speakers", "ai", "details"].map(normalizeTab)).toEqual(["speakers", "ai", "details"]); });
   it("maps the old ids to their new tab", () => {
-    expect(normalizeTab("highlights")).toBe("ai"); expect(normalizeTab("ask")).toBe("ai");
+    expect(normalizeTab("highlights")).toBe("ai"); expect(normalizeTab("summary")).toBe("ai"); expect(normalizeTab("ask")).toBe("ai");
     expect(normalizeTab("options")).toBe("details"); expect(normalizeTab("info")).toBe("details");
   });
   it("falls back to speakers", () => { expect(normalizeTab(undefined)).toBe("speakers"); expect(normalizeTab("nope")).toBe("speakers"); });
   it("keeps Ask as the AI part for an old saved ask tab", () => { expect(legacyAiPart("ask")).toBe("ask"); expect(legacyAiPart("highlights")).toBe("highlights"); });
+  it("has Summary as its own AI part, between Highlights and Ask", () => { expect(AI_PARTS).toEqual(["highlights", "summary", "ask"]); expect(legacyAiPart("summary")).toBe("summary"); expect(legacyAiPart("nope")).toBe("highlights"); });
 });
 
 describe("hints seen", () => {

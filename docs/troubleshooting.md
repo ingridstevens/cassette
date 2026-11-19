@@ -96,7 +96,7 @@ Copy the whole token (it starts with `hf_`), make sure it came from the **Read**
 and send its form (**Agree and access repository**). If it still says **Form not sent yet**, wait a minute and click **Check now**.
 
 ## Suggest highlights or Write a summary doesn't work
-- **"The language model is not downloaded yet":** open the Highlights tab and press **Download the language model**, or use Settings, Summaries and translation. It needs one online download.
+- **"The language model is not downloaded yet":** open the AI tab (Highlights or Summary) and press **Download the language model**, or use Settings, Summaries and translation. It needs one online download.
 - **The tab says the language model is not part of this version:** the build you run doesn't include it (on Windows and Linux it needs llama.cpp, an opt-in install: `uv sync --extra llm` in the `engine` folder, see [Windows and Linux](#windows-and-linux)). Highlighting by hand still works.
 - **It found nothing, or the summary is very short:** small models struggle with very short recordings. Try a bigger one in Settings, Summaries and translation.
 - **It stops with an error:** the message is shown in the tab and the details are in the activity log (Settings, Privacy). A computer with little memory may not be able to load the larger model; use the small one.

@@ -50,8 +50,10 @@ Inference runs with offline mode on (`HF_HUB_OFFLINE=1`); only `models download`
 
 ## Where things are in the app
 
-- `app/electron/main.ts`: window, IPC (`pick-file`, `transcribe`, `models`, `export`, `save-image`, `reveal-*`,
-  `disk-free`, `peaks`, projects load/save). Keep handlers small and validate arguments.
+- `app/electron/main.ts`: app lifecycle and the window (hardening, crash reload, files opened from outside).
+- `app/electron/ipc/`: the IPC handlers, one module per area (`projects`, `mediaFiles`, `engineJobs`, `models`, `exports`, `diagnostics`; live recording is `live.ts`).
+  Keep handlers small and validate arguments. `ipc/typed.ts` has the typed `handle` / `on` / `onSync` helpers.
+- `app/electron/ipcChannels.ts`: the one typed map of every channel (arguments and result), used by both `ipc/` and the preload. Add a channel there first.
 - `app/electron/preload.ts`: the only bridge (`window.api`).
 - `app/src/useProjects.ts`: project list, persistence, the one-at-a-time queue, engine events.
 - `app/src/components/`: `ProjectView` (transcript, player, toolbar), `Inspector` (Speakers / AI / Details), `HighlightsTab` (highlights, suggestions, audio clips, summary),
@@ -156,7 +158,7 @@ the app sends its language with every export. The language setting is `appLangua
 1. Add a pure function to `engine/src/engine/export.py` and a test in `engine/tests/test_export.py`.
 2. Register it in `cmd_export` in `engine/src/engine/main.py` and in the `--format` choices.
 3. Add an item to `FORMATS` in `app/src/components/ExportMenu.tsx` (and options in `ExportOptions.tsx` if needed).
-4. If the file extension differs from the format id, adjust the mapping in the `export` handler in `main.ts`.
+4. If the file extension differs from the format id, adjust the mapping in the `export` handler in `app/electron/ipc/exports.ts`.
 
 ## File sizes
 

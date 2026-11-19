@@ -75,12 +75,12 @@ def test_app_does_not_make_its_own_requests():
 
 
 def test_only_huggingface_pages_can_be_opened_from_the_app():
-    main = (APP / "electron" / "main.ts").read_text(encoding="utf-8")
+    main = (APP / "electron" / "ipc" / "diagnostics.ts").read_text(encoding="utf-8")  # the open-external handler lives here since main.ts was split (issue 116)
     assert 'startsWith("https://huggingface.co/")' in main
 
 
 def test_only_the_new_issue_page_on_github_can_be_opened_from_the_app():
-    main = (APP / "electron" / "main.ts").read_text(encoding="utf-8")
+    main = (APP / "electron" / "ipc" / "diagnostics.ts").read_text(encoding="utf-8")  # the open-external handler lives here since main.ts was split (issue 116)
     assert 'feedback = "https://github.com/ingridstevens/cassette/issues/new"' in main
     assert main.count("github.com") == 1
 

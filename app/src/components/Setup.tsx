@@ -59,7 +59,7 @@ export default function Setup({ opts, set, status, models, compact = false, onCo
   const infoPanel = (
     <div className="info-panel" id="spk-info">
       <b>{t("What is speaker detection?")}</b>
-      <p>{t("It is also called diarization. The app listens for changes in voice and splits the transcript into turns, one per speaker. It doesn't know who anyone is: speakers are numbered, and you can rename them afterwards, for example to “Anna”.")}</p>
+      <p>{t("The app listens for changes in voice and splits the transcript into turns, one per speaker. It doesn't know who anyone is: speakers are numbered, and you can rename them afterwards, for example to “Anna”.")}</p>
       <p>{t("It works best with clear voices and can struggle when people talk over each other. For a single voice, like a voice memo or a lecture, you don't need it.")}</p>
     </div>
   );
@@ -87,7 +87,7 @@ export default function Setup({ opts, set, status, models, compact = false, onCo
                 </p>
               </>
             )}
-            <details className="detail"><summary>{t("Technical details")}</summary>Whisper “{opts.model}” by OpenAI, run with faster-whisper · MIT licence{status.dir ? <> · {t("saved to")} <code>{status.dir}</code></> : null}</details>
+            <details className="detail"><summary>{t("Details for IT")}</summary>Whisper “{opts.model}” by OpenAI, run with faster-whisper · MIT licence{status.dir ? <> · {t("saved to")} <code>{status.dir}</code></> : null}</details>
           </div>
         </div>
 
@@ -103,7 +103,7 @@ export default function Setup({ opts, set, status, models, compact = false, onCo
                 <div className="choices">
                   <button type="button" className="choice-card" aria-expanded={false} onClick={() => setOpen(true)}>
                     <b>{t("Set up speaker detection")}</b>
-                    <span>{t("Needs a free Hugging Face account. Only the speaker files are downloaded; your recordings are never sent there.")}</span>
+                    <span>{t("Needs a free account. Only the speaker files are downloaded; your recordings are never sent.")}</span>
                     <em>{t("About 3 minutes")}</em>
                   </button>
                   <button type="button" className="choice-card" onClick={cont}>
@@ -128,8 +128,7 @@ export default function Setup({ opts, set, status, models, compact = false, onCo
                   <button type="button" className="btn quiet" onClick={() => setOpen(false)}>{t("Do this later")}</button>
                   <span>{t("You can finish this any time under Settings, Speakers.")}</span>
                 </div>
-                <details className="detail"><summary>{t("Technical details")}</summary>pyannote speaker-diarization 3.1 and segmentation 3.0 · MIT licence. {t("The token is kept in your computer’s secure storage and used only for this download.")}</details>
-              </>
+                              </>
             )}
           </div>
         </div>
