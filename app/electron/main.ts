@@ -247,7 +247,7 @@ app.whenReady().then(() => {
     if (!modelsOk(action, name)) throw new Error("Unsupported model action");
     const a = ["models", action, ...(name ? [name] : [])];
     const env: Record<string, string> = { ...baseEnv() };
-    if ((name === "diarization" && action === "download") || action === "check") env.HF_TOKEN = readToken();
+    if ((name === "diarization" && (action === "download" || action === "repair")) || action === "check") env.HF_TOKEN = readToken();
     const jobId = randomUUID();
     if (action !== "status") modelsJob = jobId;
     try {
