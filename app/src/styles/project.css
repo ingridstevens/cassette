@@ -97,7 +97,7 @@
 
 /* inspector */
 .pview .pv-inspector { padding-top: 18px; }
-.pv-tab { flex: 1; min-height: 0; overflow-y: auto; padding: 2px; display: flex; flex-direction: column; }
+.pv-tab { flex: 1; min-height: 0; overflow-y: auto; padding: 2px 2px 14px; display: flex; flex-direction: column; }
 .pv-col { display: flex; flex-direction: column; gap: 14px; }
 .pv-spk { padding: 12px 14px; border-radius: 16px; display: flex; flex-direction: column; gap: 9px; }
 .pv-spk-head { display: flex; align-items: center; gap: 8px; }
