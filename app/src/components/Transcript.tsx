@@ -4,6 +4,7 @@ import { MAIN_LANGS, WHISPER_LANGS, langName } from "../languages";
 import { Highlight, UnsureRef, isUnsure, PALETTE, Result, chapterDefault, displayName, fmt, wordIn, wordsInSelection } from "../types";
 import { onMenuKeyDown } from "./ExportMenu";
 import { FIND_DEFAULTS, FindOpts, matcher } from "../find";
+import { quoteText, toolbarPosition } from "../selectionToolbar";
 import { FILTER_AT, filterSpeakers } from "../speakerMenu";
 import { SCROLL_EVENT, ScrollJob, renderIndices, rowOffsets, spacerHeight, visibleRange } from "../windowing";
 import "../styles/project.css";
@@ -63,6 +64,42 @@ export default function Transcript({ easy = false, showLang, result, names, time
     return () => document.removeEventListener("selectionchange", gone);
   }, [picked]);
   const highlight = (i: number, from: number, to: number) => { onHighlight?.(i, from, to); setPicked(null); window.getSelection()?.removeAllRanges(); };
+  /** The floating toolbar above the selection: placed in the viewport (position: fixed) and moved when the page scrolls or resizes. It stays in the line's own markup, so Tab from the selection reaches it. */
+  const bar = useRef<HTMLDivElement>(null);
+  const [barAt, setBarAt] = useState<{ top: number; left: number } | null>(null);
+  const [said, setSaid] = useState("");
+  useLayoutEffect(() => {
+    if (!picked) { setBarAt(null); return; }
+    const place = () => {
+      const sel = window.getSelection(), el = bar.current;
+      if (!sel || !sel.rangeCount || !el) return;
+      const r = sel.getRangeAt(0).getBoundingClientRect();
+      setBarAt(toolbarPosition({ top: r.top, left: r.left, width: r.width, height: r.height }, { width: el.offsetWidth, height: el.offsetHeight }, { width: window.innerWidth, height: window.innerHeight }));
+    };
+    place();
+    window.addEventListener("scroll", place, true); window.addEventListener("resize", place);
+    return () => { window.removeEventListener("scroll", place, true); window.removeEventListener("resize", place); };
+  }, [picked]);
+  useEffect(() => { // Esc closes the toolbar (and keeps the selection, so it can still be copied)
+    if (!picked) return;
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape" && !e.defaultPrevented) { setPicked(null); setSaid(""); } };
+    document.addEventListener("keydown", esc);
+    return () => document.removeEventListener("keydown", esc);
+  }, [picked]);
+  useEffect(() => { setSaid(picked ? t("{count} words selected. Press Tab to reach the actions, Esc to close them.", { count: picked.to - picked.from + 1 }) : ""); }, [picked?.seg, picked?.from, picked?.to]); // eslint-disable-line react-hooks/exhaustive-deps
+  /** Left and right arrows move between the toolbar's buttons. */
+  const arrowKeys = (e: ReactKeyEvent<HTMLElement>) => {
+    const d = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+    if (!d) return;
+    const items = [...e.currentTarget.querySelectorAll<HTMLElement>("button")], at = items.indexOf(document.activeElement as HTMLElement);
+    if (at < 0) return;
+    e.preventDefault(); items[(at + d + items.length) % items.length].focus();
+  };
+  const copyPicked = (i: number, from: number, to: number) => {
+    const seg = result.segments[i];
+    navigator.clipboard.writeText(quoteText(label(seg.speaker), fmt(seg.words[from]?.start ?? seg.start), seg.words, from, to));
+    setSaid(t("Quote copied"));
+  };
   /** Which part of the text to select when the editor opens (the word that was double-clicked). */
   const editSel = useRef<[number, number] | null>(null);
   const editArea = useRef<HTMLTextAreaElement | null>(null);
@@ -271,6 +308,7 @@ export default function Transcript({ easy = false, showLang, result, names, time
   return (
     <>
       <span ref={anchor} hidden />
+      <span className="pv-sr" role="status" aria-live="polite">{said}</span>
       <span id="pv-unsure-label" className="pv-sr">{t("unsure")}</span>
       <div className="pv-rows" role="list" ref={listRef}>
       {layout.map((it) => {
@@ -431,8 +469,12 @@ export default function Transcript({ easy = false, showLang, result, names, time
           )
           )}
           {!easy && picked?.seg === i && editing !== i && splitting !== i && (
-            <div className="pv-picked" role="group" aria-label={t("Highlight the selected words")}>
+            <div ref={bar} className="pv-picked" role="toolbar" aria-label={t("Actions for the selected words")} style={barAt ? { top: barAt.top, left: barAt.left } : { visibility: "hidden" }}
+              onKeyDown={(e) => { if (e.key === "Escape") { e.stopPropagation(); setPicked(null); setSaid(""); } else arrowKeys(e); }}>
               <button type="button" className="btn sun small" onMouseDown={(e) => e.preventDefault()} onClick={() => highlight(i, picked.from, picked.to)}>{t("Highlight this passage")}</button>
+              <button type="button" className="btn small" onMouseDown={(e) => e.preventDefault()} onClick={() => copyPicked(i, picked.from, picked.to)} title={t("Copy as a quote, with speaker and time")}>{t("Copy quote")}</button>
+              <button type="button" className="btn small" aria-pressed={!!seg.marked} onMouseDown={(e) => e.preventDefault()} onClick={() => onMark(i)} title={t("Mark this line as a decision, action item or quote. Marked lines go into the meeting minutes and the quote list.")}>{seg.marked ? t("Marked ✓") : t("Mark")}</button>
+              <button type="button" className="btn small" onMouseDown={(e) => e.preventDefault()} onClick={() => onSeek(seg.words[picked.from]?.start ?? seg.start)}>{t("Play from selection")}</button>
               <span className="note">{t("{count} words selected", { count: picked.to - picked.from + 1 })}</span>
             </div>
           )}
