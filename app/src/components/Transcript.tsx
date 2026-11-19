@@ -1,15 +1,16 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { type KeyboardEvent as ReactKeyEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useT } from "../i18n";
 import { MAIN_LANGS, WHISPER_LANGS, langName } from "../languages";
 import { Highlight, UnsureRef, isUnsure, PALETTE, Result, chapterDefault, displayName, fmt, wordIn, wordsInSelection } from "../types";
 import { onMenuKeyDown } from "./ExportMenu";
 import { FIND_DEFAULTS, FindOpts, matcher } from "../find";
+import { FILTER_AT, filterSpeakers } from "../speakerMenu";
 import { SCROLL_EVENT, ScrollJob, renderIndices, rowOffsets, spacerHeight, visibleRange } from "../windowing";
 import "../styles/project.css";
 
 interface Props {
   result: Result; names: Record<string, string>; time: number;
-  onSeek(t: number): void; onReassign(index: number, speaker: string): void;
+  onSeek(t: number): void; onReassign(index: number, speaker: string): void; /** Give the line to a new speaker with this name (empty: the usual default name). */ onNewSpeaker(index: number, name: string): void;
   onEdit(index: number, text: string): void; onRevert(index: number): void; onChapter(index: number, title: string | null): void; onMark(index: number): void; onHeard(index: number): void; onSplit(index: number, wordIndex: number): void; onLanguage(index: number, lang: string | null): void; onRetranscribe(index: number, language: string): void; onTranslate(index: number, remove?: boolean): void; playing: boolean; onPause(): void; reviewAt?: UnsureRef | null; translatingIndex?: number | null; canRetranscribe: boolean; onJoin(index: number): void;
   highlights?: Highlight[]; onHighlight?(index: number, from: number, to: number): void;
   /** Show the language of every line, not only lines that differ from the recording. */ showLang?: boolean;
@@ -22,11 +23,16 @@ const DOUBLE_CLICK_MS = 260;
 /** Space between two lines (the .pv-rows gap), and how far past the visible area lines stay drawn, in px. */
 const GAP = 2, OVERSCAN = 700;
 
-export default function Transcript({ easy = false, showLang, result, names, time, onSeek, onReassign, onEdit, onRevert, onChapter, onMark, onHeard, onSplit, onJoin, onLanguage, onRetranscribe, onTranslate, playing, onPause, reviewAt = null, translatingIndex = null, canRetranscribe, highlights = [], onHighlight, query = "", findOpts = FIND_DEFAULTS, matchSeg = -1 }: Props) {
+export default function Transcript({ easy = false, showLang, result, names, time, onSeek, onReassign, onNewSpeaker, onEdit, onRevert, onChapter, onMark, onHeard, onSplit, onJoin, onLanguage, onRetranscribe, onTranslate, playing, onPause, reviewAt = null, translatingIndex = null, canRetranscribe, highlights = [], onHighlight, query = "", findOpts = FIND_DEFAULTS, matchSeg = -1 }: Props) {
   const t = useT();
   const color = (sp: string) => PALETTE[Math.max(0, result.speakers.indexOf(sp)) % PALETTE.length];
   const label = (sp: string) => displayName(sp, result.speakers, names);
   const [menu, setMenu] = useState<number | null>(null);
+  /** The "Who said this line?" menu: the text typed in its filter, whether the new speaker's name is being typed, and that name. */
+  const [who, setWho] = useState({ filter: "", naming: false, name: "" });
+  const [whoNote, setWhoNote] = useState("");
+  useEffect(() => { setWho({ filter: "", naming: false, name: "" }); setWhoNote(""); }, [menu]);
+  const closeWho = (i: number) => { setMenu(null); document.querySelector<HTMLElement>(`[data-who="${i}"]`)?.focus(); };
   const [langPop, setLangPop] = useState<number | null>(null);
   const langBox = useRef<HTMLDivElement>(null);
   const closeLang = (i: number) => { setLangPop(null); setTimeout(() => document.querySelector<HTMLElement>(`[data-who="${i}"]`)?.focus(), 0); };
@@ -217,6 +223,16 @@ export default function Transcript({ easy = false, showLang, result, names, time
   useEffect(() => { if (follow && active >= 0) goTo(active, "nearest"); }, [active, follow]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (matchSeg >= 0) goTo(matchSeg, "center"); }, [matchSeg, q]); // eslint-disable-line react-hooks/exhaustive-deps
   const inUse = new Set(result.segments.map((s) => s.speaker));
+  const listed = (cur: string) => result.speakers.filter((sp) => inUse.has(sp) || sp === cur);
+  /** Keys in the "Who said this line?" menu: arrows move through the entries (also out of the filter); typing a letter on an entry goes to the filter. */
+  const whoKeys = (e: ReactKeyEvent<HTMLElement>, filterShown: boolean) => {
+    if (e.target instanceof HTMLInputElement) { if (e.key === "ArrowDown" || e.key === "ArrowUp") onMenuKeyDown(e); return; }
+    if (filterShown && e.key.length === 1 && e.key !== " " && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      e.preventDefault(); setWho((w) => ({ ...w, filter: w.filter + e.key }));
+      menuBox.current?.querySelector<HTMLElement>(".pv-who-filter")?.focus(); return;
+    }
+    onMenuKeyDown(e);
+  };
   /** Highlighted words get a colour: kept highlights in yellow, suggestions from the language model dotted until the user decides. */
   const hlClass = (w: { start: number; end: number; word: string }) => { const h = highlights.find((x) => wordIn(w as never, x)); return h ? (h.suggested ? " hl sug" : " hl") : ""; };
 
@@ -259,7 +275,7 @@ export default function Transcript({ easy = false, showLang, result, names, time
       <div className="pv-rows" role="list" ref={listRef}>
       {layout.map((it) => {
         if ("gap" in it) return <div key={it.key} className="pv-gap" aria-hidden style={{ height: it.gap, flex: "none" }} />;
-        const i = it.i, seg = result.segments[i];
+        const i = it.i, seg = result.segments[i], spk = menu === i ? listed(seg.speaker) : [];
         return (
         <div key={i} role="listitem" aria-posinset={i + 1} aria-setsize={n} onFocus={() => setFocusRow(i)}
           data-turn={i} className={"pv-turn" + (seg.marked ? " marked" : "") + (i === active ? " now" : "") + (i === matchSeg ? " found" : "") + (i > 0 && result.segments[i - 1].speaker === seg.speaker ? " cont" : "")}>
@@ -290,13 +306,38 @@ export default function Transcript({ easy = false, showLang, result, names, time
             {!easy && <button type="button" className="pv-copy" onClick={() => copyQuote(i)} aria-label={t("Copy this line as a quote with the speaker and time")} title={t("Copy as a quote, with speaker and time")}>{copied === i ? t("Copied ✓") : t("Copy quote")}</button>}
           </div>
           {menu === i && (
-            <div ref={menuBox} className="menu pv-turn-menu" role="menu" aria-label={t("Who said this line?")} onKeyDown={onMenuKeyDown}>
+            <div ref={menuBox} className="menu pv-turn-menu" role="menu" aria-label={t("Who said this line?")} onKeyDown={(e) => whoKeys(e, spk.length >= FILTER_AT)}>
               <div className="pv-menu-title" aria-hidden>{t("Who said this line?")}</div>
-              {result.speakers.filter((sp) => inUse.has(sp) || sp === seg.speaker).map((sp) => (
+              {spk.length >= FILTER_AT && (
+                <input type="search" className="input pv-who-filter" value={who.filter} dir="auto" autoComplete="off" spellCheck={false} aria-label={t("Find a speaker")} placeholder={t("Find a speaker")}
+                  onChange={(e) => { const f = e.target.value, n = filterSpeakers(spk, label, f).length; setWho({ ...who, filter: f }); setWhoNote(f.trim() ? (n === 0 ? t("No speaker matches") : n === 1 ? t("1 speaker matches") : t("{count} speakers match", { count: n })) : ""); }}
+                  onKeyDown={(e) => { if (e.key === "Escape" && who.filter) { e.preventDefault(); e.stopPropagation(); setWho({ ...who, filter: "" }); setWhoNote(""); } }} />
+              )}
+              {filterSpeakers(spk, label, who.filter).map((sp) => (
                 <button key={sp} type="button" role="menuitemradio" aria-checked={sp === seg.speaker} onClick={() => { setMenu(null); onReassign(i, sp); document.querySelector<HTMLElement>(`[data-who="${i}"]`)?.focus(); }}>
                   <span className="pv-menu-item"><span className="sw" style={{ background: color(sp) }} aria-hidden /><b>{label(sp)}</b><span aria-hidden>{sp === seg.speaker ? "✓" : ""}</span></span>
                 </button>
               ))}
+              {who.filter.trim() && filterSpeakers(spk, label, who.filter).length === 0 && <div className="pv-menu-none" aria-hidden>{t("No speaker matches")}</div>}
+              {who.naming ? (
+                <div className="pv-who-new" role="group" aria-label={t("New speaker")}>
+                  <input autoFocus type="text" className="input" dir="auto" value={who.name} autoComplete="off" aria-label={t("Name of the new speaker")} placeholder={t("Name of the new speaker")}
+                    onChange={(e) => setWho({ ...who, name: e.target.value })}
+                    onKeyDown={(e) => {
+                      if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); setWho({ ...who, naming: false }); setTimeout(() => menuBox.current?.querySelector<HTMLElement>(".pv-who-add")?.focus(), 0); }
+                      else if (e.key === "Enter") { e.preventDefault(); closeWho(i); onNewSpeaker(i, who.name); }
+                    }} />
+                  <div className="pv-editor-row">
+                    <button type="button" className="btn sun small" onClick={() => { closeWho(i); onNewSpeaker(i, who.name); }}>{t("Add speaker")}</button>
+                    <button type="button" className="btn quiet small" onClick={() => { setWho({ ...who, naming: false }); setTimeout(() => menuBox.current?.querySelector<HTMLElement>(".pv-who-add")?.focus(), 0); }}>{t("Cancel")}</button>
+                  </div>
+                </div>
+              ) : (
+                <button type="button" role="menuitem" className="pv-who-add" onClick={() => setWho({ ...who, naming: true, name: who.filter.trim() })}>
+                  <span className="pv-menu-item"><b>{t("+ New speaker…")}</b></span>
+                </button>
+              )}
+              <div className="pv-sr" role="status" aria-live="polite" aria-atomic="true">{whoNote}</div>
               {!easy && <><div className="pv-menu-sep" role="separator" />
               <button type="button" role="menuitem" aria-haspopup="dialog" onClick={() => { setMenu(null); setLangPop(i); }}>
                 <span className="pv-menu-item"><b>{t("Language and translation…")}</b></span>

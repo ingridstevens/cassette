@@ -3,6 +3,7 @@ import { useT } from "../i18n";
 import FitCard from "./FitCard";
 import ReviewBar from "./ReviewBar";
 import StartSheet, { TRIAL_SECONDS, spanText, useStartEstimate } from "./StartSheet";
+import { assignToNamed } from "../speakerMenu";
 import { toggleHeard, acceptWord, addHighlight, fixWord, highlightOf, unsureWords, withSuggestions, ExportOpts, LastExport, Options, DraftLine, IS_MAC, JobProgress, MOD_KEY, PALETTE, Project, Result, baseName, displayName, fmt, isUnsure, joinWithPrevious, retext, revertLine, splitSegment } from "../types";
 import "../styles/project.css";
 import ExportMenu from "./ExportMenu";
@@ -370,6 +371,18 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
     if (from === to) return;
     setSpeaker(i, from, to);
     setMoved({ from, to, idx: i });
+    setAnnounce(t("Line at {time} now said by {name}", { time: fmt(result.segments[i].start), name: displayName(to, result.speakers, names) }));
+  }
+  /** A new speaker (or, when the name is taken, the existing one) gets the line. Speakers, names and the line change in one edit, so one Undo takes it all back. */
+  function newSpeaker(i: number, typed: string) {
+    if (!result) return;
+    const out = assignToNamed(result, names, i, typed, (id) => displayName(id, result.speakers, names));
+    if (!out) return;
+    const time = fmt(result.segments[i].start), who = displayName(out.id, out.result.speakers, out.names);
+    if (out.id === result.segments[i].speaker) { setAnnounce(t("Line at {time} is already said by {name}", { time, name: who })); return; }
+    onPatch({ result: out.result, names: out.names }, out.created ? t("add a speaker and give them a line") : t("change speaker"));
+    setMoved(null);
+    setAnnounce(out.created ? t("Added speaker {name}. They now say the line at {time}", { time, name: who }) : t("Line at {time} now said by {name}", { time, name: who }));
   }
   function moveAll() {
     if (!result || !moved) return;
@@ -537,7 +550,7 @@ export default function ProjectView({ project, progress, draft, blocker, waiting
             <button type="button" className="btn quiet small" onClick={() => onRemember?.({ unsureLegendSeen: true })}>{t("Got it")}</button>
           </div>
         )}
-        <Transcript easy={easy} showLang={easy ? false : showLang} result={result} names={names} time={time} query={query} findOpts={findOpts} highlights={highlights} onHighlight={easy ? undefined : (i, a, b) => { const h = highlightOf(result.segments[i], a, b); if (h) patchResult((x) => ({ ...x, highlights: addHighlight(x.highlights ?? [], h) })); }} matchSeg={matches[mi] ?? -1} onSeek={(t) => player.current?.seek(t)} onReassign={reassign}
+        <Transcript easy={easy} showLang={easy ? false : showLang} result={result} names={names} time={time} query={query} findOpts={findOpts} highlights={highlights} onHighlight={easy ? undefined : (i, a, b) => { const h = highlightOf(result.segments[i], a, b); if (h) patchResult((x) => ({ ...x, highlights: addHighlight(x.highlights ?? [], h) })); }} matchSeg={matches[mi] ?? -1} onSeek={(t) => player.current?.seek(t)} onReassign={reassign} onNewSpeaker={newSpeaker}
           onEdit={(i, text) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => (k === i ? retext(s, text) : s)) } }, t("edit a line"))}
           canRetranscribe={canTranscribe} reviewAt={reviewAt} translatingIndex={translating} playing={playing} onPause={() => player.current?.pause()}
           onTranslate={async (i, remove) => {
