@@ -12,6 +12,7 @@ export const shortcutList = (t: TFn): [string, string][] => [
   ["M / Shift+M", t("Next or previous marked line")],
   ["C / Shift+C", t("Next or previous chapter")],
   ["R", t("Review the unsure words")],
+  ["Enter / Shift+Enter / ↓ / ↑", t("While reviewing unsure words: save and go on, play again, skip, go back")],
   ["G", t("Go to a time in the recording")],
   ["[ / ]", t("Mark the start and the end of a clip at the playhead")],
   ["S", t("Save the marked clip")],

@@ -10,5 +10,6 @@ describe("shortcutList", () => {
   it("passes every description through the translator", () => {
     expect(shortcutList((s) => `<${s}>`).every(([, text]) => text.startsWith("<"))).toBe(true);
   });
+  it("lists the keys that work while reviewing unsure words", () => { expect(list.some(([k, d]) => k.includes("Shift+Enter") && /reviewing/.test(d))).toBe(true); });
   it("re-exports parseTime", () => { expect(parseTime("1:30")).toBe(90); });
 });
