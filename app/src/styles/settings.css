@@ -228,3 +228,5 @@ kbd { font: 12.5px ui-monospace, Menlo, monospace; padding: 2px 8px; border-radi
 .st-chip .i { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.4; }
 .st-token .st-mask-label { align-self: flex-start; font-size: 12.5px; font-weight: 600; color: var(--ink2); }
 .st-token .st-mask.st-empty { color: var(--ink3); border-style: dashed; font-family: var(--font-ui); font-size: 13px; }
+.st-fmt { border: 0; margin: 14px 0 0; padding: 0; display: grid; gap: 6px; min-width: 0; }
+.st-fmt legend { font-size: 15px; font-weight: 650; padding: 0; margin-bottom: 6px; }

@@ -27,6 +27,24 @@ The menu is grouped: **Read and share** (Word, text, Markdown, anonymised, Text 
 **Export all as CSV** (sidebar, shown when two or more projects are finished) writes one spreadsheet with a
 `project` column followed by the usual columns.
 
+## Choose which formats the menu shows
+
+The menu lists a few formats up front (Word, plain text, Print / PDF, Large-print PDF, subtitles and meeting minutes) and keeps the
+rest under **More formats…**. To change what is up front, open **Settings, Saving and export, Formats in the Export menu** and tick
+the formats you use. The list is grouped like the menu and the change applies at once; it is remembered between runs and is the same for
+every project.
+
+- **Nothing is lost.** A format you do not tick is still in the menu under **More formats…**. At the bottom of that list,
+  **Choose which formats to show…** takes you back to the setting.
+- **Bring a format back:** tick it again, or press **Reset to the default set**.
+- It only changes the menu. The `⌘E` / `Ctrl+E` shortcut, **Again: …** (the last export of the project, or the
+  format chosen under "First item in the Export menu") and **Export all as CSV** work as before.
+- A format that needs something from the project (chapters, highlights) still says why it is greyed out when it is listed.
+- **Easy mode** keeps its own two items (Word and Print / PDF), whatever is ticked here.
+- You can untick everything: the menu then shows only **More formats…**.
+- With the keyboard, Tab to a checkbox and press Space; each checkbox is labelled with its format name and description, and a
+  line under the list says how many are listed up front.
+
 The **Text style…** item at the bottom of the menu is not an export; it sets how the text formats are written (below).
 
 ## The JSON file

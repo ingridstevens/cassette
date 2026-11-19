@@ -194,7 +194,7 @@ the first match.
   download), the same as on the first screen. Once it is set up you can switch it off for new projects, or delete it.
 - **Summaries and translation:** the language model for highlights and summaries, and the translation model, each with **Use** and **Delete**.
 - **Saving and export:** optionally save a backup file (`name.transcript.json`) next to each recording after transcribing. Transcribing the same
-  recording again replaces that file. Your audio is never changed or moved.
+  recording again replaces that file. Your audio is never changed or moved. **Formats in the Export menu** lets you tick which formats the menu lists up front (the rest stay under *More formats…*; see [Exporting](exporting.md#choose-which-formats-the-menu-shows)).
 - **Text and language:** **Text size** (four sizes, each shown with its percentage, scales the whole app), the language of the app (*Match my computer*, English, Deutsch, Français or
   Español; the translations are machine-assisted and not yet reviewed), the **look** (*Clean*, the default: flat, with one blue-green accent, in the Inter font; or
   *Fairytale sunset*; same layout, only the colours differ), **Light or dark**, **Contrast** (*Standard* or *High contrast*: stronger colours and heavier borders),

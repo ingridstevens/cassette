@@ -2,45 +2,11 @@ import { KeyboardEvent, useEffect, useLayoutEffect, useRef, useState } from "rea
 import { createPortal } from "react-dom";
 import { useT } from "../i18n";
 import { ExportOpts, LastExport } from "../types";
-import { formatsFor } from "../easy";
+import { ALL, EXPORT_CHOICES, GROUPS, shownFormats } from "../exportFormats";
 import ExportOptions, { OptionsKind, loadExportOpts } from "./ExportOptions";
 import "../styles/project.css";
 
-/** Grouped by what the export is for. */
-const GROUPS: { title: string; formats: readonly (readonly [string, string, string])[] }[] = [
-  { title: "Read and share", formats: [
-    ["docx", "Word document", ".docx · speakers in bold, with times"],
-    ["txt", "Plain text", ".txt · [time] Speaker: text"],
-    ["md", "Markdown", ".md"],
-    ["copy-md", "Copy as Markdown", "To the clipboard, to paste into a note app · follows the Text style settings"],
-    ["print", "Print / PDF", ".pdf · the transcript only, ready to print"],
-    ["print-large", "Large-print PDF", ".pdf · 150% text size, for easier reading"],
-    ["redacted", "Anonymised text", ".txt · speaker names replaced by P01, P02…; other names in the text are not found"],
-    ["text", "Text style…", "Keep or remove “um”, mark pauses, show or hide times"],
-  ] },
-  { title: "Subtitles and video", formats: [
-    ["srt", "Subtitles (.srt)", "Line length, speaker names, time shift"],
-    ["vtt", "Web subtitles (.vtt)", "For web video"],
-    ["chapters", "Chapters (text)", "0:00 Title per line · YouTube and podcasts"],
-    ["edl", "Markers (DaVinci Resolve .edl)", "Chapters or speaker turns as timeline markers"],
-  ] },
-  { title: "Data", formats: [
-    ["csv", "Spreadsheet", ".csv · start and end times, speaker, text"],
-    ["json", "Everything (JSON)", ".json · all lines, words and speakers"],
-    ["changes", "Original vs. edited", ".txt · every line you changed, before and after"],
-  ] },
-  { title: "Highlights and minutes", formats: [
-    ["minutes", "Meeting minutes (Word)", ".docx · summary, attendees, decisions, key quotes, record"],
-    ["highlights", "Highlights (Word)", ".docx · quotes with speaker, time and reason"],
-    ["quotes", "Highlights and marked lines (text)", ".txt · your highlights and marked lines as quotes"],
-  ] },
-];
-
-/** The few formats most people use, shown first. Everything else sits behind "More formats". */
-const PRIMARY = ["docx", "txt", "print", "print-large", "srt", "minutes"] as const;
-const ALL = GROUPS.flatMap((g) => g.formats);
-/** Formats that can be chosen as the default in Settings (the text-style dialog only saves settings, it exports nothing). */
-export const EXPORT_CHOICES = ALL.filter(([f]) => f !== "text" && f !== "copy-md");
+export { EXPORT_CHOICES };
 /** Technical names that are the same in every language; the other formats use their menu label. */
 const SHORT: Record<string, string> = { srt: "SRT", vtt: "VTT", edl: "EDL", csv: "CSV", json: "JSON" };
 
@@ -60,7 +26,7 @@ const WITH_OPTIONS = new Set(["srt", "vtt", "edl", "text"]);
 export const STYLED = new Set(["txt", "md", "copy-md", "docx", "csv", "minutes", "redacted"]);
 /** Options a format needs when it is run without asking (the saved ones for subtitles and styled text, none for the rest). */
 const usualOpts = (f: string): Record<string, unknown> => (WITH_OPTIONS.has(f) || STYLED.has(f) ? { ...loadExportOpts() } : {});
-export default function ExportMenu({ onExport, openSignal = 0, hasChapters = false, markedCount = 0, lastExport, defaultFormat, onRemember, easy = false }: { easy?: boolean; onExport(format: string, options?: ExportOpts): Promise<Res>; openSignal?: number; hasChapters?: boolean; markedCount?: number; lastExport?: LastExport; defaultFormat?: string; onRemember?(format: string, options: Record<string, unknown>): void }) {
+export default function ExportMenu({ onExport, openSignal = 0, hasChapters = false, markedCount = 0, lastExport, defaultFormat, onRemember, easy = false, shown, onOpenSettings }: { easy?: boolean; /** The formats chosen in Settings to show up front (undefined = the default set). */ shown?: string[]; onOpenSettings?(section?: string): void; onExport(format: string, options?: ExportOpts): Promise<Res>; openSignal?: number; hasChapters?: boolean; markedCount?: number; lastExport?: LastExport; defaultFormat?: string; onRemember?(format: string, options: Record<string, unknown>): void }) {
   const t = useT();
   const [asking, setAsking] = useState<OptionsKind | null>(null);
   const [open, setOpen] = useState(false);
@@ -106,6 +72,7 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
     const label = details ? t("{format} ({details})", { format: name, details }) : name;
     return lastExport ? t("Again: {what}", { what: label }) : t("Usual: {what}", { what: label });
   })();
+  const up = shownFormats(shown, easy);
   const host = trigger.current?.closest(".pview") ?? document.body;
   const item = ([f, label, hint]: readonly [string, string, string]) => (
     <button key={f} type="button" role="menuitem" aria-disabled={(f === "chapters" && !hasChapters) || ((f === "quotes" || f === "highlights") && !markedCount) ? true : undefined}
@@ -134,14 +101,16 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
                 }}><b>{againText}</b></button>
               </div>
             )}
-            <div role="group" aria-label={t("Most used")}>
-              {formatsFor(PRIMARY.map((f) => ALL.find((x) => x[0] === f)!), easy).map(item)}
-            </div>
+            {up.length > 0 && (
+              <div role="group" aria-label={t("Most used")}>
+                {up.map((f) => item(ALL.find((x) => x[0] === f)!))}
+              </div>
+            )}
             {!easy && <button type="button" role="menuitem" className="menu-more" aria-expanded={more} onClick={() => setMore(!more)}>
               <b>{more ? t("Fewer formats") : t("More formats…")}</b>
             </button>}
             {!easy && more && GROUPS.map((g) => {
-              const rest = g.formats.filter(([f]) => !(PRIMARY as readonly string[]).includes(f));
+              const rest = g.formats.filter(([f]) => !up.includes(f));
               return rest.length === 0 ? null : (
                 <div key={g.title} role="group" aria-label={t(g.title)}>
                   <div className="menu-head" aria-hidden="true">{t(g.title)}</div>
@@ -149,6 +118,11 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
                 </div>
               );
             })}
+            {!easy && more && onOpenSettings && (
+              <button type="button" role="menuitem" className="menu-more" onClick={() => { setOpen(false); onOpenSettings("Saving and export"); }}>
+                <b>{t("Choose which formats to show…")}</b>
+              </button>
+            )}
           </div>
         )}
       </div>

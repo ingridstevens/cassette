@@ -38,7 +38,7 @@ export default function SettingsPage({ opts, set, status, models, onBack, onRese
   const index: [string, Section][] = [
     [t("Model in use"), "Transcription"], [t("Engine: Whisper, Parakeet, Moonshine"), "Transcription"], [t("Delete a model"), "Transcription"], [t("Use a models folder"), "Transcription"], [t("Language of recordings"), "Transcription"],
     [t("Speaker detection and Hugging Face token"), "Speakers"], [t("Summary model"), "Summaries and translation"], [t("Translation model"), "Summaries and translation"],
-    [t("Backup copy"), "Saving and export"], [t("Text size"), "Text and language"], [t("Simple mode (fewer buttons)"), "Text and language"], [t("Language of the app"), "Text and language"], [t("Light or dark"), "Text and language"], [t("High contrast"), "Text and language"], [t("Colour mood"), "Text and language"], [t("Keyboard shortcuts"), "Text and language"],
+    [t("Backup copy"), "Saving and export"], [t("Formats in the Export menu"), "Saving and export"], [t("First item in the Export menu"), "Saving and export"], [t("Text size"), "Text and language"], [t("Simple mode (fewer buttons)"), "Text and language"], [t("Language of the app"), "Text and language"], [t("Light or dark"), "Text and language"], [t("High contrast"), "Text and language"], [t("Colour mood"), "Text and language"], [t("Keyboard shortcuts"), "Text and language"],
     [t("Every network call"), "Privacy"], [t("What is stored where"), "Privacy"], [t("Hugging Face token"), "Privacy"], [t("Activity log"), "Privacy"],
     [t("Processor (CPU or Apple GPU)"), "Advanced"], [t("Language checker"), "Advanced"], [t("Models folder"), "Advanced"], [t("Copy diagnostics"), "Advanced"], [t("Reset all settings"), "Advanced"], [t("Version and licence"), "About"],
   ];

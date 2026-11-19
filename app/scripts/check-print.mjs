@@ -18,7 +18,7 @@ const main = readFileSync("electron/main.ts", "utf8");
 if (!/ipcMain\.handle\("print-pdf"/.test(main) || !/printToPDF/.test(main)) fail("main.ts has no print-pdf handler");
 if (!/printPdf/.test(readFileSync("electron/preload.ts", "utf8"))) fail("preload.ts does not expose printPdf");
 const menu = readFileSync("src/components/ExportMenu.tsx", "utf8");
-if (!/PRIMARY = \[[^\]]*"print"[^\]]*"print-large"/.test(menu)) fail("the export menu does not list the print formats in the most-used group");
+if (!/DEFAULT_SHOWN[^=]*= \[[^\]]*"print"[^\]]*"print-large"/.test(readFileSync("src/exportFormats.ts", "utf8"))) fail("the export menu does not list the print formats in the most-used group");
 
 // "Again" export: the last export is saved with the project and offered first in the menu
 if (!/lastExport/.test(readFileSync("src/useProjects.ts", "utf8"))) fail("useProjects.ts no longer saves lastExport");
