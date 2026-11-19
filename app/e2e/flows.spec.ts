@@ -121,7 +121,7 @@ test("Export > Copy as Markdown puts the text on the clipboard and is not rememb
   await page.getByRole("button", { name: "Export" }).click();
   await page.getByRole("menuitem", { name: "More formats…" }).click();
   await page.getByRole("menuitem", { name: /^Copy as Markdown/ }).click();
-  await expect(page.getByText("Copied as Markdown ✓")).toBeVisible();
+  await expect(page.locator(".toast").getByText("Copied as Markdown ✓")).toBeVisible();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toContain("**Anna**");
   expect(exported).toEqual([]); // nothing was saved to a file
   await page.getByRole("button", { name: "Export" }).click();
@@ -144,4 +144,13 @@ test("Settings > Formats in the Export menu changes what the menu lists first, a
   await expect(page.getByRole("menuitem", { name: /^Plain text/ })).toBeVisible();
   await page.getByRole("menuitem", { name: "Choose which formats to show…" }).click();
   await expect(page.getByRole("button", { name: "Reset to the default set" })).toBeEnabled();
+});
+
+test("screen-reader announcements: a finished transcription and an export are spoken in live regions", async ({ page }) => {
+  await startFirstRecording(page);
+  // the polite region is always in the page; its text is what a screen reader reads out
+  await expect(page.getByRole("status").filter({ hasText: /^Finished transcribing / })).toHaveCount(1);
+  await page.getByRole("button", { name: "Export" }).click();
+  await page.getByRole("menuitem").first().click();
+  await expect(page.getByRole("status").filter({ hasText: /Exported/ })).toHaveCount(1);
 });

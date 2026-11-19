@@ -126,7 +126,10 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
           </div>
         )}
       </div>
-      {msg && <div className={"toast" + (bad ? " pv-toast-bad" : "")} role={bad ? "alert" : "status"}><span>{msg}</span></div>}
+      {/* The live regions stay in the page and only their text changes: a region inserted together with its text is often not announced. */}
+      <div className="pv-sr" role="status" aria-live="polite" aria-atomic="true">{bad ? "" : msg}</div>
+      <div className="pv-sr" role="alert" aria-atomic="true">{bad ? msg : ""}</div>
+      {msg && <div className={"toast" + (bad ? " pv-toast-bad" : "")} aria-hidden="true"><span>{msg}</span></div>}
     </>
   );
 }
