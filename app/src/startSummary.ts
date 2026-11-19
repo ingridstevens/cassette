@@ -11,7 +11,7 @@ export function summaryLine(t: TFn, eff: Options): string {
     : eff.numSpeakers === "range" ? t("{from} to {to} speakers", { from: eff.minSpeakers ?? "2", to: eff.maxSpeakers ?? "4" })
     : eff.numSpeakers ? t("{count} speakers", { count: eff.numSpeakers })
     : t("find speakers");
-  return [language, t("{model} model", { model: modelName(eff.model) }), speakers, ...(eff.translate ? [t("with translation")] : [])].join(" · ");
+  return [language, t("{model} model", { model: modelName(eff.model) }), speakers, ...(eff.translate ? [t("with translation")] : []), ...(eff.audioCleanup && eff.audioCleanup !== "off" ? [t("cleaned sound")] : [])].join(" · ");
 }
 
 const KEY = "startSettingsOpen";

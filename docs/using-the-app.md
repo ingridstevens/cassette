@@ -161,6 +161,13 @@ These apply the next time you transcribe that project:
   sample sentence with hesitations in the recording's language (German, English, French, Spanish; other languages get no sample). It is a
   nudge, not a guarantee, and it has only been checked on clean text-to-speech samples, which contain no hesitations. For what the *export*
   does with hesitations, pauses and times, see *Text style* in [Exporting](exporting.md) and [Verbatim, pauses and timestamps](verbatim.md).
+- **Clean up the sound first** (advanced, off by default): runs the recording through ffmpeg filters before it is transcribed. *Even out the
+  volume* normalises loudness (`loudnorm`), *Reduce steady noise* cuts low rumble and constant background hiss (`highpass` and `afftdn`), *Both*
+  does both. It can help with quiet or noisy recordings, but it can also blur quiet words and make the text worse, so try it on a short stretch
+  (**Transcribe a range**) and compare before using it on a whole recording. Your file is never changed: the engine decodes a temporary copy
+  in the app's private temp folder, cleans that, and deletes it when the run ends, fails or is cancelled. The waveform, playback and audio
+  clips keep using the original. The filters come with ffmpeg; nothing is downloaded and there is no neural denoiser. Speaker detection
+  hears the cleaned copy too. No before-and-after estimate is shown, and the effect on real recordings has not been measured yet.
 - **Skip silence:** ignores long pauses. Faster, but can miss quiet speech.
 - **Transcript only:** don't work out who is speaking.
 - **Names and special words:** a list (for example `Müller GmbH, pyannote`) that helps the model spell them.

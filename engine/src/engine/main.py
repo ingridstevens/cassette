@@ -25,8 +25,11 @@ def cmd_transcribe(a) -> None:
     with tempfile.TemporaryDirectory() as tmp:
         wav = Path(tmp) / "audio.wav"
         progress("decode", None, "Decoding audio")
+        cleanup = getattr(a, "audio_cleanup", "off")  # callers that build their own args (tests, older code) leave it off
+        if cleanup != "off":
+            log(f"Audio cleanup ({cleanup}) is applied to a temporary copy; your file is not changed.")
         log(f"Input: {a.input}" + (f" (range {a.start or 0:.1f}s-{a.end}s)" if a.start or a.end else ""))
-        decode(a.input, wav, a.start, a.end)
+        decode(a.input, wav, a.start, a.end, cleanup)
         from .audio import load_wav
 
         data, sr = load_wav(wav)
@@ -341,6 +344,7 @@ def build_parser() -> argparse.ArgumentParser:
     t.add_argument("--vad", action="store_true", help="skip silence")
     t.add_argument("--backend", default="auto", choices=["auto", "faster", "mlx"], help="auto: the Apple GPU engine (MLX) when it is installed and downloaded, otherwise faster-whisper")
     t.add_argument("--prompt", help="custom vocabulary / initial prompt")
+    t.add_argument("--audio-cleanup", choices=["off", "level", "denoise", "both"], default="off", help="even out loudness and/or reduce steady noise on a temporary copy before transcribing (can also hurt: off by default)")
     t.add_argument("--no-diarize", action="store_true")
     t.add_argument("--mixed-languages", choices=["auto", "on", "off"], default="auto",
                    help="auto: check each speaker's language and switch to per-speaker detection when several are found")
