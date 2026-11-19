@@ -575,3 +575,84 @@ def test_md_copy_adds_highlights_as_quotes_and_file_export_is_unchanged():
     assert "Ben, 1:05" not in to_md(segs, names, {"highlights": hl, "timestamps": False})
     assert to_md(segs, names, {"highlights": []}) == plain
 
+
+
+def _stamp_export(tmp_path, fmt, stamp=True, **extra):
+    import argparse
+
+    from engine import main
+
+    data = {"app": "0.1.0", "language": "de", "lang": "en", "segments": [{**s} for s in SEGS], "speakers": NAMES,
+            "meta": {"model": "small", "device": "cpu"}, "options": {"stamp": stamp, "excel": True}, **extra}
+    t = tmp_path / "t.json"
+    t.write_text(json.dumps(data))
+    out = tmp_path / f"o.{fmt}"
+    main.cmd_export(argparse.Namespace(transcript=str(t), output=str(out), format=fmt, key_output=None))
+    return out
+
+
+def test_stamp_text_uses_the_json_provenance_fields_and_has_no_date_or_path():
+    from engine.export import provenance, stamp_text
+
+    data = {"app": "0.1.0", "language": "de", "segments": SEGS, "meta": {"model": "small", "device": "cpu"}}
+    one = stamp_text(data)
+    eng = provenance(data)["engine"]
+    assert one.startswith("Cassette 0.1.0 (export format 1, ")
+    assert "language de" in one and "model small" in one and (not eng or f"engine {eng}" in one)
+    assert "cpu" not in one and "/" not in one and one == stamp_text(data)
+    assert stamp_text({"segments": []}).startswith("Cassette")
+
+
+def test_stamp_is_off_by_default_so_exports_stay_identical(tmp_path):
+    for fmt in ("txt", "csv", "md"):
+        assert "export format" not in _stamp_export(tmp_path, fmt, stamp=False).read_text(encoding="utf-8")
+    from engine.export import to_csv, to_md, to_txt
+    assert to_txt(SEGS, NAMES) == to_txt(SEGS, NAMES, {"stampText": None})
+    assert to_csv(SEGS, NAMES) == to_csv(SEGS, NAMES, {})
+    assert to_md(SEGS, NAMES) == to_md(SEGS, NAMES, {})
+
+
+def test_stamp_txt_and_md_end_with_one_line(tmp_path):
+    t = _stamp_export(tmp_path, "txt").read_text(encoding="utf-8")
+    assert t.splitlines()[-1].startswith("Cassette 0.1.0") and "language de" in t and "model small" in t
+    assert "[01:01:01] SPEAKER_01: Bonjour." in t
+    m = _stamp_export(tmp_path, "md").read_text(encoding="utf-8")
+    assert m.splitlines()[-1].startswith("_Cassette 0.1.0")
+
+
+def test_stamp_csv_is_a_last_row_that_keeps_columns_and_survives_excel_option(tmp_path):
+    import csv
+    import io
+
+    raw = _stamp_export(tmp_path, "csv").read_text(encoding="utf-8")
+    assert raw.startswith("﻿start_seconds,end_seconds,start,end,speaker,text,overlap,language,translation")
+    rows = list(csv.reader(io.StringIO(raw.lstrip("﻿"))))
+    assert rows[0] == ["start_seconds", "end_seconds", "start", "end", "speaker", "text", "overlap", "language", "translation"]
+    assert len(rows) == 4 and all(len(r) == 9 for r in rows)
+    assert rows[1][4] == "Anna" and rows[2][4] == "SPEAKER_01"  # data rows unchanged
+    last = rows[-1]
+    assert last[:4] == ["", "", "", ""] and last[4] == "#" and last[5].startswith("Cassette 0.1.0") and "model small" in last[5]
+
+
+def test_stamp_docx_footer_and_minutes_carry_it(tmp_path):
+    from docx import Document
+
+    d = Document(str(_stamp_export(tmp_path, "docx")))
+    foot = "\n".join(p.text for p in d.sections[0].footer.paragraphs)
+    assert "Cassette 0.1.0" in foot and "model small" in foot
+    m = Document(str(_stamp_export(tmp_path, "minutes")))
+    assert m.paragraphs[-1].text.startswith("Cassette 0.1.0")
+    plain = Document(str(_stamp_export(tmp_path, "docx", stamp=False)))
+    assert "export format" not in "\n".join(p.text for p in plain.sections[0].footer.paragraphs)
+    assert not Document(str(_stamp_export(tmp_path, "minutes", stamp=False))).paragraphs[-1].text.startswith("Cassette")
+
+
+def test_stamp_never_goes_into_subtitles_json_edl_or_the_anonymised_export(tmp_path):
+    for fmt in ("srt", "vtt", "edl", "json", "redacted", "chapters", "changes"):
+        out = _stamp_export(tmp_path, fmt)
+        assert "export format" not in out.read_text(encoding="utf-8"), fmt
+
+
+def test_stamp_cannot_be_injected_through_the_options(tmp_path):
+    out = _stamp_export(tmp_path, "txt", stamp=False, options={"stampText": "evil", "stamp": False})
+    assert "evil" not in out.read_text(encoding="utf-8")

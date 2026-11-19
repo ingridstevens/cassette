@@ -77,7 +77,12 @@ export default function ExportOptions({ kind, onCancel, onConfirm }: { kind: Opt
               <span id={id + "xl"}>{t("Spreadsheet opens in Excel")}</span>
               <button type="button" role="switch" className="switch" aria-checked={o.excel} aria-labelledby={id + "xl"} onClick={() => setO({ ...o, excel: !o.excel })} />
             </div>
-            <span className="note">{t("For .csv files. Keeps accents like ä and é right in Excel on Windows, and shows a cell that starts with = + - or @ as text. Turn it off if you load the file into other software.")}</span>
+<span className="note">{t("For .csv files. Keeps accents like ä and é right in Excel on Windows, and shows a cell that starts with = + - or @ as text. Turn it off if you load the file into other software.")}</span>
+            <div className="pv-opt-row">
+              <span id={id + "vs"}>{t("Add a version line")}</span>
+              <button type="button" role="switch" className="switch" aria-checked={o.stamp} aria-labelledby={id + "vs"} onClick={() => setO({ ...o, stamp: !o.stamp })} />
+            </div>
+            <span className="note">{t("Adds one last line to Word, text, Markdown, minutes and spreadsheet files: the Cassette and engine versions, the language and the speech model, so a result can be traced. No date, no file path, no names. In a spreadsheet it is a last row with # in the speaker column. Subtitles, JSON and the anonymised text are left as they are.")}</span>
           </>
         ) : subs ? (
           <>
