@@ -814,7 +814,6 @@ def to_minutes(segs, names=None, title=None, lang=None, summary=None, highlights
             cell.paragraphs[0].runs[0].bold = True
         # Word's "header row" flag: screen readers then announce the column name with each cell
         from docx.oxml import OxmlElement
-        from docx.oxml.ns import qn
         trPr = table.rows[0]._tr.get_or_add_trPr()
         trPr.append(OxmlElement("w:tblHeader"))
         for a in summary["actions"]:
