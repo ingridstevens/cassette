@@ -181,6 +181,7 @@ Start at [docs/README.md](docs/README.md). Every page:
 | [Highlights and summaries](docs/highlights.md) | Quotes, audio clips, summaries, search and replace |
 | [Exporting](docs/exporting.md) | Word, subtitles, spreadsheets, markers, anonymised copies |
 | [Privacy and offline use](docs/privacy-and-offline.md) | What stays on your computer, and the only network calls |
+| [Where your data is](docs/data-evidence.md) | Evidence pack for data-protection reviews: each data kind, its location, how to delete it |
 | [Confidentiality](docs/confidentiality.md) | Handling sensitive recordings |
 | [Troubleshooting](docs/troubleshooting.md) | When something isn't working, including Windows and Linux |
 | [FAQ](docs/faq.md) and [Glossary](docs/glossary.md) | Quick answers and word meanings |

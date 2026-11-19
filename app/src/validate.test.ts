@@ -1,5 +1,7 @@
+import path from "node:path";
 import { describe, expect, it } from "vitest";
-import { EXPORT_FORMATS, MODEL, MODEL_NAME, modelsOk, safeName, saveClipOk, speakerCount, transcribeProblem } from "../electron/validate";
+import { dataLocations } from "../electron/dataLocations";
+import { EXPORT_FORMATS, REVEAL_TARGETS, MODEL, MODEL_NAME, modelsOk, safeName, saveClipOk, speakerCount, transcribeProblem } from "../electron/validate";
 
 const ok = { model: "small", language: "auto", device: "auto" };
 
@@ -65,5 +67,18 @@ describe("saveClipOk", () => {
     expect(saveClipOk(1, NaN)).toBe(false);
     expect(saveClipOk("1", 2)).toBe(false);
     expect(saveClipOk(undefined, 2)).toBe(false);
+  });
+});
+
+describe("reveal targets and data locations", () => {
+  it("the window can only name a fixed place, never a path", () => {
+    for (const k of ["models", "log", "data", "recordings", "peaks", "tmp"]) expect(REVEAL_TARGETS.has(k)).toBe(true);
+    for (const k of ["/etc", "../x", "token", "projects", ""]) expect(REVEAL_TARGETS.has(k)).toBe(false);
+  });
+  it("every place lies inside the app's data folder", () => {
+    const d = dataLocations("/u/Cassette");
+    expect(d.recordings).toBe(path.join("/u/Cassette", "recordings"));
+    expect(d.projects).toBe(path.join("/u/Cassette", "projects.json"));
+    for (const p of Object.values(d)) expect(path.relative("/u/Cassette", p).startsWith("..")).toBe(false);
   });
 });

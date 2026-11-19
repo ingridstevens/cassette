@@ -10,10 +10,11 @@ import { logFile, logHideFile, logHides, logLine, logOffFile, logOn, logText } f
 import { withTempJson } from "./tempJson";
 import { registerLive } from "./live";
 import { createKnownPaths } from "./knownPaths";
-import { EXPORT_FORMATS, isNum, modelsOk, safeName, saveClipOk, speakerCount, transcribeProblem } from "./validate";
+import { EXPORT_FORMATS, REVEAL_TARGETS, isNum, modelsOk, safeName, saveClipOk, speakerCount, transcribeProblem } from "./validate";
 import { isAppNavigation } from "./navGuard";
 import { byteRange, mediaPathFromUrl, mimeFor, peaksCacheName } from "./media";
 import { createProjectsStore } from "./projectsStore";
+import { dataLocations } from "./dataLocations";
 
 // Show "Cassette" as the app name (menus, About, Dock) instead of "Electron" when run from source.
 // setName also moves the data folder, so keep it exactly where it was: nobody loses their projects or downloaded models.
@@ -274,9 +275,11 @@ app.whenReady().then(() => {
   ipcMain.handle("disk-free", () => {
     try { fs.mkdirSync(modelsDir(), { recursive: true }); const st = fs.statfsSync(modelsDir()); return st.bavail * st.bsize; } catch { return null; }
   });
-  ipcMain.handle("reveal", (_e, what: "models" | "log" | "data") => {
+  ipcMain.handle("reveal", (_e, what: unknown) => {
+    if (typeof what !== "string" || !REVEAL_TARGETS.has(what)) return;
     if (what === "models") { fs.mkdirSync(modelsDir(), { recursive: true }); return shell.openPath(modelsDir()); }
     if (what === "data") return shell.openPath(app.getPath("userData"));
+    if (what === "recordings" || what === "peaks" || what === "tmp") { const d = dataLocations(app.getPath("userData"))[what]; fs.mkdirSync(d, { recursive: true }); return shell.openPath(d); }
     if (!fs.existsSync(logFile())) fs.writeFileSync(logFile(), "");
     shell.showItemInFolder(logFile());
   });
@@ -291,6 +294,7 @@ app.whenReady().then(() => {
   ipcMain.handle("log-clear", () => { try { fs.writeFileSync(logFile(), ""); return { ok: true }; } catch (e) { return { ok: false, error: String((e as Error).message) }; } });
   ipcMain.handle("paths", () => ({
     models: modelsDir(), log: logFile(), token: tokenFile(), data: app.getPath("userData"),
+    ...(({ projects, recordings, peaks, tmp }) => ({ projects, recordings, peaks, tmp }))(dataLocations(app.getPath("userData"))),
     system: { platform: process.platform, arch: process.arch, chip: os.cpus()[0]?.model ?? "", cores: os.cpus().length, memGB: Math.round(os.totalmem() / 2 ** 30) },
   }));
 

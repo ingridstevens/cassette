@@ -23,7 +23,7 @@ Only the latest release (and the current main branch) receives security fixes.
   Exception: on Linux without a keyring (GNOME Keyring or KWallet), `safeStorage` falls back to its
   `basic_text` backend, which is effectively plain text. Settings shows a warning in that case; install and
   unlock a keyring, or paste the token each time instead of saving it.
-- Projects, transcripts and models are stored unencrypted in the user-data folder; protect it with disk encryption.
+- Projects, transcripts and models are stored unencrypted in the user-data folder; protect it with disk encryption. [docs/data-evidence.md](docs/data-evidence.md) lists every place data is kept, with the source for each.
 - The Electron window is hardened: context isolation, renderer sandbox, no Node integration, navigation
   and new windows blocked, all web permission requests denied, and a strict Content-Security-Policy in
   production builds. Only `https://huggingface.co/` links and the new-issue page `https://github.com/ingridstevens/cassette/issues/new` (Settings, About, Send feedback; pre-filled with the version, system and memory, which you can edit) can be opened in your default browser.
