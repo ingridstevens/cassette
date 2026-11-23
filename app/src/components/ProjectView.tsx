@@ -20,6 +20,7 @@ import { revealTurn, scrollToTurn } from "../windowing";
 import Waveform, { WaveformHandle } from "./Waveform";
 import VideoPreview from "./VideoPreview";
 import { mediaKind } from "../projectActions";
+import { restoreFrom } from "../restorePoint";
 import { Edge, dragEdge, FINE_STEP, nudgeStep, nudgeWord } from "../highlightBounds";
 import { GoToTime, ShortcutSheet } from "./JumpDialogs";
 
@@ -29,7 +30,7 @@ const STAGE_ORDER = ["decode", "diarize", "transcribe", "merge"];
 interface Props {
   project: Project; progress?: JobProgress; draft?: DraftLine[]; /** What an earlier run that did not finish had written down (kept in the data folder). */ interrupted?: { lines: DraftLine[]; audioChanged: boolean }; onDiscardInterrupted?(): void; blocker: string; waiting: number; visible: boolean;
   nowPlayingId?: string | null; stopSignal?: number; onPlayingChange?(playing: boolean): void; onOpenSettings?(section?: string): void; models: Models;
-  onTranscribe(range: [number, number] | null, line?: { language: string; speaker: string }, trial?: boolean, acceptFit?: boolean): void; onCancel(): void; onPatch(p: Partial<Project>, label?: string, merge?: boolean): void; onUndo(): string | null; onRedo(): string | null;
+  onTranscribe(range: [number, number] | null, line?: { language: string; speaker: string }, trial?: boolean, acceptFit?: boolean): void; onCancel(): void; onPatch(p: Partial<Project>, label?: string, merge?: boolean): void; /** An edit of many lines: a restore point is saved first. Resolves false (and changes nothing) when that could not be saved. */ onBulkPatch(p: Partial<Project>, label: string): Promise<boolean>; onUndo(): string | null; onRedo(): string | null;
   othersWaiting?: number; onApplyToOthers?(o: Partial<Options>): void; onRemember?(o: Partial<Options>): void;
   /** The Settings default for the first Export menu item, and where to keep the last export (not an edit, so it leaves the retention date alone). */ defaultExport?: string; /** The formats the Export menu shows up front (Settings). */ exportShown?: string[]; onExported?(last: LastExport): void; /** The user has dismissed the explanation of dotted words. */ unsureLegendSeen?: boolean;
   /** Easy mode: no AI, review, chapters, clips, marks or extra exports. Turning it off brings them all back. */ easy?: boolean;
@@ -65,7 +66,7 @@ function Dialog({ title, children, cancel, confirm, onCancel, onConfirm }: { tit
 }
 
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
-export default function ProjectView({ project, progress, draft, interrupted, onDiscardInterrupted, blocker, waiting, visible, nowPlayingId, stopSignal = 0, onPlayingChange, onOpenSettings, models, onTranscribe, onCancel, onPatch, onUndo, onRedo, othersWaiting = 0, onApplyToOthers, onRemember, defaultExport, exportShown, onExported, unsureLegendSeen, easy = false }: Props) {
+export default function ProjectView({ project, progress, draft, interrupted, onDiscardInterrupted, blocker, waiting, visible, nowPlayingId, stopSignal = 0, onPlayingChange, onOpenSettings, models, onTranscribe, onCancel, onPatch, onBulkPatch, onUndo, onRedo, othersWaiting = 0, onApplyToOthers, onRemember, defaultExport, exportShown, onExported, unsureLegendSeen, easy = false }: Props) {
   const [renaming, setRenaming] = useState(false);
   const t = useT();
   const { result, names, path } = project;
@@ -246,7 +247,7 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
   const [confirmAll, setConfirmAll] = useState(false);
   useEffect(() => setConfirmAll(false), [q, findOpts, replaceWith, replaceOpen]);
   /** Swap every occurrence of the search text in the given lines (case is ignored, the replacement is taken literally). Edited lines can be put back like any other edit. */
-  const replaceIn = (lines: number[]) => {
+  const replaceIn = async (lines: number[]) => {
     if (!result || !q || !lines.length) return;
     const todo = new Set(lines);
     let n = 0;
@@ -256,7 +257,9 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
       n += r.n;
       return retext(s, r.text);
     });
-    onPatch({ result: { ...result, segments } }, lines.length > 1 ? t("replace all") : t("replace in a line"));
+    const patch = { result: { ...result, segments } };
+    // Replace all changes many lines at once: a restore point is saved first, and nothing changes if that fails
+    if (lines.length > 1) { if (!(await onBulkPatch(patch, t("replace all")))) return; } else onPatch(patch, t("replace in a line"));
     setConfirmAll(false);
     flash(n === 1 ? t("Replaced 1 time") : t("Replaced {count} times", { count: n }));
   };
@@ -414,10 +417,10 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
     setMoved(null);
     setAnnounce(out.created ? t("Added speaker {name}. They now say the line at {time}", { time, name: who }) : t("Line at {time} now said by {name}", { time, name: who }));
   }
-  function moveAll() {
+  async function moveAll() {
     if (!result || !moved) return;
     const segments = result.segments.map((s) => (s.speaker === moved.from ? { ...s, speaker: moved.to, words: s.words.map((w) => ({ ...w, speaker: moved.to })) } : s));
-    onPatch({ result: { ...result, segments, speakers: result.speakers.filter((x) => x !== moved.from) } }, t("move lines to a speaker"));
+    if (!(await onBulkPatch({ result: { ...result, segments, speakers: result.speakers.filter((x) => x !== moved.from) } }, t("move lines to a speaker")))) return;
     flash(t("Moved the remaining lines to {name}", { name: displayName(moved.to, result.speakers, names) }));
     setMoved(null);
   }
@@ -452,9 +455,11 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
   const replace = () => { setDialog(null); setMoved(null); setQuery(""); onTranscribe(null); };
   const restore = () => {
     const prev = project.previous;
-    if (!prev) return;
+    const back = restoreFrom(project, t("restore the earlier transcript"), Date.now());
+    if (!prev || !back) return;
     setMoved(null); setQuery("");
-    onPatch({ result: prev.result, names: prev.names, meta: prev.meta, previous: undefined, trial: undefined }, t("restore the earlier transcript"));
+    // What was on screen becomes the new restore point, so the restore can be taken back too
+    onPatch(back, t("restore the earlier transcript"));
     if (globalOpts().autosave) void window.api.saveSidecar(project.path, { source: baseName(project.path), language: prev.result.language, duration: prev.result.duration, speakers: Object.fromEntries(prev.result.speakers.map((sp) => [sp, displayName(sp, prev.result.speakers, prev.names)])), segments: prev.result.segments.map(({ words: _w, orig: _o, edited: _e, ...s }) => s) });
   };
 
@@ -561,9 +566,9 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
       <div className="pv-scroll">
         {failed && errorCard}
         {fitCard}
-        {project.previous && !busy && (
+        {project.previous && !running && (
           <div className="pv-moved pv-restore" role="status">
-            <span>{t("This transcript replaced an earlier one.")}</span>
+            <span>{project.previous.label ? t("A copy from before “{what}” is kept.", { what: project.previous.label }) : t("This transcript replaced an earlier one.")}</span>
             <span className="pv-restore-act"><button type="button" className="btn small" onClick={restore}>{t("Restore the earlier transcript")}</button>
               <button type="button" className="btn quiet small" onClick={() => onPatch({ previous: undefined })}>{t("Dismiss")}</button></span>
           </div>

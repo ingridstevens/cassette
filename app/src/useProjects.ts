@@ -4,7 +4,8 @@ import { History, emptyHistory, record, stepBack, stepForward } from "./history"
 import { currentLang, t } from "./i18n";
 import { SaveState, createSaveTracker } from "./saveTracker";
 import { copyName, duplicateProject } from "./projectActions";
-import { DraftLine, FitAsk, JobProgress, MEDIA_EXT, Options, Project, Result, RunMeta, Segment, baseName, displayName, stripExt } from "./types";
+import { readRestorePoint, takeRestorePoint, writeRestorePoint } from "./restorePoint";
+import { DraftLine, FitAsk, JobProgress, MEDIA_EXT, Options, Project, RestorePoint, Result, RunMeta, Segment, baseName, displayName, stripExt } from "./types";
 
 type Range = [number, number] | null;
 const persisted = (p: Project) => ({ id: p.id, path: p.path, name: p.name, addedAt: p.addedAt, openedAt: p.openedAt, editedAt: p.editedAt, result: p.result, names: p.names, opts: p.opts, meta: p.meta, trial: p.trial, previous: p.previous, lastExport: p.lastExport });
@@ -40,6 +41,7 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   const projectsRef = useRef(projects); projectsRef.current = projects;
   const written = useRef(new Map<string, DraftLine[]>());  // project -> lines of the full run in progress (the engine's partial events, in order)
   const saveTimer = useRef(new Map<string, number>());
+  const held = useRef(new Map<string, { previous: RestorePoint | undefined }>());  // project -> the restore point it had before a re-run took its own (put back when the run is cancelled or fails)
   const history = useRef(new Map<string, History>());  // project -> undo and redo steps for transcript edits (kept while the app runs)
 
   const patch = useCallback((id: string, p: Partial<Project>) => setProjects((l) => l.map((x) => (x.id === id ? { ...x, ...p } : x))), []);
@@ -54,7 +56,7 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
           : raw.recoveredFrom ? t("Your project list was damaged. Cassette restored an earlier copy. The damaged file is kept in the data folder.")
           : t("Your project list was damaged and no earlier copy could be restored. The damaged file is kept in the data folder."));
       }
-      const list = (raw.projects as Project[]).map((p) => ({ ...p, status: (p.result ? "done" : "idle") as Project["status"] }));
+      const list = (raw.projects as Project[]).map((p) => ({ ...p, previous: readRestorePoint(p.previous), status: (p.result ? "done" : "idle") as Project["status"] }));
       setProjects(list); setActiveId(list[0]?.id ?? null); setLoaded(true);
       // Runs that did not finish (stopped, failed, or cut off by a crash or sleep): their saved lines come back as an "interrupted" state. Everything else in the folder is deleted.
       window.api.loadPartials(list.filter((p) => !p.result).map((p) => p.id)).then((found) => {
@@ -87,6 +89,18 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     return () => clearTimeout(timer);
   }, [projects, loaded]);
   const retrySave = useCallback(() => { void tracker.current.retry(); }, []);
+
+  /** Keeps the project as it is now as its restore point and waits until that is on disk. False (with a notice) when it could not be written: the caller must then not start the operation. */
+  const checkpoint = useCallback(async (id: string, label: string): Promise<boolean> => {
+    const cur = projectsRef.current.find((x) => x.id === id);
+    const point = cur?.result ? takeRestorePoint(cur, label, Date.now()) : null;
+    if (!point) return true;
+    const r = await writeRestorePoint(tracker.current, projectsRef.current, id, point);
+    // keep only the one project's field from the result, so an edit made while the write ran is not lost
+    setProjects((l) => l.map((x) => (x.id === id ? { ...x, previous: r.ok ? point : cur!.previous } : x)));
+    if (!r.ok) setNotice(t("Cassette could not save a restore point first, so nothing was changed: {error}. Free some disk space and try again.", { error: r.error ?? "unknown" }));
+    return r.ok;
+  }, []);
 
   // flush on close or quit: the debounced save above would not get to run, so a quick edit followed by Cmd+Q was lost
   const loadedRef = useRef(false); loadedRef.current = loaded;
@@ -157,14 +171,14 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   const autoStart = useRef(new Set<string>());
   const addAndTranscribe = useCallback((paths: string[]) => { paths.forEach((p) => autoStart.current.add(p)); return add(paths); }, [add]);
   useEffect(() => {
-    for (const p of projects) if (autoStart.current.has(p.path) && p.status === "idle" && !p.result) { autoStart.current.delete(p.path); transcribe(p.id); }
+    for (const p of projects) if (autoStart.current.has(p.path) && p.status === "idle" && !p.result) { autoStart.current.delete(p.path); void transcribe(p.id); }
   });
 
   const jobOf = (pid: string) => [...jobs.current.entries()].find(([, v]) => v.pid === pid)?.[0];
 
   const remove = useCallback((id: string) => {
     const j = jobOf(id); if (j) window.api.cancel(j);
-    pending.current.delete(id); history.current.delete(id); dropInterrupted(id);
+    pending.current.delete(id); held.current.delete(id); history.current.delete(id); dropInterrupted(id);
     setProjects((l) => { const next = l.filter((p) => p.id !== id); setActiveId((a) => (a === id ? next[0]?.id ?? null : a)); return next; });
   }, [dropInterrupted]);
 
@@ -177,16 +191,32 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     return name;
   }, []);
 
-  const transcribe = useCallback((id: string, range: Range = null, line?: LineRedo, trial?: boolean, acceptFit?: boolean) => {
-    pending.current.set(id, { range, line, trial, acceptFit });
-    patch(id, { status: "queued", error: undefined, fitAsk: undefined, partial: !!range && !!projectsRef.current.find((p) => p.id === id)?.result });
+  /** Put back the restore point a re-run took when the run ends without replacing anything (cancelled, failed, or stopped to ask about the model). */
+  const releaseCheckpoint = useCallback((id: string) => {
+    const h = held.current.get(id); if (!h) return;
+    held.current.delete(id);
+    patch(id, { previous: h.previous });
   }, [patch]);
+
+  /** Queue a run. When the project already has a transcript, a restore point is saved first; if that fails nothing is queued and false is returned. */
+  const transcribe = useCallback(async (id: string, range: Range = null, line?: LineRedo, trial?: boolean, acceptFit?: boolean): Promise<boolean> => {
+    const had = projectsRef.current.find((p) => p.id === id);
+    if (had?.result) {
+      const prior = had.previous;
+      const label = line ? t("redo a line") : range ? t("redo part of the transcript") : t("transcribe again");
+      if (!(await checkpoint(id, label))) return false;
+      held.current.set(id, { previous: prior });
+    }
+    pending.current.set(id, { range, line, trial, acceptFit });
+    patch(id, { status: "queued", error: undefined, fitAsk: undefined, partial: !!range && !!had?.result });
+    return true;
+  }, [patch, checkpoint]);
 
   const cancel = useCallback((id: string) => {
     const j = jobOf(id);
     if (j) window.api.cancel(j);
-    else patch(id, { status: projectsRef.current.find((p) => p.id === id)?.result ? "done" : "idle", partial: undefined });
-  }, [patch]);
+    else { releaseCheckpoint(id); patch(id, { status: projectsRef.current.find((p) => p.id === id)?.result ? "done" : "idle", partial: undefined }); }
+  }, [patch, releaseCheckpoint]);
 
   // queue: one engine job at a time
   useEffect(() => {
@@ -198,8 +228,8 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     const forced = line ? { language: line.language, noDiarize: true, multilingual: false } : {};
     const translate = (next.opts?.translate ?? optsRef.current.translate) ?? false;
     window.api.transcribe({ input: next.path, ...optsRef.current, ...next.opts, translate, ...forced, acceptFit, start: rg?.[0], end: rg?.[1], clientId: next.id })
-      .catch((e: unknown) => patch(next.id, { status: "error", error: String(e) }));
-  }, [projects, patch]);
+      .catch((e: unknown) => { releaseCheckpoint(next.id); patch(next.id, { status: "error", error: String(e) }); });
+  }, [projects, patch, releaseCheckpoint]);
 
   // engine events -> projects
   useEffect(() => window.api.onEvent((e) => {
@@ -218,6 +248,7 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
       setProgress((m) => { const { [pid]: _, ...rest } = m; return rest; });
       const had = projectsRef.current.find((p) => p.id === pid)?.result;
       const { type: _t, jobId: _j, ...ask } = e;
+      releaseCheckpoint(pid);
       patch(pid, { status: had ? "done" : "idle", partial: undefined, fitAsk: ask as FitAsk });
     } else if (e.type === "error") {
       jobs.current.delete(e.jobId);
@@ -225,11 +256,13 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
       if (!range) keepInterrupted(pid);
       setProgress((m) => { const { [pid]: _, ...rest } = m; return rest; });
       const had = projectsRef.current.find((p) => p.id === pid)?.result;
+      releaseCheckpoint(pid);  // the last finished transcript stays as it was, with the restore point it had before
       patch(pid, e.cancelled ? { status: had ? "done" : "idle", partial: undefined } : { status: "error", error: String(e.message), partial: undefined });
     } else if (e.type === "done") {
       jobs.current.delete(e.jobId);
       dropDraft();
       if (!range) dropInterrupted(pid);  // finished: the saved lines are no longer needed
+      held.current.delete(pid);  // the restore point stays: it is what the run replaced
       history.current.delete(pid);  // the engine's transcript replaces the one the steps belong to
       setProgress((m) => { const { [pid]: _, ...rest } = m; return rest; });
       const r: Result = { language: e.language, duration: e.duration, speakers: e.speakers, segments: e.segments };
@@ -239,7 +272,7 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
       setProjects((l) => l.map((p) => {
         if (p.id !== pid) return p;
         const result = range && p.result ? mergeRange(p.result, r, range, line) : r;
-        // a full re-run replaces the transcript: keep the old one for one step back, and start the new one without speaker names
+        // a full re-run replaces the transcript: the old one was kept as the restore point (and written to disk) before the run started; the new one starts without speaker names
         const replaced = !range && !!p.result;
         const keptNames = replaced ? {} : p.names;
         if (optsRef.current.autosave) {
@@ -247,10 +280,10 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
           window.api.saveSidecar(p.path, { source: baseName(p.path), language: result.language, duration: result.duration, speakers: names, segments: result.segments.map(({ words, orig, edited, ...s }) => s) })
             .then((r2) => logRef.current(r2.ok ? "info" : "error", r2.ok ? `Saved transcript next to the audio: ${r2.path}` : `Couldn't save next to the audio: ${r2.error}`));
         }
-        return { ...p, result, names: keptNames, previous: replaced ? { result: p.result!, names: p.names, meta: p.meta } : p.previous, meta: range && p.meta ? { ...p.meta, ...meta } : meta, status: "done", error: undefined, partial: undefined, trial: trial ? true : range ? p.trial : undefined };
+        return { ...p, result, names: keptNames, meta: range && p.meta ? { ...p.meta, ...meta } : meta, status: "done", error: undefined, partial: undefined, trial: trial ? true : range ? p.trial : undefined };
       }));
     }
-  }), [patch, schedulePartial, keepInterrupted, dropInterrupted]);
+  }), [patch, schedulePartial, keepInterrupted, dropInterrupted, releaseCheckpoint]);
 
   const open = useCallback((id: string | null) => { setActiveId(id); if (id) patch(id, { openedAt: Date.now() }); }, [patch]);
   /** Every user edit goes through here. An edit of the transcript or the speaker names can be undone; `label` says what it was, `merge` folds quick repeats (typing a name) into one step. */
@@ -259,6 +292,16 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     if (cur?.result && ("result" in p || "names" in p)) history.current.set(id, record(history.current.get(id) ?? emptyHistory(), { result: cur.result, names: cur.names }, label, Date.now(), merge));
     patch(id, { ...p, editedAt: Date.now() });
   }, [patch]);
+  /** An edit that touches many lines: a restore point is written first, and the edit is made only once it is saved (and only if the transcript is still the one the edit was worked out from). */
+  const editWithCheckpoint = useCallback(async (id: string, p: Partial<Project>, label: string): Promise<boolean> => {
+    const cur = projectsRef.current.find((x) => x.id === id);
+    if (!cur?.result) { edit(id, p, label); return true; }
+    if (!(await checkpoint(id, label))) return false;
+    const now = projectsRef.current.find((x) => x.id === id);
+    if (!now || now.result !== cur.result || now.names !== cur.names) { setNotice(t("The transcript changed while the restore point was being saved, so nothing was changed. Try again.")); return false; }
+    edit(id, p, label);
+    return true;
+  }, [edit, checkpoint]);
   const step = useCallback((id: string, f: typeof stepBack): string | null => {
     const cur = projectsRef.current.find((x) => x.id === id);
     const h = history.current.get(id);
@@ -272,6 +315,6 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   /** Each returns the label of the edit it undid or redid (empty when it had none), or null when there was nothing to do. */
   const undo = useCallback((id: string) => step(id, stepBack), [step]);
   const redo = useCallback((id: string) => step(id, stepForward), [step]);
-  return { projects, loaded, notice, saveError: saveState.status === "failed" ? saveState.error ?? "unknown" : null, retrySave, dismissNotice: () => setNotice(""), activeId, setActiveId: open, edit, undo, redo, progress, drafts, interrupted, discardInterrupted: dropInterrupted, add, addAndTranscribe, remove, rename: (id: string, name: string) => edit(id, { name }), duplicate, patch, transcribe, cancel,
-    transcribeAll: () => projectsRef.current.filter((p) => p.status === "idle" || p.status === "error").forEach((p) => transcribe(p.id)) };
+  return { projects, loaded, notice, saveError: saveState.status === "failed" ? saveState.error ?? "unknown" : null, retrySave, dismissNotice: () => setNotice(""), activeId, setActiveId: open, edit, undo, redo, progress, drafts, interrupted, discardInterrupted: dropInterrupted, add, addAndTranscribe, remove, rename: (id: string, name: string) => edit(id, { name }), duplicate, patch, transcribe, cancel, editWithCheckpoint,
+    transcribeAll: () => projectsRef.current.filter((p) => p.status === "idle" || p.status === "error").forEach((p) => void transcribe(p.id)) };
 }
