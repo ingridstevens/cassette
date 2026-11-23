@@ -5,10 +5,10 @@ import { describe, expect, it } from "vitest";
 import { dataLocations } from "../electron/dataLocations";
 import { buildEvidence, NETWORK_HOSTS, pathBytes, projectListBytes, type EvidenceInput } from "../electron/evidencePack";
 
-const HOME = "/Users/ingrid.stevens";
+const HOME = path.join(path.sep, "Users", "ingrid.stevens"); // native separators, as the real home folder has
 const base = (over: Partial<EvidenceInput> = {}): EvidenceInput => ({
   appVersion: "1.2.3", electron: "33.0.0", platform: "darwin", arch: "arm64", osRelease: "25.5.0",
-  locations: dataLocations(`${HOME}/Library/Application Support/Cassette`),
+  locations: dataLocations(path.join(HOME, "Library", "Application Support", "Cassette")),
   sizes: { data: 3_000_000_000, projects: 48_000, recordings: 310_000_000, peaks: null, partials: null, tmp: 0, models: 2_100_000_000, log: 900 },
   home: HOME, net: { since: Date.UTC(2026, 0, 2, 10), entries: [], transcriptions: 0 }, now: Date.UTC(2026, 0, 2, 12), ...over,
 });
@@ -29,7 +29,7 @@ describe("buildEvidence", () => {
     const t = buildEvidence(base());
     expect(t).not.toContain(HOME);
     expect(t).not.toContain("ingrid.stevens");
-    expect(t).toContain("~/Library/Application Support/Cassette/recordings");
+    expect(t).toContain("`" + path.join("~", "Library", "Application Support", "Cassette", "recordings") + "`"); // path.join: backslashes on Windows
   });
   it("takes only versions, sizes and host names from its input: hostile values do not survive", () => {
     const hostile = "the patient admitted she stole the quarterly report";
