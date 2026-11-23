@@ -49,6 +49,8 @@ Inside the app's data folder (Settings → Privacy → *Open*, or Settings → S
 - **Activity log:** a text file of what the app did. It lists file names and folders, which can be sensitive
   themselves, but never the text of a transcript.
 
+- **Project backups:** only if you choose **Back up project…**: one `.cassette-backup` file where you save it, holding the project and a copy of its recording (so it is as sensitive as both). Restoring one copies the recording into `recordings` in the data folder. No network is used.
+
 Next to a recording (only if Settings → Saving is on): `name.transcript.json`. Your audio file is never changed
 or moved.
 

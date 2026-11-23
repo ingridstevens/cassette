@@ -8,7 +8,7 @@ import { IS_MAC, JobProgress, MOD_KEY, Project, fmt } from "../types";
 
 interface Props {
   projects: Project[]; activeId: string | null; progress: Record<string, JobProgress>; blocker: string;
-  onSelect(id: string): void; onAdd(): void; onRecord(): void; onRemove(id: string): void; onRename(id: string, name: string): void; onDuplicate(id: string): string | null; onReveal(path: string): void; onTranscribeAll(): void; onExportAll(): void; doneCount: number;
+  onSelect(id: string): void; onAdd(): void; onRecord(): void; onRemove(id: string): void; onRename(id: string, name: string): void; onDuplicate(id: string): string | null; onBackup(id: string): void; onRestore(): void; onReveal(path: string): void; onTranscribeAll(): void; onExportAll(): void; doneCount: number;
   onOpenSettings(): void;
   activity?: React.ReactNode;
   playingId?: string | null;
@@ -17,7 +17,7 @@ interface Props {
 
 const DOT: Record<Project["status"], string> = { idle: "idle", queued: "wait", running: "run", done: "done", error: "err" };
 
-export default function ProjectSidebar({ projects, activeId, progress, blocker, onSelect, onAdd, onRecord, onRemove, onRename, onDuplicate, onReveal, onTranscribeAll, onExportAll, doneCount, onOpenSettings, activity, playingId, easy = false }: Props) {
+export default function ProjectSidebar({ projects, activeId, progress, blocker, onSelect, onAdd, onRecord, onRemove, onRename, onDuplicate, onBackup, onRestore, onReveal, onTranscribeAll, onExportAll, doneCount, onOpenSettings, activity, playingId, easy = false }: Props) {
   const t = useT();
   const langName = (c: string) => (c === "de" ? t("German") : c === "en" ? t("English") : c === "fr" ? t("French") : c === "es" ? t("Spanish") : c.toUpperCase());
   const [editing, setEditing] = useState<string | null>(null);
@@ -89,6 +89,9 @@ export default function ProjectSidebar({ projects, activeId, progress, blocker, 
       {!easy && <button type="button" className="btn add-btn rec-btn" onClick={onRecord}>
         <svg className="i" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" /></svg>{t("Record")}
       </button>}
+      <button type="button" className="btn add-btn" onClick={onRestore}>
+        <svg className="i" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></svg>{t("Restore project backup…")}
+      </button>
       <div className="group group-row"><span id="proj-group">{t("Projects")}</span>
         {todo > 1 && <button type="button" className="btn small" disabled={!!blocker} title={blocker || undefined} onClick={onTranscribeAll}>{t("Transcribe all ({count})", { count: todo })}</button>}
       </div>
@@ -141,6 +144,7 @@ export default function ProjectSidebar({ projects, activeId, progress, blocker, 
                   style={pos ? { left: pos.left, top: pos.top } : { left: 0, top: 0, visibility: "hidden" }}>
                   <button type="button" role="menuitem" onClick={() => { closeMenu(false); setEditing(p.id); }}>{t("Rename")}</button>
                   {!easy && <button type="button" role="menuitem" onClick={() => { closeMenu(); const n = onDuplicate(p.id); if (n) setSaid(t("Duplicated as “{name}”", { name: n })); }}>{t("Duplicate")}</button>}
+                  <button type="button" role="menuitem" onClick={() => { closeMenu(); onBackup(p.id); }}>{t("Back up project…")}</button>
                   <button type="button" role="menuitem" onClick={() => { closeMenu(); onReveal(p.path); }}>{IS_MAC ? t("Show in Finder") : t("Show in file explorer")}</button>
                   <button type="button" role="menuitem" className="danger-item" onClick={() => { closeMenu(false); onRemove(p.id); }}>{t("Delete…")}</button>
                 </div>, document.body)}
