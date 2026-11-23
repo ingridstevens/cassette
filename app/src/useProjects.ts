@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { recordSpeed } from "./estimate";
 import { History, emptyHistory, record, stepBack, stepForward } from "./history";
 import { currentLang, t } from "./i18n";
+import { SaveState, createSaveTracker } from "./saveTracker";
 import { copyName, duplicateProject } from "./projectActions";
 import { DraftLine, FitAsk, JobProgress, MEDIA_EXT, Options, Project, Result, RunMeta, Segment, baseName, displayName, stripExt } from "./types";
 
@@ -31,7 +32,7 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   const [interrupted, setInterrupted] = useState<Record<string, Interrupted>>({});
   const [loaded, setLoaded] = useState(false);
   const [notice, setNotice] = useState("");  // set once, when the saved project list had to be recovered
-  const [saveError, setSaveError] = useState<string | null>(null);  // set while the last save failed; cleared by the next one that works
+  const [saveState, setSaveState] = useState<SaveState>({ status: "saved" });  // failed while the latest edit is not on disk; cleared by the next save that works
   const optsRef = useRef(opts); optsRef.current = opts;
   const logRef = useRef(log); logRef.current = log;
   const jobs = useRef(new Map<string, { pid: string; range: Range; line?: LineRedo; trial?: boolean }>());      // engine jobId -> project
@@ -72,15 +73,20 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
       }).catch(() => {});
     }).catch(() => setLoaded(true));
   }, []);
+  // One tracker for every save of the project list: the debounced save, the Retry button and the close-time flush all go through it (see saveTracker.ts).
+  const tracker = useRef<ReturnType<typeof createSaveTracker<Project[]>>>(null as never);
+  tracker.current ??= createSaveTracker<Project[]>(
+    (list) => window.api.saveProjects(list.map(persisted)).then((r) => { if (!r.ok) logRef.current("error", `Couldn't save the project list: ${r.error}`); return r; }),
+    (list) => window.api.saveProjectsSync(list.map(persisted)),
+    setSaveState);
   // debounced save (only after the first load, so we never overwrite saved projects with an empty list)
   useEffect(() => {
     if (!loaded) return;
-    const timer = setTimeout(() => { window.api.saveProjects(projects.map(persisted)).then((r) => {
-      if (!r.ok) logRef.current("error", `Couldn't save the project list: ${r.error}`);
-      setSaveError(r.ok ? null : r.error ?? "unknown");
-    }).catch((e) => setSaveError(String(e))); }, 400);
+    tracker.current.submit(projects);
+    const timer = setTimeout(() => { void tracker.current.drain(); }, 400);
     return () => clearTimeout(timer);
   }, [projects, loaded]);
+  const retrySave = useCallback(() => { void tracker.current.retry(); }, []);
 
   // flush on close or quit: the debounced save above would not get to run, so a quick edit followed by Cmd+Q was lost
   const loadedRef = useRef(false); loadedRef.current = loaded;
@@ -114,10 +120,12 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   }, []);
 
   useEffect(() => {
-    const flush = () => {
+    const flush = (e: BeforeUnloadEvent) => {
       if (!loadedRef.current) return;
-      window.api.saveProjectsSync(projectsRef.current.map(persisted));
+      const saved = tracker.current.flushSync();
       for (const id of [...written.current.keys()]) savePartialNow(id, true);  // quitting or reloading: keep what a run had written so far
+      // The edit did not reach the disk: cancel the close so the window stays open and the user can press Retry save. (Electron keeps the window open when beforeunload is cancelled.)
+      if (!saved) { e.preventDefault(); e.returnValue = ""; }
     };
     window.addEventListener("beforeunload", flush);
     return () => window.removeEventListener("beforeunload", flush);
@@ -264,6 +272,6 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   /** Each returns the label of the edit it undid or redid (empty when it had none), or null when there was nothing to do. */
   const undo = useCallback((id: string) => step(id, stepBack), [step]);
   const redo = useCallback((id: string) => step(id, stepForward), [step]);
-  return { projects, loaded, notice, saveError, dismissNotice: () => setNotice(""), activeId, setActiveId: open, edit, undo, redo, progress, drafts, interrupted, discardInterrupted: dropInterrupted, add, addAndTranscribe, remove, rename: (id: string, name: string) => edit(id, { name }), duplicate, patch, transcribe, cancel,
+  return { projects, loaded, notice, saveError: saveState.status === "failed" ? saveState.error ?? "unknown" : null, retrySave, dismissNotice: () => setNotice(""), activeId, setActiveId: open, edit, undo, redo, progress, drafts, interrupted, discardInterrupted: dropInterrupted, add, addAndTranscribe, remove, rename: (id: string, name: string) => edit(id, { name }), duplicate, patch, transcribe, cancel,
     transcribeAll: () => projectsRef.current.filter((p) => p.status === "idle" || p.status === "error").forEach((p) => transcribe(p.id)) };
 }
