@@ -59,14 +59,21 @@ export function registerProjects({ known, opened, mediaFile, knownMedia }: IpcCo
   // Back up one project to a single file (see projectArchive.ts). The window sends the project as it is on screen; the recording is found by its path, which must be a known recording.
   const failure = (e: unknown) => ({ ok: false as const, code: e instanceof BackupError ? e.code : ("failed" as const) });
   handle("backup-project", async (_e, project: unknown) => {
-    const p = project as { name?: unknown; path?: unknown } | null;
+    const p = project as { name?: unknown; path?: unknown; appended?: unknown } | null;
     if (!p || typeof p !== "object" || Array.isArray(p)) return { ok: false as const, code: "failed" as const };
     if (!knownMedia(p.path)) return { ok: false as const, code: "missing-source" as const };
+    // the recordings added after the first: every one must be a recording the app knows, like the first
+    const parts: { id: string; path: string }[] = [];
+    for (const a of Array.isArray(p.appended) ? p.appended : []) {
+      const x = a as { id?: unknown; path?: unknown } | null;
+      if (!x || typeof x.id !== "string" || !knownMedia(x.path)) return { ok: false as const, code: "missing-source" as const };
+      parts.push({ id: x.id, path: x.path });
+    }
     const r = await dialog.showSaveDialog({ defaultPath: `${safeName(p.name, "Project")}.cassette-backup`, filters: [{ name: "Cassette project backup", extensions: ["cassette-backup"] }] });
     if (r.canceled || !r.filePath) return { ok: false as const, cancelled: true };
     const dest = r.filePath.toLowerCase().endsWith(".cassette-backup") ? r.filePath : `${r.filePath}.cassette-backup`;
     try {
-      const w = await writeBackup({ dest, project: project as Record<string, unknown>, mediaPath: p.path, app: app.getVersion() });
+      const w = await writeBackup({ dest, project: project as Record<string, unknown>, mediaPath: p.path, parts, app: app.getVersion() });
       return { ok: true as const, path: dest, bytes: w.bytes };
     } catch (e) { logLine("error", `Backup failed: ${e instanceof BackupError ? e.code : "unexpected"}`); return failure(e); }
   });
@@ -76,7 +83,7 @@ export function registerProjects({ known, opened, mediaFile, knownMedia }: IpcCo
     if (r.canceled || !r.filePaths[0]) return { ok: false as const, cancelled: true };
     try {
       const got = await restoreBackup({ archive: r.filePaths[0], mediaDir: dataLocations(app.getPath("userData")).recordings });
-      known.add([got.mediaPath]);
+      known.add(Object.values(got.mediaPaths));
       return { ok: true as const, project: got.project, mediaPath: got.mediaPath, bytes: got.bytes };
     } catch (e) { logLine("error", `Restore failed: ${e instanceof BackupError ? e.code : "unexpected"}`); return failure(e); }
   });

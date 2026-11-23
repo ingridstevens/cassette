@@ -1,4 +1,4 @@
-import type { Highlight, Part, Project, Result, Segment, Word } from "./types";
+import type { Highlight, Join, Part, Project, Result, Segment, Word } from "./types";
 import { baseName } from "./types";
 
 /**
@@ -100,6 +100,36 @@ export function redoTarget(parts: Part[], range: [number, number]): { path: stri
   return { path: c.path, offset, local: [c.start, c.end], global: [offset + c.start, offset + c.end] };
 }
 
+/** A boundary note as read from disk: only a known kind, and a length that is a positive number where one is needed. Anything else is no note. */
+export function readJoin(raw: unknown): Join | undefined {
+  const o = raw as { kind?: unknown; seconds?: unknown } | null;
+  if (!o || typeof o !== "object") return undefined;
+  if (o.kind === "unknown") return { kind: "unknown" };
+  if ((o.kind === "gap" || o.kind === "overlap") && typeof o.seconds === "number" && Number.isFinite(o.seconds) && o.seconds > 0) return { kind: o.kind, seconds: o.seconds };
+  return undefined;
+}
+
+/** One place on the timeline where a recording ends and the next begins. `at` is where the later recording starts. */
+export interface Boundary { index: number; at: number; before: Part; after: Part; join?: Join }
+/** Every boundary between recordings, in order (none for a project with one recording). */
+export const boundaries = (parts: Part[]): Boundary[] => parts.slice(1).map((after, i) => ({ index: i + 1, at: after.offset, before: parts[i], after, join: after.join }));
+
+/**
+ * Which transcript line each boundary is shown above: the first line that starts at or after the point where the later recording begins.
+ * A boundary with no line after it (the later recording had no speech) is not in the map.
+ */
+export function boundaryRows(segments: Pick<Segment, "start">[], parts: Part[]): Map<number, Boundary[]> {
+  const out = new Map<number, Boundary[]>();
+  for (const b of boundaries(parts)) {
+    const row = segments.findIndex((s) => s.start >= b.at);
+    if (row >= 0) out.set(row, [...(out.get(row) ?? []), b]);
+  }
+  return out;
+}
+
+/** The recordings with the boundary note before recording `id` set (or taken away with undefined). Everything else is the same. */
+export const withJoin = (appended: Part[], id: string, join: Join | undefined): Part[] => appended.map((x) => { if (x.id !== id) return x; const { join: _j, ...rest } = x; return join ? { ...rest, join } : rest; });
+
 /** Added recordings as read from projects.json (or a restore point or backup): the entries that are usable, in order. A damaged entry is left out rather than breaking the project. Undefined when none is left. */
 export function readParts(raw: unknown): Part[] | undefined {
   if (!Array.isArray(raw)) return undefined;
@@ -114,6 +144,7 @@ export function readParts(raw: unknown): Part[] | undefined {
       ...(src && typeof src.size === "number" && typeof src.sample === "string" ? { source: { size: src.size, sample: src.sample } } : {}),
       ...(Array.isArray(o.speakers) ? { speakers: o.speakers.filter((v): v is string => typeof v === "string") } : {}),
       ...(o.matched === true ? { matched: true } : {}),
+      ...(readJoin(o.join) ? { join: readJoin(o.join) } : {}),
     });
   }
   return out.length ? out : undefined;

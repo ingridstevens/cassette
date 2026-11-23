@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { clipOf, hasParts, joinAdded, locate, matchSpeakers, readParts, redoTarget, shiftResult, sourcesOf, timelineLength } from "./sources";
+import { boundaries, boundaryRows, clipOf, hasParts, joinAdded, locate, matchSpeakers, readParts, readJoin, redoTarget, shiftResult, sourcesOf, timelineLength, withJoin } from "./sources";
 import { duplicateProject } from "./projectActions";
 import { readRestorePoint, restoreFrom, takeRestorePoint } from "./restorePoint";
 import { createKnownPaths } from "../electron/knownPaths";
@@ -197,5 +197,68 @@ describe("known recordings", () => {
     k.remember([{ path: "/phones/a.m4a", appended: [{ path: "/phones/b.wav" }], previous: { appended: [{ path: "/phones/c.mp3" }] } }, { path: "/x.wav" }]);
     for (const f of ["/phones/a.m4a", "/phones/b.wav", "/phones/c.mp3", "/x.wav"]) expect(k.has(f)).toBe(true);
     expect(k.has("/phones/d.wav")).toBe(false);
+  });
+});
+
+describe("boundaries between recordings", () => {
+  const three = () => {
+    const a = joined();
+    const j2 = joinAdded(a, { language: "en", duration: 20, speakers: ["SPEAKER_00"], segments: [seg(1, 9, "SPEAKER_00", "Third phone here")] }, { id: "s3", path: "/phones/c.mp3", name: "c.mp3", offset: 140 }, 20)!;
+    return base({ ...j2 });
+  };
+  it("a project with one recording has none, and a joined one has one per join at the point the later recording starts", () => {
+    expect(boundaries(sourcesOf(base()))).toEqual([]);
+    const b = boundaries(sourcesOf(three()));
+    expect(b.map((x) => [x.index, x.at, x.before.id, x.after.id])).toEqual([[1, 100, "s1", "s2"], [2, 140, "s2", "s3"]]);
+  });
+  it("the three cases are kept apart, and a boundary nobody noted says nothing", () => {
+    let p = three();
+    p = { ...p, appended: withJoin(withJoin(p.appended!, "s2", { kind: "gap", seconds: 30 }), "s3", { kind: "overlap", seconds: 5 }) };
+    expect(boundaries(sourcesOf(p)).map((x) => x.join?.kind)).toEqual(["gap", "overlap"]);
+    p = { ...p, appended: withJoin(p.appended!, "s2", { kind: "unknown" }) };
+    expect(boundaries(sourcesOf(p)).map((x) => x.join)).toEqual([{ kind: "unknown" }, { kind: "overlap", seconds: 5 }]);
+    p = { ...p, appended: withJoin(p.appended!, "s2", undefined) };
+    expect(boundaries(sourcesOf(p))[0].join).toBeUndefined();
+    expect(p.appended![0]).not.toHaveProperty("join");
+  });
+  it("a note changes neither the timeline nor the lines, and the playable audio stays continuous", () => {
+    const plain = three(), noted = { ...plain, appended: withJoin(plain.appended!, "s2", { kind: "gap", seconds: 600 }) };
+    expect(sourcesOf(noted).map((x) => [x.offset, x.duration])).toEqual(sourcesOf(plain).map((x) => [x.offset, x.duration]));
+    expect(timelineLength(sourcesOf(noted))).toBe(160);
+    expect(noted.result).toBe(plain.result);
+  });
+  it("each boundary sits above the first line of the later recording", () => {
+    const p = three(), parts = sourcesOf(p), segs = p.result!.segments;
+    const rows = boundaryRows(segs, parts);
+    expect([...rows.keys()].map((i) => segs[i].text)).toEqual(["Ja, hier bin ich wieder", "Third phone here"]);
+    expect(rows.get(segs.findIndex((s) => s.text === "Ja, hier bin ich wieder"))![0].after.id).toBe("s2");
+    // a later recording with no speech has no line to sit above
+    expect(boundaryRows([{ start: 0 }, { start: 90 }], parts).size).toBe(0);
+    expect(boundaryRows([], parts).size).toBe(0);
+  });
+  it("quotes on either side of a boundary open the right recording at the right time", () => {
+    const p = three(), parts = sourcesOf(p);
+    const before = p.result!.highlights![0];            // in phone one
+    const after = p.result!.segments.find((s) => s.text === "Bis bald")!; // in phone two, 30 s into it
+    const third = p.result!.segments.find((s) => s.text === "Third phone here")!;
+    expect(locate(parts, before.start)).toEqual({ index: 0, local: 10 });
+    expect(locate(parts, after.start)).toEqual({ index: 1, local: 30 });
+    expect(clipOf(parts, after.start, after.end)).toMatchObject({ path: "/phones/b.wav", start: 30, end: 40, index: 1 });
+    expect(clipOf(parts, third.start, third.end)).toMatchObject({ path: "/phones/c.mp3", start: 1, end: 9, index: 2 });
+    expect(locate(parts, 100).index).toBe(1);   // the join belongs to the later recording
+    expect(locate(parts, 99.9).index).toBe(0);
+  });
+  it("reads notes from disk: a known kind with a usable length, nothing else", () => {
+    expect(readJoin({ kind: "gap", seconds: 12.5 })).toEqual({ kind: "gap", seconds: 12.5 });
+    expect(readJoin({ kind: "unknown", seconds: 9 })).toEqual({ kind: "unknown" });
+    for (const bad of [null, "gap", {}, { kind: "gap" }, { kind: "gap", seconds: 0 }, { kind: "overlap", seconds: -1 }, { kind: "overlap", seconds: "3" }, { kind: "gap", seconds: NaN }, { kind: "other", seconds: 1 }]) expect(readJoin(bad)).toBeUndefined();
+    const parts = readParts([{ id: "s2", path: "/b.wav", offset: 10, duration: 5, join: { kind: "overlap", seconds: 2 } }, { id: "s3", path: "/c.wav", offset: 15, duration: 5, join: { kind: "gap" } }])!;
+    expect(parts.map((x) => x.join)).toEqual([{ kind: "overlap", seconds: 2 }, undefined]);
+  });
+  it("notes survive a restore point and a duplicate", () => {
+    const p = three(), noted = { ...p, appended: withJoin(p.appended!, "s3", { kind: "unknown" }) };
+    expect(duplicateProject(noted, "q", "copy", 9).appended![1].join).toEqual({ kind: "unknown" });
+    const pt = readRestorePoint({ result: partOne, names: {}, appended: noted.appended })!;
+    expect(pt.appended![1].join).toEqual({ kind: "unknown" });
   });
 });

@@ -100,7 +100,13 @@ export interface Project {
   appended?: Part[];
 }
 /** One added recording. Its transcript lines are on the project's single timeline: `offset` is where it starts there, in seconds, and `duration` is its own length. `id` stays the same for the life of the project. */
-export interface Part { id: string; path: string; name: string; offset: number; duration: number; source?: SourceId; /** Speaker ids this recording brought in (renamed to unused ids when it was added), offered for matching with the speakers already there. */ speakers?: string[]; /** The person answered the speaker-matching question (matched them or kept them apart). */ matched?: boolean }
+export interface Part { id: string; path: string; name: string; offset: number; duration: number; source?: SourceId; /** Speaker ids this recording brought in (renamed to unused ids when it was added), offered for matching with the speakers already there. */ speakers?: string[]; /** The person answered the speaker-matching question (matched them or kept them apart). */ matched?: boolean; /** What is known about the boundary between the recording before this one and this one. */ join?: Join }
+/**
+ * What is known about the moment one recording ends and the next begins. A note only: the timeline stays as it is (the next recording starts where the last one ends) and nothing is added to the audio.
+ * "gap": a stretch of known length that nobody recorded. "unknown": something may be missing, nobody knows how much. "overlap": both recordings were running for `seconds` of the same time (a handoff).
+ * No note on a boundary means nothing is said about it.
+ */
+export type Join = { kind: "gap"; seconds: number } | { kind: "unknown" } | { kind: "overlap"; seconds: number };
 /** Size of the recording and a checksum over samples of it (see electron/sourceId.ts). */
 export interface SourceId { size: number; sample: string }
 /** A whole earlier state of the transcript: text, speakers and names, checked quotes, chapters, translations and the summary all live in `result`. `label` and `at` are missing in points saved by older versions. */

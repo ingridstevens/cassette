@@ -22,7 +22,8 @@ import type { Located } from "../relink";
 import VideoPreview from "./VideoPreview";
 import { mediaKind } from "../projectActions";
 import { restoreFrom } from "../restorePoint";
-import { clipOf, hasParts, sourcesOf } from "../sources";
+import { boundaryRows, clipOf, hasParts, sourcesOf, withJoin } from "../sources";
+import { BoundaryEditor } from "./BoundaryNote";
 import { Edge, dragEdge, FINE_STEP, nudgeStep, nudgeWord } from "../highlightBounds";
 import { GoToTime, ShortcutSheet } from "./JumpDialogs";
 
@@ -652,7 +653,7 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
             <button type="button" className="btn quiet small" onClick={() => onRemember?.({ unsureLegendSeen: true })}>{t("Got it")}</button>
           </div>
         )}
-        <Transcript easy={easy} showLang={easy ? false : showLang} result={result} names={names} time={time} query={query} findOpts={findOpts} highlights={highlights} onHighlight={easy ? undefined : (i, a, b) => { const h = highlightOf(result.segments[i], a, b); if (h) patchResult((x) => ({ ...x, highlights: addHighlight(x.highlights ?? [], h) })); }} matchSeg={matches[mi] ?? -1} onSeek={(t) => player.current?.seek(t)} onPlayRange={(a, b) => { window.clearTimeout(clipTimer.current); player.current?.playRange(a, b); }} onReassign={reassign} onNewSpeaker={newSpeaker}
+        <Transcript easy={easy} boundaries={parts.length > 1 ? boundaryRows(result.segments, parts) : undefined} showLang={easy ? false : showLang} result={result} names={names} time={time} query={query} findOpts={findOpts} highlights={highlights} onHighlight={easy ? undefined : (i, a, b) => { const h = highlightOf(result.segments[i], a, b); if (h) patchResult((x) => ({ ...x, highlights: addHighlight(x.highlights ?? [], h) })); }} matchSeg={matches[mi] ?? -1} onSeek={(t) => player.current?.seek(t)} onPlayRange={(a, b) => { window.clearTimeout(clipTimer.current); player.current?.playRange(a, b); }} onReassign={reassign} onNewSpeaker={newSpeaker}
           onEdit={(i, text) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => (k === i ? retext(s, text) : s)) } }, t("edit a line"))}
           canRetranscribe={canTranscribe} reviewAt={reviewAt} translatingIndex={translating} playing={playing} onPause={() => player.current?.pause()}
           onTranslate={async (i, remove) => {
@@ -856,6 +857,7 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
               {parts.length > 1 && <span className="pv-sep" aria-hidden />}
               <button type="button" className="btn quiet small" disabled={!showResult || !canTranscribe || !!project.trial || !onAddRecording} onClick={() => void addRecording()}>{t("Add a recording…")}</button>
             </div>
+            {parts.length > 1 && <BoundaryEditor parts={parts} onChange={(id, join) => onPatch({ appended: withJoin(project.appended ?? [], id, join) }, t("note a boundary"))} />}
             <div className="pv-hint pv-keys">{t("Drag the waveform to save a clip · Space or K plays · J / L skip 10 s · Double-click a word to fix it")}</div>
           </div>}
         </div>
