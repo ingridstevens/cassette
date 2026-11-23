@@ -161,7 +161,8 @@ Labels share one pair of brackets and are separated by commas (`Name [overlap, s
 `checked by a person` (and its language and overlap): you vouched for it. The check goes away as soon as you change the line's wording
 or its speaker, so an export never calls changed text checked. In Word the notes are shaded lines of plain text. In the quote list the labels
 follow the time (`— Anna, 0:05 [wording unsure: Brandt]`) and name only the unsure words that are inside the quote. **Copy quote** in the
-transcript adds the same labels. Subtitles, Markdown, the spreadsheet, JSON and the anonymised export do not carry these cues.
+transcript adds the same labels. Subtitles, Markdown, the spreadsheet, JSON and the anonymised export do not carry these cues. The original-versus-edited file (the changes list) puts
+`[checked by a person]` after the speaker of an edited line you pressed **Heard** on after changing it, and **Changes by you** in the Info tab shows the same.
 
 ## The app's language in exports
 

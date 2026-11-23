@@ -321,6 +321,7 @@ function Changes({ project, onPatch, onShowLine }: { project: Project; onPatch(p
             <button type="button" className="pv-time" onClick={() => onShowLine?.(i)} aria-label={t("Show the line at {time} in the transcript", { time: fmt(s.start) })}>{fmt(s.start)}</button>
             <p><b>{t("Model heard:")}</b> {s.orig!.text}</p>
             <p><b>{t("Now:")}</b> {s.text}</p>
+            {s.heard && <p className="pv-heard-note"><b>{t("Heard")}</b> {t("You listened to this line against the audio after changing it.")}</p>}
             <button type="button" className="btn quiet small" onClick={() => putBack(i)} aria-label={t("Put the line at {time} back to what the model heard", { time: fmt(s.start) })}>{t("Put back")}</button>
           </li>
         ))}
