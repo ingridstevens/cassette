@@ -226,10 +226,15 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   const backup = useCallback(async (id: string): Promise<boolean> => {
     const p = projectsRef.current.find((x) => x.id === id); if (!p) return false;
     setInfo(""); setNotice("");
-    if (hasParts(p)) { setNotice(t("“{name}” is made of {count} recordings, and a backup holds only one recording, so no backup was made. Nothing was changed.", { name: p.name, count: sourcesOf(p).length })); return false; }
     let r: Awaited<ReturnType<typeof window.api.backupProject>>;
     try { r = await window.api.backupProject(persisted(p)); } catch { r = { ok: false, code: "failed" }; }
-    if (r.ok) { setInfo(t("Backed up “{name}” ({size}) as {file}. It holds the transcript, speakers, checked quotes and the recording, and restores without the original file.", { name: p.name, size: bytes(r.bytes), file: baseName(r.path) })); return true; }
+    if (r.ok) {
+      const args = { name: p.name, size: bytes(r.bytes), file: baseName(r.path), count: sourcesOf(p).length };
+      setInfo(hasParts(p)
+        ? t("Backed up “{name}” ({size}) as {file}. It holds the transcript, speakers, checked quotes and all {count} recordings, with where each one starts and any boundary notes, and restores without the original files.", args)
+        : t("Backed up “{name}” ({size}) as {file}. It holds the transcript, speakers, checked quotes and the recording, and restores without the original file.", args));
+      return true;
+    }
     if (!r.cancelled) setNotice(t("Could not back up “{name}”: {why} Nothing was changed, and any earlier backup is still there.", { name: p.name, why: backupReason(r.code) }));
     return false;
   }, []);

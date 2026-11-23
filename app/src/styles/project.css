@@ -606,3 +606,17 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .pv-zoom { overflow: clip; overflow-clip-margin: 3px; }
 /* in a narrow strip the scroll bar and the level give way (the level is announced anyway) and Follow takes the place of Fit */
 @container (max-width: 179px) { .pv-zlevel, .pv-zscroll { display: none; } .pv-zoom.unfollowed .pv-fit { display: none; } }
+
+/* where one recording ends and the next begins: each kind has its own word and its own line style, so colour is never the only difference */
+.pv-boundary { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; margin: 0 0 10px; padding: 6px 10px; font-size: 13.5px; color: var(--ink); border-radius: 12px; border: 2px solid color-mix(in srgb, var(--tint) 40%, transparent); }
+.pv-boundary.plain { border-style: solid; }
+.pv-boundary.gap { border-style: dashed; }
+.pv-boundary.unknown { border-style: dotted; }
+.pv-boundary.overlap { border-style: double; border-width: 4px; }
+.pv-boundary .pv-bflag { background: color-mix(in srgb, var(--tint) 14%, transparent); color: var(--ink); }
+.pv-boundary .pv-btext { flex: 1 1 220px; }
+.pv-bedit { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.pv-brow { display: flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; font-size: 13.5px; }
+.pv-brow select, .pv-brow input[type="number"] { font: 14px var(--font-ui); color: var(--ink); padding: 5px 8px; border-radius: 10px; border: 0; background: var(--surface); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--tint) 30%, transparent); }
+.pv-brow input[type="number"] { width: 90px; }
+.pv-berr { color: var(--err-ink); font-weight: 650; }

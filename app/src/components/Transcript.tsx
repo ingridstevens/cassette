@@ -1,6 +1,8 @@
 import { type KeyboardEvent as ReactKeyEvent, useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useT } from "../i18n";
 import { MAIN_LANGS, WHISPER_LANGS, langName } from "../languages";
+import { BoundaryNote } from "./BoundaryNote";
+import type { Boundary } from "../sources";
 import { Highlight, UnsureRef, isUnsure, PALETTE, Result, chapterDefault, displayName, fmt, wordIn, wordsInSelection } from "../types";
 import { onMenuKeyDown } from "./ExportMenu";
 import { FIND_DEFAULTS, FindOpts, matcher } from "../find";
@@ -19,6 +21,7 @@ interface Props {
   /** Show the language of every line, not only lines that differ from the recording. */ showLang?: boolean;
   /** Easy mode: only the speaker, the time and Edit stay on each line. */ easy?: boolean;
   query?: string; findOpts?: FindOpts; matchSeg?: number;
+  /** Where a recording ends and the next begins: the notes shown above the first line of the later recording (line index to boundaries). */ boundaries?: Map<number, Boundary[]>;
 }
 
 /** How long a click on a word waits for a possible second click before it starts playing (a typical double-click gap). */
@@ -26,7 +29,7 @@ const DOUBLE_CLICK_MS = 260;
 /** Space between two lines (the .pv-rows gap), and how far past the visible area lines stay drawn, in px. */
 const GAP = 2, OVERSCAN = 700;
 
-export default function Transcript({ easy = false, showLang, result, names, time, onSeek, onPlayRange, onReassign, onNewSpeaker, onEdit, onRevert, onChapter, onMark, onHeard, onSplit, onJoin, onLanguage, onRetranscribe, onTranslate, playing, onPause, reviewAt = null, translatingIndex = null, canRetranscribe, highlights = [], onHighlight, query = "", findOpts = FIND_DEFAULTS, matchSeg = -1 }: Props) {
+export default function Transcript({ easy = false, showLang, result, names, time, onSeek, onPlayRange, onReassign, onNewSpeaker, onEdit, onRevert, onChapter, onMark, onHeard, onSplit, onJoin, onLanguage, onRetranscribe, onTranslate, playing, onPause, reviewAt = null, translatingIndex = null, canRetranscribe, highlights = [], onHighlight, query = "", findOpts = FIND_DEFAULTS, matchSeg = -1, boundaries }: Props) {
   const t = useT();
   const color = (sp: string) => PALETTE[Math.max(0, result.speakers.indexOf(sp)) % PALETTE.length];
   const label = (sp: string) => displayName(sp, result.speakers, names);
@@ -357,6 +360,7 @@ export default function Transcript({ easy = false, showLang, result, names, time
         return (
         <div key={i} role="listitem" aria-posinset={i + 1} aria-setsize={n} onFocus={() => setFocusRow(i)} onKeyDown={(e) => wordKeys(e, i)}
           data-turn={i} className={"pv-turn" + (seg.marked ? " marked" : "") + (i === active ? " now" : "") + (i === matchSeg ? " found" : "") + (i > 0 && result.segments[i - 1].speaker === seg.speaker ? " cont" : "")}>
+          {boundaries?.get(i)?.map((b) => <BoundaryNote key={b.after.id} boundary={b} onSeek={onSeek} />)}
           <div className="pv-who">
             <button type="button" className="pv-who-btn" data-who={i} aria-haspopup="menu" aria-expanded={menu === i}
               aria-label={t("Change who said the line at {time}. Now: {name}", { time: fmt(seg.start), name: label(seg.speaker) })} onClick={() => setMenu(menu === i ? null : i)}>
