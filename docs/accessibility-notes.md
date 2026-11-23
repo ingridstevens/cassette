@@ -24,6 +24,6 @@ Tests: `engine/tests/test_export.py` (`test_every_word_export_declares_its_title
 ## Remains
 
 - Speaker names in the transcript Word file are bold paragraphs, not headings (a heading per line would flood the navigation pane). Needs a design decision.
-- The share card canvas has a generic English label ("Preview of the share card"); its quote and title are not read out, and the label is not translated.
+- The share card canvas now has a translated text alternative (title, talk time per speaker, the quote when one is on the card; `app/src/shareCardA11y.test.ts`). Not heard with a real screen reader. The rest of the share card dialog is still English only.
 - Plain Word files still carry the default author name from the library.
 - Needs real assistive technology: Word with NVDA/JAWS/VoiceOver, and the printed PDF's reading order and tags.
