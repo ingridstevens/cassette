@@ -4,6 +4,7 @@
  * so the compiler checks both sides of every channel (name, argument order, return value).
  * The types describe what the window SENDS and gets back; the handlers still check every value at run time (validate.ts, knownPaths.ts).
  */
+import type { NetActivity } from "./netWatch";
 import type { PartialInfo } from "./partialStore";
 import type { BackupErrorCode } from "./projectArchive";
 import type { ProjectsLoad } from "./projectsStore";
@@ -51,6 +52,7 @@ export interface IpcInvoke {
   "translate-line": Ch<[p: { input: string; start: number; end: number; model: string; language: string; backend?: string }], { ok: boolean; text?: string; error?: string }>;
   "llm-run": Ch<[kind: "highlights" | "summarize" | "ask", payload: unknown, o: { jobId: string; clientId: string; model: string; count?: number }], { type: string; message?: string; cancelled?: boolean; highlights?: unknown[]; summary?: unknown; answer?: unknown } | null>;
   "export-clips": Ch<[input: string, clips: Clip[], format: string, name: string], Result & { count?: number }>;
+  "net-activity": Ch<[], NetActivity>;
   "log-state": Ch<[], { on: boolean; bytes: number; hideNames: boolean }>;
   "log-set": Ch<[on: boolean], { ok: boolean; error?: string }>;
   "log-hide-names": Ch<[hide: boolean], { ok: boolean; error?: string }>;
