@@ -963,7 +963,8 @@ def to_changes(segs, names=None, options=None):
         o = s.get("orig")
         if not o or o.get("text") == s["text"]:
             continue
-        out.append(f"[{_ts(s['start'])[:8]}] {_name(s, names)}\n  - {L['original']}{o['text']}\n  + {L['edited']}{s['text']}")
+        checked = f" [{L['cueChecked']}]" if s.get("heard") else ""
+        out.append(f"[{_ts(s['start'])[:8]}] {_name(s, names)}{checked}\n  - {L['original']}{o['text']}\n  + {L['edited']}{s['text']}")
     n = len(out)
     head = L["edited1" if n == 1 else "editedN"].format(n=n, m=len(segs)) + "\n\n"
     return head + "\n\n".join(out) + ("\n" if out else "")

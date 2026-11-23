@@ -8,6 +8,7 @@ export default {
     "mark a line as heard": "Zeile als gehört markieren", "unmark a line as heard": "Gehört-Markierung entfernen",
     "Line at {time} marked as heard": "Zeile bei {time} als gehört markiert",
     "Line at {time} no longer marked as heard": "Zeile bei {time} nicht mehr als gehört markiert",
+    "You listened to this line against the audio after changing it.": "Du hast diese Zeile nach der Änderung mit der Aufnahme abgeglichen.",
   },
   fr: {
     "Heard": "Écouté", "Heard it": "Écouté", "Heard ✓": "Écouté ✓",
@@ -17,6 +18,7 @@ export default {
     "mark a line as heard": "marquer une ligne comme écoutée", "unmark a line as heard": "retirer la marque écoutée d'une ligne",
     "Line at {time} marked as heard": "Ligne à {time} marquée comme écoutée",
     "Line at {time} no longer marked as heard": "Ligne à {time} n'est plus marquée comme écoutée",
+    "You listened to this line against the audio after changing it.": "Vous avez vérifié cette ligne avec l'audio après l'avoir modifiée.",
   },
   es: {
     "Heard": "Escuchado", "Heard it": "Escuchado", "Heard ✓": "Escuchado ✓",
@@ -26,5 +28,6 @@ export default {
     "mark a line as heard": "marcar una línea como escuchada", "unmark a line as heard": "quitar la marca de escuchada de una línea",
     "Line at {time} marked as heard": "Línea en {time} marcada como escuchada",
     "Line at {time} no longer marked as heard": "Línea en {time} ya no está marcada como escuchada",
+    "You listened to this line against the audio after changing it.": "Has comprobado esta línea con el audio después de cambiarla.",
   },
 };

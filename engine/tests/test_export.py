@@ -219,6 +219,16 @@ def test_changes_lists_edits_only():
     assert c.startswith("1 edited line of 2") and "original: old" in c and "edited:   new" in c
 
 
+def test_changes_say_which_edited_lines_a_person_checked():
+    from engine.export import to_changes
+
+    segs = [{"start": 0, "end": 1, "speaker": "A", "text": "new", "heard": True, "orig": {"text": "old", "words": []}},
+            {"start": 1, "end": 2, "speaker": "A", "text": "newer", "orig": {"text": "older", "words": []}}]
+    c = to_changes(segs)
+    assert c.count("[checked by a person]") == 1 and "A [checked by a person]\n  - original: old" in c
+    assert "[checked by a person]" not in to_changes([segs[1]])
+
+
 def test_combined_csv_has_project_column():
     from engine.export import to_combined_csv
 
