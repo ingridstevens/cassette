@@ -1,5 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron";
-import type { IpcEvents, IpcInvoke, IpcSend, IpcSendSync } from "./ipcChannels";
+import type { CleanupLevels, IpcEvents, IpcInvoke, IpcSend, IpcSendSync } from "./ipcChannels";
 
 // Every call goes through these three, so the channel name, the arguments and the result are checked against ipcChannels.ts (the same types main.ts registers with).
 const invoke = <C extends keyof IpcInvoke>(channel: C, ...args: IpcInvoke[C]["args"]): Promise<IpcInvoke[C]["ret"]> => ipcRenderer.invoke(channel, ...args);
@@ -26,6 +26,8 @@ const api = {
   loadPartials: (ids: string[]): Promise<Record<string, { lines: { start: number; end: number; speaker: string; text: string; lang?: string }[]; savedAt: number; model: string; language: string; audioChanged: boolean }>> => invoke("partial-load", ids),
   saveSidecar: (audioPath: string, data: unknown): Promise<{ ok: boolean; path?: string; error?: string }> => invoke("save-sidecar", audioPath, data),
   /** The waveform (8000 values, 0 to 1) and length in seconds of a recording, or null when the file is gone. */
+  /** Loudness figures for the first minute and a half of a recording, before and after an audio cleanup (works on temporary copies; the file is never changed). */
+  cleanupEstimate: (path: string, mode: string): Promise<{ ok: true; before: CleanupLevels; after: CleanupLevels; seconds: number } | { ok: false; error: string }> => invoke("cleanup-estimate", path, mode),
   peaks: (path: string): Promise<{ peaks: number[]; duration: number } | null> => invoke("peaks", path),
   /** Where the player streams a recording from (served by the main process, known recordings only). */
   mediaUrl: (path: string): string => `media://file/${encodeURIComponent(path)}`,

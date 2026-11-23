@@ -9,6 +9,9 @@ import type { BackupErrorCode } from "./projectArchive";
 import type { ProjectsLoad } from "./projectsStore";
 import type { SourceId } from "./sourceId";
 
+/** Rough loudness figures of a stretch of sound, in dB relative to full scale: the level of the louder parts (speech) and of the quieter parts (background). */
+export type CleanupLevels = { speech_db: number; noise_floor_db: number; gap_db: number };
+
 type Result = { ok?: boolean; cancelled?: boolean; path?: string; error?: string };
 type BundleRequest = { model: string; downloaded: string[]; diarization: boolean; checks: { id: string; level: string }[]; includeLog: boolean };
 type Clip = { start: number; end: number; speaker?: string };
@@ -28,6 +31,7 @@ export interface IpcInvoke {
   "partial-load": Ch<[ids: string[]], Record<string, PartialInfo>>;
   "save-sidecar": Ch<[audioPath: string, data: unknown], { ok: boolean; path?: string; error?: string }>;
   "peaks": Ch<[path: string], { peaks: number[]; duration: number } | null>;
+  "cleanup-estimate": Ch<[path: string, mode: string], { ok: true; before: CleanupLevels; after: CleanupLevels; seconds: number } | { ok: false; error: string }>;
   "transcribe": Ch<[opts: Record<string, unknown>], string>;
   "live-start": Ch<[o: Record<string, unknown>], { ok: boolean; jobId?: string; error?: string }>;
   "live-recover": Ch<[], string[]>;
