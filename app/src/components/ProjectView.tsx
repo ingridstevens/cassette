@@ -4,7 +4,7 @@ import FitCard from "./FitCard";
 import ReviewBar from "./ReviewBar";
 import StartSheet, { TRIAL_SECONDS, spanText, useStartEstimate } from "./StartSheet";
 import { assignToNamed } from "../speakerMenu";
-import { toggleHeard, acceptWord, addHighlight, fixWord, highlightOf, unsureWords, withSuggestions, ExportOpts, LastExport, Options, DraftLine, IS_MAC, JobProgress, MOD_KEY, PALETTE, Project, Result, baseName, displayName, fmt, isUnsure, joinWithPrevious, retext, revertLine, splitSegment } from "../types";
+import { toggleHeard, acceptWord, addHighlight, fixWord, highlightOf, unsureWords, withSuggestions, ExportOpts, LastExport, Options, DraftLine, IS_MAC, JobProgress, MOD_KEY, PALETTE, Project, Result, baseName, bytes, displayName, fmt, isUnsure, joinWithPrevious, retext, revertLine, splitSegment } from "../types";
 import "../styles/project.css";
 import ExportMenu from "./ExportMenu";
 import { langName } from "../languages";
@@ -18,6 +18,7 @@ import Transcript from "./Transcript";
 import { FIND_DEFAULTS, FindOpts, matcher, nearMisses } from "../find";
 import { revealTurn, scrollToTurn } from "../windowing";
 import Waveform, { WaveformHandle } from "./Waveform";
+import type { Located } from "../relink";
 import VideoPreview from "./VideoPreview";
 import { mediaKind } from "../projectActions";
 import { restoreFrom } from "../restorePoint";
@@ -34,9 +35,10 @@ interface Props {
   othersWaiting?: number; onApplyToOthers?(o: Partial<Options>): void; onRemember?(o: Partial<Options>): void;
   /** The Settings default for the first Export menu item, and where to keep the last export (not an edit, so it leaves the retention date alone). */ defaultExport?: string; /** The formats the Export menu shows up front (Settings). */ exportShown?: string[]; onExported?(last: LastExport): void; /** The user has dismissed the explanation of dotted words. */ unsureLegendSeen?: boolean;
   /** Easy mode: no AI, review, chapters, clips, marks or extra exports. Turning it off brings them all back. */ easy?: boolean;
+  /** "Locate recording": starts the chooser; `confirm` is asked (with a preview) only for a project that cannot check the file itself. */ onRelink?(confirm: (c: Located) => Promise<boolean>): void;
 }
 
-function Dialog({ title, children, cancel, confirm, onCancel, onConfirm }: { title: string; children: ReactNode; cancel: string; confirm: string; onCancel(): void; onConfirm(): void }) {
+function Dialog({ title, children, cancel, confirm, confirmClass = "btn danger", onCancel, onConfirm }: { title: string; children: ReactNode; cancel: string; confirm: string; confirmClass?: string; onCancel(): void; onConfirm(): void }) {
   const first = useRef<HTMLButtonElement>(null);
   const last = useRef<HTMLButtonElement>(null);
   useEffect(() => {
@@ -58,15 +60,32 @@ function Dialog({ title, children, cancel, confirm, onCancel, onConfirm }: { tit
         {children}
         <div className="row">
           <button ref={first} type="button" className="btn" onClick={onCancel}>{cancel}</button>
-          <button ref={last} type="button" className="btn danger" onClick={onConfirm}>{confirm}</button>
+          <button ref={last} type="button" className={confirmClass} onClick={onConfirm}>{confirm}</button>
         </div>
       </div>
     </div>
   );
 }
 
+/** What the person compares before accepting a file the project cannot check: its name, size and length against the length the transcript covers. */
+function LocatedPreview({ located, covered }: { located: Located; covered: number }) {
+  const t = useT();
+  const [length, setLength] = useState<number | null | undefined>(undefined);
+  useEffect(() => { let dead = false; window.api.peaks(located.path).then((r) => { if (!dead) setLength(r ? r.duration : null); }).catch(() => { if (!dead) setLength(null); }); return () => { dead = true; }; }, [located.path]);
+  return (
+    <>
+      <p>{t("This project was saved before Cassette could check recordings, so it cannot tell whether “{file}” is the right one. Compare it with the transcript first.", { file: located.name })}</p>
+      <ul>
+        <li>{t("This file: {size}, {length}", { size: bytes(located.source.size), length: length === undefined ? t("reading the length…") : length === null ? t("length unknown") : fmt(length) })}</li>
+        <li>{t("The transcript covers {length}.", { length: fmt(covered) })}</li>
+      </ul>
+      <p>{t("Nothing changes except which file this project plays and exports from.")}</p>
+    </>
+  );
+}
+
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
-export default function ProjectView({ project, progress, draft, interrupted, onDiscardInterrupted, blocker, waiting, visible, nowPlayingId, stopSignal = 0, onPlayingChange, onOpenSettings, models, onTranscribe, onCancel, onPatch, onBulkPatch, onUndo, onRedo, othersWaiting = 0, onApplyToOthers, onRemember, defaultExport, exportShown, onExported, unsureLegendSeen, easy = false }: Props) {
+export default function ProjectView({ project, progress, draft, interrupted, onDiscardInterrupted, blocker, waiting, visible, nowPlayingId, stopSignal = 0, onPlayingChange, onOpenSettings, models, onTranscribe, onCancel, onPatch, onBulkPatch, onUndo, onRedo, othersWaiting = 0, onApplyToOthers, onRemember, defaultExport, exportShown, onExported, unsureLegendSeen, easy = false, onRelink }: Props) {
   const [renaming, setRenaming] = useState(false);
   const t = useT();
   const { result, names, path } = project;
@@ -111,6 +130,8 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
   const [moved, setMoved] = useState<Moved | null>(null);
   const [tab, setTab] = useState<Tab>("speakers");
   const [dialog, setDialog] = useState<"again" | "stop" | null>(null);
+  /** A located file waiting for the person's yes (only for projects saved before recordings could be checked). */
+  const [locating, setLocating] = useState<{ c: Located; answer(ok: boolean): void } | null>(null);
   const [details, setDetails] = useState(false);
   const flash = (m: string) => { setNotice(m); setTimeout(() => setNotice(""), 2800); };
   // ---- player: the strip stays one row; "Details" folds the speaker and clip tools out below it, and remembers its state
@@ -765,7 +786,7 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
             <button type="button" className={"pv-speed" + (rate !== 1 ? " on" : "")} dir="ltr" onClick={() => stepRate(1, true)}
               aria-label={t("Playback speed {rate}×. Click to change.", { rate })} title={t("Playback speed: click to change, or press < and >")}>{rate}×</button>
           </div>
-          <Waveform key={project.id} easy={easy} ref={player} path={path} result={result} onTime={setTime} onSelection={setSel} onPlaying={setPlaying} onDuration={setDuration} trim={trimHl ? { id: trimHl.id, start: trimHl.start, end: trimHl.end } : null} onTrim={dragHl} />
+          <Waveform key={project.id} easy={easy} ref={player} path={path} result={result} onTime={setTime} onSelection={setSel} onPlaying={setPlaying} onDuration={setDuration} trim={trimHl ? { id: trimHl.id, start: trimHl.start, end: trimHl.end } : null} onTrim={dragHl} onLocate={onRelink ? () => onRelink((c) => new Promise<boolean>((answer) => setLocating({ c, answer }))) : undefined} />
           {result && (
             <div className="pv-now" aria-live="off">
               <i style={{ background: nowName ? nowColor : undefined }} aria-hidden />
@@ -823,6 +844,12 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
         <Dialog title={t("Replace this transcript?")} cancel={t("Cancel")} confirm={t("Replace transcript")} onCancel={() => setDialog(null)} onConfirm={replace}>
           <p>{t("Transcribing again writes the text from scratch. Your speaker names, moved lines, edits, highlights and chapters are not carried over. Your recording is not changed.")}</p>
           <p>{t("The transcript you have now is kept for one step back: you can restore it afterwards.")}</p>
+        </Dialog>
+      )}
+      {locating && (
+        <Dialog title={t("Use this recording?")} cancel={t("Cancel")} confirm={t("Use this recording")} confirmClass="btn sun"
+          onCancel={() => { locating.answer(false); setLocating(null); }} onConfirm={() => { locating.answer(true); setLocating(null); }}>
+          <LocatedPreview located={locating.c} covered={result?.duration ?? 0} />
         </Dialog>
       )}
       {dialog === "stop" && (

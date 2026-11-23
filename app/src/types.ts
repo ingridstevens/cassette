@@ -92,7 +92,11 @@ export interface Project {
   previous?: RestorePoint;
   /** The last successful export (format and the options it used), offered again as the first item of the Export menu. */
   lastExport?: LastExport;
+  /** Which recording this project belongs to, independent of its name and place: used to check a file chosen with "Locate recording". Missing in projects saved before it existed (filled in the next time the file is found). */
+  source?: SourceId;
 }
+/** Size of the recording and a checksum over samples of it (see electron/sourceId.ts). */
+export interface SourceId { size: number; sample: string }
 /** A whole earlier state of the transcript: text, speakers and names, checked quotes, chapters, translations and the summary all live in `result`. `label` and `at` are missing in points saved by older versions. */
 export interface RestorePoint { result: Result; names: Record<string, string>; meta?: RunMeta; label?: string; at?: number }
 export interface LastExport { format: string; options: Record<string, unknown> }

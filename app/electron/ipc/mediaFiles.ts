@@ -7,6 +7,7 @@ import { app, dialog, protocol, shell } from "electron";
 import { EngineEvent, runEngine } from "../engine-client";
 import { byteRange, mediaPathFromUrl, mimeFor, peaksCacheName } from "../media";
 import { saveClipOk } from "../validate";
+import { fingerprintFile } from "../sourceId";
 import { handle, type IpcContext } from "./typed";
 
 /** The sample interview shipped with the app (extraResources in electron-builder.yml; docs/samples when run from source). */
@@ -65,6 +66,17 @@ export function registerMediaFiles({ known, mediaFile, knownMedia }: IpcContext)
   handle("file-size", (_e, p: unknown) => {
     if (typeof p !== "string") return null;
     try { const st = fs.statSync(p); return st.isFile() ? st.size : null; } catch { return null; }
+  });
+  handle("fingerprint-file", (_e, p: unknown) => (knownMedia(p) ? fingerprintFile(p) : null));
+  // "Locate recording": the person picks the moved file. It becomes known (so it can be played) and its identity comes back; the project is changed by the window, only after it has checked the identity and saved.
+  handle("locate-recording", async () => {
+    const r = await dialog.showOpenDialog({ properties: ["openFile"], filters: [{ name: "Audio / Video", extensions: ["mp3", "wav", "m4a", "flac", "ogg", "opus", "aac", "mp4", "mov", "mkv", "webm"] }] });
+    const p = r.filePaths[0];
+    if (r.canceled || !p) return { ok: false as const, cancelled: true };
+    const source = mediaFile(p) ? await fingerprintFile(p) : null;
+    if (!source) return { ok: false as const };
+    known.add([p]);
+    return { ok: true as const, path: p, name: path.basename(p), source };
   });
 
   handle("save-clip", async (_e, input: string, start: number, end: number) => {

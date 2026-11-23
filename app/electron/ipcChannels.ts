@@ -7,6 +7,7 @@
 import type { PartialInfo } from "./partialStore";
 import type { BackupErrorCode } from "./projectArchive";
 import type { ProjectsLoad } from "./projectsStore";
+import type { SourceId } from "./sourceId";
 
 type Result = { ok?: boolean; cancelled?: boolean; path?: string; error?: string };
 type BundleRequest = { model: string; downloaded: string[]; diarization: boolean; checks: { id: string; level: string }[]; includeLog: boolean };
@@ -61,6 +62,8 @@ export interface IpcInvoke {
   "save-image": Ch<[dataUrl: string, defaultName: string], Result>;
   "reveal-path": Ch<[p: string], void>;
   "file-size": Ch<[p: string], number | null>;
+  "fingerprint-file": Ch<[p: string], SourceId | null>;
+  "locate-recording": Ch<[], { ok: true; path: string; name: string; source: SourceId } | { ok: false; cancelled?: boolean }>;
   "disk-free": Ch<[], number | null>;
   "open-external": Ch<[url: string], boolean>;
   "sample": Ch<[], { ok: true; path: string } | { ok: false; error: string }>;
