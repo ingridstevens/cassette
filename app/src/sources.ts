@@ -1,5 +1,5 @@
 import type { Highlight, Join, Part, Project, Result, Segment, Word } from "./types";
-import { baseName } from "./types";
+import { baseName, reattribute } from "./types";
 
 /**
  * Recordings of one project, in order, on one timeline. Transcript lines, highlights and the playhead all use that timeline; each recording
@@ -82,7 +82,7 @@ export function matchSpeakers(result: Result, names: Record<string, string>, map
   if (!moves.length) return { result, names };
   const map = new Map(moves);
   const to = (s: string) => map.get(s) ?? s;
-  const segments = result.segments.map((s) => (map.has(s.speaker) || s.words.some((w) => map.has(w.speaker)) ? { ...s, speaker: to(s.speaker), words: s.words.map((w) => (map.has(w.speaker) ? { ...w, speaker: to(w.speaker) } : w)) } : s));
+  const segments = result.segments.map((s) => (map.has(s.speaker) || s.words.some((w) => map.has(w.speaker)) ? { ...reattribute(s, to(s.speaker)), words: s.words.map((w) => (map.has(w.speaker) ? { ...w, speaker: to(w.speaker) } : w)) } : s));
   const highlights = result.highlights?.map((h) => (map.has(h.speaker) ? { ...h, speaker: to(h.speaker) } : h));
   const gone = new Set(map.keys());
   const kept = Object.fromEntries(Object.entries(names).filter(([id]) => !gone.has(id)));

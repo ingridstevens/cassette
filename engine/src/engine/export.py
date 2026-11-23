@@ -19,24 +19,32 @@ def _ts(sec: float, sep: str = ",", hours: bool = True) -> str:
 # ---- Words the exports write themselves (everything else is the user's own text) -----------------------------
 _L = {
     "en": {"sharesHead": "Language share:", "time": "Time", "speakerCol": "Speaker", "translation": "Translation", "summary": "Summary", "topics": "Topics", "actions": "Action items", "owner": "Owner", "task": "Action", "due": "Due", "keyquotes": "Key quotes", "highlights": "Highlights", "nohighlights": "Nothing was highlighted. Select text in the transcript and choose Highlight.", "aisummary": "Written by a language model on this computer. Check it before you share it.", "aihighlight": "suggested by the language model", "speaker": "speaker", "speakers": "speakers", "participants": "Participants: ", "footer": "Made with Cassette  ·  page ",
+           "cueUnsure": "wording unsure: {words}", "cueSpeaker": "speaker unconfirmed", "cueChecked": "checked by a person",
+           "noteGap": "Gap of {length}: nothing was recorded between these two recordings.", "noteUnknown": "Possible gap: something may be missing between these two recordings, and nobody knows how much.", "noteOverlap": "The recordings overlap by {length}: some words may appear twice.", "noteTrial": "Not transcribed: everything after {at}. Only a sample was transcribed.",
            "attendees": "Attendees", "decisions": "Decisions and action items", "nomarks": "No lines were marked. Mark a line in the transcript to list it here.",
            "record": "Record", "minutes": "Meeting minutes", "edited1": "{n} edited line of {m}", "editedN": "{n} edited lines of {m}",
            "original": "original: ", "edited": "edited:   ",
            "cleannote": "Edited copy: hesitations such as “um” and “uh” were removed. This is not a verbatim record.", "pausenote": "Pauses are marked (.) about half a second, (..) about one second, (...) two seconds or more.", "overlap": "overlap",
            "months": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]},
     "de": {"sharesHead": "Sprachanteile:", "time": "Zeit", "speakerCol": "Sprecher", "translation": "Übersetzung", "summary": "Zusammenfassung", "topics": "Themen", "actions": "Aufgaben", "owner": "Verantwortlich", "task": "Aufgabe", "due": "Fällig bis", "keyquotes": "Zitate", "highlights": "Highlights", "nohighlights": "Nichts wurde hervorgehoben. Markiere Text im Transkript und wähle Hervorheben.", "aisummary": "Von einem Sprachmodell auf diesem Computer geschrieben. Bitte vor dem Weitergeben prüfen.", "aihighlight": "vom Sprachmodell vorgeschlagen", "speaker": "Sprecher", "speakers": "Sprecher", "participants": "Teilnehmende: ", "footer": "Erstellt mit Cassette  ·  Seite ",
+           "cueUnsure": "Wortlaut unsicher: {words}", "cueSpeaker": "Sprecher unbestätigt", "cueChecked": "von einer Person geprüft",
+           "noteGap": "Lücke von {length}: Zwischen diesen beiden Aufnahmen wurde nichts aufgenommen.", "noteUnknown": "Mögliche Lücke: Zwischen diesen beiden Aufnahmen fehlt möglicherweise etwas, und niemand weiß, wie viel.", "noteOverlap": "Die Aufnahmen überlappen sich um {length}: Einige Wörter können doppelt vorkommen.", "noteTrial": "Nicht transkribiert: alles nach {at}. Es wurde nur eine Probe transkribiert.",
            "attendees": "Teilnehmende", "decisions": "Beschlüsse und Aufgaben", "nomarks": "Es wurden keine Zeilen markiert. Markiere eine Zeile im Transkript, damit sie hier erscheint.",
            "record": "Protokoll", "minutes": "Besprechungsprotokoll", "edited1": "{n} geänderte Zeile von {m}", "editedN": "{n} geänderte Zeilen von {m}",
            "original": "Original:  ", "edited": "Geändert: ",
            "cleannote": "Bearbeitete Fassung: Füllwörter wie „äh“ und „ähm“ wurden entfernt. Das ist kein wörtliches Protokoll.", "pausenote": "Pausen sind markiert: (.) etwa eine halbe Sekunde, (..) etwa eine Sekunde, (...) zwei Sekunden oder mehr.", "overlap": "überlappend",
            "months": ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]},
     "fr": {"sharesHead": "Répartition des langues :", "time": "Temps", "speakerCol": "Locuteur", "translation": "Traduction", "summary": "Résumé", "topics": "Sujets", "actions": "Actions à mener", "owner": "Responsable", "task": "Action", "due": "Échéance", "keyquotes": "Citations clés", "highlights": "Moments forts", "nohighlights": "Rien n’a été mis en avant. Sélectionnez du texte dans la transcription et choisissez Mettre en avant.", "aisummary": "Rédigé par un modèle de langage sur cet ordinateur. Vérifiez-le avant de le partager.", "aihighlight": "proposé par le modèle de langage", "speaker": "locuteur", "speakers": "locuteurs", "participants": "Participants : ", "footer": "Créé avec Cassette  ·  page ",
+           "cueUnsure": "formulation incertaine : {words}", "cueSpeaker": "locuteur non confirmé", "cueChecked": "vérifié par une personne",
+           "noteGap": "Trou de {length} : rien n’a été enregistré entre ces deux enregistrements.", "noteUnknown": "Trou possible : il manque peut-être quelque chose entre ces deux enregistrements, et personne ne sait combien.", "noteOverlap": "Les enregistrements se chevauchent sur {length} : certains mots peuvent apparaître deux fois.", "noteTrial": "Non transcrit : tout ce qui suit {at}. Seul un échantillon a été transcrit.",
            "attendees": "Participants", "decisions": "Décisions et actions", "nomarks": "Aucune ligne n’a été marquée. Marquez une ligne dans la transcription pour qu’elle apparaisse ici.",
            "record": "Compte rendu", "minutes": "Compte rendu de réunion", "edited1": "{n} ligne modifiée sur {m}", "editedN": "{n} lignes modifiées sur {m}",
            "original": "original : ", "edited": "modifié :  ",
            "cleannote": "Version nettoyée : les hésitations comme « euh » ont été supprimées. Ce n’est pas une transcription littérale.", "pausenote": "Les pauses sont indiquées : (.) environ une demi-seconde, (..) environ une seconde, (...) deux secondes ou plus.", "overlap": "chevauchement",
            "months": ["janvier", "février", "mars", "avril", "mai", "juin", "juillet", "août", "septembre", "octobre", "novembre", "décembre"]},
     "es": {"sharesHead": "Reparto de idiomas:", "time": "Tiempo", "speakerCol": "Hablante", "translation": "Traducción", "summary": "Resumen", "topics": "Temas", "actions": "Tareas", "owner": "Responsable", "task": "Tarea", "due": "Fecha límite", "keyquotes": "Citas clave", "highlights": "Destacados", "nohighlights": "No se destacó nada. Selecciona texto en la transcripción y elige Destacar.", "aisummary": "Escrito por un modelo de lenguaje en este ordenador. Revísalo antes de compartirlo.", "aihighlight": "sugerido por el modelo de lenguaje", "speaker": "hablante", "speakers": "hablantes", "participants": "Participantes: ", "footer": "Creado con Cassette  ·  página ",
+           "cueUnsure": "redacción dudosa: {words}", "cueSpeaker": "hablante sin confirmar", "cueChecked": "comprobado por una persona",
+           "noteGap": "Hueco de {length}: no se grabó nada entre estas dos grabaciones.", "noteUnknown": "Posible hueco: puede faltar algo entre estas dos grabaciones, y nadie sabe cuánto.", "noteOverlap": "Las grabaciones se solapan {length}: algunas palabras pueden aparecer dos veces.", "noteTrial": "Sin transcribir: todo lo que sigue a {at}. Solo se transcribió una muestra.",
            "attendees": "Asistentes", "decisions": "Decisiones y tareas", "nomarks": "No se marcó ninguna línea. Marca una línea en la transcripción para que aparezca aquí.",
            "record": "Acta", "minutes": "Acta de la reunión", "edited1": "{n} línea editada de {m}", "editedN": "{n} líneas editadas de {m}",
            "original": "original: ", "edited": "editado:  ",
@@ -130,7 +138,65 @@ def _flag(seg: dict, lang: str | None, options: dict | None = None) -> str:
         parts.append(own)
     if seg.get("overlap"):
         parts.append(_tr(lang)["overlap"])
+    parts += cue_labels(seg, lang, options)
     return f" [{', '.join(parts)}]" if parts else ""
+
+
+def cue_labels(seg: dict, lang: str | None, options: dict | None = None) -> list[str]:
+    """What a reader without the audio needs to know about one line, one label per cue, each its own words:
+    `checked by a person` (the user listened to the line and vouches for it), else `wording unsure: ...` (words the model doubted and nobody confirmed)
+    and `speaker unconfirmed` (a speaker brought in by an added recording that nobody matched or named). Overlapping speech is a cue of its own (see `_flag`)
+    and never says anything about the speaker. Only when `options.cues` is on, and a line with nothing to say gets nothing."""
+    o = options or {}
+    if not o.get("cues"):
+        return []
+    L = _tr(lang)
+    if seg.get("heard"):
+        return [L["cueChecked"]]
+    out = []
+    words = [w for w in (seg.get("unsure") or []) if w]
+    if words:
+        out.append(L["cueUnsure"].format(words=", ".join(words)))
+    if seg.get("speaker") in (o.get("unconfirmedSpeakers") or []):
+        out.append(L["cueSpeaker"])
+    return out
+
+
+def _length(sec: float) -> str:
+    sec = max(0.0, float(sec))
+    if sec < 60:
+        return f"{round(sec * 10) / 10:g} s"
+    return f"{int(sec // 60)} min {round(sec % 60)} s"
+
+
+def boundary_notes(segs, lang: str | None, options: dict | None = None) -> tuple[dict[int, list[tuple[float, str]]], list[tuple[float, str]]]:
+    """Notes about the recording itself, placed where the reader meets them: a gap, an unknown gap or an overlap between two recordings,
+    and the stretch nobody transcribed. Each goes before the first line that starts at or after its moment; those with no line after them
+    come last. Returns (index of line -> [(moment, note)], the same for the end). Nothing is said unless `options.cues` is on and the project has such a thing."""
+    o = options or {}
+    if not o.get("cues"):
+        return {}, []
+    L = _tr(lang)
+    items: list[tuple[float, str]] = []
+    for b in o.get("boundaries") or []:
+        kind, sec = b.get("kind"), b.get("seconds") or 0
+        if kind == "gap" and sec > 0:
+            items.append((b["at"], L["noteGap"].format(length=_length(sec))))
+        elif kind == "overlap" and sec > 0:
+            items.append((b["at"], L["noteOverlap"].format(length=_length(sec))))
+        elif kind == "unknown":
+            items.append((b["at"], L["noteUnknown"]))
+    for r in o.get("untranscribed") or []:
+        items.append((r["start"], L["noteTrial"].format(at=_clock(r["start"]))))
+    before: dict[int, list[tuple[float, str]]] = {}
+    tail: list[tuple[float, str]] = []
+    for at, text in sorted(items, key=lambda x: x[0]):
+        idx = next((i for i, s in enumerate(segs) if s["start"] >= at), None)
+        if idx is None:
+            tail.append((at, text))
+        else:
+            before.setdefault(idx, []).append((at, text))
+    return before, tail
 
 
 def _trans_txt(seg: dict, options: dict | None) -> str:
@@ -138,12 +204,22 @@ def _trans_txt(seg: dict, options: dict | None) -> str:
     return f"\n    → {seg['translation']}" if seg.get("translation") and (options or {}).get("translations", True) else ""
 
 
+def _note_line(note: tuple[float, str], stamp: bool) -> str:
+    return (f"[{_ts(note[0])[:8]}] " if stamp else "") + f"[{note[1]}]"
+
+
 def to_txt(segs, names=None, options=None):
     names = names or {}
     o = options or {}
     stamp = o.get("timestamps", True)
     note = style_note(o, o.get("lang"))
-    body = "\n".join((f"[{_ts(s['start'])[:8]}] " if stamp else "") + f"{_name(s, names)}{_flag(s, o.get('lang'), o)}: {s['text']}" + _trans_txt(s, o) for s in segs) + "\n"
+    before, tail = boundary_notes(segs, o.get("lang"), o)
+    lines = []
+    for i, s in enumerate(segs):
+        lines += [_note_line(n, stamp) for n in before.get(i, [])]
+        lines.append((f"[{_ts(s['start'])[:8]}] " if stamp else "") + f"{_name(s, names)}{_flag(s, o.get('lang'), o)}: {s['text']}" + _trans_txt(s, o))
+    lines += [_note_line(n, stamp) for n in tail]
+    body = "\n".join(lines) + "\n"
     return (note + "\n\n" if note else "") + body + (f"\n{o['stampText']}\n" if o.get("stampText") else "")
 
 
@@ -608,8 +684,19 @@ def to_docx(segs, names=None, title="Transcript", lang=None, options=None) -> by
     stamp = (options or {}).get("timestamps", True)
 
     # the conversation
-    for sg in segs:
+    before, tail = boundary_notes(segs, lang, options)
+
+    def note(n):  # a shaded line of plain words (a gap, an overlap, the untranscribed rest), never colour alone
+        p = doc.add_paragraph()
+        p.paragraph_format.space_before = Pt(8)
+        p.paragraph_format.space_after = Pt(4)
+        _shade(p, "FFF4D6")
+        _font(p.add_run((f"{_ts(n[0])[:8]}   " if stamp else "") + n[1]), _SANS, 9.5, True, _INK, italic=True)
+
+    for si, sg in enumerate(segs):
         sp = sg["speaker"]
+        for n in before.get(si, []):
+            note(n)
         if sg.get("chapter"):
             c = doc.add_paragraph(style="Heading 2")  # chapters are real headings: a screen reader can jump between them
             c.paragraph_format.space_before = Pt(16)
@@ -637,6 +724,8 @@ def to_docx(segs, names=None, title="Transcript", lang=None, options=None) -> by
             tr.paragraph_format.left_indent = Cm(0.45)
             tr.paragraph_format.space_after = Pt(2)
             _font(tr.add_run("→ " + sg["translation"]), _SERIF, 10.5, color=_MUTED, italic=True)
+    for n in tail:
+        note(n)
 
     out = io.BytesIO()
     doc.save(out)
@@ -816,11 +905,29 @@ def quote_list(segs, highlights=None):
     return sorted(out, key=lambda q: q["start"])
 
 
-def to_quotes(segs, names=None, highlights=None):
-    """The highlights and the marked lines, as quotes with speaker and time."""
+def _quote_cues(q: dict, segs, lang: str | None, options: dict | None) -> str:
+    """` [wording unsure: ...]` for a quote: the cues of the line it comes from, limited to the unsure words the quote actually contains."""
+    if not (options or {}).get("cues"):
+        return ""
+    best, share = None, 0.0
+    for s in segs:
+        ov = min(q["end"], s["end"]) - max(q["start"], s["start"])
+        if ov > share:
+            best, share = s, ov
+    if best is None:
+        return ""
+    text = q["text"].lower()
+    mine = {**best, "unsure": [w for w in (best.get("unsure") or []) if w.lower() in text]}
+    labels = cue_labels(mine, lang, options)
+    return f" [{', '.join(labels)}]" if labels else ""
+
+
+def to_quotes(segs, names=None, highlights=None, options=None):
+    """The highlights and the marked lines, as quotes with speaker and time (and, when the cues are on, what a reader should know about the line each came from)."""
     names = names or {}
+    o = options or {}
     quotes = quote_list(segs, highlights)
-    return "\n\n".join(f"“{q['text']}”\n— {names.get(q['speaker'], q['speaker'])}, {_clock(q['start'])}" for q in quotes) + ("\n" if quotes else "")
+    return "\n\n".join(f"“{q['text']}”\n— {names.get(q['speaker'], q['speaker'])}, {_clock(q['start'])}{_quote_cues(q, segs, o.get('lang'), o)}" for q in quotes) + ("\n" if quotes else "")
 
 
 def to_highlights_docx(segs, names=None, highlights=None, title=None, lang=None) -> bytes:

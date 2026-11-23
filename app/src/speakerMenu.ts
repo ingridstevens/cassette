@@ -1,4 +1,5 @@
 import type { Result } from "./types";
+import { reattribute } from "./types";
 
 /** The speaker filter in the "Who said this line?" menu only shows up from this many speakers on. */
 export const FILTER_AT = 6;
@@ -31,7 +32,7 @@ export function assignToNamed(result: Result, names: Record<string, string>, ind
   const same = name ? result.speakers.find((sp) => label(sp).trim().toLowerCase() === name.toLowerCase()) : undefined;
   const created = !same;
   const id = same ?? nextSpeakerId(result.speakers, names);
-  const segments = result.segments.map((s, k) => (k === index ? { ...s, speaker: id, words: s.words.map((w) => ({ ...w, speaker: id })) } : s));
+  const segments = result.segments.map((s, k) => (k === index ? reattribute(s, id) : s));
   return {
     result: { ...result, speakers: created ? [...result.speakers, id] : result.speakers, segments },
     names: created && name ? { ...names, [id]: name } : names, id, created,

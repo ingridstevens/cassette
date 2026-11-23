@@ -148,13 +148,27 @@ export function retext(seg: Segment, raw: string): Segment {
     words = tokens.map((t, i) => ({ start: seg.start + i * step, end: seg.start + (i + 1) * step, word: (i === 0 ? "" : " ") + t, speaker: seg.speaker, prob: 1 }));
   }
   const same = text === orig.text;
-  return { ...seg, text, words, orig: same ? undefined : orig, edited: same ? undefined : true };
+  return { ...unheard(seg), text, words, orig: same ? undefined : orig, edited: same ? undefined : true };
+}
+
+/** The line without its "heard it myself" mark. Whoever listened vouched for the wording and the speaker as they were, so any change to either takes the mark away. */
+export function unheard(seg: Segment): Segment {
+  if (!seg.heard) return seg;
+  const { heard: _h, ...rest } = seg;
+  return rest;
+}
+
+/** Give a line to another speaker (the words follow). A line that really changes hands loses its "heard" mark; one that stays with the same speaker is returned as it is. */
+export function reattribute(seg: Segment, to: string): Segment {
+  if (seg.speaker === to && seg.words.every((w) => w.speaker === to)) return seg;
+  return { ...(seg.speaker === to ? seg : unheard(seg)), speaker: to, words: seg.words.map((w) => ({ ...w, speaker: to })) };
 }
 
 /** Put a line back to what the model heard. */
 export function revertLine(seg: Segment): Segment {
   if (!seg.orig) return seg;
-  const { orig, edited: _edited, ...rest } = seg;
+  const { orig } = seg;
+  const { edited: _edited, orig: _orig, ...rest } = unheard(seg);
   return { ...rest, text: orig.text, words: orig.words.map((w) => ({ ...w, speaker: seg.speaker })) };
 }
 
@@ -209,6 +223,7 @@ export function joinWithPrevious(segs: Segment[], i: number): Segment[] | null {
   const words = [...prev.words, ...cur.words.map((w) => ({ ...w, speaker: prev.speaker }))];
   const { orig: _o, ...rest } = prev;
   const joined: Segment = { ...rest, end: cur.end, words, text: joinText(words), ...(prev.edited || cur.edited ? { edited: true } : {}) };
+  if (!cur.heard && joined.heard) delete joined.heard; // the joined line holds words nobody listened to
   return [...segs.slice(0, i - 1), joined, ...segs.slice(i + 1)];
 }
 
@@ -248,7 +263,7 @@ export function fixWord(seg: Segment, j: number, text: string): Segment {
   const next = words.map((x) => x.word).join("").replace(/\s+/g, " ").trim();
   const orig = seg.orig ?? { text: seg.text, words: seg.words };
   const same = next === orig.text;
-  return { ...seg, text: next, words, orig: same ? undefined : orig, edited: same ? undefined : true };
+  return { ...unheard(seg), text: next, words, orig: same ? undefined : orig, edited: same ? undefined : true };
 }
 
 const wordsText = (words: Word[]) => words.map((w) => w.word).join("").trim();

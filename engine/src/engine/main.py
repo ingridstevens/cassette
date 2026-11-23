@@ -219,7 +219,11 @@ def cmd_export(a) -> None:
         return
     names = data.get("speakers", {})
     opts = {**(data.get("options") or {}), "lang": data.get("lang"), "fileLanguage": data.get("language")}
-    opts.pop("stampText", None)  # only ever built here, from the transcript's own fields
+    opts.pop("stampText", None)
+    # recording cues (unsure wording, unconfirmed speaker, checked lines, gaps, untranscribed rest): only in the text, Word and quote exports
+    opts["cues"] = a.format in ("txt", "docx", "quotes")
+    if opts["cues"]:
+        opts.update({k: data[k] for k in ("boundaries", "untranscribed", "unconfirmedSpeakers") if isinstance(data.get(k), list)})  # only ever built here, from the transcript's own fields
     if opts.get("stamp") and a.format in ("txt", "md", "md-copy", "csv", "docx", "minutes", "bilingual"):  # opt-in version line; never in subtitles, JSON (has its meta), markers or the anonymised export
         opts["stampText"] = ex.stamp_text(data)
     segs = data["segments"]
@@ -238,7 +242,7 @@ def cmd_export(a) -> None:
     elif a.format == "highlights":
         Path(a.output).write_bytes(ex.to_highlights_docx(segs, names, data.get("highlights"), title=Path(a.output).stem, lang=data.get("lang")))
     elif a.format == "quotes":
-        Path(a.output).write_text(ex.to_quotes(segs, names, data.get("highlights")), encoding="utf-8", newline="")
+        Path(a.output).write_text(ex.to_quotes(segs, names, data.get("highlights"), opts), encoding="utf-8", newline="")
     elif a.format == "md-copy":  # Markdown for the clipboard: the .md export plus the highlights as quotes (names as in the .md export)
         Path(a.output).write_text(ex.to_md(segs, names, {**opts, "highlights": data.get("highlights") or []}), encoding="utf-8", newline="")
     elif a.format == "edl":

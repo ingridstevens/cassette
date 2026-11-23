@@ -143,6 +143,26 @@ choice is remembered. Your transcript itself is never changed.
 - The spreadsheet's columns are: start and end (seconds), start and end (`h:mm:ss`), speaker, text, `overlap`, `language`,
   `translation`. New columns are always added at the end, so existing spreadsheet formulas keep working.
 
+## Cues for a reader without the audio (text, Word and quotes)
+
+The text, Word and quote-list exports say, in words, what is not settled. Each cue has its own wording, and a line with nothing to say gets
+no label, so a clean recording from one file exports exactly as before.
+
+| Cue | Where it appears | Wording |
+|---|---|---|
+| Unsure word (the model doubted it and you have not confirmed it) | after the speaker, on that line | `Name [wording unsure: Brandt]:` |
+| Unconfirmed speaker (brought in by an added recording that you have neither matched nor named) | after the speaker | `Name [speaker unconfirmed]:` |
+| Overlapping speech | after the speaker | `Name [overlap]:` (says nothing about who the speaker is) |
+| Checked by a person (you pressed **Heard** on the line) | after the speaker | `Name [checked by a person]:` |
+| Known gap, unknown gap, overlapping handoff between recordings | a line of its own before the first line of the later recording | `[Gap of 2 min 5 s: nothing was recorded between these two recordings.]` |
+| Untranscribed rest (a 3-minute sample) | a line of its own at the end | `[Not transcribed: everything after 3:00. Only a sample was transcribed.]` |
+
+Labels share one pair of brackets and are separated by commas (`Name [overlap, speaker unconfirmed]:`). A line you checked carries only
+`checked by a person` (and its language and overlap): you vouched for it. The check goes away as soon as you change the line's wording
+or its speaker, so an export never calls changed text checked. In Word the notes are shaded lines of plain text. In the quote list the labels
+follow the time (`— Anna, 0:05 [wording unsure: Brandt]`) and name only the unsure words that are inside the quote. **Copy quote** in the
+transcript adds the same labels. Subtitles, Markdown, the spreadsheet, JSON and the anonymised export do not carry these cues.
+
 ## The app's language in exports
 
 The words the app writes itself follow the language you chose under Settings, Text and language: headings in the Word document and the
