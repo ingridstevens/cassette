@@ -18,13 +18,26 @@ scores, and writes the result here.
 
 ## A proposal
 
-A proposal is a short list. For each feature give an id, a title and two or three sentences on what it does and what it costs
-(for example: needs a new download, adds a network call, slows transcription).
+A proposal is a short list. For each feature give an id, a title, two or three sentences on what it does, and a **Cost** line.
+The cost line is required: a proposal without one is incomplete, and the vote skill asks for it before starting.
 
 ```markdown
 ## F1 Batch export of all projects as one zip
-Export every project's Word file and CSV in one go. Adds no network access. About 150 lines of code.
+Export every project's Word file and CSV in one go. Adds no network access.
+Cost: about 150 lines of code; new dependencies: none; size added: 0 MB; screens touched: 1 (Export menu).
 ```
+
+The cost line has four parts, so clutter and upkeep are visible next to the benefit:
+
+| Part | What to write |
+| --- | --- |
+| Lines of code | Rough estimate of lines added, plus tests |
+| New dependencies | Package names, or "none" |
+| MB added | Download or installed size added, or "0 MB" |
+| Screens touched | Which screens, menus or settings change, and how many items they gain |
+
+Once the Max persona exists ([9.2](https://github.com/ingridstevens/cassette/issues/120)), Max scores the cost of each proposal
+and the cost penalty is subtracted from the mean. A proposal needs a net positive score after that penalty to go ahead.
 
 Look at [`proposals/_example.md`](proposals/_example.md).
 
