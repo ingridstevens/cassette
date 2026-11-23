@@ -18,7 +18,7 @@ under Options, English translation, or use **Translate to English** on a single 
 **Is it free?** Yes. The app is released into the public domain; models and libraries keep their own licences
 ([notices](../THIRD_PARTY_NOTICES.md)).
 
-**Is my audio uploaded?** No. The internet is used only to download models. See [Privacy](privacy-and-offline.md).
+**Is my audio uploaded?** No. The internet is used only to download models (and, if you switch it on, to ask once a week whether a new version is out). See [Privacy](privacy-and-offline.md).
 
 **What happens if I quit the app while it is transcribing?** The transcription stops and is not resumed. The speech engine ends as soon as the
 app does (checked from the command line: closing its output ends it within seconds), nothing is saved from the unfinished run, and after you

@@ -34,6 +34,9 @@ export default function PrivacySection({ models, opts, set }: Props) {
   const [netFailed, setNetFailed] = useState(false);
   const refreshNet = () => window.api.netActivity().then((a) => { setNet(a); setNetFailed(false); }).catch(() => setNetFailed(true));
   useEffect(() => { void refreshNet(); }, []);
+  const [upd, setUpd] = useState<Awaited<ReturnType<typeof window.api.updateState>> | null>(null);
+  const [updMsg, setUpdMsg] = useState("");
+  useEffect(() => { window.api.updateState().then(setUpd).catch(() => {}); }, []);
   const input = useRef<HTMLInputElement>(null);
   const back = useReturnFocus();
   const reread = () => window.api.token().then((t) => setHint(t || null));
@@ -59,10 +62,10 @@ export default function PrivacySection({ models, opts, set }: Props) {
     <>
       <div className="card st-card">
         <h2>{t("Your recordings stay on this computer")}</h2>
-        <p className="st-lead">{t("Audio and transcripts are not uploaded anywhere. The app has no account and sends no usage data. It goes online only to download models, and to check your Hugging Face token when you set up speaker detection.")}</p>
+        <p className="st-lead">{t("Audio and transcripts are not uploaded anywhere. The app has no account and sends no usage data. It goes online only to download models, to check your Hugging Face token when you set up speaker detection, and, only if you switch it on, to ask once a week whether a new version is out.")}</p>
         <div className="st-facts">
           <div className="st-inset"><b>{t("Stays on this computer")}</b>{t("Your recordings, transcripts, speaker names and the project list.")}</div>
-          <div className="st-inset"><b>{t("Uses the internet")}</b>{t("Model downloads from huggingface.co, once. After that the app works offline.")}</div>
+          <div className="st-inset"><b>{t("Uses the internet")}</b>{t("Model downloads from huggingface.co, once. After that the app works offline. A weekly update notice only if you switch it on.")}</div>
         </div>
       </div>
 
@@ -88,9 +91,27 @@ export default function PrivacySection({ models, opts, set }: Props) {
             <tr><th scope="row"><code>download.moonshine.ai</code></th><td>{t("You press Download on a Moonshine model")}</td><td>{t("The language.")}</td><td><Path p="engine/src/engine/asr_moonshine.py" /></td></tr>
             <tr><th scope="row"><code>huggingface.co</code></th><td>{t("You press Open the token page or Open the two model pages")}</td><td>{t("Nothing: your browser opens the page. The app opens only huggingface.co pages.")}</td><td><Path p="app/electron/ipc/diagnostics.ts" /> <small>open-external</small></td></tr>
             <tr><th scope="row"><code>github.com</code></th><td>{t("You press Send feedback in About")}</td><td>{t("Nothing: your browser opens a new GitHub issue, pre-filled with the app version, your system and its memory, which you can read and edit. The app opens only that one page.")}</td><td><Path p="app/src/components/settings/AboutSection.tsx" /> <small>sendFeedback</small></td></tr>
+            <tr><th scope="row"><code>api.github.com</code></th><td>{t("Only if you switch on Tell me when a new version is out: when you switch it on, then at most once a week while the app is open")}</td><td>{t("A request for the newest release's version number. No token, cookies or file names. GitHub sees your internet address and \"Cassette\" with this app's version number. Nothing is downloaded or installed.")}</td><td><Path p="app/electron/ipc/updates.ts" /></td></tr>
+            <tr><th scope="row"><code>github.com</code></th><td>{t("You press Open the Releases page in About")}</td><td>{t("Nothing: your browser opens the Releases page. The app opens only that one page, besides the new-issue form.")}</td><td><Path p="app/electron/ipc/diagnostics.ts" /> <small>open-external</small></td></tr>
           </tbody></table></div>
         <p className="note">{t("Every network call is listed here. Nothing else leaves this computer. This comes from reading the app's code, not from an independent audit.")}</p>
         <p className="note">{t("A test in the project (engine/tests/test_network_surface.py) fails if code that can reach the network appears in a new place or a new web address is written into the app. It is a tripwire, not an audit.")}</p>
+      </div>
+
+      <div className="card st-card" role="region" aria-labelledby="pv-updates">
+        <h2 id="pv-updates">{t("Updates")}</h2>
+        <p className="st-lead">{t("Off by default, so the app makes no request of its own. Turn it on and the app asks github.com once a week for the newest version number and tells you in About if there is a newer one. It never downloads or installs anything.")}</p>
+        {upd && (
+          <>
+            <SwitchRow id="upd-on" title={t("Tell me when a new version is out (checks github.com once a week)")} help={t("Off: no request is made. On: one request to api.github.com when you switch it on, then at most once a week while the app is open. Security fixes only reach you if you hear about them.")} on={upd.on}
+              onChange={async (on) => { try { const s = await window.api.setUpdateCheck(on); setUpd(s); setUpdMsg(on ? t("Update notices are on.") : t("Update notices are off. No request will be made.")); void refreshNet(); } catch { setUpdMsg(t("The setting could not be saved.")); } }} />
+            {upd.on && <p className="note">{upd.failed ? t("The last check did not work (no connection, or GitHub did not answer). It will try again in a week.")
+              : upd.lastChecked === null ? t("Not checked yet.")
+              : upd.newer ? t("Version {version} is out. You have {current}. Open About to see where to get it.", { version: upd.newer, current: upd.current })
+              : t("Last checked {date}: you have the newest version.", { date: new Date(upd.lastChecked).toLocaleDateString() })}</p>}
+            <p className="st-sr" role="status">{updMsg}</p>
+          </>
+        )}
       </div>
 
       <div className="card st-card" role="region" aria-labelledby="pv-activity">
@@ -104,6 +125,7 @@ export default function PrivacySection({ models, opts, set }: Props) {
           const s = netSummary(net);
           const when = (ms: number) => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
           const what = (e: typeof net.entries[number]) => e.kind === "request" ? t("A request from the app's window to {host}", { host: e.host })
+            : e.kind === "update" ? t("Checked {host} for a newer version (the update notice is on)", { host: e.host })
             : e.kind === "link" ? t("Opened a page in your browser: {host}", { host: e.host })
             : e.action === "check" ? t("Asked the engine to check your Hugging Face token")
             : e.action === "repair" ? t("Asked the engine to download a model again{model}", { model: e.model ? `: ${e.model}` : "" })

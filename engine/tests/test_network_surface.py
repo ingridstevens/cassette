@@ -1,4 +1,4 @@
-"""The app promises that the only network use is model downloads and the Hugging Face token check (Settings, Privacy lists each call).
+"""The app promises that the only network use is model downloads, the Hugging Face token check and, only if the person switches it on, a weekly look at the newest release number (Settings, Privacy lists each call).
 This test makes that promise fail loudly: if code that can reach the network appears in a new place, or a new web address is written
 into the app, the test fails until a person has looked at it, updated the allow-list below, and updated the Privacy page and docs.
 It reads the source with plain text search; it cannot catch code that builds an address at run time, so it is a tripwire, not an audit."""
@@ -18,7 +18,9 @@ ENGINE_NETWORK_FILES = {
 }
 NETWORK_NAMES = re.compile(r"\b(snapshot_download|hf_hub_download|HfApi|requests\.|urllib|httpx|aiohttp|socket\.|http\.client|urlopen|download_model)\b")
 # Hosts that may appear as a web address in the app's own source (not in translations or licence texts)
-ALLOWED_HOSTS = {"huggingface.co", "download.moonshine.ai", "github.com", "www.w3.org"}  # w3.org is only the SVG/XML namespace string
+ALLOWED_HOSTS = {"huggingface.co", "download.moonshine.ai", "github.com", "api.github.com", "www.w3.org"}  # w3.org is only the SVG/XML namespace string
+# The one file in the app that may make a request of its own: the optional update notice (off until the person turns it on in Settings > Privacy).
+UPDATE_CHECK_FILE = "updates.ts"
 BROWSER_CALLS = re.compile(r"\b(fetch\(|XMLHttpRequest|WebSocket\(|net\.request|net\.fetch|https\.get|http\.get|navigator\.sendBeacon|EventSource\()")
 
 
@@ -67,11 +69,25 @@ def test_app_source_writes_only_known_web_addresses():
 def test_app_does_not_make_its_own_requests():
     offenders = []
     for p in _files(APP, (".ts", ".tsx")):
-        if "scripts" in p.parts or p.name == "dev-mock.ts":
+        if "scripts" in p.parts or p.name == "dev-mock.ts" or p.name == UPDATE_CHECK_FILE:
             continue
         if BROWSER_CALLS.search(p.read_text(encoding="utf-8")):
             offenders.append(p.name)
     assert not offenders, f"The app now makes network requests itself in {offenders}. That needs a Privacy page row and docs."
+
+
+def test_the_update_check_is_one_request_to_one_host_and_off_by_default():
+    check = (APP / "electron" / "ipc" / UPDATE_CHECK_FILE).read_text(encoding="utf-8")
+    assert len(BROWSER_CALLS.findall(check)) == 1 and "net.fetch(" in check, "the update check must make exactly one request"
+    assert re.findall(r"https?://([A-Za-z0-9.-]+)", check) == ["api.github.com"]
+    # the request is only reachable through the weekly rule, which is false while the switch is off
+    assert check.index("dueForCheck(") < check.index("net.fetch(")
+    logic = (APP / "electron" / "updateLogic.ts").read_text(encoding="utf-8")
+    assert "if (!f.on) return false;" in logic
+    assert "UPDATES_OFF: UpdateFile = { on: false," in logic
+    # nothing else in the main process may start it
+    callers = [p.name for p in _files(APP / "electron", (".ts",)) if "registerUpdates(" in p.read_text(encoding="utf-8")]
+    assert sorted(callers) == ["main.ts", "updates.ts"]
 
 
 def test_only_huggingface_pages_can_be_opened_from_the_app():
@@ -79,10 +95,12 @@ def test_only_huggingface_pages_can_be_opened_from_the_app():
     assert 'startsWith("https://huggingface.co/")' in main
 
 
-def test_only_the_new_issue_page_on_github_can_be_opened_from_the_app():
+def test_only_the_new_issue_page_and_the_releases_page_on_github_can_be_opened_from_the_app():
     main = (APP / "electron" / "ipc" / "diagnostics.ts").read_text(encoding="utf-8")  # the open-external handler lives here since main.ts was split (issue 116)
     assert 'feedback = "https://github.com/ingridstevens/cassette/issues/new"' in main
-    assert main.count("github.com") == 1
+    assert 'releases = "https://github.com/ingridstevens/cassette/releases"' in main
+    assert "url === releases" in main and 'startsWith(releases' not in main  # exactly that address, nothing under it
+    assert main.count("github.com") == 2
 
 
 def test_readme_and_security_name_every_host_the_app_uses():

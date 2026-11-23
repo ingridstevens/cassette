@@ -118,6 +118,8 @@ function fake(path = "") {
   liveStop: async () => { clearInterval((window as unknown as { __liveTick?: number }).__liveTick); return { ok: true, path: "/Users/demo/Recording 2026-10-16 14.05.wav", seconds: 14, name: "Recording 2026-10-16 14.05" }; },
   cancel: async () => {},
   netActivity: async () => ({ since: Date.now() - 3600_000, transcriptions: 2, transcribing: false, entries: [{ t: Date.now() - 1800_000, kind: "link" as const, host: "huggingface.co", whileTranscribing: false }, { t: Date.now() - 900_000, kind: "model" as const, host: "", action: "download", model: "small", whileTranscribing: false }] }),
+  updateState: async () => ({ on: localStorage.getItem("mock-update-on") === "1", lastChecked: localStorage.getItem("mock-update-on") === "1" ? Date.now() - 86_400_000 : null, newer: localStorage.getItem("mock-update-on") === "1" ? "99.0.0" : null, failed: false, current: "0.0.0" }),
+  setUpdateCheck: async (on: boolean) => { try { localStorage.setItem("mock-update-on", on ? "1" : "0"); } catch { /* storage unavailable */ } return { on, lastChecked: on ? Date.now() : null, newer: on ? "99.0.0" : null, failed: false, current: "0.0.0" }; },
   logState: async () => ({ on: localStorage.getItem("mock-log-off") !== "1", bytes: localStorage.getItem("mock-log-cleared") === "1" ? 0 : 18432, hideNames: localStorage.getItem("mock-log-hide") === "1" }),
   hideLogNames: async (hide: boolean) => { try { localStorage.setItem("mock-log-hide", hide ? "1" : "0"); } catch { /* storage unavailable */ } return { ok: true }; },
   setLog: async (on: boolean) => { try { localStorage.setItem("mock-log-off", on ? "0" : "1"); } catch { /* storage unavailable */ } return { ok: true }; },

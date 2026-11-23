@@ -37,7 +37,7 @@ Anything that could not be established from the code is marked **not verified**.
 
 ## Network calls and when
 
-The single list of web hosts is `ALLOWED_HOSTS` in `engine/tests/test_network_surface.py`: `huggingface.co`, `download.moonshine.ai`, `github.com` (and `www.w3.org`, which is only an XML namespace string and is never contacted).
+The single list of web hosts is `ALLOWED_HOSTS` in `engine/tests/test_network_surface.py`: `huggingface.co`, `download.moonshine.ai`, `github.com`, `api.github.com` (and `www.w3.org`, which is only an XML namespace string and is never contacted).
 
 | Host | When | What is sent | Source |
 | --- | --- | --- | --- |
@@ -46,9 +46,11 @@ The single list of web hosts is `ALLOWED_HOSTS` in `engine/tests/test_network_su
 | `download.moonshine.ai` | You download a Moonshine model | The language | `engine/src/engine/asr_moonshine.py` |
 | `huggingface.co` pages | You press **Open token page** or **Open the two model pages** | Nothing from the app: your browser opens the page | `app/electron/ipc/diagnostics.ts` (`open-external`) |
 | `github.com` | You press **Send feedback** (Settings, About) | Nothing from the app: your browser opens a pre-filled new-issue page that you can edit and only send yourself | `app/electron/ipc/diagnostics.ts` (`open-external`), `AboutSection.tsx` |
+| `api.github.com` | Only if you switch on **Tell me when a new version is out** (Settings, Privacy): on switching it on, then at most once a week | A request for the newest release number. No token, cookies or file names; the User-Agent carries the app name and version. The on/off choice and last result are kept in `update-check.json` in the data folder | `app/electron/ipc/updates.ts`, `app/electron/updateLogic.ts` |
+| `github.com` | You press **Open the Releases page** (Settings, About) | Nothing from the app: your browser opens that one page | `app/electron/ipc/diagnostics.ts` (`open-external`), `AboutSection.tsx` |
 | Everything else (transcribing, exporting, highlights, translation, retention, Easy mode) | Never | Nothing | The engine runs offline; `test_network_surface.py` guards the rest |
 
-No account, analytics, telemetry or update check exists in the code paths read for this page; the network-surface test is a tripwire for the files and source text it scans, not proof for everything (it cannot see an address built at run time).
+No account, analytics or telemetry exists in the code paths read for this page, and the update check is off until you switch it on; the network-surface test is a tripwire for the files and source text it scans, not proof for everything (it cannot see an address built at run time).
 
 ## Retention, Easy mode and "keep a copy"
 

@@ -6,7 +6,7 @@
 
 Drop in an audio or video file and get the words, split by speaker, in German, English, French or Spanish
 (about 100 other languages work too, with varying accuracy). Everything runs on your own computer: no account in the
-app, no telemetry, no update checks, and it works offline after a one-time model download.
+app, no telemetry, no update checks unless you switch on one optional weekly notice (it asks api.github.com for the newest version number), and it works offline after a one-time model download.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/00-hero-dark.jpg">

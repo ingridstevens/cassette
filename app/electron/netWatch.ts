@@ -7,9 +7,10 @@
  *  - "model": the app asked the speech engine to download a model or check the Hugging Face token. The connection itself is made inside the
  *    engine, which this list does not watch; only the fact that the app asked is recorded.
  *  - "link": a page the app opened in the person's browser (huggingface.co pages and the feedback form).
+ *  - "update": the app's own weekly request for the newest release number, made only while the person has switched the update notice on.
  * What it cannot show: other software on the computer, or the engine's own connections. Only the host name is kept, never a path, query or token.
  */
-export type NetKind = "request" | "model" | "link";
+export type NetKind = "request" | "model" | "link" | "update";
 export type NetEntry = {
   t: number; kind: NetKind;
   /** Host name for a request or link; empty for a model action. */
@@ -65,6 +66,8 @@ export function createNetWatch(now: () => number = Date.now) {
       try { host = new URL(url).hostname; } catch { /* not an address */ }
       add({ kind: "link", host });
     },
+    /** The optional update check made its one request (host name only). */
+    update(host: string): void { add({ kind: "update", host }); },
     /** A transcription started or ended; entries made in between are marked as made while transcribing. */
     transcriptionStarted() { running++; transcriptions++; },
     transcriptionEnded() { running = Math.max(0, running - 1); },
