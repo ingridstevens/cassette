@@ -282,6 +282,8 @@ button.pv-flag.pv-lang-btn:hover { background: rgba(31, 166, 160, .28); }
 .pv-radio:has(input:checked), .pv-check:has(input:checked) { background: var(--surface); box-shadow: inset 0 0 0 2px var(--accent-solid, var(--hot)); }
 .pv-radio input, .pv-check input { margin-top: 3px; width: 18px; height: 18px; flex: none; accent-color: var(--hot-d); }
 .pv-radio > span, .pv-check > span { display: flex; flex-direction: column; gap: 3px; min-width: 0; font-size: 14px; }
+.pv-estimate { display: grid; gap: 6px; justify-items: start; margin-top: 6px; }
+.pv-estimate small { color: var(--ink2); font-size: 12.5px; }
 .pv-radio small, .pv-check small { color: var(--ink2); font-size: 12.5px; }
 .pv-radio select { margin-top: 4px; height: 36px; max-width: 100%; }
 .pv-start .pv-suggest { border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }

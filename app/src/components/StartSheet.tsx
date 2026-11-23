@@ -112,7 +112,7 @@ export default function StartSheet({ project, duration, eff, info, set, models, 
 
       <div>
         <button type="button" className="btn quiet pv-fold" aria-expanded={open} aria-controls="start-settings" onClick={toggle}>{t("Change settings")}</button>
-        {open && <div id="start-settings" ref={fields} className="pv-start-fields-anchor"><TranscribeFields hasResult={!!project.result} eff={eff} set={choose} status={status} models={models} onOpenSettings={onOpenSettings} /></div>}
+        {open && <div id="start-settings" ref={fields} className="pv-start-fields-anchor"><TranscribeFields hasResult={!!project.result} eff={eff} set={choose} status={status} models={models} onOpenSettings={onOpenSettings} recording={project.path} /></div>}
       </div>
 
       {trialTime && <p className="note">{t("A short sample shows whether the speakers and languages look right before you spend the whole time.")}</p>}

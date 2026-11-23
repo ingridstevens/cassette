@@ -134,3 +134,38 @@ def load_wav(path: Path) -> tuple[np.ndarray, int]:
         sr = f.getframerate()
         data = np.frombuffer(f.readframes(f.getnframes()), dtype=np.int16)
     return data.astype(np.float32) / 32768.0, sr
+
+
+ESTIMATE_SECONDS = 90.0  # how much of the recording the before/after estimate listens to
+_WINDOW = 0.05  # seconds per loudness window
+
+
+def level_stats(data: np.ndarray, sr: int) -> dict | None:
+    """Rough loudness figures of a mono signal, in dB relative to full scale: the level of the louder windows (speech) and of the quieter
+    ones (background), measured over 50 ms windows. None when the sound is too short to say. An estimate, not a measurement of text quality."""
+    n = int(sr * _WINDOW)
+    if n <= 0 or len(data) < n * 10:
+        return None
+    frames = data[: len(data) // n * n].reshape(-1, n)
+    db = 20 * np.log10(np.maximum(np.sqrt(np.mean(frames * frames, axis=1)), 1e-5))
+    speech, noise = float(np.percentile(db, 90)), float(np.percentile(db, 10))
+    return {"speech_db": round(speech, 1), "noise_floor_db": round(noise, 1), "gap_db": round(speech - noise, 1)}
+
+
+def estimate_cleanup(src: str, mode: str, start: float | None = None, seconds: float = ESTIMATE_SECONDS) -> dict:
+    """Before and after figures for `mode` on the first `seconds` of the recording (from `start`). Both copies are temporary and deleted
+    again; the original is only read. "gap_db" (speech level minus background level) is the signal-to-noise estimate: a bigger gap
+    is cleaner, but whether the text improves has to be checked by listening and comparing."""
+    import tempfile
+
+    if mode in (None, "off") or mode not in CLEANUPS:
+        raise ValueError(f"Unknown audio cleanup: {mode}")
+    with tempfile.TemporaryDirectory() as tmp:
+        out = {}
+        for name, m in (("before", None), ("after", mode)):
+            wav = Path(tmp) / f"{name}.wav"
+            decode(src, wav, start, (start or 0.0) + seconds, m)
+            data, sr = load_wav(wav)
+            out[name] = level_stats(data, sr)
+            out["seconds"] = round(len(data) / sr, 1)
+    return out

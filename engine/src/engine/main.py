@@ -321,6 +321,16 @@ def cmd_peaks(a) -> None:
     emit("done", peaks=values, duration=duration)
 
 
+def cmd_cleanup_estimate(a) -> None:
+    from .audio import estimate_cleanup
+
+    r = estimate_cleanup(a.input, a.mode, a.start)
+    if r["before"] is None or r["after"] is None:
+        emit("error", message="The recording is too short, or silent here, to estimate.")
+        return
+    emit("done", **r)
+
+
 def cmd_clip(a) -> None:
     from .audio import clip
 
@@ -432,6 +442,12 @@ def build_parser() -> argparse.ArgumentParser:
     pk.add_argument("input")
     pk.add_argument("--points", type=int, default=8000, choices=range(100, 20001), metavar="N", help="how many waveform points (100 to 20000)")
     pk.set_defaults(fn=cmd_peaks)
+
+    ce = sub.add_parser("cleanup-estimate", help="loudness and background-noise figures of the start of a recording, before and after an audio cleanup")
+    ce.add_argument("input")
+    ce.add_argument("--mode", required=True, choices=["level", "denoise", "both"])
+    ce.add_argument("--start", type=float)
+    ce.set_defaults(fn=cmd_cleanup_estimate)
     return p
 
 

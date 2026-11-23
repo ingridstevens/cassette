@@ -161,7 +161,7 @@ These apply the next time you transcribe that project:
   sample sentence with hesitations in the recording's language (German, English, French, Spanish; other languages get no sample). It is a
   nudge, not a guarantee, and it has only been checked on clean text-to-speech samples, which contain no hesitations. For what the *export*
   does with hesitations, pauses and times, see *Text style* in [Exporting](exporting.md) and [Verbatim, pauses and timestamps](verbatim.md).
-- **Clean up the sound first** (advanced, off by default): runs the recording through ffmpeg filters before it is transcribed. *Even out the
+- **Clean up the sound first** (advanced, off by default): runs the recording through ffmpeg filters before it is transcribed. *Even out the Once a mode is chosen, **Check what this would change** listens to the first 90 seconds of the recording with and without the cleanup (on temporary copies in the app's private temp folder, deleted afterwards) and shows the speech level and the background level in dB before and after, and whether the gap between them grew. It is a rough loudness estimate: it does not show whether the text improves, and no recommendation is made from it.
   volume* normalises loudness (`loudnorm`), *Reduce steady noise* cuts low rumble and constant background hiss (`highpass` and `afftdn`), *Both*
   does both. It can help with quiet or noisy recordings, but it can also blur quiet words and make the text worse, so try it on a short stretch
   (**Transcribe a range**) and compare before using it on a whole recording. Your file is never changed: the engine decodes a temporary copy

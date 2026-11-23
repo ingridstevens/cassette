@@ -6,14 +6,16 @@ import { Readable } from "node:stream";
 import { app, dialog, protocol, shell } from "electron";
 import { EngineEvent, runEngine } from "../engine-client";
 import { byteRange, mediaPathFromUrl, mimeFor, peaksCacheName } from "../media";
-import { saveClipOk } from "../validate";
+import { AUDIO_CLEANUP, saveClipOk } from "../validate";
+import { privateTmp } from "../tempJson";
+import type { CleanupLevels } from "../ipcChannels";
 import { fingerprintFile } from "../sourceId";
 import { handle, type IpcContext } from "./typed";
 
 /** The sample interview shipped with the app (extraResources in electron-builder.yml; docs/samples when run from source). */
 const SAMPLE_FILE = "test-interview-english-two-voices.m4a";
 
-export function registerMediaFiles({ known, mediaFile, knownMedia }: IpcContext) {
+export function registerMediaFiles({ known, mediaFile, knownMedia, baseEnv }: IpcContext) {
   // The player's source: media://file/<encoded path>, with Range support so seeking works and nothing is read into memory. Only known recordings are served.
   protocol.handle("media", async (req) => {
     const p = mediaPathFromUrl(req.url);
@@ -40,6 +42,15 @@ export function registerMediaFiles({ known, mediaFile, knownMedia }: IpcContext)
     const out = { peaks: r.peaks as number[], duration: r.duration };
     try { fs.mkdirSync(path.dirname(cache), { recursive: true }); fs.writeFileSync(cache, JSON.stringify(out)); } catch { /* the cache is only a speed-up */ }
     return out;
+  });
+  // Before and after figures for an audio cleanup on the start of a recording. The engine works on temporary copies in the app's private temp folder.
+  handle("cleanup-estimate", async (_e, p: unknown, mode: unknown) => {
+    if (!knownMedia(p)) return { ok: false as const, error: "The recording could not be found." };
+    if (typeof mode !== "string" || mode === "off" || !AUDIO_CLEANUP.has(mode)) return { ok: false as const, error: "Unsupported audio cleanup" };
+    const dir = privateTmp();
+    const r = await runEngine(randomUUID(), ["cleanup-estimate", p, "--mode", mode], { ...baseEnv(), TMPDIR: dir, TEMP: dir, TMP: dir }, () => {}) as EngineEvent | null;
+    if (r?.type !== "done" || !r.before || !r.after) return { ok: false as const, error: String(r?.message ?? "The estimate could not be made.").slice(0, 300) };
+    return { ok: true as const, before: r.before as CleanupLevels, after: r.after as CleanupLevels, seconds: Number(r.seconds) || 0 };
   });
   handle("pick-file", async () => {
     const r = await dialog.showOpenDialog({ properties: ["openFile", "multiSelections"], filters: [{ name: "Audio / Video", extensions: ["mp3", "wav", "m4a", "flac", "ogg", "opus", "aac", "mp4", "mov", "mkv", "webm"] }] });

@@ -59,6 +59,7 @@ function fake(path = "") {
 }
 
 (window as any).api = {
+  cleanupEstimate: async (p: string, mode: string) => { await wait(500); return p.includes("broken") ? { ok: false as const, error: "The estimate could not be made." } : { ok: true as const, seconds: 90, before: { speech_db: -31.2, noise_floor_db: -52.4, gap_db: 21.2 }, after: mode === "level" ? { speech_db: -19.8, noise_floor_db: -41.0, gap_db: 21.2 } : { speech_db: -27.5, noise_floor_db: -61.3, gap_db: 33.8 } }; },
   peaks: async (p: string) => { if (p.includes("broken")) return null; await wait(600); const w = wav(), n = 8000; return { peaks: Array.from({ length: n }, (_, i) => Math.abs(Math.sin(i / 40) * Math.sin(i / 700 + 1))), duration: (w.length - 44) / 16000 }; },
   mediaUrl: (_p: string) => URL.createObjectURL(new Blob([wav() as BlobPart], { type: "audio/wav" })),
   // ?missing adds a recording whose file is gone (to read the missing-file messages)

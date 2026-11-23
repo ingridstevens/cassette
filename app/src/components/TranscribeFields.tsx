@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { currentLang, useT } from "../i18n";
 import { MAIN_LANGS, TRANSLATE_LANGS, WHISPER_LANGS, langName } from "../languages";
 import { ModelStatus, Options } from "../types";
 import Hint from "../Hint";
+import { CleanupVerdict, cleanupVerdict } from "../cleanupEstimate";
 import SpeakerCountField from "./SpeakerCountField";
 import { ENGINE_MODELS, RECOMMENDED, WHISPER_MODELS, modelName, moonshineName } from "./modelInfo";
 import { Models, modelSize } from "./useModels";
@@ -23,6 +24,8 @@ interface Props {
   /** Also show "Skip silence" and "Names and special words". */
   advanced?: boolean;
   onOpenSettings?(section?: string): void;
+  /** The recording on disk, so the audio cleanup can show what it would change before anything is transcribed. */
+  recording?: string;
 }
 
 export default function TranscribeFields(p: Props) {
@@ -125,7 +128,7 @@ export function TranscriptOnlyField({ eff, set }: Section) {
 /** Parakeet and Moonshine ignore the custom vocabulary and "Skip silence". */
 export const ignoresExtras = (model: string) => /^(parakeet|moonshine)/.test(model);
 
-export function ExtrasField({ eff, set, advanced, status, onOpenSettings }: Section) {
+export function ExtrasField({ eff, set, advanced, status, onOpenSettings, recording }: Section) {
   const t = useT();
   const limited = ignoresExtras(eff.model);
   const translate = eff.translate ?? false;
@@ -156,12 +159,46 @@ export function ExtrasField({ eff, set, advanced, status, onOpenSettings }: Sect
               <option value="both">{t("Both")}</option>
             </select>
           </label>
+          {recording && eff.audioCleanup && eff.audioCleanup !== "off" && <CleanupEstimate recording={recording} mode={eff.audioCleanup} />}
           <Hint id="audio-cleanup">{t("Quiet or noisy recordings can come out worse. Cleaning the sound first sometimes helps, but it can also blur quiet words and make the text worse, so try it on a short stretch and compare. It works on a temporary copy that is deleted afterwards; your recording is never changed, and playback stays original.")}</Hint>
         </div>
       )}
       {advanced && <label className="pv-check"><input type="checkbox" checked={!!eff.vad && !limited} disabled={limited} onChange={(e) => set({ vad: e.target.checked })} />
         <span><b>{t("Skip silence")}</b><small>{limited ? t("Not used by this model.") : t("Ignores long pauses. Faster, but can miss quiet speech.")}</small></span></label>}
     </>
+  );
+}
+
+type Estimate = { state: "idle" } | { state: "busy" } | { state: "error"; message: string } | { state: "done"; seconds: number; before: { speech_db: number; noise_floor_db: number }; after: { speech_db: number; noise_floor_db: number }; verdict: CleanupVerdict };
+
+/** "Check what this would change": the engine listens to the start of the recording with and without the cleanup (on temporary copies) and
+ *  the loudness of the speech and the background are shown. A rough estimate; it does not say whether the transcript gets better. */
+function CleanupEstimate({ recording, mode }: { recording: string; mode: string }) {
+  const t = useT();
+  const [est, setEst] = useState<Estimate>({ state: "idle" });
+  useEffect(() => setEst({ state: "idle" }), [recording, mode]);
+  const run = async () => {
+    setEst({ state: "busy" });
+    const r = await window.api.cleanupEstimate(recording, mode).catch((e: unknown) => ({ ok: false as const, error: String((e as Error)?.message ?? e) }));
+    if (!r.ok) return setEst({ state: "error", message: r.error });
+    setEst({ state: "done", seconds: Math.round(r.seconds), before: r.before, after: r.after, verdict: cleanupVerdict(r.before, r.after) });
+  };
+  const db = (n: number) => String(Math.round(n));
+  return (
+    <div className="pv-estimate">
+      <button type="button" className="btn quiet" disabled={est.state === "busy"} onClick={run}>{est.state === "busy" ? t("Checking the start of the recording…") : t("Check what this would change")}</button>
+      <div role="status" aria-live="polite">
+        {est.state === "error" && <small className="note">{est.message}</small>}
+        {est.state === "done" && (
+          <>
+            <small>{t("Before: speech {speech} dB, background {noise} dB.", { speech: db(est.before.speech_db), noise: db(est.before.noise_floor_db) })}</small>{" "}
+            <small>{t("After: speech {speech} dB, background {noise} dB.", { speech: db(est.after.speech_db), noise: db(est.after.noise_floor_db) })}</small>{" "}
+            <small>{est.verdict.gapKind === "wider" ? t("The gap between speech and background grew by {db} dB.", { db: db(est.verdict.gap) }) : est.verdict.gapKind === "narrower" ? t("The gap between speech and background shrank by {db} dB, so this is unlikely to help here.", { db: db(-est.verdict.gap) }) : t("The gap between speech and background hardly changed.")}</small>{" "}
+            <small className="note">{t("A rough estimate from the first {seconds} seconds. It does not show whether the text gets better.", { seconds: String(est.seconds) })}</small>
+          </>
+        )}
+      </div>
+    </div>
   );
 }
 
