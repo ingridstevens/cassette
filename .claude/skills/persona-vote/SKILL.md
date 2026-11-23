@@ -15,6 +15,7 @@ Simulated opinions are not evidence of demand. Say so in every results file.
 Input: a path to a proposals file (see `docs/votes/README.md`), or proposals pasted by the user. If there are none, ask for them.
 
 1. Read `docs/personas/README.md` and the proposals. Give each feature an id (`F1`, `F2`, ...) if it has none.
+   Every feature needs a **Cost** line: lines of code, new dependencies, MB added, screens touched (see `docs/votes/README.md`). If one is missing, ask the user for it before starting; do not invent one.
 2. Start **one subagent per persona, all in the same message so they run in parallel**. Do not run them one after another.
    Use a cheaper model if the harness lets you pick one. Each agent gets:
    - the full text of its own persona file, with the instruction "You are this person. Stay in character; judge only from your own needs, rewards, penalties and vetoes."
@@ -30,6 +31,7 @@ Input: a path to a proposals file (see `docs/votes/README.md`), or proposals pas
    Scores: 0 harmful, 1 bad, 2 unwelcome, 3 neutral or nice to have, 4 valuable, 5 would choose the app for it. Set `veto: true` (and score 0) only when the feature meets a veto condition in the persona file, and quote that condition in `veto_reason`.
 4. Parse the JSON. If an agent returned something unparseable or skipped a feature, re-ask that agent once; if it still fails, mark its cells `n/a` and say so.
 5. Compute for each feature: mean score (ignore `n/a`), spread (max minus min), and the list of vetoes.
+   If the Max persona exists in `docs/personas`, take his cost penalty for each feature and report the net score (mean minus penalty); a feature needs a net positive score to be recommended. Until Max exists, copy each feature's cost line into the Ranking table and say that no penalty was applied.
 6. Write `docs/votes/YYYY-MM-DD-<topic>.md` with these sections in this order: a one-line caveat that the votes are simulated, **Vetoes**, **Ranking** (mean, spread), **Contested** (spread of 3 or more), a **per-persona table** (rows are features, columns are personas), **Recommendations**, **Notes**.
 
    **Recommendations is required, and every vote must end in one.** Group the personas' reasons (the "biggest thing I would change") into a numbered list of concrete changes, ordered by how many personas asked and how cheap the change is. Name who asked for each, mark what to do first, and say what you would not do and why. Before you write it, read the code involved and add a short "Check against the code" paragraph: personas guess, so say where a persona's claim about current behaviour is wrong. A vote with no recommendation is incomplete. Notes should mention relevant blind spots (for example Dev under-weights non-technical users) and any feature only one persona scored above 3.
