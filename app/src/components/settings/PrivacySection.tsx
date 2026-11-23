@@ -19,6 +19,10 @@ export default function PrivacySection({ models, opts, set }: Props) {
   useEffect(() => { window.api.tokenSecure().then(setSecure).catch(() => {}); }, []);
   const [paths, setPaths] = useState<Awaited<ReturnType<typeof window.api.paths>> | null>(null);
   useEffect(() => { window.api.paths().then(setPaths).catch(() => {}); }, []);
+  const [sizes, setSizes] = useState<Awaited<ReturnType<typeof window.api.storageSizes>> | null>(null);
+  const refreshSizes = () => window.api.storageSizes().then(setSizes).catch(() => {});
+  useEffect(() => { void refreshSizes(); }, []);
+  const [evMsg, setEvMsg] = useState("");
   const [hint, setHint] = useState<string | null>(models.tokenSet ? models.tokenHint : null);
   const [replacing, setReplacing] = useState(false);
   const [value, setValue] = useState("");
@@ -154,21 +158,26 @@ export default function PrivacySection({ models, opts, set }: Props) {
           <tbody>
             {([
               [t("Your recordings"), null, t("Where you keep them. Never moved or changed."), null],
-              [t("Recordings made in the app, and the copy of the sample"), paths?.recordings, t("Deleting the project deletes these."), "recordings"],
-              [t("Projects, transcripts, speaker names"), paths?.projects, t("Plus up to three rolling backups of the project list next to it (projects.json.bak1 to bak3). To erase the project list, delete projects.json and these backups."), "data"],
+              [t("Recordings made in the app, and the copy of the sample"), paths?.recordings, t("Deleting the project deletes these."), "recordings", "recordings"],
+              [t("Projects, transcripts, speaker names"), paths?.projects, t("Plus up to three rolling backups of the project list next to it (projects.json.bak1 to bak3). To erase the project list, delete projects.json and these backups."), "data", "projects"],
               [t("Backup copies"), null, t("Next to each recording, if the switch in Saving and export is on"), null],
-              [t("Waveform cache"), paths?.peaks, t("The shape of each recording's sound, not the words. Safe to delete; it is made again."), "peaks"],
-              [t("Temporary files"), paths?.tmp, t("Transcript text handed to the engine, deleted right after use and emptied when the app starts. Decoded audio is held in your system's temporary folder while a job runs."), "tmp"],
-              [t("Models"), paths?.models, t("Downloaded models. No recordings or transcripts."), "models"],
-              [t("Activity log"), paths?.log, t("File names and folders. It never contains the text of a transcript."), "log"],
-            ] as [string, string | null | undefined, string, "recordings" | "data" | "peaks" | "tmp" | "models" | "log" | null][]).map(([what, where, note, key]) => (
-              <tr key={what}><th scope="row">{what}</th><td>{where ? <><Path p={where} /><br /></> : null}<small>{note}</small></td>
+              [t("Waveform cache"), paths?.peaks, t("The shape of each recording's sound, not the words. Safe to delete; it is made again."), "peaks", "peaks"],
+              [t("Temporary files"), paths?.tmp, t("Transcript text handed to the engine, deleted right after use and emptied when the app starts. Decoded audio is held in your system's temporary folder while a job runs."), "tmp", "tmp"],
+              [t("Models"), paths?.models, t("Downloaded models. No recordings or transcripts."), "models", "models"],
+              [t("Activity log"), paths?.log, t("File names and folders. It never contains the text of a transcript."), "log", "log"],
+            ] as [string, string | null | undefined, string, "recordings" | "data" | "peaks" | "tmp" | "models" | "log" | null, ("recordings" | "projects" | "peaks" | "tmp" | "models" | "log")?][]).map(([what, where, note, key, sizeKey]) => (
+              <tr key={what}><th scope="row">{what}</th><td>{where ? <><Path p={where} /><br /></> : null}{sizes && sizeKey ? <><b>{sizes[sizeKey] === null ? t("Size: nothing there yet") : t("Size: {size}", { size: bytes(sizes[sizeKey] as number) })}</b><br /></> : null}<small>{note}</small></td>
                 <td className="act">{key && <button type="button" className="btn small" aria-label={t("Show {what} in the file manager", { what })} onClick={() => window.api.reveal(key)}>{t("Show")}</button>}</td></tr>
             ))}
             <tr><th scope="row">{t("Hugging Face token")}</th><td>{paths?.token ? <><Path p={paths.token} /><br /></> : null}<small>{hint ? (secure ? t("Encrypted by your computer's secure storage. Last 4 characters: {hint}", { hint: hint.slice(-4) }) : t("Not encrypted: this computer has no password keyring. Last 4 characters: {hint}", { hint: hint.slice(-4) })) : t("No token is saved.")}</small></td><td className="act" /></tr>
             <tr><th scope="row">{t("Exports and the anonymisation key")}</th><td><small>{t("Where you chose to save them. The app keeps no list of them and never deletes them.")}</small></td><td className="act" /></tr>
           </tbody></table></div>
         <p className="note">{t("The app does not encrypt these files. Turn on {name} so they are protected when the computer is off.", { name: IS_MAC ? "FileVault" : IS_WIN ? "BitLocker" : t("disk encryption") })}</p>
+        <div className="st-row">
+          <p className="note grow">{t("For a data-protection review: a one-page summary of the versions, the places above with their sizes, the web hosts the app can contact and what it did on the network since it opened. It holds no audio, transcript text or file names, and is saved only where you choose.")}</p>
+          <button type="button" className="btn small" onClick={async () => { try { await refreshSizes(); const r = await window.api.saveEvidence(); setEvMsg(r.cancelled ? "" : r.ok ? t("Saved the summary to {path}", { path: r.path ?? "" }) : t("The summary could not be saved.")); } catch { setEvMsg(t("The summary could not be saved.")); } }}>{t("Save evidence summary…")}</button>
+        </div>
+        <p className="note" role="status">{evMsg}</p>
       </div>
 
       <div className="card st-card">

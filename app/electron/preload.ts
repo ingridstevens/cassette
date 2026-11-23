@@ -72,6 +72,10 @@ const api = {
   reveal: (what: "models" | "log" | "data" | "recordings" | "peaks" | "tmp"): Promise<void> => invoke("reveal", what),
   bundlePreview: (req: { model: string; downloaded: string[]; diarization: boolean; checks: { id: string; level: string }[]; includeLog: boolean }): Promise<{ name: string; text: string; bytes: number }[] | null> => invoke("bundle-preview", req),
   bundleSave: (req: { model: string; downloaded: string[]; diarization: boolean; checks: { id: string; level: string }[]; includeLog: boolean }): Promise<{ ok?: boolean; cancelled?: boolean; path?: string; error?: string }> => invoke("bundle-save", req),
+  /** Size in bytes of each place the app keeps data (null when it does not exist yet). Reads sizes only, never contents. */
+  storageSizes: (): Promise<Record<"data" | "projects" | "recordings" | "peaks" | "partials" | "tmp" | "models" | "log", number | null>> => invoke("storage-sizes"),
+  /** Saves a one-page evidence summary (Markdown) where the person chooses: versions, places, sizes, network hosts. No audio, no transcript text. */
+  saveEvidence: (): Promise<{ ok?: boolean; cancelled?: boolean; path?: string; error?: string }> => invoke("evidence-save"),
   paths: (): Promise<{ models: string; log: string; token: string; data: string; projects: string; recordings: string; peaks: string; tmp: string; system: { platform: string; arch: string; chip: string; cores: number; memGB: number } }> => invoke("paths"),
   saveImage: (dataUrl: string, defaultName: string): Promise<{ ok?: boolean; cancelled?: boolean; path?: string; error?: string }> => invoke("save-image", dataUrl, defaultName),
   revealPath: (p: string): Promise<void> => invoke("reveal-path", p),

@@ -4,6 +4,7 @@ import os from "node:os";
 import { app, dialog, powerMonitor, shell } from "electron";
 import { logFile, logHideFile, logHides, logLine, logOffFile, logOn } from "../activityLog";
 import { dataLocations } from "../dataLocations";
+import { buildEvidence, pathBytes, projectListBytes } from "../evidencePack";
 import { REVEAL_TARGETS } from "../validate";
 import { buildBundle, bundleRequest } from "../supportBundle";
 import { zipStore } from "../zipStore";
@@ -57,6 +58,24 @@ export function registerDiagnostics({ modelsDir, tokenFile, watch }: IpcContext)
     const r = await dialog.showSaveDialog({ defaultPath: "cassette-diagnostics.zip", filters: [{ name: "ZIP", extensions: ["zip"] }] });
     if (r.canceled || !r.filePath) return { cancelled: true };
     try { fs.writeFileSync(r.filePath, zipStore(files.map((f) => ({ name: f.name, data: Buffer.from(f.text, "utf-8") })))); return { ok: true, path: r.filePath }; }
+    catch (e) { return { ok: false, error: String((e as Error).message) }; }
+  });
+  // Sizes of the app's own places (file sizes only, never contents) and the one-page evidence summary built from them (evidencePack.ts).
+  const sizes = () => {
+    const d = dataLocations(app.getPath("userData"));
+    return { data: pathBytes(d.data), projects: projectListBytes(d.projects), recordings: pathBytes(d.recordings), peaks: pathBytes(d.peaks), partials: pathBytes(d.partials), tmp: pathBytes(d.tmp), models: pathBytes(modelsDir()), log: pathBytes(logFile()) };
+  };
+  handle("storage-sizes", () => sizes());
+  handle("evidence-save", async () => {
+    const loc = { ...dataLocations(app.getPath("userData")), models: modelsDir(), log: logFile(), token: tokenFile() };
+    const net = watch.snapshot();
+    const text = buildEvidence({
+      appVersion: app.getVersion(), electron: process.versions.electron, platform: process.platform, arch: process.arch, osRelease: os.release(),
+      locations: loc, sizes: sizes(), home: os.homedir(), net: { since: net.since, entries: net.entries, transcriptions: net.transcriptions }, now: Date.now(),
+    });
+    const r = await dialog.showSaveDialog({ defaultPath: "cassette-evidence-summary.md", filters: [{ name: "Markdown", extensions: ["md"] }] });
+    if (r.canceled || !r.filePath) return { cancelled: true };
+    try { fs.writeFileSync(r.filePath, text, "utf-8"); return { ok: true, path: r.filePath }; }
     catch (e) { return { ok: false, error: String((e as Error).message) }; }
   });
   handle("paths", () => ({
