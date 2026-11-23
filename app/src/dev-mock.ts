@@ -180,6 +180,9 @@ function fake(path = "") {
   // dev only: ?backupfail=damaged makes both fail with that reason
   backupProject: async (p: { name?: string }) => { const f = new URLSearchParams(location.search).get("backupfail"); return f ? { ok: false as const, code: f } : { ok: true as const, path: `/Users/demo/${p.name ?? "Project"}.cassette-backup`, bytes: 31_400_000 }; },
   restoreProject: async () => { const f = new URLSearchParams(location.search).get("backupfail"); return f ? { ok: false as const, code: f } : { ok: true as const, project: { id: "restored-demo", name: "Restored interview", names: {}, result: null }, mediaPath: "/Users/demo/Restored interview.wav", bytes: 31_400_000 }; },
+  // dev only: every recording has the same identity; ?relinkwrong makes the chosen file a different one, ?relinkfail makes it unreadable
+  fingerprintFile: async (p: string) => (p.includes("broken") ? null : { size: 3_412_907, sample: "mock" }),
+  locateRecording: async () => { const q = location.search; return q.includes("relinkfail") ? { ok: false as const } : { ok: true as const, path: "/Users/demo/moved/Interview 2026.wav", name: "Interview 2026.wav", source: { size: 3_412_907, sample: q.includes("relinkwrong") ? "other" : "mock" } }; },
   fileSize: async (p: string) => (p.includes("broken") ? null : 3_412_907),
   diskFree: async () => (location.search.includes("lowdisk") ? 2.1e9 : 48e9),
   openExternal: async () => true,

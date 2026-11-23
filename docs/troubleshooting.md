@@ -35,7 +35,13 @@ Check your connection and use **Resume download**. Files already downloaded are 
 ## The waveform doesn't show
 
 You'll see "Couldn't show the waveform" with a reason and **Retry**. The file may have moved or be unreadable; you can
-still transcribe it. If the recording was moved, add it again.
+still transcribe it.
+
+If the waveform area says "The recording can't be found", the file was moved, renamed or deleted. Choose **Locate recording…** and pick the
+file in its new place. The project keeps its transcript, speaker names, edits and quote positions; only the place it plays and exports from changes.
+Cassette checks that the file is the same recording (its size and a checksum of samples of it, whatever its name), and refuses a different file
+with the same name or length. A project saved before this check existed shows the file's name, size and length next to the length of the
+transcript and asks you to confirm. If you cancel, or the new place cannot be saved, nothing is changed.
 
 ## Wrong speakers, or too many
 

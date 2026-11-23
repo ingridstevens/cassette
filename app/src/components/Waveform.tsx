@@ -15,6 +15,7 @@ interface Props {
   path: string; result: Result | null;
   onTime(t: number): void; onSelection(range: [number, number] | null): void; onPlaying?(p: boolean): void; onDuration?(d: number): void;
   trim?: TrimRange | null; onTrim?(id: string, start: number, end: number): void;
+  /** Opens the file chooser for a recording that was moved (shown when the file cannot be found). */ onLocate?(): void;
   /** Easy mode shows no zoom controls and always the whole recording. */ easy?: boolean;
 }
 
@@ -27,7 +28,7 @@ function waveColors() {
 
 type State = { kind: "loading" } | { kind: "ready" } | { kind: "error"; message: string } | { kind: "missing" };
 
-const Waveform = forwardRef<WaveformHandle, Props>(({ path, result, onTime, onSelection, onPlaying, onDuration, trim, onTrim, easy = false }, ref) => {
+const Waveform = forwardRef<WaveformHandle, Props>(({ path, result, onTime, onSelection, onPlaying, onDuration, trim, onTrim, onLocate, easy = false }, ref) => {
   const t = useT();
   const box = useRef<HTMLDivElement>(null);
   const ws = useRef<WaveSurfer | null>(null);
@@ -218,7 +219,10 @@ const Waveform = forwardRef<WaveformHandle, Props>(({ path, result, onTime, onSe
       {state.kind === "missing" && (
         <div className="pv-wave-overlay pv-wave-error" role="alert">
           <span><b>{t("The recording can't be found.")}</b> {t("It was moved, renamed or deleted. Its transcript is still here.")}</span>
-          <button type="button" className="btn small" onClick={() => setAttempt((a) => a + 1)}>{t("Check again")}</button>
+          <span className="pv-wave-actions">
+            {onLocate && <button type="button" className="btn small" onClick={onLocate}>{t("Locate recording…")}</button>}
+            <button type="button" className="btn small" onClick={() => setAttempt((a) => a + 1)}>{t("Check again")}</button>
+          </span>
         </div>
       )}
       {state.kind === "error" && (

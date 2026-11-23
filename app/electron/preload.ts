@@ -67,6 +67,10 @@ const api = {
   saveImage: (dataUrl: string, defaultName: string): Promise<{ ok?: boolean; cancelled?: boolean; path?: string; error?: string }> => invoke("save-image", dataUrl, defaultName),
   revealPath: (p: string): Promise<void> => invoke("reveal-path", p),
   fileSize: (p: string): Promise<number | null> => invoke("file-size", p),
+  /** The identity of a known recording (size and sampled checksum), or null when it is gone. */
+  fingerprintFile: (p: string): Promise<{ size: number; sample: string } | null> => invoke("fingerprint-file", p),
+  /** Asks the person to choose the moved recording; it becomes a known recording and comes back with its identity. Nothing is changed by this call. */
+  locateRecording: (): Promise<{ ok: true; path: string; name: string; source: { size: number; sample: string } } | { ok: false; cancelled?: boolean }> => invoke("locate-recording"),
   diskFree: (): Promise<number | null> => invoke("disk-free"),
   openExternal: (url: string): Promise<boolean> => invoke("open-external", url),
   logError: (message: string): void => { send("renderer-error", message); },

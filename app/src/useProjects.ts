@@ -5,11 +5,12 @@ import { currentLang, t } from "./i18n";
 import { SaveState, createSaveTracker } from "./saveTracker";
 import { copyName, duplicateProject } from "./projectActions";
 import { restoredProject } from "./projectBackup";
+import { Located, commitRelink, judgeLocated } from "./relink";
 import { readRestorePoint, takeRestorePoint, writeRestorePoint } from "./restorePoint";
 import { DraftLine, FitAsk, JobProgress, MEDIA_EXT, Options, Project, RestorePoint, Result, RunMeta, Segment, baseName, bytes, displayName, stripExt } from "./types";
 
 type Range = [number, number] | null;
-const persisted = (p: Project) => ({ id: p.id, path: p.path, name: p.name, addedAt: p.addedAt, openedAt: p.openedAt, editedAt: p.editedAt, result: p.result, names: p.names, opts: p.opts, meta: p.meta, trial: p.trial, previous: p.previous, lastExport: p.lastExport });
+const persisted = (p: Project) => ({ id: p.id, path: p.path, name: p.name, addedAt: p.addedAt, openedAt: p.openedAt, editedAt: p.editedAt, result: p.result, names: p.names, opts: p.opts, meta: p.meta, trial: p.trial, previous: p.previous, lastExport: p.lastExport, source: p.source });
 
 /** Replace the segments overlapping a re-transcribed range, keep the rest. */
 /** `line` is set when one line is transcribed again in a chosen language: the new text keeps that line's speaker and gets the language. */
@@ -106,6 +107,18 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     return () => clearTimeout(timer);
   }, [projects, loaded]);
   const retrySave = useCallback(() => { void tracker.current.retry(); }, []);
+
+  // Projects saved before recordings had an identity get one as soon as their file is found, so a moved file can be checked later. Each project is tried once per run of the app.
+  const sourceTried = useRef(new Set<string>());
+  useEffect(() => {
+    if (!loaded) return;
+    for (const p of projects) {
+      if (p.source || sourceTried.current.has(p.id)) continue;
+      sourceTried.current.add(p.id);
+      const at = p.path;
+      window.api.fingerprintFile(at).then((src) => { if (src) setProjects((l) => l.map((x) => (x.id === p.id && x.path === at && !x.source ? { ...x, source: src } : x))); }).catch(() => {});
+    }
+  }, [projects, loaded]);
 
   /** Keeps the project as it is now as its restore point and waits until that is on disk. False (with a notice) when it could not be written: the caller must then not start the operation. */
   const checkpoint = useCallback(async (id: string, label: string): Promise<boolean> => {
@@ -233,6 +246,32 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     return true;
   }, []);
 
+  /**
+   * "Locate recording": the person picks the moved file. A project that knows its recording accepts only a file with the same identity; an older one asks `confirm` first (with a preview).
+   * The new place is saved before it is used, and anything that goes wrong (wrong file, cancel, failed save) leaves the project as it was. Resolves true when the project now points at the new file.
+   */
+  const relink = useCallback(async (id: string, confirm: (c: Located) => Promise<boolean>): Promise<boolean> => {
+    const p = projectsRef.current.find((x) => x.id === id); if (!p) return false;
+    setInfo(""); setNotice("");
+    if (p.status === "queued" || p.status === "running") { setNotice(t("Wait for the transcription to finish, or cancel it, before choosing the recording again.")); return false; }
+    let r: Awaited<ReturnType<typeof window.api.locateRecording>>;
+    try { r = await window.api.locateRecording(); } catch { r = { ok: false }; }
+    if (!r.ok) { if (!r.cancelled) setNotice(t("That file could not be read as a recording. Nothing was changed.")); return false; }
+    const c: Located = { path: r.path, name: r.name, source: r.source };
+    const verdict = judgeLocated(p, c);
+    if (verdict === "different") { setNotice(t("“{file}” is not the recording “{name}” was made from, so nothing was changed. Choose the original file; it may have been renamed or moved.", { file: c.name, name: p.name })); return false; }
+    if (verdict === "unverified" && !(await confirm(c))) return false;
+    const cur = projectsRef.current.find((x) => x.id === id);
+    if (!cur || cur.path !== p.path) { setNotice(t("The project changed while you were choosing, so nothing was changed. Try again.")); return false; }
+    if (cur.path === c.path && cur.source) { setInfo(t("That is the recording this project already uses.")); return false; }
+    const w = await commitRelink(tracker.current, projectsRef.current, id, c);
+    if (!w.ok) { setNotice(t("Cassette could not save the new place of the recording, so nothing was changed: {error}. Free some disk space and try again.", { error: w.error ?? "unknown" })); return false; }
+    // only this project's two fields, so an edit made while the write ran is not lost
+    setProjects((l) => l.map((x) => (x.id === id ? { ...x, path: c.path, source: c.source } : x)));
+    setInfo(t("“{name}” now uses the recording “{file}”. The transcript, speaker names and edits are unchanged.", { name: p.name, file: c.name }));
+    return true;
+  }, []);
+
   /** Put back the restore point a re-run took when the run ends without replacing anything (cancelled, failed, or stopped to ask about the model). */
   const releaseCheckpoint = useCallback((id: string) => {
     const h = held.current.get(id); if (!h) return;
@@ -357,6 +396,6 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   /** Each returns the label of the edit it undid or redid (empty when it had none), or null when there was nothing to do. */
   const undo = useCallback((id: string) => step(id, stepBack), [step]);
   const redo = useCallback((id: string) => step(id, stepForward), [step]);
-  return { projects, loaded, notice, info, dismissInfo: () => setInfo(""), backup, restore, saveError: saveState.status === "failed" ? saveState.error ?? "unknown" : null, retrySave, dismissNotice: () => setNotice(""), activeId, setActiveId: open, edit, undo, redo, progress, drafts, interrupted, discardInterrupted: dropInterrupted, add, addAndTranscribe, remove, rename: (id: string, name: string) => edit(id, { name }), duplicate, patch, transcribe, cancel, editWithCheckpoint,
+  return { projects, loaded, notice, info, dismissInfo: () => setInfo(""), backup, restore, relink, saveError: saveState.status === "failed" ? saveState.error ?? "unknown" : null, retrySave, dismissNotice: () => setNotice(""), activeId, setActiveId: open, edit, undo, redo, progress, drafts, interrupted, discardInterrupted: dropInterrupted, add, addAndTranscribe, remove, rename: (id: string, name: string) => edit(id, { name }), duplicate, patch, transcribe, cancel, editWithCheckpoint,
     transcribeAll: () => projectsRef.current.filter((p) => p.status === "idle" || p.status === "error").forEach((p) => void transcribe(p.id)) };
 }
