@@ -2,11 +2,14 @@ import { useEffect, useState } from "react";
 import { useT } from "../../i18n";
 import { Block } from "./shared";
 
+const RELEASES_URL = "https://github.com/ingridstevens/cassette/releases";
 const FEEDBACK_URL = "https://github.com/ingridstevens/cassette/issues/new";
 
 export default function AboutSection() {
   const t = useT();
   const [sys, setSys] = useState<{ platform: string; arch: string; memGB: number } | null>(null);
+  const [upd, setUpd] = useState<Awaited<ReturnType<typeof window.api.updateState>> | null>(null);
+  useEffect(() => { window.api.updateState().then(setUpd).catch(() => {}); }, []);
   useEffect(() => { window.api.paths().then((p) => setSys(p.system)).catch(() => {}); }, []);
   // Nothing is sent by the app: this opens the user's browser on a pre-filled GitHub form that they read, edit and submit themselves.
   const sendFeedback = () => {
@@ -18,9 +21,14 @@ export default function AboutSection() {
       <dl className="st-meta">
         <div><dt>{t("Version")}</dt><dd>{__APP_VERSION__}</dd></div>
         <div><dt>{t("Licence")}</dt><dd>{t("Unlicense (public domain)")}</dd></div>
-        <div><dt>{t("Updates")}</dt><dd>{t("Never checked automatically. Download new versions yourself.")}</dd></div>
+        <div><dt>{t("Updates")}</dt><dd>{!upd?.on ? t("Check the Releases page for updates.")
+          : upd.newer ? t("Version {version} is out. Download it from the Releases page.", { version: upd.newer })
+          : upd.failed ? t("The last check did not work. Check the Releases page for updates.")
+          : upd.lastChecked === null ? t("Checks github.com once a week. Not checked yet.")
+          : t("Checks github.com once a week. You have the newest version as of {date}.", { date: new Date(upd.lastChecked).toLocaleDateString() })}</dd></div>
       </dl>
       <div className="st-row">
+        <button type="button" className="btn quiet small ext" onClick={() => window.api.openExternal(RELEASES_URL)}>{t("Open the Releases page")}</button>
         <button type="button" className="btn quiet small ext" onClick={sendFeedback}>{t("Send feedback")}</button>
       </div>
       <p className="note">{t("Opens a new GitHub issue in your browser, filled in with the app version, your system and its memory. You can read and change it before you send it; the app sends nothing itself, and you need a GitHub account.")}</p>

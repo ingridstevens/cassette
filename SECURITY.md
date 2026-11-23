@@ -12,11 +12,11 @@ Only the latest release (and the current main branch) receives security fixes.
 
 ## Privacy and security model
 
-- No account, no sign-in, no analytics, no telemetry, no auto-update check.
+- No account, no sign-in, no analytics, no telemetry. There is no auto-update: an optional, off-by-default notice (Settings, Privacy, Updates) asks `api.github.com` once a week for the newest release number and says so in About; it never downloads or installs anything.
 - Audio and transcripts never leave your computer. Transcription and speaker detection run locally.
-- The only network hosts are `huggingface.co`, and `download.moonshine.ai` for Moonshine models: models are
+- The only network hosts are `huggingface.co`, `download.moonshine.ai` for Moonshine models, and, only if you switch on the update notice, `api.github.com`: models are
   downloaded from them, and your token is checked against Hugging Face when you download the speaker models.
-  `github.com` is only ever opened in your own browser, when you press Send feedback (see below). During transcription the engine runs with
+  `github.com` is otherwise only opened in your own browser, when you press Send feedback or Open the Releases page (see below). During transcription the engine runs with
   `HF_HUB_OFFLINE=1`.
 - Your Hugging Face token is encrypted with Electron `safeStorage` (OS keychain-backed) and stored as
   `hf-token.bin` in the app's user-data folder. It is only passed to the engine when downloading speaker models.

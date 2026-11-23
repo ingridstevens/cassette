@@ -47,7 +47,7 @@ describe("createNetWatch", () => {
     w.transcriptionEnded();
     w.link(web("github.com/x"));
     const s = netSummary(w.snapshot());
-    expect(s).toEqual({ requests: 0, models: 0, links: 2, duringTranscription: 0, transcriptions: 1 });
+    expect(s).toEqual({ requests: 0, models: 0, links: 2, updates: 0, duringTranscription: 0, transcriptions: 1 });
     w.transcriptionStarted(); w.request(web("example.org/")); w.transcriptionEnded();
     expect(netSummary(w.snapshot()).duringTranscription).toBe(1);
   });

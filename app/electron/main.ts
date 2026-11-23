@@ -10,6 +10,7 @@ import { createNetWatch } from "./netWatch";
 import { isAppNavigation } from "./navGuard";
 import { on, type IpcContext, type Send } from "./ipc/typed";
 import { registerDiagnostics } from "./ipc/diagnostics";
+import { registerUpdates } from "./ipc/updates";
 import { registerEngineJobs } from "./ipc/engineJobs";
 import { registerExports } from "./ipc/exports";
 import { registerMediaFiles } from "./ipc/mediaFiles";
@@ -130,6 +131,7 @@ app.whenReady().then(() => {
   const knownMedia = (p: unknown): p is string => mediaFile(p) && known.has(p);
   const ctx: IpcContext = { send, watch, known, opened, baseEnv, modelsDir, tokenFile, mediaFile, knownMedia };
   registerDiagnostics(ctx);
+  registerUpdates(ctx);
   registerMediaFiles(ctx); // includes protocol.handle("media"), which must be in place before the window is created
   registerEngineJobs(ctx);
   registerModels(ctx);

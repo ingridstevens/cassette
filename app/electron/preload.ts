@@ -1,5 +1,6 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron";
 import type { NetActivity } from "./netWatch";
+import type { UpdateState } from "./updateLogic";
 import type { CleanupLevels, IpcEvents, IpcInvoke, IpcSend, IpcSendSync } from "./ipcChannels";
 
 // Every call goes through these three, so the channel name, the arguments and the result are checked against ipcChannels.ts (the same types main.ts registers with).
@@ -55,6 +56,9 @@ const api = {
   exportClips: (input: string, clips: { start: number; end: number; speaker?: string }[], format: string, name: string): Promise<{ ok?: boolean; cancelled?: boolean; count?: number; path?: string; error?: string }> => invoke("export-clips", input, clips, format, name),
   /** What network use the app itself has started since it opened (its own window's requests, model downloads it asked for, pages it opened in the browser). */
   netActivity: (): Promise<NetActivity> => invoke("net-activity"),
+  /** The optional update notice: whether it is on, when it last looked, and a newer version if there is one. Off unless the person turns it on. */
+  updateState: (): Promise<UpdateState> => invoke("update-state"),
+  setUpdateCheck: (on: boolean): Promise<UpdateState> => invoke("update-set", on),
   logState: (): Promise<{ on: boolean; bytes: number; hideNames: boolean }> => invoke("log-state"),
   setLog: (on: boolean): Promise<{ ok: boolean; error?: string }> => invoke("log-set", on),
   hideLogNames: (hide: boolean): Promise<{ ok: boolean; error?: string }> => invoke("log-hide-names", hide),

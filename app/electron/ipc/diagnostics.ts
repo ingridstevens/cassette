@@ -67,7 +67,8 @@ export function registerDiagnostics({ modelsDir, tokenFile, watch }: IpcContext)
 
   handle("open-external", async (_e, url: string) => {
     const feedback = "https://github.com/ingridstevens/cassette/issues/new"; // the one GitHub page the app may open: the new-issue form, filled in by the user in their browser
-    if (typeof url !== "string" || !(url.startsWith("https://huggingface.co/") || url === feedback || url.startsWith(feedback + "?"))) return false;
+    const releases = "https://github.com/ingridstevens/cassette/releases"; // the Releases page, opened from About: exactly this address, nothing under it
+    if (typeof url !== "string" || !(url.startsWith("https://huggingface.co/") || url === feedback || url.startsWith(feedback + "?") || url === releases)) return false;
     watch.link(url);
     await shell.openExternal(url);
     return true;
