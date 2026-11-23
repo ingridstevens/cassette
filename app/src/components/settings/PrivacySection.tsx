@@ -5,6 +5,7 @@ import { useT } from "../../i18n";
 import Dialog, { useReturnFocus } from "./Dialog";
 import { SwitchRow } from "./shared";
 import { bytes } from "../../types";
+import { netSummary } from "../../netSummary";
 
 interface Props { models: Models; opts: Options; set(o: Options): void }
 
@@ -29,6 +30,10 @@ export default function PrivacySection({ models, opts, set }: Props) {
   const [logMsg, setLogMsg] = useState("");
   const refreshLog = () => window.api.logState().then(setLog).catch(() => {});
   useEffect(() => { void refreshLog(); }, []);
+  const [net, setNet] = useState<Awaited<ReturnType<typeof window.api.netActivity>> | null>(null);
+  const [netFailed, setNetFailed] = useState(false);
+  const refreshNet = () => window.api.netActivity().then((a) => { setNet(a); setNetFailed(false); }).catch(() => setNetFailed(true));
+  useEffect(() => { void refreshNet(); }, []);
   const input = useRef<HTMLInputElement>(null);
   const back = useReturnFocus();
   const reread = () => window.api.token().then((t) => setHint(t || null));
@@ -86,6 +91,37 @@ export default function PrivacySection({ models, opts, set }: Props) {
           </tbody></table></div>
         <p className="note">{t("Every network call is listed here. Nothing else leaves this computer. This comes from reading the app's code, not from an independent audit.")}</p>
         <p className="note">{t("A test in the project (engine/tests/test_network_surface.py) fails if code that can reach the network appears in a new place or a new web address is written into the app. It is a tripwire, not an audit.")}</p>
+      </div>
+
+      <div className="card st-card" role="region" aria-labelledby="pv-activity">
+        <div className="st-row">
+          <div className="grow"><h2 id="pv-activity">{t("Network activity since the app opened")}</h2>
+            <p className="st-lead">{t("What the app itself has started on the network. It does not show other software on this computer, and it cannot watch the speech engine's own connections: for downloads it only shows that the app asked for one.")}</p></div>
+          <button type="button" className="btn small" onClick={() => void refreshNet()}>{t("Refresh")}</button>
+        </div>
+        {netFailed && <p className="err-line" role="alert">{t("The list could not be read.")}</p>}
+        {net && (() => {
+          const s = netSummary(net);
+          const when = (ms: number) => new Date(ms).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+          const what = (e: typeof net.entries[number]) => e.kind === "request" ? t("A request from the app's window to {host}", { host: e.host })
+            : e.kind === "link" ? t("Opened a page in your browser: {host}", { host: e.host })
+            : e.action === "check" ? t("Asked the engine to check your Hugging Face token")
+            : e.action === "repair" ? t("Asked the engine to download a model again{model}", { model: e.model ? `: ${e.model}` : "" })
+            : t("Asked the engine to download a model{model}", { model: e.model ? `: ${e.model}` : "" });
+          return (
+            <>
+              <p role="status"><b>{s.transcriptions === 0 ? t("No transcription has run since the app opened.")
+                : s.duringTranscription === 0 ? t("Transcriptions since the app opened: {n}. Network use seen while transcribing: none.", { n: s.transcriptions })
+                : t("Transcriptions since the app opened: {n}. Network use seen while transcribing: {m} entries, listed below.", { n: s.transcriptions, m: s.duringTranscription })}</b>{net.transcribing ? " " + t("A transcription is running now.") : ""}</p>
+              {net.entries.length === 0
+                ? <p className="note">{t("Nothing yet: the app has made no network request, asked for no download and opened no page since it started at {time}.", { time: when(net.since) })}</p>
+                : <div className="tbl-wrap"><table className="st-table"><caption className="st-sr">{t("Network activity since the app opened")}</caption>
+                  <thead><tr><th scope="col">{t("Time")}</th><th scope="col">{t("What")}</th><th scope="col">{t("While transcribing")}</th></tr></thead>
+                  <tbody>{net.entries.map((e, i) => <tr key={i}><th scope="row">{when(e.t)}</th><td>{what(e)}</td><td>{e.whileTranscribing ? t("Yes") : t("No")}</td></tr>)}</tbody></table></div>}
+              <p className="note">{t("The list starts empty each time the app opens, keeps the last 200 entries, and shows host names only, never addresses, tokens or your files. A model download that begins while a transcription runs is counted as made during it.")}</p>
+            </>
+          );
+        })()}
       </div>
 
       <div className="card st-card" role="region" aria-labelledby="pv-store">

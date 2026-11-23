@@ -9,7 +9,7 @@ import { buildBundle, bundleRequest } from "../supportBundle";
 import { zipStore } from "../zipStore";
 import { handle, on, type IpcContext } from "./typed";
 
-export function registerDiagnostics({ modelsDir, tokenFile }: IpcContext) {
+export function registerDiagnostics({ modelsDir, tokenFile, watch }: IpcContext) {
   on("renderer-error", (_e, message: unknown) => logLine("renderer", String(message).slice(0, 4000)));
   // Whether the computer is running on battery (the start sheet warns before a long job).
   handle("power-state", () => { try { return { onBattery: powerMonitor.isOnBatteryPower() }; } catch { return { onBattery: false }; } });
@@ -25,6 +25,7 @@ export function registerDiagnostics({ modelsDir, tokenFile }: IpcContext) {
     shell.showItemInFolder(logFile());
   });
   // Activity log controls: is it on, how big is it, switch it, empty it. Nothing here reads the log's text.
+  handle("net-activity", () => watch.snapshot());
   handle("log-state", () => { let bytes = 0; try { bytes = fs.statSync(logFile()).size; } catch { /* no log yet */ } return { on: logOn(), bytes, hideNames: logHides() }; });
   handle("log-set", (_e, on: unknown) => {
     try { if (on) fs.rmSync(logOffFile(), { force: true }); else fs.writeFileSync(logOffFile(), ""); return { ok: true }; } catch (e) { return { ok: false, error: String((e as Error).message) }; }
@@ -67,6 +68,7 @@ export function registerDiagnostics({ modelsDir, tokenFile }: IpcContext) {
   handle("open-external", async (_e, url: string) => {
     const feedback = "https://github.com/ingridstevens/cassette/issues/new"; // the one GitHub page the app may open: the new-issue form, filled in by the user in their browser
     if (typeof url !== "string" || !(url.startsWith("https://huggingface.co/") || url === feedback || url.startsWith(feedback + "?"))) return false;
+    watch.link(url);
     await shell.openExternal(url);
     return true;
   });

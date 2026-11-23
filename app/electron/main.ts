@@ -6,6 +6,7 @@ import { killAllJobs } from "./engine-client";
 import { logFile, logLine, logOn, logText } from "./activityLog";
 import { registerLive } from "./live";
 import { createKnownPaths } from "./knownPaths";
+import { createNetWatch } from "./netWatch";
 import { isAppNavigation } from "./navGuard";
 import { on, type IpcContext, type Send } from "./ipc/typed";
 import { registerDiagnostics } from "./ipc/diagnostics";
@@ -44,6 +45,7 @@ const pendingOpen: string[] = [];
 let rendererReady = false;
 const opened = new Set<string>();
 const known = createKnownPaths();
+const watch = createNetWatch();
 /** Keeps only existing audio/video files, tells knownPaths they are the user's own, and sends them to the window (or holds them until it is ready). */
 function openFiles(candidates: string[]) {
   const isFile = (a: string) => { try { return fs.statSync(a).isFile(); } catch { return false; } };
@@ -126,7 +128,7 @@ app.whenReady().then(() => {
   };
   /** A recording the app knows about (see knownPaths.ts): the window may only read, reveal or delete those. */
   const knownMedia = (p: unknown): p is string => mediaFile(p) && known.has(p);
-  const ctx: IpcContext = { send, known, opened, baseEnv, modelsDir, tokenFile, mediaFile, knownMedia };
+  const ctx: IpcContext = { send, watch, known, opened, baseEnv, modelsDir, tokenFile, mediaFile, knownMedia };
   registerDiagnostics(ctx);
   registerMediaFiles(ctx); // includes protocol.handle("media"), which must be in place before the window is created
   registerEngineJobs(ctx);
@@ -134,6 +136,8 @@ app.whenReady().then(() => {
   registerExports(ctx);
   registerProjects(ctx);
 
+  // Note (never block) every request the window makes to something that is not part of the app; Settings, Privacy shows the list. The development server's own address is not counted.
+  session.defaultSession.webRequest.onBeforeRequest((d, cb) => { watch.request(d.url, process.env.VITE_DEV_SERVER_URL); cb({}); });
   createWindow();
   app.on("activate", () => BrowserWindow.getAllWindows().length === 0 && createWindow());
 });

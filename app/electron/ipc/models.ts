@@ -6,7 +6,7 @@ import { EngineEvent, cancelJob, runEngine } from "../engine-client";
 import { modelsOk } from "../validate";
 import { handle, type IpcContext } from "./typed";
 
-export function registerModels({ send, baseEnv, tokenFile }: IpcContext) {
+export function registerModels({ send, baseEnv, tokenFile, watch }: IpcContext) {
   /** The running model download/delete job, so the renderer can cancel it. */
   let modelsJob: string | null = null;
   function readToken(): string {
@@ -26,6 +26,7 @@ export function registerModels({ send, baseEnv, tokenFile }: IpcContext) {
     const env: Record<string, string> = { ...baseEnv() };
     if ((name === "diarization" && (action === "download" || action === "repair")) || action === "check") env.HF_TOKEN = readToken();
     const jobId = randomUUID();
+    watch.model(action, name);
     if (action !== "status") modelsJob = jobId;
     try {
       const r = await runEngine(jobId, a, env, (e) => send("engine-event", { jobId, source: "models", ...e }));

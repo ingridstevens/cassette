@@ -2,6 +2,7 @@
 import { ipcMain, type IpcMainEvent, type IpcMainInvokeEvent } from "electron";
 import type { IpcEvents, IpcInvoke, IpcSend, IpcSendSync } from "../ipcChannels";
 import type { KnownPaths } from "../knownPaths";
+import type { NetWatch } from "../netWatch";
 
 /** A handler may return nothing useful for a `void` channel (the window ignores it), and otherwise the declared type, plain or in a promise. */
 type Reply<R> = [R] extends [void] ? unknown : R | Promise<R>;
@@ -23,6 +24,8 @@ export type Send = <C extends keyof IpcEvents>(channel: C, payload: IpcEvents[C]
 /** What the handler modules share with main.ts. Built once in main.ts; nothing here is new state. */
 export interface IpcContext {
   send: Send;
+  /** What the app has done on the network since it started (netWatch.ts). */
+  watch: NetWatch;
   known: KnownPaths;
   /** Recordings handed to the app from outside (Dock, "Open with", command line); main.ts fills it. */
   opened: Set<string>;

@@ -5,7 +5,7 @@ import { privateTmp, withTempJson } from "../tempJson";
 import { AUDIO_CLEANUP, isNum, speakerCount, transcribeProblem } from "../validate";
 import { handle, type IpcContext } from "./typed";
 
-export function registerEngineJobs({ send, baseEnv, mediaFile }: IpcContext) {
+export function registerEngineJobs({ send, baseEnv, mediaFile, watch }: IpcContext) {
   // English translation of one stretch of a recording (the "Translate to English" action on a line).
   handle("translate-line", async (_e, p: { input: unknown; start: unknown; end: unknown; model: unknown; language: unknown; backend?: unknown }) => {
     if (!mediaFile(p?.input) || typeof p.start !== "number" || typeof p.end !== "number" || !(p.end > p.start)) return { ok: false, error: "Unsupported or missing recording" };
@@ -49,7 +49,8 @@ export function registerEngineJobs({ send, baseEnv, mediaFile }: IpcContext) {
     if (cleanup) a.push("--audio-cleanup", String(opts.audioCleanup));
     const env = cleanup ? { ...baseEnv(), TMPDIR: privateTmp(), TEMP: privateTmp(), TMP: privateTmp() } : baseEnv();
     send("engine-event", { jobId, type: "started", clientId: opts.clientId });
-    runEngine(jobId, a, env, (e) => send("engine-event", { jobId, ...e })).then((r) => { if (r?.type === "error") send("engine-event", { jobId, ...r }); });
+    watch.transcriptionStarted();
+    runEngine(jobId, a, env, (e) => send("engine-event", { jobId, ...e })).then((r) => { if (r?.type === "error") send("engine-event", { jobId, ...r }); }).finally(() => watch.transcriptionEnded());
     return jobId;
   });
   handle("cancel", (_e, jobId: string) => cancelJob(jobId));

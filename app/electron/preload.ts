@@ -1,4 +1,5 @@
 import { contextBridge, ipcRenderer, webUtils } from "electron";
+import type { NetActivity } from "./netWatch";
 import type { CleanupLevels, IpcEvents, IpcInvoke, IpcSend, IpcSendSync } from "./ipcChannels";
 
 // Every call goes through these three, so the channel name, the arguments and the result are checked against ipcChannels.ts (the same types main.ts registers with).
@@ -52,6 +53,8 @@ const api = {
   translateLine: (p: { input: string; start: number; end: number; model: string; language: string; backend?: string }): Promise<{ ok: boolean; text?: string; error?: string }> => invoke("translate-line", p),
   runLlm: (kind: "highlights" | "summarize" | "ask", payload: unknown, o: { jobId: string; clientId: string; model: string; count?: number }): Promise<{ type: string; message?: string; cancelled?: boolean; highlights?: unknown[]; summary?: unknown; answer?: unknown } | null> => invoke("llm-run", kind, payload, o),
   exportClips: (input: string, clips: { start: number; end: number; speaker?: string }[], format: string, name: string): Promise<{ ok?: boolean; cancelled?: boolean; count?: number; path?: string; error?: string }> => invoke("export-clips", input, clips, format, name),
+  /** What network use the app itself has started since it opened (its own window's requests, model downloads it asked for, pages it opened in the browser). */
+  netActivity: (): Promise<NetActivity> => invoke("net-activity"),
   logState: (): Promise<{ on: boolean; bytes: number; hideNames: boolean }> => invoke("log-state"),
   setLog: (on: boolean): Promise<{ ok: boolean; error?: string }> => invoke("log-set", on),
   hideLogNames: (hide: boolean): Promise<{ ok: boolean; error?: string }> => invoke("log-hide-names", hide),
