@@ -88,11 +88,13 @@ export interface Project {
   fitAsk?: FitAsk;
   /** The transcript covers only the first minutes, run to check the settings before the whole recording. */
   trial?: boolean;
-  /** The transcript this one replaced (one step back, so "Replace" can be undone). */
-  previous?: { result: Result; names: Record<string, string>; meta?: RunMeta };
+  /** The restore point: the project as it was before the last re-run, Replace all or bulk speaker move (and, after a restore, the version that was put aside). See restorePoint.ts. */
+  previous?: RestorePoint;
   /** The last successful export (format and the options it used), offered again as the first item of the Export menu. */
   lastExport?: LastExport;
 }
+/** A whole earlier state of the transcript: text, speakers and names, checked quotes, chapters, translations and the summary all live in `result`. `label` and `at` are missing in points saved by older versions. */
+export interface RestorePoint { result: Result; names: Record<string, string>; meta?: RunMeta; label?: string; at?: number }
 export interface LastExport { format: string; options: Record<string, unknown> }
 /** A line written down while the run is still going. Speakers are already known; the finished transcript replaces all of these. */
 export interface DraftLine { start: number; end: number; speaker: string; text: string; lang?: string }

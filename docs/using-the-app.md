@@ -171,7 +171,7 @@ These apply the next time you transcribe that project:
 - **Skip silence:** ignores long pauses. Faster, but can miss quiet speech.
 - **Transcript only:** don't work out who is speaking.
 - **Names and special words:** a list (for example `Müller GmbH, pyannote`) that helps the model spell them.
-- **Transcribe again…** replaces the transcript. The app asks first, because your speaker names and edits are lost.
+- **Transcribe again…** replaces the transcript. The app asks first and keeps the old one as a restore point, shown as **Restore the earlier transcript** above the text. The same restore point is saved before **Transcribe this part again** or redoing a line, **Replace all**, and moving all lines of one speaker to another; if it cannot be saved, nothing happens.
 
 ## Info
 

@@ -67,8 +67,13 @@ recordings with long pauses. On an Apple chip or an NVIDIA card, speaker detecti
 
 ## I transcribed again and lost my edits
 
-**Transcribe again** replaces the transcript; the app warns first. Speaker names, edits and chapters are not
-recovered. If **Saving** was on, the previous backup file next to the recording is overwritten too.
+**Transcribe again** replaces the transcript; the app warns first. Before it starts, Cassette saves the project as it
+is (text, speakers and names, checked quotes, chapters, translations and the summary) as a restore point. If the new run
+is stopped or fails, the old transcript stays as it was. Once it has replaced the transcript, press **Restore the earlier
+transcript** above the text to bring everything back together; this also works after you restart Cassette. Restoring keeps
+the version you leave as the new restore point, so you can switch back. Only one restore point is kept: the next re-run,
+**Replace all** or bulk speaker move replaces it. If the restore point cannot be saved (for example the disk is full), the
+action does not start and nothing changes. If **Saving** was on, the backup file next to the recording is overwritten too.
 
 ## Windows and Linux
 

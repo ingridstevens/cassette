@@ -98,6 +98,6 @@ Capital letters and accents are ignored when looking for matches (so `lucia` fin
 **Put back what the model heard**, so a replacement can be undone line by line, and the changed text is what exports use. If your replacement has a different
 number of words than the original, the words in that line are spread evenly over the line's time, exactly as with any other edit.
 
-Two switches under the toolbar, **Match case** and **Whole word**, narrow the search (with Whole word on, `projekt` does not match `Projekte`). They apply to Replace too. **Replace all** first lists every line it would change, with the old text struck through and the new text beside it, and marks lines where an unsure word is affected; press **Replace all** again to confirm, or **Back**.
+Two switches under the toolbar, **Match case** and **Whole word**, narrow the search (with Whole word on, `projekt` does not match `Projekte`). They apply to Replace too. **Replace all** first lists every line it would change, with the old text struck through and the new text beside it, and marks lines where an unsure word is affected; press **Replace all** again to confirm, or **Back**. Cassette saves a restore point first (**Restore the earlier transcript** above the text brings it back).
 
 The whole text you type has to appear in the transcript: `deutsche` does not match a line that only says `Deutsch`. When nothing matches, a line under the toolbar says so and offers the closest words in the transcript (for example `Deutsch (3)`); click one to search for it.
