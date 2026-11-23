@@ -84,6 +84,8 @@ export interface Project {
   meta?: RunMeta;
   /** A run that redoes only part of an existing transcript (a line or a selection): the transcript stays on screen. Not saved. */
   partial?: boolean;
+  /** Name of the recording being added right now (the transcript stays on screen meanwhile). Not saved. */
+  adding?: string;
   /** Set when the engine stopped to suggest a better model for the language it heard. */
   fitAsk?: FitAsk;
   /** The transcript covers only the first minutes, run to check the settings before the whole recording. */
@@ -94,11 +96,15 @@ export interface Project {
   lastExport?: LastExport;
   /** Which recording this project belongs to, independent of its name and place: used to check a file chosen with "Locate recording". Missing in projects saved before it existed (filled in the next time the file is found). */
   source?: SourceId;
+  /** Recordings added after the first one, in order (a second phone, the rest of an interview). The first recording is always `path`/`source`; read the whole ordered list with `sourcesOf` (sources.ts). Missing = one recording, as in every project saved before this existed. */
+  appended?: Part[];
 }
+/** One added recording. Its transcript lines are on the project's single timeline: `offset` is where it starts there, in seconds, and `duration` is its own length. `id` stays the same for the life of the project. */
+export interface Part { id: string; path: string; name: string; offset: number; duration: number; source?: SourceId; /** Speaker ids this recording brought in (renamed to unused ids when it was added), offered for matching with the speakers already there. */ speakers?: string[]; /** The person answered the speaker-matching question (matched them or kept them apart). */ matched?: boolean }
 /** Size of the recording and a checksum over samples of it (see electron/sourceId.ts). */
 export interface SourceId { size: number; sample: string }
 /** A whole earlier state of the transcript: text, speakers and names, checked quotes, chapters, translations and the summary all live in `result`. `label` and `at` are missing in points saved by older versions. */
-export interface RestorePoint { result: Result; names: Record<string, string>; meta?: RunMeta; label?: string; at?: number }
+export interface RestorePoint { result: Result; names: Record<string, string>; meta?: RunMeta; /** The added recordings the transcript was made with (a point taken before one was added has none). */ appended?: Part[]; label?: string; at?: number }
 export interface LastExport { format: string; options: Record<string, unknown> }
 /** A line written down while the run is still going. Speakers are already known; the finished transcript replaces all of these. */
 export interface DraftLine { start: number; end: number; speaker: string; text: string; lang?: string }

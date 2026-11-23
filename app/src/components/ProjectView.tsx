@@ -22,6 +22,7 @@ import type { Located } from "../relink";
 import VideoPreview from "./VideoPreview";
 import { mediaKind } from "../projectActions";
 import { restoreFrom } from "../restorePoint";
+import { clipOf, hasParts, sourcesOf } from "../sources";
 import { Edge, dragEdge, FINE_STEP, nudgeStep, nudgeWord } from "../highlightBounds";
 import { GoToTime, ShortcutSheet } from "./JumpDialogs";
 
@@ -35,6 +36,7 @@ interface Props {
   othersWaiting?: number; onApplyToOthers?(o: Partial<Options>): void; onRemember?(o: Partial<Options>): void;
   /** The Settings default for the first Export menu item, and where to keep the last export (not an edit, so it leaves the retention date alone). */ defaultExport?: string; /** The formats the Export menu shows up front (Settings). */ exportShown?: string[]; onExported?(last: LastExport): void; /** The user has dismissed the explanation of dotted words. */ unsureLegendSeen?: boolean;
   /** Easy mode: no AI, review, chapters, clips, marks or extra exports. Turning it off brings them all back. */ easy?: boolean;
+  /** "Add a recording": the file is transcribed and joined after the ones already there. Resolves true when the work started. */ onAddRecording?(file: string): Promise<boolean>; /** The answer to the speaker-matching question for an added recording: each of its speakers mapped to one that was there before (a speaker left out stays separate). */ onMatchSpeakers?(partId: string, mapping: Record<string, string>): void;
   /** "Locate recording": starts the chooser; `confirm` is asked (with a preview) only for a project that cannot check the file itself. */ onRelink?(confirm: (c: Located) => Promise<boolean>): void;
 }
 
@@ -85,10 +87,13 @@ function LocatedPreview({ located, covered }: { located: Located; covered: numbe
 }
 
 const SPEEDS = [0.75, 1, 1.25, 1.5, 2];
-export default function ProjectView({ project, progress, draft, interrupted, onDiscardInterrupted, blocker, waiting, visible, nowPlayingId, stopSignal = 0, onPlayingChange, onOpenSettings, models, onTranscribe, onCancel, onPatch, onBulkPatch, onUndo, onRedo, othersWaiting = 0, onApplyToOthers, onRemember, defaultExport, exportShown, onExported, unsureLegendSeen, easy = false, onRelink }: Props) {
+export default function ProjectView({ project, progress, draft, interrupted, onDiscardInterrupted, blocker, waiting, visible, nowPlayingId, stopSignal = 0, onPlayingChange, onOpenSettings, models, onTranscribe, onCancel, onPatch, onBulkPatch, onUndo, onRedo, othersWaiting = 0, onApplyToOthers, onRemember, defaultExport, exportShown, onExported, unsureLegendSeen, easy = false, onRelink, onAddRecording, onMatchSpeakers }: Props) {
   const [renaming, setRenaming] = useState(false);
   const t = useT();
   const { result, names, path } = project;
+  const parts = sourcesOf(project);
+  const [activeIdx, setActiveIdx] = useState(0);
+  const activePart = parts[Math.min(activeIdx, parts.length - 1)];
   const player = useRef<WaveformHandle>(null);
   const [rate, setRate] = useState(() => { try { return Number(localStorage.getItem("playbackRate")) || 1; } catch { return 1; } });
   /** Move to the next (or previous) speed in SPEEDS; `wrap` goes round from the fastest back to the slowest, for the pill. */
@@ -237,10 +242,20 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
     player.current?.seek(Math.max(0, start - 0.2));
     clipTimer.current = window.setTimeout(() => player.current?.pause(), Math.max(400, ((end + 0.2 - start) / rate) * 1000));
   };
+  /** Saves a stretch of the timeline as a clip of the recording it is in (cut at the end of that recording when it runs over the join). */
+  const saveRange = async (a: number, b: number) => { const c = clipOf(parts, a, b); return c ? window.api.saveClip(c.path, c.start, c.end) : false; };
   const saveClips = async (format: string) => {
-    const r = await window.api.exportClips(path, keptHighlights.map((h) => ({ start: h.start, end: h.end, speaker: displayName(h.speaker, result!.speakers, names) })), format, project.name).catch((e: unknown) => ({ ok: false, error: String(e) } as { ok?: boolean; cancelled?: boolean; count?: number; error?: string }));
-    if (r.cancelled) return;
-    flash(r.ok ? (r.count === 1 ? t("Saved 1 audio clip ✓") : t("Saved {count} audio clips ✓", { count: r.count ?? 0 })) : t("Saving the clips failed: {reason}", { reason: r.error ?? "" }));
+    // one folder per recording (each asks where to save): a clip is cut from the recording it is in
+    let total = 0;
+    for (let i = 0; i < parts.length; i++) {
+      const mine = keptHighlights.flatMap((h) => { const c = clipOf(parts, h.start, h.end); return c && c.index === i ? [{ start: c.start, end: c.end, speaker: displayName(h.speaker, result!.speakers, names) }] : []; });
+      if (!mine.length) continue;
+      const r = await window.api.exportClips(parts[i].path, mine, format, parts.length > 1 ? `${project.name} part ${i + 1}` : project.name).catch((e: unknown) => ({ ok: false, error: String(e) } as { ok?: boolean; cancelled?: boolean; count?: number; error?: string }));
+      if (r.cancelled) return;
+      if (!r.ok) { flash(t("Saving the clips failed: {reason}", { reason: r.error ?? "" })); return; }
+      total += r.count ?? 0;
+    }
+    flash(total === 1 ? t("Saved 1 audio clip ✓") : t("Saved {count} audio clips ✓", { count: total }));
   };
 
   const running = project.status === "running" || project.status === "queued";
@@ -381,7 +396,7 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
         else if (e.key === "]") markEnd();
         else if (e.key === ",") { player.current?.skip(-0.5); }
         else if (e.key === ".") { player.current?.skip(0.5); }
-        else if (sel) void window.api.saveClip(path, sel[0], sel[1]).then((ok) => { if (ok) flash(t("Clip saved ✓")); });
+        else if (sel) void saveRange(sel[0], sel[1]).then((ok) => { if (ok) flash(t("Clip saved ✓")); });
         else flash(t("Mark a clip first: [ for the start, ] for the end"));
       }
       else if (!mod && !e.altKey && showResult && !busy && !easy && /^[-+=0]$/.test(e.key) && quietTarget(e.target)) {
@@ -472,6 +487,16 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
   }, [review, reviewAt?.seg, reviewAt?.word]);
   useEffect(() => { if (busy) setReview(false); }, [busy]);
   useEffect(() => { if (!visible) { window.clearTimeout(clipTimer.current); player.current?.pause(); } }, [visible]); // leaving the screen keeps the review where it was; only the sound stops
+  /** "Add a recording…": pick one file; it is transcribed and joined after the ones already there. */
+  const addRecording = async () => {
+    const picked = await window.api.pickFiles().catch(() => [] as string[]);
+    if (!picked[0] || !onAddRecording) return;
+    const started = await onAddRecording(picked[0]);
+    if (started) flash(picked.length > 1 ? t("Adding “{name}”. Only one recording is added at a time, so add the others afterwards.", { name: baseName(picked[0]) }) : t("Adding “{name}” after the earlier recording…", { name: baseName(picked[0]) }));
+  };
+  // the speakers an added recording brought, until the person has said which of them are people already in the transcript
+  const [matching, setMatching] = useState<{ partId: string; choice: Record<string, string> } | null>(null);
+  const toMatch = !running && result ? (project.appended ?? []).find((x) => !x.matched && (x.speakers ?? []).some((sp) => result.speakers.includes(sp)) && result.speakers.some((sp) => !(x.speakers ?? []).includes(sp))) : undefined;
   const again = () => { if (result) setDialog("again"); else onTranscribe(null); };
   const replace = () => { setDialog(null); setMoved(null); setQuery(""); onTranscribe(null); };
   const restore = () => {
@@ -600,9 +625,16 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
             <button type="button" className="btn sun small" disabled={!canTranscribe} onClick={replace}>{startInfo.est ? t("Transcribe the whole recording ({time})", { time: spanText(t, startInfo.est) }) : t("Transcribe the whole recording")}</button>
           </div>
         )}
+        {toMatch && result && !matching && (
+          <div className="pv-partial" role="status">
+            <span><b>{t("Are any speakers in “{name}” people you already have?", { name: toMatch.name })}</b> {t("Match them so each person is one speaker across the recordings.")}</span>
+            <span className="pv-restore-act"><button type="button" className="btn sun small" onClick={() => setMatching({ partId: toMatch.id, choice: {} })}>{t("Match speakers…")}</button>
+              <button type="button" className="btn quiet small" onClick={() => onMatchSpeakers?.(toMatch.id, {})}>{t("Keep them separate")}</button></span>
+          </div>
+        )}
         {partial && (
           <div className="pv-partial" role="status">
-            <span><b>{project.status === "queued" ? t("Waiting in line to redo this part") : t("Redoing this part…")}</b> {project.status === "running" && progress?.stage === "transcribe" && progress.fraction != null ? `${Math.round(progress.fraction * 100)}%` : ""}</span>
+            <span><b>{project.adding ? (project.status === "queued" ? t("Waiting in line to add “{name}”", { name: project.adding }) : t("Adding “{name}”…", { name: project.adding })) : project.status === "queued" ? t("Waiting in line to redo this part") : t("Redoing this part…")}</b> {project.status === "running" && progress?.stage === "transcribe" && progress.fraction != null ? `${Math.round(progress.fraction * 100)}%` : ""}</span>
             <button type="button" className="btn quiet small" onClick={onCancel}>{t("Stop")}</button>
           </div>
         )}
@@ -628,7 +660,9 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
             const put = (translation?: string) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => { if (k !== i) return s; const { translation: _t, ...rest } = s; return translation ? { ...rest, translation } : rest; }) } }, t("translation"));
             if (remove) { put(); return; }
             setTranslating(i);
-            const r = await window.api.translateLine({ input: path, start: seg.start, end: seg.end, model: ({ ...globalOpts(), ...project.opts }).model, language: seg.lang ?? result.language, backend: globalOpts().whisperEngine }).catch((e: unknown) => ({ ok: false, error: String(e) } as { ok: boolean; text?: string; error?: string }));
+            const at = clipOf(parts, seg.start, seg.end);
+            if (!at) { setTranslating(null); flash(t("Nothing to translate here")); return; }
+            const r = await window.api.translateLine({ input: at.path, start: at.start, end: at.end, model: ({ ...globalOpts(), ...project.opts }).model, language: seg.lang ?? result.language, backend: globalOpts().whisperEngine }).catch((e: unknown) => ({ ok: false, error: String(e) } as { ok: boolean; text?: string; error?: string }));
             setTranslating(null);
             if (r.ok && r.text) put(r.text); else flash(r.ok ? t("Nothing to translate here") : t("Translation failed: {reason}", { reason: r.error ?? "" }));
           }}
@@ -680,7 +714,7 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
               )}
               {!easy && <button type="button" className={"btn quiet small" + (showLang ? " on" : "")} aria-pressed={showLang} onClick={toggleLang} title={t("Show the language of every line, so a line tagged with the wrong language stands out. Click a tag to change it.")}>{t("Languages")}</button>}
               {!easy && <button type="button" className={"btn quiet small" + (replaceOpen ? " on" : "")} aria-expanded={replaceOpen} aria-controls="pv-replace" onClick={() => setReplaceOpen(!replaceOpen)} title={t("Replace words in the transcript")}>{t("Replace")}</button>}
-              <ExportMenu easy={easy} shown={exportShown} onOpenSettings={onOpenSettings} openSignal={exportSignal} lastExport={project.lastExport} defaultFormat={defaultExport} onRemember={(format, options) => onExported?.({ format, options })} hasChapters={result!.segments.some((s) => !!s.chapter?.trim())} markedCount={result!.segments.filter((s) => s.marked).length + keptHighlights.length} translatedCount={result!.segments.filter((s) => !!s.translation?.trim()).length} onExport={async (f, o) => { if (f === "copy-md") { const r = await window.api.exportText(payload("md", o)); if (!r.ok) return { ok: false, error: r.error }; try { await navigator.clipboard.writeText(r.text ?? ""); return { ok: true }; } catch { return { ok: false, error: t("The clipboard is not available.") }; } } if (f === "episode") return window.api.exportEpisode(payload(f, o), path, project.name); return f === "print" || f === "print-large" ? window.api.printPdf(project.name, f === "print-large") : window.api.exportTranscript(payload(f, o), f, project.name); }} />
+              <ExportMenu easy={easy} shown={exportShown} onOpenSettings={onOpenSettings} openSignal={exportSignal} lastExport={project.lastExport} defaultFormat={defaultExport} onRemember={(format, options) => onExported?.({ format, options })} hasChapters={result!.segments.some((s) => !!s.chapter?.trim())} markedCount={result!.segments.filter((s) => s.marked).length + keptHighlights.length} translatedCount={result!.segments.filter((s) => !!s.translation?.trim()).length} onExport={async (f, o) => { if (f === "copy-md") { const r = await window.api.exportText(payload("md", o)); if (!r.ok) return { ok: false, error: r.error }; try { await navigator.clipboard.writeText(r.text ?? ""); return { ok: true }; } catch { return { ok: false, error: t("The clipboard is not available.") }; } } if (f === "episode") return window.api.exportEpisode(payload(f, o), hasParts(project) ? "" : path, project.name); return f === "print" || f === "print-large" ? window.api.printPdf(project.name, f === "print-large") : window.api.exportTranscript(payload(f, o), f, project.name); }} />
             </>
           )}
           <button ref={drawerBtn} type="button" className={"btn icon quiet pv-insp-toggle" + (drawer ? " on" : "")} aria-expanded={drawer} aria-controls={inspectorId} aria-label={drawer ? t("Hide inspector") : t("Show inspector")} title={drawer ? t("Hide inspector") : t("Show inspector")} onClick={() => (drawer ? closeDrawer() : setDrawer(true))}>
@@ -786,7 +820,7 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
             <button type="button" className={"pv-speed" + (rate !== 1 ? " on" : "")} dir="ltr" onClick={() => stepRate(1, true)}
               aria-label={t("Playback speed {rate}×. Click to change.", { rate })} title={t("Playback speed: click to change, or press < and >")}>{rate}×</button>
           </div>
-          <Waveform key={project.id} easy={easy} ref={player} path={path} result={result} onTime={setTime} onSelection={setSel} onPlaying={setPlaying} onDuration={setDuration} trim={trimHl ? { id: trimHl.id, start: trimHl.start, end: trimHl.end } : null} onTrim={dragHl} onLocate={onRelink ? () => onRelink((c) => new Promise<boolean>((answer) => setLocating({ c, answer }))) : undefined} />
+          <Waveform key={project.id} easy={easy} ref={player} parts={parts} onActive={setActiveIdx} result={result} onTime={setTime} onSelection={setSel} onPlaying={setPlaying} onDuration={setDuration} trim={trimHl ? { id: trimHl.id, start: trimHl.start, end: trimHl.end } : null} onTrim={dragHl} onLocate={onRelink ? () => onRelink((c) => new Promise<boolean>((answer) => setLocating({ c, answer }))) : undefined} />
           {result && (
             <div className="pv-now" aria-live="off">
               <i style={{ background: nowName ? nowColor : undefined }} aria-hidden />
@@ -799,7 +833,7 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
           </button>}
           {!easy && <div className="pv-dock-side">
             <div className="pv-actions">
-              {sel && <button type="button" className="btn quiet small" onClick={async () => { if (await window.api.saveClip(path, sel[0], sel[1])) flash(t("Clip saved ✓")); }}>{t("Save clip")}</button>}
+              {sel && <button type="button" className="btn quiet small" onClick={async () => { if (await saveRange(sel[0], sel[1])) flash(t("Clip saved ✓")); }}>{t("Save clip")}</button>}
             </div>
           </div>}
           {!easy && <div className="pv-drawer" id="pv-drawer" hidden={!dockOpen}>
@@ -813,7 +847,14 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
             <div className="pv-tools" role="group">
               <button type="button" className="btn quiet small" onClick={markStart}>{t("Start clip")}</button>
               <button type="button" className="btn quiet small" onClick={markEnd}>{t("End clip")}</button>
-              <button type="button" className="btn quiet small" disabled={!sel} onClick={async () => { if (sel && await window.api.saveClip(path, sel[0], sel[1])) flash(t("Clip saved ✓")); }}>{t("Save clip")}</button>
+              <button type="button" className="btn quiet small" disabled={!sel} onClick={async () => { if (sel && await saveRange(sel[0], sel[1])) flash(t("Clip saved ✓")); }}>{t("Save clip")}</button>
+            </div>
+            <div className="pv-tools" role="group" aria-label={t("Recordings")}>
+              {parts.length > 1 && parts.map((x, i) => (
+                <button key={x.id} type="button" className={"btn quiet small" + (i === activeIdx ? " on" : "")} aria-pressed={i === activeIdx} title={x.name} onClick={() => player.current?.seek(x.offset, false)}>{t("Part {n}", { n: i + 1 })}</button>
+              ))}
+              {parts.length > 1 && <span className="pv-sep" aria-hidden />}
+              <button type="button" className="btn quiet small" disabled={!showResult || !canTranscribe || !!project.trial || !onAddRecording} onClick={() => void addRecording()}>{t("Add a recording…")}</button>
             </div>
             <div className="pv-hint pv-keys">{t("Drag the waveform to save a clip · Space or K plays · J / L skip 10 s · Double-click a word to fix it")}</div>
           </div>}
@@ -824,7 +865,7 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
       </section>
 
       <div className="pv-insp-scrim" aria-hidden onClick={closeDrawer} />
-      <Inspector top={showResult && mediaKind(path) === "video" ? <VideoPreview path={path} name={project.name} time={time} playing={playing} rate={rate} /> : undefined} easy={easy} id={inspectorId} drawerOpen={drawer} onDrawerClose={closeDrawer} project={project} tab={tab} onTab={setTab} visible={visible} moved={moved} onMoveAll={moveAll} onUndo={undo}
+      <Inspector top={showResult && mediaKind(activePart.path) === "video" ? <VideoPreview path={activePart.path} name={project.name} time={time - activePart.offset} playing={playing} rate={rate} /> : undefined} easy={easy} id={inspectorId} drawerOpen={drawer} onDrawerClose={closeDrawer} project={project} tab={tab} onTab={setTab} visible={visible} moved={moved} onMoveAll={moveAll} onUndo={undo}
         canTranscribe={canTranscribe} onAskAgain={again} onPatch={onPatch} onOpenSettings={onOpenSettings} models={models} onShowLine={showLine}
         askPanel={<AskTab project={project} visible={visible} thread={askThread} job={llmJob} onAsk={runAsk}
           onStop={() => { askStopped.current = true; void window.api.cancel(llmId.current); }} onClear={() => setAskThread([])} onShow={showLine} />}
@@ -835,7 +876,7 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
           onKeepAll={() => patchResult((x) => ({ ...x, highlights: (x.highlights ?? []).map((h) => ({ ...h, suggested: undefined })) }))}
           onDismissAll={() => patchResult((x) => ({ ...x, highlights: (x.highlights ?? []).filter((h) => !h.suggested) }))}
           onPlay={playRange} onPause={() => { window.clearTimeout(clipTimer.current); player.current?.pause(); }} clip={playing ? hlClip : null} time={time} onSeek={(s) => player.current?.seek(s)} onSaveClips={saveClips}
-          onSaveOne={async (h) => { if (await window.api.saveClip(path, Math.max(0, h.start - 0.3), h.end + 0.3)) flash(t("Clip saved ✓")); }} />}
+          onSaveOne={async (h) => { if (await saveRange(Math.max(0, h.start - 0.3), h.end + 0.3)) flash(t("Clip saved ✓")); }} />}
         summaryPanel={<SummaryTab project={project} visible={visible} job={llmJob} error={llmError} onSummarize={(m) => runLlm("summarize", m)} onStop={() => { void window.api.cancel(llmId.current); }} onSeek={(s) => player.current?.seek(s)}
           onEditSummary={(text) => patchResult((x) => (x.summary ? { ...x, summary: { ...x.summary, summary: text } } : x))}
           onClearSummary={() => patchResult((x) => { const { summary: _s, ...rest } = x; return rest; })} />} />
@@ -846,6 +887,27 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
           <p>{t("The transcript you have now is kept for one step back: you can restore it afterwards.")}</p>
         </Dialog>
       )}
+      {matching && result && (() => {
+        const part = (project.appended ?? []).find((x) => x.id === matching.partId);
+        const fresh = (part?.speakers ?? []).filter((sp) => result.speakers.includes(sp));
+        const before = result.speakers.filter((sp) => !fresh.includes(sp));
+        const close = () => setMatching(null);
+        return (
+          <Dialog title={t("Match speakers")} cancel={t("Cancel")} confirm={t("Match speakers")} confirmClass="btn sun" onCancel={close}
+            onConfirm={() => { const mapping = Object.fromEntries(Object.entries(matching.choice).filter(([, to]) => to)); onMatchSpeakers?.(matching.partId, mapping); close(); }}>
+            <p>{t("For each speaker in “{name}”, choose the person from the earlier recordings, or leave it as a new speaker. You can undo this.", { name: part?.name ?? "" })}</p>
+            {fresh.map((sp) => (
+              <label key={sp} className="field">
+                <span>{displayName(sp, result.speakers, names)}</span>
+                <select value={matching.choice[sp] ?? ""} onChange={(e) => setMatching({ ...matching, choice: { ...matching.choice, [sp]: e.target.value } })}>
+                  <option value="">{t("A new speaker")}</option>
+                  {before.map((b) => <option key={b} value={b}>{displayName(b, result.speakers, names)}</option>)}
+                </select>
+              </label>
+            ))}
+          </Dialog>
+        );
+      })()}
       {locating && (
         <Dialog title={t("Use this recording?")} cancel={t("Cancel")} confirm={t("Use this recording")} confirmClass="btn sun"
           onCancel={() => { locating.answer(false); setLocating(null); }} onConfirm={() => { locating.answer(true); setLocating(null); }}>

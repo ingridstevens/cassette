@@ -1,20 +1,21 @@
 import type { SaveTracker } from "./saveTracker";
+import { readParts } from "./sources";
 import type { Project, RestorePoint, Result, Segment } from "./types";
 
 /** The project as it is now, kept as the restore point. Null when there is no transcript to keep. `label` says what is about to happen. */
-export function takeRestorePoint(p: Pick<Project, "result" | "names" | "meta">, label: string, at: number): RestorePoint | null {
+export function takeRestorePoint(p: Pick<Project, "result" | "names" | "meta"> & Partial<Pick<Project, "appended">>, label: string, at: number): RestorePoint | null {
   if (!p.result) return null;
-  return { result: p.result, names: p.names, meta: p.meta, label, at };
+  return { result: p.result, names: p.names, meta: p.meta, ...(p.appended?.length ? { appended: p.appended } : {}), label, at };
 }
 
 /**
  * Put the restore point back. What was on screen becomes the new restore point, so a restore can itself be taken back
  * (and a restore that does not reach the disk loses nothing: the old point is still in the saved file).
  */
-export function restoreFrom(p: Pick<Project, "result" | "names" | "meta" | "previous">, label: string, at: number): Partial<Project> | null {
+export function restoreFrom(p: Pick<Project, "result" | "names" | "meta" | "previous"> & Partial<Pick<Project, "appended">>, label: string, at: number): Partial<Project> | null {
   const prev = p.previous;
   if (!prev) return null;
-  return { result: prev.result, names: prev.names, meta: prev.meta, previous: takeRestorePoint(p, label, at) ?? undefined, trial: undefined };
+  return { result: prev.result, names: prev.names, meta: prev.meta, appended: prev.appended, previous: takeRestorePoint(p, label, at) ?? undefined, trial: undefined };
 }
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === "object" && v !== null && !Array.isArray(v);
@@ -33,6 +34,7 @@ export function readRestorePoint(raw: unknown): RestorePoint | undefined {
   return {
     result, names: isObj(raw.names) ? (raw.names as Record<string, string>) : {},
     ...(isObj(raw.meta) ? { meta: raw.meta as RestorePoint["meta"] } : {}),
+    ...(readParts(raw.appended) ? { appended: readParts(raw.appended) } : {}),
     ...(typeof raw.label === "string" ? { label: raw.label } : {}), ...(typeof raw.at === "number" ? { at: raw.at } : {}),
   };
 }
