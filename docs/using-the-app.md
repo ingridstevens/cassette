@@ -173,6 +173,14 @@ These apply the next time you transcribe that project:
 - **Names and special words:** a list (for example `Müller GmbH, pyannote`) that helps the model spell them.
 - **Transcribe again…** replaces the transcript. The app asks first and keeps the old one as a restore point, shown as **Restore the earlier transcript** above the text. The same restore point is saved before **Transcribe this part again** or redoing a line, **Replace all**, and moving all lines of one speaker to another; if it cannot be saved, nothing happens.
 
+## Back up and restore a project
+
+**Back up project…** (in the **…** menu of a project in the list) saves one project as a single `.cassette-backup` file in a place you choose: the transcript, speaker names, checked quotes, chapters, translations, summary and settings, **and the recording itself**. The file is checked as it is written, a backup you already have in that place is replaced only when the new one is complete, and nothing is sent anywhere.
+
+**Restore project backup…** (under **Record** in the project list) reads such a file and adds it as a **new project**; it never replaces one you have. The whole file is checked first (contents list, size and checksum of the recording). The recording is then copied into Cassette's own recordings folder, so the project works with the original file gone, on a computer that is offline, and clicking a checked quote jumps to that moment. If a project with the same identity is already in the list (for example you restore the same backup twice), the restored one becomes a separate copy and says so.
+
+When it cannot be done, Cassette says why and changes nothing: the recording is not available, the place cannot be written to, the disk is too full, the file is damaged, cut short or not a Cassette backup, it comes from a newer version of Cassette, or it names an unsafe path. Other backups and your projects stay as they were. Deleting a restored project later also deletes its recording copy in the recordings folder, like a recording made with **Record**. One project per backup for now.
+
 ## Info
 
 ![The Info tab](screenshots/12-info.jpg)

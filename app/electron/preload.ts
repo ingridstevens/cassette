@@ -55,6 +55,10 @@ const api = {
   hideLogNames: (hide: boolean): Promise<{ ok: boolean; error?: string }> => invoke("log-hide-names", hide),
   clearLog: (): Promise<{ ok: boolean; error?: string }> => invoke("log-clear"),
   deleteProjectFiles: (audioPath: string): Promise<{ ok: true; backup: "removed" | "none" | "failed"; backupName: string; appMade: boolean; audio: "removed" | "none" | "failed" | "kept"; audioName: string } | { ok: false; error: string }> => invoke("delete-project-files", audioPath),
+  /** Saves one project (transcript, speakers, checked quotes and its recording) as a single backup file the person chooses. */
+  backupProject: (project: unknown): Promise<{ ok: true; path: string; bytes: number } | { ok: false; cancelled?: boolean; code?: string }> => invoke("backup-project", project),
+  /** Asks for a backup file and restores it into the app's recordings folder; the window adds the project it returns. */
+  restoreProject: (): Promise<{ ok: true; project: Record<string, unknown>; mediaPath: string; bytes: number } | { ok: false; cancelled?: boolean; code?: string }> => invoke("restore-project"),
   saveClip: (input: string, start: number, end: number): Promise<string | null> => invoke("save-clip", input, start, end),
   reveal: (what: "models" | "log" | "data" | "recordings" | "peaks" | "tmp"): Promise<void> => invoke("reveal", what),
   bundlePreview: (req: { model: string; downloaded: string[]; diarization: boolean; checks: { id: string; level: string }[]; includeLog: boolean }): Promise<{ name: string; text: string; bytes: number }[] | null> => invoke("bundle-preview", req),

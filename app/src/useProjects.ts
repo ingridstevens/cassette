@@ -4,8 +4,9 @@ import { History, emptyHistory, record, stepBack, stepForward } from "./history"
 import { currentLang, t } from "./i18n";
 import { SaveState, createSaveTracker } from "./saveTracker";
 import { copyName, duplicateProject } from "./projectActions";
+import { restoredProject } from "./projectBackup";
 import { readRestorePoint, takeRestorePoint, writeRestorePoint } from "./restorePoint";
-import { DraftLine, FitAsk, JobProgress, MEDIA_EXT, Options, Project, RestorePoint, Result, RunMeta, Segment, baseName, displayName, stripExt } from "./types";
+import { DraftLine, FitAsk, JobProgress, MEDIA_EXT, Options, Project, RestorePoint, Result, RunMeta, Segment, baseName, bytes, displayName, stripExt } from "./types";
 
 type Range = [number, number] | null;
 const persisted = (p: Project) => ({ id: p.id, path: p.path, name: p.name, addedAt: p.addedAt, openedAt: p.openedAt, editedAt: p.editedAt, result: p.result, names: p.names, opts: p.opts, meta: p.meta, trial: p.trial, previous: p.previous, lastExport: p.lastExport });
@@ -25,6 +26,21 @@ export interface Interrupted { lines: DraftLine[]; savedAt: number; audioChanged
 /** How often the lines written so far are saved while a run goes on (a crash loses at most this much). */
 export const PARTIAL_SAVE_MS = 5000;
 
+/** The reason a backup or restore failed, in words (the code comes from electron/projectArchive.ts). */
+function backupReason(code: string | undefined): string {
+  switch (code) {
+    case "missing-source": return t("The recording for this project is not available.");
+    case "source-changed": return t("The recording changed while it was being copied. Try again.");
+    case "unwritable": return t("That place cannot be written to. Choose another folder.");
+    case "low-disk": return t("There is not enough free disk space.");
+    case "not-backup": return t("That file is not a Cassette project backup.");
+    case "damaged": return t("The backup is damaged or incomplete.");
+    case "unsupported": return t("The backup was made by a newer version of Cassette. Update Cassette and try again.");
+    case "unsafe-path": return t("The backup names a recording path that is not safe.");
+    default: return t("Something went wrong.");
+  }
+}
+
 export function useProjects(opts: Options, log: (level: string, msg: string) => void) {
   const [projects, setProjects] = useState<Project[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -32,6 +48,7 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   const [drafts, setDrafts] = useState<Record<string, DraftLine[]>>({});
   const [interrupted, setInterrupted] = useState<Record<string, Interrupted>>({});
   const [loaded, setLoaded] = useState(false);
+  const [info, setInfo] = useState("");  // the outcome of the last backup or restore that worked (a failure goes to `notice`)
   const [notice, setNotice] = useState("");  // set once, when the saved project list had to be recovered
   const [saveState, setSaveState] = useState<SaveState>({ status: "saved" });  // failed while the latest edit is not on disk; cleared by the next save that works
   const optsRef = useRef(opts); optsRef.current = opts;
@@ -191,6 +208,31 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     return name;
   }, []);
 
+  /** Saves one project and its recording as a single backup file the person chooses. Resolves true when the file was written; says what happened either way. */
+  const backup = useCallback(async (id: string): Promise<boolean> => {
+    const p = projectsRef.current.find((x) => x.id === id); if (!p) return false;
+    setInfo(""); setNotice("");
+    let r: Awaited<ReturnType<typeof window.api.backupProject>>;
+    try { r = await window.api.backupProject(persisted(p)); } catch { r = { ok: false, code: "failed" }; }
+    if (r.ok) { setInfo(t("Backed up “{name}” ({size}) as {file}. It holds the transcript, speakers, checked quotes and the recording, and restores without the original file.", { name: p.name, size: bytes(r.bytes), file: baseName(r.path) })); return true; }
+    if (!r.cancelled) setNotice(t("Could not back up “{name}”: {why} Nothing was changed, and any earlier backup is still there.", { name: p.name, why: backupReason(r.code) }));
+    return false;
+  }, []);
+
+  /** Asks for a backup file and adds what is in it as a new project (never replacing one). Resolves true when a project was added. */
+  const restore = useCallback(async (): Promise<boolean> => {
+    setInfo(""); setNotice("");
+    let r: Awaited<ReturnType<typeof window.api.restoreProject>>;
+    try { r = await window.api.restoreProject(); } catch { r = { ok: false, code: "failed" }; }
+    if (!r.ok) { if (!r.cancelled) setNotice(t("Could not restore the backup: {why} Nothing was added, and your projects are as they were.", { why: backupReason(r.code) })); return false; }
+    const { project, collided } = restoredProject(projectsRef.current, r.project, r.mediaPath, crypto.randomUUID(), Date.now(), t("(restored)"));
+    setProjects((l) => [project, ...l]); setActiveId(project.id);
+    setInfo(collided
+      ? t("Restored as “{name}”. A project with the same identity was already here, so this one is a separate copy and the existing one is unchanged.", { name: project.name })
+      : t("Restored “{name}” as a new project. Its recording is now kept in Cassette’s own recordings folder.", { name: project.name }));
+    return true;
+  }, []);
+
   /** Put back the restore point a re-run took when the run ends without replacing anything (cancelled, failed, or stopped to ask about the model). */
   const releaseCheckpoint = useCallback((id: string) => {
     const h = held.current.get(id); if (!h) return;
@@ -315,6 +357,6 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   /** Each returns the label of the edit it undid or redid (empty when it had none), or null when there was nothing to do. */
   const undo = useCallback((id: string) => step(id, stepBack), [step]);
   const redo = useCallback((id: string) => step(id, stepForward), [step]);
-  return { projects, loaded, notice, saveError: saveState.status === "failed" ? saveState.error ?? "unknown" : null, retrySave, dismissNotice: () => setNotice(""), activeId, setActiveId: open, edit, undo, redo, progress, drafts, interrupted, discardInterrupted: dropInterrupted, add, addAndTranscribe, remove, rename: (id: string, name: string) => edit(id, { name }), duplicate, patch, transcribe, cancel, editWithCheckpoint,
+  return { projects, loaded, notice, info, dismissInfo: () => setInfo(""), backup, restore, saveError: saveState.status === "failed" ? saveState.error ?? "unknown" : null, retrySave, dismissNotice: () => setNotice(""), activeId, setActiveId: open, edit, undo, redo, progress, drafts, interrupted, discardInterrupted: dropInterrupted, add, addAndTranscribe, remove, rename: (id: string, name: string) => edit(id, { name }), duplicate, patch, transcribe, cancel, editWithCheckpoint,
     transcribeAll: () => projectsRef.current.filter((p) => p.status === "idle" || p.status === "error").forEach((p) => void transcribe(p.id)) };
 }

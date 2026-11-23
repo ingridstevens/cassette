@@ -177,6 +177,9 @@ function fake(path = "") {
   bundleSave: async () => ({ ok: true, path: "/Users/demo/cassette-diagnostics.zip" }),
   saveImage: async () => ({ ok: true, path: "/Users/demo/share-card.png" }),
   revealPath: async () => {},
+  // dev only: ?backupfail=damaged makes both fail with that reason
+  backupProject: async (p: { name?: string }) => { const f = new URLSearchParams(location.search).get("backupfail"); return f ? { ok: false as const, code: f } : { ok: true as const, path: `/Users/demo/${p.name ?? "Project"}.cassette-backup`, bytes: 31_400_000 }; },
+  restoreProject: async () => { const f = new URLSearchParams(location.search).get("backupfail"); return f ? { ok: false as const, code: f } : { ok: true as const, project: { id: "restored-demo", name: "Restored interview", names: {}, result: null }, mediaPath: "/Users/demo/Restored interview.wav", bytes: 31_400_000 }; },
   fileSize: async (p: string) => (p.includes("broken") ? null : 3_412_907),
   diskFree: async () => (location.search.includes("lowdisk") ? 2.1e9 : 48e9),
   openExternal: async () => true,

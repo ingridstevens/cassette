@@ -5,6 +5,7 @@
  * The types describe what the window SENDS and gets back; the handlers still check every value at run time (validate.ts, knownPaths.ts).
  */
 import type { PartialInfo } from "./partialStore";
+import type { BackupErrorCode } from "./projectArchive";
 import type { ProjectsLoad } from "./projectsStore";
 
 type Result = { ok?: boolean; cancelled?: boolean; path?: string; error?: string };
@@ -12,6 +13,8 @@ type BundleRequest = { model: string; downloaded: string[]; diarization: boolean
 type Clip = { start: number; end: number; speaker?: string };
 /** What the window sends to keep an interrupted run (the lines are checked by partialStore.ts, not trusted). */
 type PartialDraft = { lines: unknown[]; audio: string; model: string; language: string };
+/** The outcome of "backup-project" and "restore-project": a failure carries a code the window turns into words, never a path or text from the file. */
+type Fail = { ok: false; cancelled?: boolean; code?: BackupErrorCode };
 type Ch<A extends unknown[], R> = { args: A; ret: R };
 
 /** window.invoke(channel, ...args) answered by ipcMain.handle. */
@@ -48,6 +51,8 @@ export interface IpcInvoke {
   "log-hide-names": Ch<[hide: boolean], { ok: boolean; error?: string }>;
   "log-clear": Ch<[], { ok: boolean; error?: string }>;
   "delete-project-files": Ch<[audioPath: string], { ok: true; backup: "removed" | "none" | "failed"; backupName: string; appMade: boolean; audio: "removed" | "none" | "failed" | "kept"; audioName: string } | { ok: false; error: string }>;
+  "backup-project": Ch<[project: unknown], { ok: true; path: string; bytes: number } | Fail>;
+  "restore-project": Ch<[], { ok: true; project: Record<string, unknown>; mediaPath: string; bytes: number } | Fail>;
   "save-clip": Ch<[input: string, start: number, end: number], string | null>;
   "reveal": Ch<[what: "models" | "log" | "data" | "recordings" | "peaks" | "tmp"], void>;
   "bundle-preview": Ch<[req: BundleRequest], { name: string; text: string; bytes: number }[] | null>;

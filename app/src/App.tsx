@@ -160,7 +160,7 @@ export default function App() {
       {page === "main" && <a href="#transcript" className="skip-link" onClick={skipToTranscript}>{t("Skip to the transcript")}</a>}
       <div className={"shell" + (dragging ? " dragging" : "")} hidden={page === "settings"} onDragOver={(e) => { e.preventDefault(); setDragging(true); }} onDragLeave={(e) => { if (e.currentTarget === e.target) setDragging(false); }} onDrop={onDrop}>
         <ProjectSidebar easy={isEasy(opts)} projects={P.projects} activeId={P.activeId} progress={P.progress} blocker={blocker}
-          onSelect={(id) => { P.setActiveId(id); setPage("main"); }} onAdd={pick} onRecord={() => setPage("record")} onRemove={(id) => setRemoving(id)} onRename={P.rename} onDuplicate={P.duplicate} onReveal={(path) => void window.api.revealPath(path)} onTranscribeAll={P.transcribeAll} doneCount={P.projects.filter((p) => p.result).length} onExportAll={() => window.api.exportTranscript({ projects: P.projects.filter((p) => p.result).map((p) => ({ name: p.name, segments: p.result!.segments.map(({ words: _w, orig: _o, ...s }) => s), speakers: Object.fromEntries(p.result!.speakers.map((s) => [s, displayName(s, p.result!.speakers, p.names)])) })), options: { excel: loadExportOpts().excel } }, "combined-csv", "all-projects")} onOpenSettings={() => openSettings()} playingId={playingId}
+          onSelect={(id) => { P.setActiveId(id); setPage("main"); }} onAdd={pick} onRecord={() => setPage("record")} onRemove={(id) => setRemoving(id)} onRename={P.rename} onDuplicate={P.duplicate} onBackup={(id) => void P.backup(id)} onRestore={() => void P.restore()} onReveal={(path) => void window.api.revealPath(path)} onTranscribeAll={P.transcribeAll} doneCount={P.projects.filter((p) => p.result).length} onExportAll={() => window.api.exportTranscript({ projects: P.projects.filter((p) => p.result).map((p) => ({ name: p.name, segments: p.result!.segments.map(({ words: _w, orig: _o, ...s }) => s), speakers: Object.fromEntries(p.result!.speakers.map((s) => [s, displayName(s, p.result!.speakers, p.names)])) })), options: { excel: loadExportOpts().excel } }, "combined-csv", "all-projects")} onOpenSettings={() => openSettings()} playingId={playingId}
           activity={<Activity lines={lines} live={live} setupNeeded={!!blocker} onClear={() => setLines([])} onOpenPrivacy={() => openSettings("Privacy")} />} />
         <section className="main">
           <div className="main-body">
@@ -193,6 +193,7 @@ export default function App() {
               </div>
             )}
             {P.saveError && <p className="alert err main-err" role="alert">{t("Your changes could not be saved: {error}. Free some disk space, then keep working; Cassette tries again with every change.", { error: P.saveError })} <button type="button" className="link-btn" onClick={P.retrySave}>{t("Retry save")}</button></p>}
+            {P.info && <p className="alert ok main-err" role="status">{P.info} <button type="button" className="link-btn" onClick={P.dismissInfo}>{t("Dismiss")}</button></p>}
             {P.notice && <p className="alert err main-err" role="alert">{P.notice} <button type="button" className="link-btn" onClick={P.dismissNotice}>{t("Dismiss")}</button></p>}
             {addError && !noProjects && <p className="alert err main-err" role="alert">{addError}</p>}
 
