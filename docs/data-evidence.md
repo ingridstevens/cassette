@@ -4,6 +4,8 @@ This page maps each kind of data Cassette handles to where it is stored, what ca
 
 In the app the same places are listed with their real paths on your computer, each with a **Show** button: **Settings, Privacy, What is stored where**. The paths below use `<data folder>` for the app's data folder: the folder Electron calls `userData` for the app named "Cassette" (on macOS usually `~/Library/Application Support/Cassette`, on Windows `%APPDATA%\Cassette`, on Linux `~/.config/Cassette`; the exact path is on the Settings page). The real name is not quite "Cassette": `app/electron/main.ts` reads `userData` *before* calling `app.setName("Cassette")` and then pins it with `app.setPath`, so nobody's data moves. Before `setName`, Electron derives the name from `app/package.json`, which has `"name": "cassette"` and no `productName`, so the folder is most likely `cassette` in lower case (`~/Library/Application Support/cassette`, `%APPDATA%\cassette`, `~/.config/cassette`; macOS and Windows ignore the case). That follows from the code plus Electron's documented defaults; **not verified** on an installed build of each OS, which is why the Settings page path is the one to trust.
 
+Settings, Privacy, What is stored where also shows the size of each place, and **Save evidence summary…** writes a one-page Markdown summary to a place you choose: app, Electron and system versions, the places and their sizes, the web hosts the app can contact (with the source file), and what the app itself did on the network since it opened. It is built from a fixed list of fields (`app/electron/evidencePack.ts`): no audio, transcript text, project, file or speaker names, token or log text, and the home folder is shown as `~`. Sizes are file sizes read from the folders; contents are never read. The app does not check whether the disk is encrypted, so the summary says so and points to FileVault or BitLocker.
+
 Anything that could not be established from the code is marked **not verified**.
 
 ## Data kinds
@@ -60,7 +62,7 @@ No account, analytics or telemetry exists in the code paths read for this page, 
 
 ## Reproducing these checks
 
-1. Settings, Privacy, What is stored where: compare the paths and open each with **Show**.
+1. Settings, Privacy, What is stored where: compare the paths and sizes and open each with **Show**; save the evidence summary and read it.
 2. `cd engine && uv run pytest tests/test_network_surface.py`: host list, pinned downloads, no requests made by the app itself.
 3. `cd app && npm test`: includes the tests for the places the window may reveal and for retention.
 4. Read the source files named in the tables.

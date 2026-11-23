@@ -67,6 +67,8 @@ export interface IpcInvoke {
   "reveal": Ch<[what: "models" | "log" | "data" | "recordings" | "peaks" | "tmp"], void>;
   "bundle-preview": Ch<[req: BundleRequest], { name: string; text: string; bytes: number }[] | null>;
   "bundle-save": Ch<[req: BundleRequest], Result>;
+  "storage-sizes": Ch<[], Record<"data" | "projects" | "recordings" | "peaks" | "partials" | "tmp" | "models" | "log", number | null>>;
+  "evidence-save": Ch<[], Result>;
   "paths": Ch<[], { models: string; log: string; token: string; data: string; projects: string; recordings: string; peaks: string; tmp: string; system: { platform: string; arch: string; chip: string; cores: number; memGB: number } }>;
   "save-image": Ch<[dataUrl: string, defaultName: string], Result>;
   "reveal-path": Ch<[p: string], void>;
