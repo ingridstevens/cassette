@@ -117,7 +117,7 @@ to change the speaker, with one more item for the language and translation of th
   line break) or `Esc` to cancel. Editing the whole line, not one word, keeps the sentence around it visible. If you keep the same
   number of words, each word keeps its timing; otherwise the words are spread evenly across the line. An edited line shows **Edited**
   and **Put back what the model heard**. Exports use your corrected text.
-- **Copy quote** copies `Name (0:03): text`.
+- **Copy quote** copies `Name (0:03): text`, followed by a bracket when the line has something unsettled: `[wording unsure: …]`, `[speaker unconfirmed]` or `[checked by a person]` (see [Exporting](exporting.md#cues-for-a-reader-without-the-audio-text-word-and-quotes)). Changing a line's text or speaker removes its **Heard** mark.
 - **Mark** flags a line as a decision, an action item or a quote. Marked lines show a **Marked** flag and an orange edge. Click again
   to unmark. They are what the meeting minutes and the quote list are built from (see [Exporting](exporting.md)).
 - **Highlight a passage:** select words in a line and click **Highlight this passage**. Highlights are listed in the **Highlights** tab, where you can

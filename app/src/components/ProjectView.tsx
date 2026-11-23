@@ -4,11 +4,12 @@ import FitCard from "./FitCard";
 import ReviewBar from "./ReviewBar";
 import StartSheet, { TRIAL_SECONDS, spanText, useStartEstimate } from "./StartSheet";
 import { assignToNamed } from "../speakerMenu";
-import { toggleHeard, acceptWord, addHighlight, fixWord, highlightOf, unsureWords, withSuggestions, ExportOpts, LastExport, Options, DraftLine, IS_MAC, JobProgress, MOD_KEY, PALETTE, Project, Result, baseName, bytes, displayName, fmt, isUnsure, joinWithPrevious, retext, revertLine, splitSegment } from "../types";
+import { toggleHeard, acceptWord, addHighlight, fixWord, highlightOf, unsureWords, withSuggestions, ExportOpts, LastExport, Options, DraftLine, IS_MAC, JobProgress, MOD_KEY, PALETTE, Project, Result, baseName, bytes, displayName, fmt, isUnsure, joinWithPrevious, reattribute, retext, revertLine, splitSegment } from "../types";
 import "../styles/project.css";
 import ExportMenu from "./ExportMenu";
 import { langName } from "../languages";
 import { STYLED } from "./ExportMenu";
+import { CUED_FORMATS, boundaryCues, unconfirmedSpeakers, unsureOf, untranscribedFrom } from "../lineCues";
 import AskTab, { AskItem } from "./AskTab";
 import HighlightsTab, { LlmJob } from "./HighlightsTab";
 import SummaryTab from "./SummaryTab";
@@ -426,13 +427,21 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
     return () => window.removeEventListener("keydown", key);
   }, [visible, showResult, busy, dialog, jumpDialog, time, result, sel, clipStart, path, review, unsure, rate, easy]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const unconfirmed = useMemo(() => unconfirmedSpeakers(project.appended, result?.speakers ?? [], names), [project.appended, result?.speakers, names]);
   const payload = (format = "", options?: ExportOpts) => ({
-    segments: result!.segments.map(({ words, orig, edited, ...s }) => (["srt", "vtt", "edl", "episode", "bilingual-srt"].includes(format) || (options?.pauseMarks && STYLED.has(format)) ? { ...s, edited, words: words.map(({ start, end, word }) => ({ start, end, word })) } : format === "changes" ? { ...s, orig: orig && { text: orig.text } } : s)),
+    segments: result!.segments.map(({ words, orig, edited, ...s }) => {
+      const timed = ["srt", "vtt", "edl", "episode", "bilingual-srt"].includes(format) || (options?.pauseMarks && STYLED.has(format));
+      const base = timed ? { ...s, edited, words: words.map(({ start, end, word }) => ({ start, end, word })) } : format === "changes" ? { ...s, orig: orig && { text: orig.text } } : s;
+      return CUED_FORMATS.has(format) ? { ...base, unsure: unsureOf(words) } : base;
+    }),
+    ...(CUED_FORMATS.has(format) ? {
+      unconfirmedSpeakers: unconfirmed, boundaries: boundaryCues(parts), untranscribed: untranscribedFrom(project.trial, result!.duration),
+    } : {}),
     ...(options ? { options } : {}), app: __APP_VERSION__, meta: project.meta, highlights: keptHighlights.map(({ id: _id, suggested: _s, ...h }) => h), summary: result!.summary, language: result!.language, speakers: Object.fromEntries(result!.speakers.map((s) => [s, displayName(s, result!.speakers, names)])),
   });
   const setSpeaker = (idx: number | null, from: string, to: string) => {
     if (!result) return;
-    const segments = result.segments.map((s, k) => (idx === null ? s.speaker === from : k === idx) ? { ...s, speaker: to, words: s.words.map((w) => ({ ...w, speaker: to })) } : s);
+    const segments = result.segments.map((s, k) => (idx === null ? s.speaker === from : k === idx) ? reattribute(s, to) : s);
     onPatch({ result: { ...result, segments } }, t("change speaker"));
   };
   function reassign(i: number, to: string) {
@@ -456,7 +465,7 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
   }
   async function moveAll() {
     if (!result || !moved) return;
-    const segments = result.segments.map((s) => (s.speaker === moved.from ? { ...s, speaker: moved.to, words: s.words.map((w) => ({ ...w, speaker: moved.to })) } : s));
+    const segments = result.segments.map((s) => (s.speaker === moved.from ? reattribute(s, moved.to) : s));
     if (!(await onBulkPatch({ result: { ...result, segments, speakers: result.speakers.filter((x) => x !== moved.from) } }, t("move lines to a speaker")))) return;
     flash(t("Moved the remaining lines to {name}", { name: displayName(moved.to, result.speakers, names) }));
     setMoved(null);
@@ -653,7 +662,7 @@ export default function ProjectView({ project, progress, draft, interrupted, onD
             <button type="button" className="btn quiet small" onClick={() => onRemember?.({ unsureLegendSeen: true })}>{t("Got it")}</button>
           </div>
         )}
-        <Transcript easy={easy} boundaries={parts.length > 1 ? boundaryRows(result.segments, parts) : undefined} showLang={easy ? false : showLang} result={result} names={names} time={time} query={query} findOpts={findOpts} highlights={highlights} onHighlight={easy ? undefined : (i, a, b) => { const h = highlightOf(result.segments[i], a, b); if (h) patchResult((x) => ({ ...x, highlights: addHighlight(x.highlights ?? [], h) })); }} matchSeg={matches[mi] ?? -1} onSeek={(t) => player.current?.seek(t)} onPlayRange={(a, b) => { window.clearTimeout(clipTimer.current); player.current?.playRange(a, b); }} onReassign={reassign} onNewSpeaker={newSpeaker}
+        <Transcript easy={easy} unconfirmed={unconfirmed} boundaries={parts.length > 1 ? boundaryRows(result.segments, parts) : undefined} showLang={easy ? false : showLang} result={result} names={names} time={time} query={query} findOpts={findOpts} highlights={highlights} onHighlight={easy ? undefined : (i, a, b) => { const h = highlightOf(result.segments[i], a, b); if (h) patchResult((x) => ({ ...x, highlights: addHighlight(x.highlights ?? [], h) })); }} matchSeg={matches[mi] ?? -1} onSeek={(t) => player.current?.seek(t)} onPlayRange={(a, b) => { window.clearTimeout(clipTimer.current); player.current?.playRange(a, b); }} onReassign={reassign} onNewSpeaker={newSpeaker}
           onEdit={(i, text) => onPatch({ result: { ...result, segments: result.segments.map((s, k) => (k === i ? retext(s, text) : s)) } }, t("edit a line"))}
           canRetranscribe={canTranscribe} reviewAt={reviewAt} translatingIndex={translating} playing={playing} onPause={() => player.current?.pause()}
           onTranslate={async (i, remove) => {

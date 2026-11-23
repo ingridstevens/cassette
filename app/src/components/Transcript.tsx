@@ -7,6 +7,7 @@ import { Highlight, UnsureRef, isUnsure, PALETTE, Result, chapterDefault, displa
 import { onMenuKeyDown } from "./ExportMenu";
 import { FIND_DEFAULTS, FindOpts, matcher } from "../find";
 import { quoteText, toolbarPosition } from "../selectionToolbar";
+import { quoteCues } from "../lineCues";
 import { rangeOfWords } from "../playRange";
 import { WordSel, extendSel, selBounds, startSel } from "../wordSelection";
 import { FILTER_AT, filterSpeakers } from "../speakerMenu";
@@ -22,6 +23,7 @@ interface Props {
   /** Easy mode: only the speaker, the time and Edit stay on each line. */ easy?: boolean;
   query?: string; findOpts?: FindOpts; matchSeg?: number;
   /** Where a recording ends and the next begins: the notes shown above the first line of the later recording (line index to boundaries). */ boundaries?: Map<number, Boundary[]>;
+  /** Speakers nobody has matched or named (from an added recording): Copy quote says so, as the exports do. */ unconfirmed?: string[];
 }
 
 /** How long a click on a word waits for a possible second click before it starts playing (a typical double-click gap). */
@@ -29,7 +31,7 @@ const DOUBLE_CLICK_MS = 260;
 /** Space between two lines (the .pv-rows gap), and how far past the visible area lines stay drawn, in px. */
 const GAP = 2, OVERSCAN = 700;
 
-export default function Transcript({ easy = false, showLang, result, names, time, onSeek, onPlayRange, onReassign, onNewSpeaker, onEdit, onRevert, onChapter, onMark, onHeard, onSplit, onJoin, onLanguage, onRetranscribe, onTranslate, playing, onPause, reviewAt = null, translatingIndex = null, canRetranscribe, highlights = [], onHighlight, query = "", findOpts = FIND_DEFAULTS, matchSeg = -1, boundaries }: Props) {
+export default function Transcript({ easy = false, showLang, result, names, time, onSeek, onPlayRange, onReassign, onNewSpeaker, onEdit, onRevert, onChapter, onMark, onHeard, onSplit, onJoin, onLanguage, onRetranscribe, onTranslate, playing, onPause, reviewAt = null, translatingIndex = null, canRetranscribe, highlights = [], onHighlight, query = "", findOpts = FIND_DEFAULTS, matchSeg = -1, boundaries, unconfirmed = [] }: Props) {
   const t = useT();
   const color = (sp: string) => PALETTE[Math.max(0, result.speakers.indexOf(sp)) % PALETTE.length];
   const label = (sp: string) => displayName(sp, result.speakers, names);
@@ -115,7 +117,7 @@ export default function Transcript({ easy = false, showLang, result, names, time
   };
   const copyPicked = (i: number, from: number, to: number) => {
     const seg = result.segments[i];
-    navigator.clipboard.writeText(quoteText(label(seg.speaker), fmt(seg.words[from]?.start ?? seg.start), seg.words, from, to));
+    navigator.clipboard.writeText(quoteText(label(seg.speaker), fmt(seg.words[from]?.start ?? seg.start), seg.words, from, to) + quoteCues(t, seg, unconfirmed, seg.words.slice(from, to + 1)));
     setSaid(t("Quote copied"));
   };
   /** Shift+Left or Right in a line selects words (starting at the playing word, or the first or last word), Shift+Down goes to the toolbar. Plain arrows and Tab are left alone. */
@@ -180,7 +182,7 @@ export default function Transcript({ easy = false, showLang, result, names, time
   const saveChap = (i: number) => { const title = chapDraft.trim(); onChapter(i, title || null); closeChap(i); };
   const copyQuote = (i: number) => {
     const seg = result.segments[i];
-    navigator.clipboard.writeText(`${label(seg.speaker)} (${fmt(seg.start)}): ${seg.text}`);
+    navigator.clipboard.writeText(`${label(seg.speaker)} (${fmt(seg.start)}): ${seg.text}${quoteCues(t, seg, unconfirmed)}`);
     setCopied(i); setTimeout(() => setCopied((c) => (c === i ? null : c)), 1800);
   };
   const menuBox = useRef<HTMLDivElement>(null);
