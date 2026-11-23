@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import type { Result } from "../types";
-import { fileSlug, pickQuotes, roundPercents, talkShares, wrapText } from "./shareCardLib";
+import { useT } from "../i18n";
+import { cardDescription, fileSlug, pickQuotes, roundPercents, talkShares, wrapText } from "./shareCardLib";
 import "../styles/share.css";
 
 type StyleKey = "sunset" | "lilac" | "peach";
@@ -93,6 +94,7 @@ function Switch({ id, on, set, label }: { id: string; on: boolean; set: (v: bool
 }
 
 function Dialog({ title, result, names, onClose }: { title: string; result: Result; names: Record<string, string>; onClose: () => void }) {
+  const t = useT();
   const uid = useId();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const dlgRef = useRef<HTMLDivElement>(null);
@@ -149,7 +151,7 @@ function Dialog({ title, result, names, onClose }: { title: string; result: Resu
         <h2 id={`${uid}-h`}>Share card</h2>
         <div className="share-body">
           <div className="share-preview">
-            <canvas ref={canvasRef} role="img" aria-label="Preview of the share card" />
+            <canvas ref={canvasRef} role="img" aria-label={cardDescription(title, talkShares(result, names), quote, t)} />
           </div>
           <div className="share-controls">
             <p className="share-note">The card is made on this computer. Nothing is uploaded.</p>

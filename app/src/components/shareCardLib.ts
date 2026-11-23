@@ -76,3 +76,13 @@ export function wrapText(text: string, maxWidth: number, measure: (s: string) =>
 
 export const fileSlug = (title: string) =>
   (title.replace(/\.[^.]+$/, "").normalize("NFKD").replace(/[^\w\s-]/g, "").trim().replace(/\s+/g, "-").toLowerCase().slice(0, 40) || "recording") + "-who-talks-the-most.png";
+
+/** What the share card picture says, as text for a screen reader: the title, who talked how much, and the quote when one is on the card. `say` is the translating function (`t`). */
+export function cardDescription(title: string, shares: Share[], quote: { text: string; name: string } | null, say: (text: string, vars?: Record<string, string | number>) => string): string {
+  const pcts = roundPercents(shares.map((s) => s.pct));
+  const talk = shares.map((s, i) => `${s.name} ${pcts[i]}%`).join(", ");
+  const parts = [say("Share card for “{title}”.", { title })];
+  if (talk) parts.push(say("Talk time: {talk}.", { talk }));
+  if (quote) parts.push(say("Quote from {name}: “{text}”", { name: quote.name, text: quote.text }));
+  return parts.join(" ");
+}
