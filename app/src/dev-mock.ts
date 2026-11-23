@@ -62,7 +62,8 @@ function fake(path = "") {
   peaks: async (p: string) => { if (p.includes("broken")) return null; await wait(600); const w = wav(), n = 8000; return { peaks: Array.from({ length: n }, (_, i) => Math.abs(Math.sin(i / 40) * Math.sin(i / 700 + 1))), duration: (w.length - 44) / 16000 }; },
   mediaUrl: (_p: string) => URL.createObjectURL(new Blob([wav() as BlobPart], { type: "audio/wav" })),
   // ?missing adds a recording whose file is gone (to read the missing-file messages)
-  pickFiles: async () => ["/Users/demo/Interview 2026.wav", "/Users/demo/Podcast episode 12.m4a", "/Users/demo/Team meeting.wav", ...(location.search.includes("missing") ? ["/Users/demo/broken-recording.wav"] : [])],
+  // window.__nextPick = ["/Users/demo/phone-b.wav"] makes the next file chooser return that (to try "Add a recording")
+  pickFiles: async () => { const next = (window as unknown as { __nextPick?: string[] }).__nextPick; if (next) { (window as unknown as { __nextPick?: string[] }).__nextPick = undefined; return next; } return ["/Users/demo/Interview 2026.wav", "/Users/demo/Podcast episode 12.m4a", "/Users/demo/Team meeting.wav", ...(location.search.includes("missing") ? ["/Users/demo/broken-recording.wav"] : [])]; },
   loadProjects: async () => { try { return { projects: JSON.parse(localStorage.getItem("mock-projects") || "[]") }; } catch { return { projects: [] }; } },
   saveProjects: async (d: unknown) => { try { localStorage.setItem("mock-projects", JSON.stringify(d)); } catch { /* quota */ } return { ok: true }; },
   savePartial: async () => true, savePartialSync: () => true, dropPartial: async () => {}, loadPartials: async () => ({}),
@@ -75,6 +76,8 @@ function fake(path = "") {
     const jobId = "job" + Math.random().toString(36).slice(2, 7); emit({ jobId, type: "started", clientId: o.clientId });
     (async () => {
       const path = (o as { input?: string }).input ?? "";
+      // a file called "corrupt" cannot be decoded
+      if (path.includes("corrupt")) { await wait(500); emit({ jobId, type: "error", message: "Could not decode this file: unsupported or damaged audio." }); return; }
       // ?enginefail: the engine stops after decoding (to read the error card and the activity log)
       if (location.search.includes("enginefail")) {
         await wait(500); emit({ jobId, type: "progress", stage: "decode", fraction: 1, message: "" }); await wait(500);
@@ -181,7 +184,7 @@ function fake(path = "") {
   backupProject: async (p: { name?: string }) => { const f = new URLSearchParams(location.search).get("backupfail"); return f ? { ok: false as const, code: f } : { ok: true as const, path: `/Users/demo/${p.name ?? "Project"}.cassette-backup`, bytes: 31_400_000 }; },
   restoreProject: async () => { const f = new URLSearchParams(location.search).get("backupfail"); return f ? { ok: false as const, code: f } : { ok: true as const, project: { id: "restored-demo", name: "Restored interview", names: {}, result: null }, mediaPath: "/Users/demo/Restored interview.wav", bytes: 31_400_000 }; },
   // dev only: every recording has the same identity; ?relinkwrong makes the chosen file a different one, ?relinkfail makes it unreadable
-  fingerprintFile: async (p: string) => (p.includes("broken") ? null : { size: 3_412_907, sample: "mock" }),
+  fingerprintFile: async (p: string) => (p.includes("broken") ? null : { size: 3_412_907, sample: /phone|corrupt/.test(p) ? "mock-" + p : "mock" }),
   locateRecording: async () => { const q = location.search; return q.includes("relinkfail") ? { ok: false as const } : { ok: true as const, path: "/Users/demo/moved/Interview 2026.wav", name: "Interview 2026.wav", source: { size: 3_412_907, sample: q.includes("relinkwrong") ? "other" : "mock" } }; },
   fileSize: async (p: string) => (p.includes("broken") ? null : 3_412_907),
   diskFree: async () => (location.search.includes("lowdisk") ? 2.1e9 : 48e9),

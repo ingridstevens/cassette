@@ -278,6 +278,7 @@ function Info({ project, onPatch, onShowLine }: { project: Project; onPatch(p: P
   const sidecar = `${dir}${sep}${baseName(path).replace(/\.[^.]+$/, "")}.transcript.json`;
   // [label, value, optional action]: a row with an action renders as a link that shows the file in the file manager
   const rows: [string, string, (() => void)?][] = [[t("Location"), dir, () => window.api.revealPath(path)], [t("File size"), size === undefined ? "…" : size === null ? t("Not found") : bytes(size)], [t("Length"), result ? fmt(result.duration) : "—"]];
+  (project.appended ?? []).forEach((x, i) => rows.push([t("Part {n}", { n: i + 2 }), `${x.name} · ${fmt(x.duration)}`, () => window.api.revealPath(x.path)]));
   if (result) {
     const mix = Object.entries(meta?.languages ?? {}).sort((a, b) => b[1] - a[1]);
     const lang = mix.length > 1 ? mix.map(([c]) => langName(c)).join(", ") : langName(result.language);
@@ -287,7 +288,7 @@ function Info({ project, onPatch, onShowLine }: { project: Project; onPatch(p: P
     rows.push([t("Speakers"), t("{count} found", { count: live })]);
     rows.push([t("Models"), meta?.model ? `Whisper ${meta.model}${meta.speakerDevice ? " · pyannote 3.1" : ""}` : "—", meta?.model ? () => window.api.reveal("models") : undefined]);
     rows.push([t("Finding speakers"), meta ? (meta.speakerDevice ? `${deviceName(meta.speakerDevice)}${meta.secondsSpeakers != null ? ` · ${secs(meta.secondsSpeakers, t)}` : ""}` : t("Skipped")) : "—"]);
-    const x = meta?.secondsTranscribe ? ` (${t("{factor}× real time", { factor: (result.duration / Math.max(meta.secondsTranscribe, 0.1)).toFixed(0) })})` : "";
+    const x = meta?.secondsTranscribe ? ` (${t("{factor}× real time", { factor: ((project.appended?.[0]?.offset ?? result.duration) / Math.max(meta.secondsTranscribe, 0.1)).toFixed(0) })})` : "";
     rows.push([t("Transcribing"), meta?.device ? `${deviceName(meta.device)}${meta.secondsTranscribe != null ? ` · ${secs(meta.secondsTranscribe, t)}` : ""}${x}` : "—"]);
     rows.push([t("Saved next to audio"), g.autosave ? `${baseName(path).replace(/\.[^.]+$/, "")}.transcript.json` : t("Off"), g.autosave ? () => window.api.revealPath(sidecar) : undefined]);
   }

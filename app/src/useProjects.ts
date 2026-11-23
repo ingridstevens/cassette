@@ -7,10 +7,11 @@ import { copyName, duplicateProject } from "./projectActions";
 import { restoredProject } from "./projectBackup";
 import { Located, commitRelink, judgeLocated } from "./relink";
 import { readRestorePoint, takeRestorePoint, writeRestorePoint } from "./restorePoint";
-import { DraftLine, FitAsk, JobProgress, MEDIA_EXT, Options, Project, RestorePoint, Result, RunMeta, Segment, baseName, bytes, displayName, stripExt } from "./types";
+import { AddedRecording, hasParts, joinAdded, matchSpeakers, readParts, redoTarget, shiftResult, sourcesOf, timelineLength } from "./sources";
+import { DraftLine, FitAsk, JobProgress, MEDIA_EXT, Options, Part, Project, RestorePoint, Result, RunMeta, Segment, baseName, bytes, displayName, stripExt } from "./types";
 
 type Range = [number, number] | null;
-const persisted = (p: Project) => ({ id: p.id, path: p.path, name: p.name, addedAt: p.addedAt, openedAt: p.openedAt, editedAt: p.editedAt, result: p.result, names: p.names, opts: p.opts, meta: p.meta, trial: p.trial, previous: p.previous, lastExport: p.lastExport, source: p.source });
+const persisted = (p: Project) => ({ id: p.id, path: p.path, name: p.name, addedAt: p.addedAt, openedAt: p.openedAt, editedAt: p.editedAt, result: p.result, names: p.names, opts: p.opts, meta: p.meta, trial: p.trial, previous: p.previous, lastExport: p.lastExport, source: p.source, appended: p.appended });
 
 /** Replace the segments overlapping a re-transcribed range, keep the rest. */
 /** `line` is set when one line is transcribed again in a chosen language: the new text keeps that line's speaker and gets the language. */
@@ -54,8 +55,8 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   const [saveState, setSaveState] = useState<SaveState>({ status: "saved" });  // failed while the latest edit is not on disk; cleared by the next save that works
   const optsRef = useRef(opts); optsRef.current = opts;
   const logRef = useRef(log); logRef.current = log;
-  const jobs = useRef(new Map<string, { pid: string; range: Range; line?: LineRedo; trial?: boolean }>());      // engine jobId -> project
-  const pending = useRef(new Map<string, { range: Range; line?: LineRedo; trial?: boolean; acceptFit?: boolean }>());                            // project -> range for its next run
+  const jobs = useRef(new Map<string, { pid: string; range: Range; line?: LineRedo; trial?: boolean; add?: AddedRecording; offset?: number }>());      // engine jobId -> project
+  const pending = useRef(new Map<string, { range: Range; line?: LineRedo; trial?: boolean; acceptFit?: boolean; add?: AddedRecording; offset?: number }>());                            // project -> range for its next run
   const projectsRef = useRef(projects); projectsRef.current = projects;
   const written = useRef(new Map<string, DraftLine[]>());  // project -> lines of the full run in progress (the engine's partial events, in order)
   const saveTimer = useRef(new Map<string, number>());
@@ -74,7 +75,7 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
           : raw.recoveredFrom ? t("Your project list was damaged. Cassette restored an earlier copy. The damaged file is kept in the data folder.")
           : t("Your project list was damaged and no earlier copy could be restored. The damaged file is kept in the data folder."));
       }
-      const list = (raw.projects as Project[]).map((p) => ({ ...p, previous: readRestorePoint(p.previous), status: (p.result ? "done" : "idle") as Project["status"] }));
+      const list = (raw.projects as Project[]).map((p) => ({ ...p, appended: readParts(p.appended), previous: readRestorePoint(p.previous), status: (p.result ? "done" : "idle") as Project["status"] }));
       setProjects(list); setActiveId(list[0]?.id ?? null); setLoaded(true);
       // Runs that did not finish (stopped, failed, or cut off by a crash or sleep): their saved lines come back as an "interrupted" state. Everything else in the folder is deleted.
       window.api.loadPartials(list.filter((p) => !p.result).map((p) => p.id)).then((found) => {
@@ -225,6 +226,7 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   const backup = useCallback(async (id: string): Promise<boolean> => {
     const p = projectsRef.current.find((x) => x.id === id); if (!p) return false;
     setInfo(""); setNotice("");
+    if (hasParts(p)) { setNotice(t("“{name}” is made of {count} recordings, and a backup holds only one recording, so no backup was made. Nothing was changed.", { name: p.name, count: sourcesOf(p).length })); return false; }
     let r: Awaited<ReturnType<typeof window.api.backupProject>>;
     try { r = await window.api.backupProject(persisted(p)); } catch { r = { ok: false, code: "failed" }; }
     if (r.ok) { setInfo(t("Backed up “{name}” ({size}) as {file}. It holds the transcript, speakers, checked quotes and the recording, and restores without the original file.", { name: p.name, size: bytes(r.bytes), file: baseName(r.path) })); return true; }
@@ -279,9 +281,43 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     patch(id, { previous: h.previous });
   }, [patch]);
 
+  /**
+   * "Add a recording": the file is transcribed on its own and joined after the transcript that is there, on one timeline. Nothing that is already there is touched: a restore point is saved first,
+   * and a recording that cannot be read or decoded leaves the project as it was (the notice names the recording). Resolves true when the work was started.
+   */
+  const appendRecording = useCallback(async (id: string, file: string): Promise<boolean> => {
+    setInfo(""); setNotice("");
+    const p = projectsRef.current.find((x) => x.id === id); if (!p?.result) return false;
+    const idle = (x?: Project) => !!x && x.status !== "queued" && x.status !== "running";
+    if (!idle(p)) { setNotice(t("Wait for the transcription to finish, or cancel it, before adding a recording.")); return false; }
+    if (p.trial) { setNotice(t("This project only has a 3-minute sample. Transcribe the whole recording before adding another one.")); return false; }
+    const name = baseName(file);
+    if (!MEDIA_EXT.test(file)) { setNotice(t("“{name}” isn't audio or video. Supported: mp3, wav, m4a, flac, ogg, opus, aac, mp4, mov, mkv, webm.", { name })); return false; }
+    let src: Part["source"] | null = null;
+    try { src = await window.api.fingerprintFile(file); } catch { src = null; }
+    if (!src) { setNotice(t("“{name}” could not be read, so nothing was added.", { name })); return false; }
+    if (sourcesOf(p).some((x) => x.path === file || (x.source && x.source.size === src!.size && x.source.sample === src!.sample))) { setNotice(t("“{name}” is already part of this project, so it was not added again.", { name })); return false; }
+    // where the new recording starts: right after the last one. The first recording's length comes from its waveform, which the player already made.
+    let first = p.result.duration;
+    if (!hasParts(p)) { try { const w = await window.api.peaks(p.path); if (w && w.duration > 0) first = w.duration; } catch { /* the transcript's length is a good enough answer */ } }
+    const cur = projectsRef.current.find((x) => x.id === id);
+    if (!cur?.result || !idle(cur) || (cur.appended?.length ?? 0) !== (p.appended?.length ?? 0)) { setNotice(t("The project changed while the recording was being checked, so nothing was added. Try again.")); return false; }
+    const prior = cur.previous;
+    if (!(await checkpoint(id, t("add a recording")))) return false;
+    if (!idle(projectsRef.current.find((x) => x.id === id))) { releaseCheckpoint(id); return false; }
+    held.current.set(id, { previous: prior });
+    pending.current.set(id, { range: null, acceptFit: true, add: { id: crypto.randomUUID(), path: file, name, offset: hasParts(cur) ? timelineLength(sourcesOf(cur)) : first, source: src } });
+    patch(id, { status: "queued", error: undefined, fitAsk: undefined, partial: true, adding: name });
+    return true;
+  }, [patch, checkpoint, releaseCheckpoint]);
+
   /** Queue a run. When the project already has a transcript, a restore point is saved first; if that fails nothing is queued and false is returned. */
   const transcribe = useCallback(async (id: string, range: Range = null, line?: LineRedo, trial?: boolean, acceptFit?: boolean): Promise<boolean> => {
     const had = projectsRef.current.find((p) => p.id === id);
+    if (had?.result && !range && hasParts(had)) {
+      setNotice(t("“{name}” is made of {count} recordings. Transcribing it again from the start would drop the ones added later, so nothing was changed. Redo a line or a selection instead.", { name: had.name, count: sourcesOf(had).length }));
+      return false;
+    }
     if (had?.result) {
       const prior = had.previous;
       const label = line ? t("redo a line") : range ? t("redo part of the transcript") : t("transcribe again");
@@ -296,7 +332,7 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   const cancel = useCallback((id: string) => {
     const j = jobOf(id);
     if (j) window.api.cancel(j);
-    else { releaseCheckpoint(id); patch(id, { status: projectsRef.current.find((p) => p.id === id)?.result ? "done" : "idle", partial: undefined }); }
+    else { releaseCheckpoint(id); patch(id, { status: projectsRef.current.find((p) => p.id === id)?.result ? "done" : "idle", partial: undefined, adding: undefined }); }
   }, [patch, releaseCheckpoint]);
 
   // queue: one engine job at a time
@@ -305,22 +341,33 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     const next = projects.find((p) => p.status === "queued");
     if (!next) return;
     patch(next.id, { status: "running" });
-    const { range: rg = null, line, acceptFit } = pending.current.get(next.id) ?? {};
+    const cur = pending.current.get(next.id) ?? { range: null };
+    const { range: rg = null, line, acceptFit, add } = cur;
     const forced = line ? { language: line.language, noDiarize: true, multilingual: false } : {};
     const translate = (next.opts?.translate ?? optsRef.current.translate) ?? false;
-    window.api.transcribe({ input: next.path, ...optsRef.current, ...next.opts, translate, ...forced, acceptFit, start: rg?.[0], end: rg?.[1], clientId: next.id })
+    // an added recording is transcribed on its own; a redo runs on the one recording where it starts, in that recording's own time (its lines are moved onto the timeline when it is done)
+    let input = next.path, start = rg?.[0], end = rg?.[1];
+    if (add) { input = add.path; start = end = undefined; }
+    else if (rg && hasParts(next)) {
+      const tg = redoTarget(sourcesOf(next), rg);
+      if (!tg) { releaseCheckpoint(next.id); pending.current.delete(next.id); patch(next.id, { status: next.result ? "done" : "idle", partial: undefined, adding: undefined }); return; }
+      input = tg.path; [start, end] = tg.local;
+      pending.current.set(next.id, { ...cur, range: tg.global, offset: tg.offset });
+    }
+    window.api.transcribe({ input, ...optsRef.current, ...next.opts, translate, ...forced, acceptFit, start, end, clientId: next.id })
       .catch((e: unknown) => { releaseCheckpoint(next.id); patch(next.id, { status: "error", error: String(e) }); });
   }, [projects, patch, releaseCheckpoint]);
 
   // engine events -> projects
   useEffect(() => window.api.onEvent((e) => {
-    if (e.type === "started" && e.clientId) { jobs.current.set(e.jobId, { pid: e.clientId, range: pending.current.get(e.clientId)?.range ?? null, line: pending.current.get(e.clientId)?.line, trial: pending.current.get(e.clientId)?.trial }); return; }
+    if (e.type === "started" && e.clientId) { const q = pending.current.get(e.clientId); jobs.current.set(e.jobId, { pid: e.clientId, range: q?.range ?? null, line: q?.line, trial: q?.trial, add: q?.add, offset: q?.offset }); return; }
     const job = jobs.current.get(e.jobId);
     if (!job) return;
-    const { pid, range, line, trial } = job;
+    const { pid, range, line, trial, add, offset = 0 } = job;
+    const partial = !!range || !!add;  // a redo of one part, or an added recording: the transcript stays on screen and nothing is replaced
     const hadResult = () => !!projectsRef.current.find((p) => p.id === pid)?.result;
     const dropDraft = () => setDrafts((m) => { const { [pid]: _, ...rest } = m; return rest; });
-    if (e.type === "partial") { if (!range && !hadResult()) { written.current.set(pid, [...(written.current.get(pid) ?? []), ...(e.segments as DraftLine[])]); schedulePartial(pid); } if (!range) setDrafts((m) => ({ ...m, [pid]: [...(m[pid] ?? []), ...(e.segments as DraftLine[])] })); }  // a redo of one part keeps the transcript on screen instead
+    if (e.type === "partial") { if (!partial && !hadResult()) { written.current.set(pid, [...(written.current.get(pid) ?? []), ...(e.segments as DraftLine[])]); schedulePartial(pid); } if (!partial) setDrafts((m) => ({ ...m, [pid]: [...(m[pid] ?? []), ...(e.segments as DraftLine[])] })); }  // a redo of one part keeps the transcript on screen instead
     else if (e.type === "progress") setProgress((m) => ({ ...m, [pid]: { stage: e.stage, fraction: e.fraction, message: e.message } }));
     else if (e.type === "fit") {  // the engine stopped before the slow work: ask whether to use a better model
       jobs.current.delete(e.jobId);
@@ -330,19 +377,25 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
       const had = projectsRef.current.find((p) => p.id === pid)?.result;
       const { type: _t, jobId: _j, ...ask } = e;
       releaseCheckpoint(pid);
-      patch(pid, { status: had ? "done" : "idle", partial: undefined, fitAsk: ask as FitAsk });
+      patch(pid, { status: had ? "done" : "idle", partial: undefined, adding: undefined, fitAsk: ask as FitAsk });
     } else if (e.type === "error") {
       jobs.current.delete(e.jobId);
       dropDraft();
-      if (!range) keepInterrupted(pid);
+      if (!partial) keepInterrupted(pid);
       setProgress((m) => { const { [pid]: _, ...rest } = m; return rest; });
       const had = projectsRef.current.find((p) => p.id === pid)?.result;
       releaseCheckpoint(pid);  // the last finished transcript stays as it was, with the restore point it had before
-      patch(pid, e.cancelled ? { status: had ? "done" : "idle", partial: undefined } : { status: "error", error: String(e.message), partial: undefined });
+      if (add && !e.cancelled) {  // the recording that failed is named; everything that was there stays as it was
+        const n = sourcesOf(projectsRef.current.find((p) => p.id === pid) ?? { path: "", appended: [], result: null }).length + 1;
+        const name = projectsRef.current.find((p) => p.id === pid)?.name ?? "";
+        setNotice(t("Could not add recording {n}, “{file}”: {why} “{name}” is unchanged, and the recordings already in it still play and edit as before.", { n, file: add.name, why: String(e.message ?? "").slice(0, 240), name }));
+        patch(pid, { status: "done", error: undefined, partial: undefined, adding: undefined });
+      } else
+      patch(pid, e.cancelled ? { status: had ? "done" : "idle", partial: undefined, adding: undefined } : { status: "error", error: String(e.message), partial: undefined, adding: undefined });
     } else if (e.type === "done") {
       jobs.current.delete(e.jobId);
       dropDraft();
-      if (!range) dropInterrupted(pid);  // finished: the saved lines are no longer needed
+      if (!partial) dropInterrupted(pid);  // finished: the saved lines are no longer needed
       held.current.delete(pid);  // the restore point stays: it is what the run replaced
       history.current.delete(pid);  // the engine's transcript replaces the one the steps belong to
       setProgress((m) => { const { [pid]: _, ...rest } = m; return rest; });
@@ -352,16 +405,17 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
       if (!range && !trial && !meta.mixed && !meta.translated && meta.model) recordSpeed(meta.model, meta.device === "mps" ? "mlx" : "faster", r.duration, meta.secondsTranscribe, meta.secondsSpeakers, meta.speakerDevice === "mps" || meta.speakerDevice === "cuda");
       setProjects((l) => l.map((p) => {
         if (p.id !== pid) return p;
-        const result = range && p.result ? mergeRange(p.result, r, range, line) : r;
+        const joined = add ? joinAdded(p, r, add, e.duration) : null;
+        const result: Result = joined?.result ?? (range && p.result ? mergeRange(p.result, offset ? shiftResult(r, offset) : r, range, line) : r);
         // a full re-run replaces the transcript: the old one was kept as the restore point (and written to disk) before the run started; the new one starts without speaker names
-        const replaced = !range && !!p.result;
+        const replaced = !range && !add && !!p.result;
         const keptNames = replaced ? {} : p.names;
         if (optsRef.current.autosave) {
           const names = Object.fromEntries(result.speakers.map((sp) => [sp, displayName(sp, result.speakers, keptNames)]));
           window.api.saveSidecar(p.path, { source: baseName(p.path), language: result.language, duration: result.duration, speakers: names, segments: result.segments.map(({ words, orig, edited, ...s }) => s) })
             .then((r2) => logRef.current(r2.ok ? "info" : "error", r2.ok ? `Saved transcript next to the audio: ${r2.path}` : `Couldn't save next to the audio: ${r2.error}`));
         }
-        return { ...p, result, names: keptNames, meta: range && p.meta ? { ...p.meta, ...meta } : meta, status: "done", error: undefined, partial: undefined, trial: trial ? true : range ? p.trial : undefined };
+        return { ...p, result, ...(joined?.appended ? { appended: joined.appended } : {}), names: keptNames, meta: add && p.meta ? p.meta : range && p.meta ? { ...p.meta, ...meta } : meta, status: "done", error: undefined, partial: undefined, adding: undefined, trial: trial ? true : range || add ? p.trial : undefined, ...(add ? { editedAt: Date.now() } : {}) };
       }));
     }
   }), [patch, schedulePartial, keepInterrupted, dropInterrupted, releaseCheckpoint]);
@@ -373,6 +427,15 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
     if (cur?.result && ("result" in p || "names" in p)) history.current.set(id, record(history.current.get(id) ?? emptyHistory(), { result: cur.result, names: cur.names }, label, Date.now(), merge));
     patch(id, { ...p, editedAt: Date.now() });
   }, [patch]);
+  /** The answer to "which of these speakers is the same person as one you already have?" for the speakers an added recording brought: lines move to the chosen speakers (an edit that can be undone), and the question is not asked again. */
+  const matchParts = useCallback((id: string, partId: string, mapping: Record<string, string>) => {
+    const cur = projectsRef.current.find((x) => x.id === id); if (!cur?.result) return;
+    const m = matchSpeakers(cur.result, cur.names, mapping);
+    const appended = (cur.appended ?? []).map((x) => (x.id === partId ? { ...x, matched: true } : x));
+    if (m.result === cur.result) { patch(id, { appended }); return; }
+    edit(id, { result: m.result, names: m.names, appended }, t("match speakers"));
+  }, [patch, edit]);
+
   /** An edit that touches many lines: a restore point is written first, and the edit is made only once it is saved (and only if the transcript is still the one the edit was worked out from). */
   const editWithCheckpoint = useCallback(async (id: string, p: Partial<Project>, label: string): Promise<boolean> => {
     const cur = projectsRef.current.find((x) => x.id === id);
@@ -396,6 +459,6 @@ export function useProjects(opts: Options, log: (level: string, msg: string) => 
   /** Each returns the label of the edit it undid or redid (empty when it had none), or null when there was nothing to do. */
   const undo = useCallback((id: string) => step(id, stepBack), [step]);
   const redo = useCallback((id: string) => step(id, stepForward), [step]);
-  return { projects, loaded, notice, info, dismissInfo: () => setInfo(""), backup, restore, relink, saveError: saveState.status === "failed" ? saveState.error ?? "unknown" : null, retrySave, dismissNotice: () => setNotice(""), activeId, setActiveId: open, edit, undo, redo, progress, drafts, interrupted, discardInterrupted: dropInterrupted, add, addAndTranscribe, remove, rename: (id: string, name: string) => edit(id, { name }), duplicate, patch, transcribe, cancel, editWithCheckpoint,
+  return { projects, loaded, notice, info, dismissInfo: () => setInfo(""), backup, restore, relink, appendRecording, matchParts, saveError: saveState.status === "failed" ? saveState.error ?? "unknown" : null, retrySave, dismissNotice: () => setNotice(""), activeId, setActiveId: open, edit, undo, redo, progress, drafts, interrupted, discardInterrupted: dropInterrupted, add, addAndTranscribe, remove, rename: (id: string, name: string) => edit(id, { name }), duplicate, patch, transcribe, cancel, editWithCheckpoint,
     transcribeAll: () => projectsRef.current.filter((p) => p.status === "idle" || p.status === "error").forEach((p) => void transcribe(p.id)) };
 }

@@ -205,7 +205,7 @@ export default function App() {
                 onTranscribe={(rg, line, trial, acceptFit) => P.transcribe(p.id, rg, line, trial, acceptFit)}
                 othersWaiting={P.projects.filter((x) => x.id !== p.id && !x.result && x.status === "idle").length}
                 onApplyToOthers={(o) => P.projects.filter((x) => x.id !== p.id && !x.result && x.status === "idle").forEach((x) => P.patch(x.id, { opts: { ...x.opts, ...o } }))}
-                onRemember={(o) => setOpts({ ...opts, ...o })} onCancel={() => P.cancel(p.id)} onPatch={(patch, label, merge) => P.edit(p.id, patch, label, merge)} onBulkPatch={(patch, label) => P.editWithCheckpoint(p.id, patch, label)} onRelink={(confirm) => void P.relink(p.id, confirm)} onUndo={() => P.undo(p.id)} onRedo={() => P.redo(p.id)} defaultExport={opts.defaultExport} exportShown={opts.exportShown} unsureLegendSeen={opts.unsureLegendSeen} onExported={(lastExport) => P.patch(p.id, { lastExport })} />
+                onRemember={(o) => setOpts({ ...opts, ...o })} onCancel={() => P.cancel(p.id)} onPatch={(patch, label, merge) => P.edit(p.id, patch, label, merge)} onBulkPatch={(patch, label) => P.editWithCheckpoint(p.id, patch, label)} onRelink={(confirm) => void P.relink(p.id, confirm)} onAddRecording={(file) => P.appendRecording(p.id, file)} onMatchSpeakers={(partId, mapping) => P.matchParts(p.id, partId, mapping)} onUndo={() => P.undo(p.id)} onRedo={() => P.redo(p.id)} defaultExport={opts.defaultExport} exportShown={opts.exportShown} unsureLegendSeen={opts.unsureLegendSeen} onExported={(lastExport) => P.patch(p.id, { lastExport })} />
             ))}
           </div>
           {dragging && <div className="drop-veil" aria-hidden>{t("Drop to add recordings")}</div>}

@@ -181,6 +181,15 @@ These apply the next time you transcribe that project:
 
 When it cannot be done, Cassette says why and changes nothing: the recording is not available, the place cannot be written to, the disk is too full, the file is damaged, cut short or not a Cassette backup, it comes from a newer version of Cassette, or it names an unsafe path. Other backups and your projects stay as they were. Deleting a restored project later also deletes its recording copy in the recordings folder, like a recording made with **Record**. One project per backup for now.
 
+## Add a second recording to a project
+
+An interview that was recorded in parts (two phones, or a call that dropped and was called back) stays one project. Open the **Details** drawer under the player and press **Add a recording…**, then choose the file. Any format Cassette takes works, and the two recordings can differ in format and loudness: each is read on its own.
+
+- **One timeline.** The new recording is transcribed on its own (only the new part is processed, with the project's settings) and its lines are placed after the earlier ones. Times, quotes, search and exports use that one timeline. The player shows one recording at a time: **Part 1**, **Part 2** and so on in the drawer switch between them, seeking from a line or a quote goes to the right recording and the right moment in it, and playback carries on from the end of one into the next. A project with a single recording works exactly as before.
+- **Nothing you did is touched.** Edits, checked words, marks, chapters, quotes, speaker names and the summary of the earlier recording stay as they were, and a restore point ("A copy from before “add a recording” is kept") is saved first. If the new file cannot be read or decoded, the message names it ("Could not add recording 2, “name.wav”…") and the project stays exactly as it was; the earlier recordings still play and edit.
+- **Match speakers.** The new recording's speakers start as new people (two phones may both call their first voice "Speaker 1"). Cassette then asks whether any of them is someone you already have; **Match speakers…** lets you pick, for each, the person from the earlier recordings (the lines move and the extra speaker disappears; you can undo it), or **Keep them separate**.
+- **Where it is still limited.** One recording is added at a time, to a project that has a full transcript. **Transcribe again** for the whole project is refused (it would drop the added recordings); redo a line or a selection instead. **Back up project…** and the episode folder's clips are not available for a project of several recordings yet. Clips and translations of a line are cut from the recording the line starts in. **Locate recording…** is for the first recording only.
+
 ## Info
 
 ![The Info tab](screenshots/12-info.jpg)

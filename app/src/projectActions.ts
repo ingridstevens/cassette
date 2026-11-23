@@ -24,6 +24,7 @@ export function duplicateProject(p: Project, id: string, name: string, now: numb
     opts: p.opts ? structuredClone(p.opts) : undefined,
     meta: p.meta ? structuredClone(p.meta) : undefined,
     trial: p.trial,
+    source: p.source, appended: p.appended ? structuredClone(p.appended) : undefined,
     status: p.result ? "done" : "idle",
   };
 }
