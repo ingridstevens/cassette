@@ -43,7 +43,7 @@ jobs:
         run: echo "ENGINE_MODELS_DIR=$HOME/.cache/cassette-models" >> "$GITHUB_ENV"
       - name: Cache the tiny model
         id: models
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/cassette-models
           key: cassette-models-tiny-${{ hashFiles('engine/src/engine/models.py') }}
@@ -68,7 +68,7 @@ jobs:
         working-directory: app
         run: npm ci --prefix e2e --no-audit --no-fund
       - name: Cache the Playwright browser
-        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('app/e2e/package-lock.json') }}
