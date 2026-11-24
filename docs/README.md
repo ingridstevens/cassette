@@ -23,6 +23,7 @@ your own computer. German, English, French and Spanish are the best tested; abou
 | See what has and has not been tested, by system and feature | [Compatibility matrix](compatibility.md) |
 | Match the look, colours, icon and tone of voice | [Brand guide](brand.md) |
 | Change the code | [Development](development.md) (also see [CONTRIBUTING](../CONTRIBUTING.md)) |
+| Make a release | [Releasing](releasing.md) |
 | See who the app is for, or vote on features and test as those users | [Personas](personas/README.md), [Votes](votes/README.md), [Testing with personas](testing.md) |
 
 Try it without recording anything: two short sample interviews are in [`samples/`](samples/) (an English one
