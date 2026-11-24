@@ -43,6 +43,13 @@ Cassette checks that the file is the same recording (its size and a checksum of 
 with the same name or length. A project saved before this check existed shows the file's name, size and length next to the length of the
 transcript and asks you to confirm. If you cancel, or the new place cannot be saved, nothing is changed.
 
+## An export failed
+
+The message says why: the file may be open in another program or the folder read-only, the folder is gone, or the disk is full. An earlier
+file with the same name is not changed, so it still opens. Close the program that has it open (or pick another folder) and export again. If
+the **Episode folder** names files that failed, the others are saved; press **Save the missing files again**. Details: [If an export fails](exporting.md#if-an-export-fails).
+A leftover `.cassette-staging-…` folder next to your files (after a crash) is an unfinished copy and can be deleted.
+
 ## Wrong speakers, or too many
 
 - Set **Number of speakers** under Options if you know it, then **Transcribe again**.

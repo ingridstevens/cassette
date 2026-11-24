@@ -20,7 +20,8 @@ export function onMenuKeyDown(e: KeyboardEvent<HTMLElement>) {
   e.preventDefault(); items[to].focus();
 }
 
-type Res = { ok?: boolean; cancelled?: boolean; path?: string; error?: string; clipsSkipped?: boolean };
+type Kind = "locked" | "folder" | "space" | "other";
+type Res = { ok?: boolean; cancelled?: boolean; path?: string; error?: string; errorKind?: Kind; clipsSkipped?: boolean; failed?: { file: string; kind: Kind; message: string }[] };
 const WITH_OPTIONS = new Set(["srt", "vtt", "edl", "text"]);
 /** The episode folder needs something to put in it: a chapter, or a highlight or marked line. */
 const needsNothing = (f: string, hasChapters: boolean, markedCount: number) => f === "episode" && !hasChapters && !markedCount;
@@ -36,6 +37,7 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
   const [msg, setMsg] = useState("");
   const [bad, setBad] = useState(false);
   const [folder, setFolder] = useState(false);
+  const [retry, setRetry] = useState(false);
   const box = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   useEffect(() => { if (openSignal) setOpen(true); }, [openSignal]);
@@ -56,15 +58,19 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
     document.addEventListener("keydown", esc);
     return () => { document.removeEventListener("mousedown", close); document.removeEventListener("keydown", esc); };
   }, [open]);
+  /** Why a save failed, in plain words (the engine's own message only when there is no better one). */
+  const why = (kind: Kind, message: string) => kind === "locked" ? t("The file could not be saved. It may be open in another program, or the folder may be read-only.") : kind === "folder" ? t("The folder was not found.") : kind === "space" ? t("There is not enough space on that disk.") : message || t("unknown error");
   const run = async (f: string, o?: ExportOpts) => {
-    if (f === "episode") { setBad(false); setFolder(false); setMsg(t("Exporting the episode…")); }
+    const ep = f === "episode" || f === "episode-retry";
+    if (ep) { setBad(false); setFolder(false); setRetry(false); setMsg(t("Exporting the episode…")); }
     const r = await onExport(f, o).catch((e: unknown) => ({ ok: false, error: String(e) } as Res));
-    if (r.cancelled) { if (f === "episode") setMsg(""); return; }
-    if (r.ok && f !== "text" && f !== "copy-md") onRemember?.(f, { ...(o ?? {}) });
-    setBad(!r.ok); setMsg(r.ok ? (f === "copy-md" ? t("Copied as Markdown ✓") : f === "redacted" ? t("Exported ✓. A report and a key file were saved next to it. Keep the key apart from the data.") : f === "episode" ? (r.clipsSkipped ? t("Episode folder saved ✓. The recording was not found, so no clips were saved.") : t("Episode folder saved ✓")) : t("Exported ✓")) : t("Export failed: {reason}", { reason: r.error ?? t("unknown error") }));
-    const shows = !!r.ok && f === "episode";
-    setFolder(shows);
-    setTimeout(() => { setMsg(""); setFolder(false); }, shows ? 15000 : r.ok ? 2800 : 8000);
+    if (r.cancelled) { if (ep) setMsg(""); return; }
+    if (r.ok && f !== "text" && f !== "copy-md" && f !== "episode-retry") onRemember?.(f, { ...(o ?? {}) });
+    setBad(!r.ok); setMsg(r.ok ? (f === "copy-md" ? t("Copied as Markdown ✓") : f === "redacted" ? t("Exported ✓. A report and a key file were saved next to it. Keep the key apart from the data.") : ep ? (r.clipsSkipped ? t("Episode folder saved ✓. The recording was not found, so no clips were saved.") : t("Episode folder saved ✓")) : t("Exported ✓")) : r.failed?.length ? t("Episode folder saved, but {files} could not be saved. {reason} The other files are saved and were not changed.", { files: r.failed.map((x) => x.file).join(", "), reason: why(r.failed[0].kind, r.failed[0].message) }) : t("Export failed: {reason}", { reason: r.errorKind && r.errorKind !== "other" ? `${why(r.errorKind, "")} ${t("An earlier file with that name was not changed.")}` : r.error ?? t("unknown error") }));
+    const failedFiles = !r.ok && !!r.failed?.length;
+    const shows = (!!r.ok || failedFiles) && ep;
+    setFolder(shows); setRetry(failedFiles);
+    setTimeout(() => { setMsg(""); setFolder(false); setRetry(false); }, failedFiles ? 30000 : shows ? 15000 : r.ok ? 2800 : 8000);
   };
   // The first item: what this project was last exported as, or else the default from Settings.
   const again = lastExport ?? (defaultFormat ? { format: defaultFormat, options: usualOpts(defaultFormat) } : null);
@@ -136,7 +142,7 @@ export default function ExportMenu({ onExport, openSignal = 0, hasChapters = fal
       <div className="pv-sr" role="status" aria-live="polite" aria-atomic="true">{bad ? "" : msg}</div>
       <div className="pv-sr" role="alert" aria-atomic="true">{bad ? msg : ""}</div>
       {msg && !folder && <div className={"toast" + (bad ? " pv-toast-bad" : "")} aria-hidden="true"><span>{msg}</span></div>}
-      {msg && folder && <div className="toast"><span aria-hidden="true">{msg}</span><button type="button" onClick={() => { void window.api.showEpisodeFolder(); }}>{t("Show in folder")}</button></div>}
+      {msg && folder && <div className={"toast" + (bad ? " pv-toast-bad" : "")}><span aria-hidden="true">{msg}</span>{retry && <button type="button" onClick={() => { void run("episode-retry", loadExportOpts()); }}>{t("Save the missing files again")}</button>}<button type="button" onClick={() => { void window.api.showEpisodeFolder(); }}>{t("Show in folder")}</button></div>}
     </>
   );
 }

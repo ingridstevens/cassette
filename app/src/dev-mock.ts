@@ -175,7 +175,8 @@ function fake(path = "") {
     return { type: "done", highlights: [pick(1, 0, 6, 8, "Eine warme, offene Antwort."), pick(4, 1, 6, 7, "Zeigt, wie alles anfing.")] };
   },
   exportClips: async (_i: string, clips: unknown[]) => { await wait(300); return { ok: true, count: clips.length, path: "/Users/demo/Interview highlights" }; },
-  exportEpisode: async () => { await wait(300); return { ok: true, path: "/Users/demo/Interview episode", chapters: true, clips: 2, clipsSkipped: false }; },
+  exportEpisode: async () => { await wait(300); if (location.search.includes("episodefail")) return { ok: false, path: "/Users/demo/Interview episode", failed: [{ file: "Interview markers.edl", kind: "locked" as const, message: "Permission denied" }], error: "Permission denied" }; return { ok: true, path: "/Users/demo/Interview episode", chapters: true, clips: 2, clipsSkipped: false }; },
+  retryEpisode: async () => { await wait(300); return { ok: true, path: "/Users/demo/Interview episode", chapters: true, clips: 2, clipsSkipped: false }; },
   showEpisodeFolder: async () => {},
   saveClip: async () => "/Users/demo/clip.wav",
   reveal: async () => {},

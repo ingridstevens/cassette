@@ -14,7 +14,9 @@ import type { SourceId } from "./sourceId";
 /** Rough loudness figures of a stretch of sound, in dB relative to full scale: the level of the louder parts (speech) and of the quieter parts (background). */
 export type CleanupLevels = { speech_db: number; noise_floor_db: number; gap_db: number };
 
-type Result = { ok?: boolean; cancelled?: boolean; path?: string; error?: string };
+/** `errorKind` says why a save failed (the file is in use or read-only, the folder is missing, the disk is full) so the window can word it in the person's language. */
+type Result = { ok?: boolean; cancelled?: boolean; path?: string; error?: string; errorKind?: "locked" | "folder" | "space" | "other" };
+type EpisodeResult = Result & { chapters?: boolean; clips?: number; clipsSkipped?: boolean; failed?: { file: string; kind: "locked" | "folder" | "space" | "other"; message: string }[] };
 type BundleRequest = { model: string; downloaded: string[]; diarization: boolean; checks: { id: string; level: string }[]; includeLog: boolean };
 type Clip = { start: number; end: number; speaker?: string };
 /** What the window sends to keep an interrupted run (the lines are checked by partialStore.ts, not trusted). */
@@ -46,7 +48,8 @@ export interface IpcInvoke {
   "tokenSecure": Ch<[], boolean>;
   "token": Ch<[value?: string], string>;
   "export": Ch<[payload: unknown, format: string, name: string], Result>;
-  "export-episode": Ch<[payload: unknown, input: string, name: string], Result & { chapters?: boolean; clips?: number; clipsSkipped?: boolean }>;
+  "export-episode": Ch<[payload: unknown, input: string, name: string], EpisodeResult>;
+  "retry-episode": Ch<[payload: unknown, input: string, name: string], EpisodeResult>;
   "show-episode-folder": Ch<[], void>;
   "export-text": Ch<[payload: unknown], { ok?: boolean; text?: string; error?: string }>;
   "print-pdf": Ch<[name: string, large: boolean], Result>;
