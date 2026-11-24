@@ -6,6 +6,16 @@ Please do not open a public issue for security problems. Open a **private securi
 repository (GitHub: Security tab, "Report a vulnerability").
 Include steps to reproduce, the affected version and your OS. We will acknowledge reports as soon as we can.
 
+## Verifying a download
+
+Each tagged release is built by the `build` workflow in this repository, and the build signs what it makes. This needs the [GitHub CLI](https://cli.github.com/).
+
+- **Checksums.** Every installer has a SHA-256 line in a `SHA256SUMS-<system>.txt` file next to it. Compare yours: `shasum -a 256 <file>` (macOS), `sha256sum <file>` (Linux), `Get-FileHash <file>` (Windows).
+- **Build provenance.** `gh attestation verify <file> --repo ingridstevens/cassette` checks that the file was built from this repository by its workflow, and says which commit. Do this for the installer and for the checksum file.
+- **Software bill of materials.** `sbom-app.cdx.json` (npm packages) and `sbom-engine.cdx.json` (Python packages) are [CycloneDX](https://cyclonedx.org/) lists of everything inside the app. They are signed the same way. The workflow also makes them on every push, as the `sbom` artifact of the run.
+
+Code is scanned with CodeQL on every pull request, every push to `main` and weekly. The actions in the workflows are pinned to full commit SHAs, and Dependabot proposes updates.
+
 ## Supported versions
 
 Only the latest release (and the current main branch) receives security fixes.

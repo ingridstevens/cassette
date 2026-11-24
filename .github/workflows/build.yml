@@ -8,6 +8,9 @@ on:
         description: "Update the visual baselines (the visual job makes new screenshots and uploads them as an artifact)"
         type: boolean
         default: false
+# Every job reads the code and nothing else; a job that needs more says so itself.
+permissions:
+  contents: read
 jobs:
   # Cheap checks on every push and pull request, on all three systems.
   test:
@@ -16,9 +19,9 @@ jobs:
       matrix: { os: [macos-15, ubuntu-22.04, windows-2022] }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with: { node-version: 22 }
       - name: Engine tests
         working-directory: engine
@@ -30,8 +33,8 @@ jobs:
   e2e:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with: { node-version: 22 }
       - name: App dependencies (vite serves the page)
         working-directory: app
@@ -40,7 +43,7 @@ jobs:
         working-directory: app
         run: npm ci --prefix e2e --no-audit --no-fund
       - name: Cache the Playwright browser
-        uses: actions/cache@v4
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ~/.cache/ms-playwright
           key: playwright-${{ runner.os }}-${{ hashFiles('app/e2e/package-lock.json') }}
@@ -50,7 +53,7 @@ jobs:
       - name: End-to-end tests
         working-directory: app
         run: node e2e/node_modules/@playwright/test/cli.js test -c e2e/playwright.config.ts
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()
         with:
           name: playwright-report
@@ -66,7 +69,7 @@ jobs:
     runs-on: ubuntu-22.04
     container: mcr.microsoft.com/playwright:v1.64.1-jammy
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: App dependencies (vite serves the page)
         working-directory: app
         run: npm ci
@@ -81,14 +84,14 @@ jobs:
         if: ${{ inputs.update_visual_baselines }}
         working-directory: app
         run: node e2e/node_modules/@playwright/test/cli.js test -c e2e/visual/playwright.config.ts --update-snapshots
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: ${{ inputs.update_visual_baselines }}
         with:
           name: visual-baselines
           path: app/e2e/visual/__screenshots__
           retention-days: 7
       # The expected, actual and diff images of every screenshot that differs
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: failure()
         with:
           name: visual-report
@@ -96,17 +99,63 @@ jobs:
             app/e2e/visual/playwright-report
             app/e2e/visual/test-results
           retention-days: 7
+  # CycloneDX software bills of materials: the app's npm packages and the engine's Python packages. Runs on every push
+  # and pull request so a broken generator shows up before a release; only a v* tag signs (attests) the files.
+  sbom:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with: { node-version: 22 }
+      - name: SBOM of the app (npm, production packages)
+        working-directory: app
+        run: npm ci && npx --yes @cyclonedx/cyclonedx-npm@7.0.1 --omit dev --output-format JSON --output-file ../sbom-app.cdx.json
+      - name: SBOM of the engine (Python, production packages, from uv.lock)
+        working-directory: engine
+        run: |
+          uv export --frozen --no-dev --no-hashes --no-emit-project -o requirements-sbom.txt
+          uvx --from cyclonedx-bom==9.0.0 cyclonedx-py requirements requirements-sbom.txt --of JSON -o ../sbom-engine.cdx.json
+          rm requirements-sbom.txt
+      - name: Check both files are CycloneDX with components
+        run: |
+          python3 - <<'PY'
+          import json
+          for f in ("sbom-app.cdx.json", "sbom-engine.cdx.json"):
+              d = json.load(open(f))
+              assert d["bomFormat"] == "CycloneDX", f
+              assert len(d.get("components", [])) > 0, f
+              print(f, d["specVersion"], len(d["components"]), "components")
+          PY
+      - name: Sign the SBOMs (release tags only)
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: |
+            sbom-app.cdx.json
+            sbom-engine.cdx.json
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with: { name: sbom, path: "sbom-*.cdx.json" }
   package:
     if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && !inputs.update_visual_baselines)
     needs: test
+    # id-token and attestations let the job sign the installers (build provenance); nothing here can write to the repository.
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     strategy:
       fail-fast: false
       matrix: { os: [macos-15, macos-15-intel, ubuntu-22.04, windows-2022] }
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with: { node-version: 22 }
       - name: Test engine
         working-directory: engine
@@ -117,5 +166,23 @@ jobs:
       - name: Package app
         working-directory: app
         run: npm ci && npm run package
-      - uses: actions/upload-artifact@v4
+      - name: Checksums (SHA-256) of the installers
+        working-directory: app/release
+        shell: bash
+        run: |
+          if command -v sha256sum >/dev/null; then sum=sha256sum; else sum="shasum -a 256"; fi
+          $sum *.dmg *.zip *.AppImage *.deb *.exe 2>/dev/null > "SHA256SUMS-${{ matrix.os }}.txt" || true
+          test -s "SHA256SUMS-${{ matrix.os }}.txt"
+          cat "SHA256SUMS-${{ matrix.os }}.txt"
+      - name: Sign the installers and checksums (build provenance)
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: |
+            app/release/*.dmg
+            app/release/*.zip
+            app/release/*.AppImage
+            app/release/*.deb
+            app/release/*.exe
+            app/release/SHA256SUMS-*.txt
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with: { name: "app-${{ matrix.os }}", path: "app/release/*.*" }
