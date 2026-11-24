@@ -21,3 +21,5 @@ PERSONAS.md
 # Playwright output
 app/e2e/test-results/
 app/e2e/playwright-report/
+app/e2e/visual/test-results/
+app/e2e/visual/playwright-report/

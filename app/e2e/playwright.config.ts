@@ -9,6 +9,7 @@ const ORIGIN = `http${"://"}localhost:${PORT}`;
 export default defineConfig({
   testDir: ".",
   testMatch: "*.spec.ts",
+  testIgnore: "visual/**", // screenshot tests have a config of their own (visual/playwright.config.ts) and run only in the pinned container
   fullyParallel: true,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,

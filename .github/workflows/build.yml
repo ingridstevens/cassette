@@ -1,5 +1,13 @@
 name: build
-on: { push: { branches: ["**"], tags: ["v*"] }, pull_request: {}, workflow_dispatch: {} }
+on:
+  push: { branches: ["**"], tags: ["v*"] }
+  pull_request: {}
+  workflow_dispatch:
+    inputs:
+      update_visual_baselines:
+        description: "Update the visual baselines (the visual job makes new screenshots and uploads them as an artifact)"
+        type: boolean
+        default: false
 jobs:
   # Cheap checks on every push and pull request, on all three systems.
   test:
@@ -50,8 +58,46 @@ jobs:
             app/e2e/playwright-report
             app/e2e/test-results
           retention-days: 7
+  # Screenshot tests (light, dark, Arabic right to left, 1.5x text). They run in the Playwright container, pinned to the
+  # version in app/e2e/package.json, so fonts and Chromium are the same every time; the baselines in
+  # app/e2e/visual/__screenshots__ are only valid here. To refresh them, run this workflow by hand with
+  # "Update the visual baselines" ticked and commit the files from the visual-baselines artifact.
+  visual:
+    runs-on: ubuntu-22.04
+    container: mcr.microsoft.com/playwright:v1.64.1-jammy
+    steps:
+      - uses: actions/checkout@v4
+      - name: App dependencies (vite serves the page)
+        working-directory: app
+        run: npm ci
+      - name: Playwright dependencies
+        working-directory: app
+        run: npm ci --prefix e2e --no-audit --no-fund
+      - name: Screenshot tests
+        if: ${{ !inputs.update_visual_baselines }}
+        working-directory: app
+        run: node e2e/node_modules/@playwright/test/cli.js test -c e2e/visual/playwright.config.ts
+      - name: Make new baselines
+        if: ${{ inputs.update_visual_baselines }}
+        working-directory: app
+        run: node e2e/node_modules/@playwright/test/cli.js test -c e2e/visual/playwright.config.ts --update-snapshots
+      - uses: actions/upload-artifact@v4
+        if: ${{ inputs.update_visual_baselines }}
+        with:
+          name: visual-baselines
+          path: app/e2e/visual/__screenshots__
+          retention-days: 7
+      # The expected, actual and diff images of every screenshot that differs
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: visual-report
+          path: |
+            app/e2e/visual/playwright-report
+            app/e2e/visual/test-results
+          retention-days: 7
   package:
-    if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && !inputs.update_visual_baselines)
     needs: test
     strategy:
       fail-fast: false
