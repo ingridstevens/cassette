@@ -78,7 +78,7 @@ jobs:
       - name: End-to-end tests
         working-directory: app
         run: node e2e/node_modules/@playwright/test/cli.js test -c e2e/playwright.config.ts
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: playwright-report
@@ -109,14 +109,14 @@ jobs:
         if: ${{ inputs.update_visual_baselines }}
         working-directory: app
         run: node e2e/node_modules/@playwright/test/cli.js test -c e2e/visual/playwright.config.ts --update-snapshots
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: ${{ inputs.update_visual_baselines }}
         with:
           name: visual-baselines
           path: app/e2e/visual/__screenshots__
           retention-days: 7
       # The expected, actual and diff images of every screenshot that differs
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         if: failure()
         with:
           name: visual-report
@@ -163,7 +163,7 @@ jobs:
           subject-path: |
             sbom-app.cdx.json
             sbom-engine.cdx.json
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with: { name: sbom, path: "sbom-*.cdx.json" }
   package:
     if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && !inputs.update_visual_baselines)
@@ -214,7 +214,7 @@ jobs:
             app/release/*.deb
             app/release/*.exe
             app/release/SHA256SUMS-*.txt
-      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with: { name: "app-${{ matrix.os }}", path: "app/release/*.*" }
   # A v* tag makes a DRAFT release: generated notes, the installers, the checksum files and the SBOMs. It never publishes; the owner reads the
   # draft, runs the checklist in docs/releasing.md and presses Publish. Not exercised by pull requests (tags only). Only this job can write
