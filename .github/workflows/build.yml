@@ -29,6 +29,31 @@ jobs:
       - name: App typecheck, translations and build
         working-directory: app
         run: npm ci && npx tsc --noEmit && npm run i18n:check && npm run links:check && npm run build
+  # Real speech through the real engine: transcribes docs/samples/test-interview-english-two-voices.m4a with the tiny model and checks the word error
+  # rate (engine/tests/test_e2e.py). Ubuntu only, and a job of its own. This is the only place the model is downloaded (once, then cached by the pin
+  # in models.py); the test itself never starts a download, and a plain `uv run pytest` skips it. CASSETTE_E2E=1 makes a missing model a failure.
+  engine-e2e:
+    runs-on: ubuntu-22.04
+    env:
+      CASSETTE_E2E: "1"
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: astral-sh/setup-uv@d4b2f3b6ecc6e67c4457f6d3e41ec42d3d0fcb86 # v5
+      - name: Point the engine at the model cache (a job-level env cannot expand ~)
+        run: echo "ENGINE_MODELS_DIR=$HOME/.cache/cassette-models" >> "$GITHUB_ENV"
+      - name: Cache the tiny model
+        id: models
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.cache/cassette-models
+          key: cassette-models-tiny-${{ hashFiles('engine/src/engine/models.py') }}
+      - name: Download the tiny model (cache miss only)
+        if: steps.models.outputs.cache-hit != 'true'
+        working-directory: engine
+        run: uv run python -m engine models download tiny
+      - name: Engine end-to-end test
+        working-directory: engine
+        run: uv run pytest -q tests/test_e2e.py
   # Browser tests against the dev mock. Ubuntu only and a job of its own, so the three-system test job above is not slowed down.
   e2e:
     runs-on: ubuntu-22.04

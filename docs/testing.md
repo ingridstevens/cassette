@@ -24,6 +24,15 @@ first run). They cover the main flow (add, Start, rename a speaker, edit a line,
 sample interview and the `?enginefail` error card. CI runs them on every push and pull request in the `e2e` job (Ubuntu only);
 when one fails, the job uploads the Playwright report and traces as the `playwright-report` artifact.
 
+### Engine test with real audio
+
+`engine/tests/test_e2e.py` transcribes `docs/samples/test-interview-english-two-voices.m4a` with the real tiny model and checks the word
+error rate against the written text (it must stay under 0.25; the measured score is 0.0 on a Mac). It is skipped unless the tiny model is
+already on disk, and it never downloads anything itself, so a plain `uv run pytest` stays offline. CI runs it in the `engine-e2e` job
+(Ubuntu only), which downloads the model once with `python -m engine models download tiny`, caches it in `~/.cache/cassette-models` (keyed
+on `models.py`, where the model's commit is pinned) and sets `CASSETTE_E2E=1` so a missing model fails instead of skipping. A break in
+`audio.decode` or the model path fails this job.
+
 ### Screenshot tests
 
 `app/e2e/visual/` holds 12 screenshot tests: three screens (start, transcript, settings) in four looks (light, dark, Arabic
