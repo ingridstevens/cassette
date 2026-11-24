@@ -42,7 +42,7 @@ translation together, and **Language shares (text)** says how much of the record
   translation whatever the "translations" Text style option says, since showing it is their point. The Spreadsheet (`.csv`) already has `text`,
   `language` and `translation` columns if you prefer to work there.
 - **Language shares** come from the language tag of each line (the recording's language where a line has none), counting the seconds of each line. Nothing
-  is detected again, so correcting a wrong tag with **Languages** changes the shares. The same shares are in the **Info** tab (shown when there are two or more languages) and
+  is detected again, so correcting a wrong tag with **Languages** changes the shares. The same shares are in the **Info** section of the **Details** tab (shown when there are two or more languages) and
   at the top of the bilingual Word file, as `DE 12:30 (63%), EN 7:30 (37%)`.
 - **Anonymised export.** Bilingual formats show the real speaker names, so they are **not** part of the anonymised export, which stays a plain text file with `P01`, `P02`… and no translation.
   Language shares contain no names or text.
@@ -162,7 +162,7 @@ Labels share one pair of brackets and are separated by commas (`Name [overlap, s
 or its speaker, so an export never calls changed text checked. In Word the notes are shaded lines of plain text. In the quote list the labels
 follow the time (`— Anna, 0:05 [wording unsure: Brandt]`) and name only the unsure words that are inside the quote. **Copy quote** in the
 transcript adds the same labels. Subtitles, Markdown, the spreadsheet, JSON and the anonymised export do not carry these cues. The original-versus-edited file (the changes list) puts
-`[checked by a person]` after the speaker of an edited line you pressed **Heard** on after changing it, and **Changes by you** in the Info tab shows the same.
+`[checked by a person]` after the speaker of an edited line you pressed **Heard** on after changing it, and **Changes by you** in the Info section of the Details tab shows the same.
 
 ## The app's language in exports
 

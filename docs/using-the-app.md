@@ -141,7 +141,7 @@ to change the speaker, with one more item for the language and translation of th
 
 ## Options (per project)
 
-![The Options tab](screenshots/11-options.jpg)
+![The Options section of the Details tab](screenshots/11-options.jpg)
 
 These apply the next time you transcribe that project:
 
@@ -193,7 +193,7 @@ An interview that was recorded in parts (two phones, or a call that dropped and 
 
 ## Info
 
-![The Info tab](screenshots/12-info.jpg)
+![The Info section of the Details tab](screenshots/12-info.jpg)
 
 File name, location (click to show it in your file manager), file size, length, language (or the languages found, with the share of each when there are two or more), how many speakers
 were found, which models ran, how long each step took, whether a backup file was saved, and when you added it.
