@@ -27,7 +27,7 @@ cd app && npm run e2e         # Playwright in Chromium against the dev mock (dow
 ```
 
 The end-to-end tests live in `app/e2e/`, a workspace of its own (like `app/lint/`), so the browser tooling stays out
-of the app's installs. They use role and label selectors against `src/dev-mock.ts`; add a flow there when you add one.
+of the app's installs. CI runs them in the `e2e` job on Ubuntu; a failed run uploads the report and traces. They use role and label selectors against `src/dev-mock.ts`; add a flow there when you add one.
 
 ## Engine protocol
 

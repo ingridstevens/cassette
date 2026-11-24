@@ -18,6 +18,38 @@ jobs:
       - name: App typecheck, translations and build
         working-directory: app
         run: npm ci && npx tsc --noEmit && npm run i18n:check && npm run links:check && npm run build
+  # Browser tests against the dev mock. Ubuntu only and a job of its own, so the three-system test job above is not slowed down.
+  e2e:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: App dependencies (vite serves the page)
+        working-directory: app
+        run: npm ci
+      - name: Playwright dependencies
+        working-directory: app
+        run: npm ci --prefix e2e --no-audit --no-fund
+      - name: Cache the Playwright browser
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('app/e2e/package-lock.json') }}
+      - name: Install Chromium
+        working-directory: app
+        run: node e2e/node_modules/@playwright/test/cli.js install --with-deps chromium
+      - name: End-to-end tests
+        working-directory: app
+        run: node e2e/node_modules/@playwright/test/cli.js test -c e2e/playwright.config.ts
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            app/e2e/playwright-report
+            app/e2e/test-results
+          retention-days: 7
   package:
     if: startsWith(github.ref, 'refs/tags/v') || github.event_name == 'workflow_dispatch'
     needs: test

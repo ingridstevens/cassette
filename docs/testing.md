@@ -17,6 +17,13 @@ Test runs in a browser use the mock in `app/src/dev-mock.ts`, which fakes the en
 find layout, wording, keyboard and flow problems. They cannot say anything about transcription accuracy, speed,
 real audio, installation or model downloads. Those need a run in the real desktop app on a real machine.
 
+## Automated end-to-end tests
+
+`cd app && npm run e2e` runs the Playwright tests in `app/e2e/` in Chromium against the same mock (it installs the browser on
+first run). They cover the main flow (add, Start, rename a speaker, edit a line, undo, export), a keyboard-only path, the
+sample interview and the `?enginefail` error card. CI runs them on every push and pull request in the `e2e` job (Ubuntu only);
+when one fails, the job uploads the Playwright report and traces as the `playwright-report` artifact.
+
 ## Release checklist (manual)
 
 1. Run each persona's script on the current build, and record the findings in `docs/testing-runs/`.
