@@ -60,11 +60,11 @@ Search the transcript, or **Replace** a misheard word everywhere. → [Search an
 The **Details** tab starts with **Options**, which hold what applies the next time you transcribe the project: languages, model, number of speakers, translation, hesitations, silence, vocabulary.
 → [Options (per project)](using-the-app.md#options-per-project)
 
-![The Options tab](screenshots/11-options.jpg)
+![The Options section of the Details tab](screenshots/11-options.jpg)
 
 Below them, **Info** says what file this is, which models ran and how long each step took.
 
-![The Info tab](screenshots/12-info.jpg)
+![The Info section of the Details tab](screenshots/12-info.jpg)
 
 ## 6. Highlights and summary
 
