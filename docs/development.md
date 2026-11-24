@@ -82,6 +82,7 @@ Inference runs with offline mode on (`HF_HUB_OFFLINE=1`); only `models download`
 cd engine && uv sync && uv run pytest -q     # engine tests (export formats, merging, language and translation logic, run metadata, and a tripwire for new network code, see Privacy and offline use)
 cd app && npm ci && npm run dev              # dev app with hot reload (Node 22.12 or newer)
 cd app && npx tsc --noEmit && npm run build  # typecheck + production build
+cd app && npm ci && npm run e2e              # Playwright end-to-end tests against the dev mock (also run in CI)
 engine/build_engine.sh && cd app && npm run package   # packaged app for this OS
 ```
 
