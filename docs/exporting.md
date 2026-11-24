@@ -31,6 +31,20 @@ The menu is grouped: **Read and share** (Word, text, Markdown, anonymised, Text 
 **Export all as CSV** (sidebar, shown when two or more projects are finished) writes one spreadsheet with a
 `project` column followed by the usual columns.
 
+## If an export fails
+
+A file is first written to a small working folder next to where you save (named `.cassette-staging-…`) and only moved into place once it is
+finished. So if the export stops halfway, the disk is full, or the file is open in another program or read-only, **an earlier file with the same
+name is still there and still opens**; the message says why in plain words and the working folder is removed. The same goes for the anonymised
+text and its key, the share card and Print / PDF. (If the computer loses power mid-export, a `.cassette-staging-…` folder can be left behind;
+it holds only an unfinished copy and is safe to delete.) Not covered: **Highlights as audio clips** (the clips written into the folder you choose)
+and **Copy as Markdown** (nothing is saved).
+
+The **Episode folder** saves each file on its own. If one fails, the others are still saved and untouched, and the message names the files that
+failed (for example `Interview markers.edl`). Press **Save the missing files again** in that message to save only those into the same folder; files that
+were saved are not written again. The button is available until you export something else or close the app. Whether the markers then line up in DaVinci
+Resolve on a real long recording is **not yet checked** (that needs Resolve and a long recording).
+
 ## Two languages
 
 For a recording with lines in more than one language, **Bilingual (Word)** and **Bilingual subtitles (.srt)** put the original and the
@@ -56,7 +70,7 @@ makes a new folder inside it called `<project name> episode` and fills it with:
 - `<name> chapters.txt`, the chapter list (only when the project has chapters, see [Chapters](chapters.md)).
 - `<name> markers.edl`, DaVinci Resolve markers, with the frame rate and start timecode from the markers options.
 - `clips/`, one MP3 per kept highlight, using the trimmed start and end of each highlight (see [Highlights](highlights.md)).
-  If the recording can no longer be found, the clips are skipped and the message says so.
+  If the recording can no longer be found, the clips are skipped and the message says so. A file that cannot be saved is named in the message; see [If an export fails](#if-an-export-fails).
 
 It never overwrites anything: if `<name> episode` already exists, the new folder is `<name> episode (2)`, then `(3)`. Files are written
 only inside that new folder. The version line (see below) is not added, since none of these files carries it. It is off in Easy mode's fixed

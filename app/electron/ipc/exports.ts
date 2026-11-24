@@ -7,6 +7,10 @@ import { EngineEvent, runEngine } from "../engine-client";
 import { withTempJson } from "../tempJson";
 import { EXPORT_FORMATS, episodeFolder, episodeInput, safeName } from "../validate";
 import { handle, type IpcContext } from "./typed";
+import { type EpisodeStep, type StepFailure, plainFailure, runSteps, withStaged, writeStaged } from "../stagedExport";
+
+/** A failed save as the window gets it: the English message, plus the kind so the window can say it in the person's language. */
+const failed = (e: unknown) => { const f = plainFailure(e); return { ok: false as const, error: f.message, errorKind: f.kind }; };
 
 export function registerExports({ mediaFile, knownMedia }: IpcContext) {
   // One audio file per highlight, written into a folder the user picks (created if needed), then shown in the file manager.
@@ -28,8 +32,8 @@ export function registerExports({ mediaFile, knownMedia }: IpcContext) {
     if (typeof dataUrl !== "string" || !dataUrl.startsWith("data:image/png;base64,")) return { ok: false, error: "Not a PNG image." };
     const r = await dialog.showSaveDialog({ defaultPath: `${String(defaultName || "share-card").replace(/[\\/:*?"<>|]/g, "-")}.png`, filters: [{ name: "PNG image", extensions: ["png"] }] });
     if (r.canceled || !r.filePath) return { cancelled: true };
-    try { fs.writeFileSync(r.filePath, Buffer.from(dataUrl.slice(22), "base64")); return { ok: true, path: r.filePath }; }
-    catch (e) { return { ok: false, error: String((e as Error).message) }; }
+    try { await writeStaged(r.filePath, Buffer.from(dataUrl.slice(22), "base64")); return { ok: true, path: r.filePath }; }
+    catch (e) { return failed(e); }
   });
 
   handle("export", async (_e, payload: unknown, format: string, defaultName: string) => {
@@ -38,6 +42,7 @@ export function registerExports({ mediaFile, knownMedia }: IpcContext) {
     const r = await dialog.showSaveDialog({ defaultPath: `${safeName(defaultName, "Transcript")}.${ext}`, filters: [{ name: ext.toUpperCase(), extensions: [ext] }] });
     if (r.canceled || !r.filePath) return { cancelled: true };
     const args = ["--format", format];
+    let keyPath = "";
     if (format === "redacted") { // the key maps P01 back to real names, so it goes to a second place, away from the anonymised text
       const k = await dialog.showSaveDialog({
         title: "Where should the key go? Keep it apart from the data",
@@ -45,15 +50,50 @@ export function registerExports({ mediaFile, knownMedia }: IpcContext) {
         filters: [{ name: "TXT", extensions: ["txt"] }],
       });
       if (k.canceled || !k.filePath) return { cancelled: true };
-      args.push("--key-output", k.filePath);
+      keyPath = k.filePath;
     }
-    const res = await withTempJson(payload, (tmp) => runEngine(randomUUID(), ["export", tmp, r.filePath!, ...args], {}, () => {}));
-    return res?.type === "done" ? { ok: true, path: r.filePath } : { ok: false, error: String(res?.message ?? "The export failed.").slice(0, 300) };
+    // Written to a staging file first, so an earlier export of the same name stays readable if this one fails (see stagedExport.ts).
+    const dest = r.filePath;
+    const engine = async (out: string, key?: string) => {
+      const res = await withTempJson(payload, (tmp) => runEngine(randomUUID(), ["export", tmp, out, ...args, ...(key ? ["--key-output", key] : [])], {}, () => {}));
+      if (res?.type !== "done") throw new Error(String(res?.message ?? "The export failed.").slice(0, 300));
+    };
+    try {
+      if (keyPath) await withStaged(dest, (out) => withStaged(keyPath, (key) => engine(out, key)), [`${path.basename(dest, path.extname(dest))}.anonymisation-report.txt`]);
+      else await withStaged(dest, (out) => engine(out));
+      return { ok: true, path: dest };
+    } catch (e) { return failed(e); }
   });
 
   // One-button episode export: chapters, a clip per kept highlight and DaVinci Resolve markers, all in one NEW folder inside a folder the user picks.
   // The window never supplies a path: the parent comes from the dialog, the recording must be a known one, and nothing existing is overwritten (a taken folder name gets " (2)").
+  // Each file is saved on its own (staged, then moved into place), so one failing file does not cost the others; the result names the files that failed
+  // and "retry-episode" saves just those into the same folder (remembered here, never taken from the window).
   let lastEpisode = "";
+  let lastFailed: string[] = [];
+  const episodeSteps = (payload: unknown, input: unknown, name: unknown, ep: { chapters: boolean; clips: { start: number; end: number; speaker: string }[] }) => {
+    const base = safeName(typeof name === "string" ? name.trim() : "", "Episode");
+    const text = (format: string): EpisodeStep["run"] => async (out) => {
+      const res = await withTempJson(payload, (tmp) => runEngine(randomUUID(), ["export", tmp, out, "--format", format], {}, () => {})) as EngineEvent | null;
+      if (res?.type !== "done") throw new Error(String(res?.message ?? "The export failed.").slice(0, 300));
+    };
+    const withClips = ep.clips.length > 0 && knownMedia(input);
+    let clips = 0;
+    const steps: EpisodeStep[] = [];
+    if (ep.chapters) steps.push({ id: "chapters", file: `${base} chapters.txt`, run: text("chapters") });
+    steps.push({ id: "markers", file: `${base} markers.edl`, run: text("edl") });
+    if (withClips) steps.push({ id: "clips", file: "clips", run: async (out) => {
+      const res = await withTempJson(ep.clips, (tmp) => runEngine(randomUUID(), ["export-clips", input as string, out, "--clips", tmp, "--format", "mp3"], {}, () => {})) as EngineEvent | null;
+      if (res?.type !== "done") throw new Error(String(res?.message ?? "The clips could not be saved.").slice(0, 300));
+      clips = (res.paths as string[]).length;
+    } });
+    return { steps, clipCount: () => clips, clipsSkipped: ep.clips.length > 0 && !withClips };
+  };
+  const episodeResult = (dir: string, ep: { chapters: boolean }, run: { saved: string[]; failed: StepFailure[] }, clips: number, clipsSkipped: boolean) => {
+    lastEpisode = dir; lastFailed = run.failed.map((f) => f.id);
+    const failures = run.failed.map(({ file, kind, message }) => ({ file, kind, message }));
+    return { ok: !failures.length, path: dir, chapters: ep.chapters, clips, clipsSkipped, ...(failures.length ? { failed: failures, error: failures[0].message } : {}) };
+  };
   handle("export-episode", async (_e, payload: unknown, input: unknown, name: unknown) => {
     const ep = episodeInput(payload);
     if (typeof ep === "string") return { ok: false, error: ep };
@@ -62,27 +102,20 @@ export function registerExports({ mediaFile, knownMedia }: IpcContext) {
     let dir = "";
     for (let n = 1; n <= 999 && !dir; n++) {
       const d = path.join(r.filePaths[0], episodeFolder(name, n));
-      try { fs.mkdirSync(d); dir = d; } catch (e) { if ((e as NodeJS.ErrnoException).code !== "EEXIST") return { ok: false, error: String((e as Error).message).slice(0, 300) }; }
+      try { fs.mkdirSync(d); dir = d; } catch (e) { if ((e as NodeJS.ErrnoException).code !== "EEXIST") return failed(e); }
     }
     if (!dir) return { ok: false, error: "The folder could not be created." };
-    const base = safeName(typeof name === "string" ? name.trim() : "", "Episode");
-    const step = async (format: string, file: string) => {
-      const res = await withTempJson(payload, (tmp) => runEngine(randomUUID(), ["export", tmp, path.join(dir, file), "--format", format], {}, () => {})) as EngineEvent | null;
-      if (res?.type !== "done") throw new Error(String(res?.message ?? "The export failed.").slice(0, 300));
-    };
-    try {
-      if (ep.chapters) await step("chapters", `${base} chapters.txt`);
-      await step("edl", `${base} markers.edl`);
-      let clips = 0;
-      const withClips = ep.clips.length > 0 && knownMedia(input);
-      if (withClips) {
-        const res = await withTempJson(ep.clips, (tmp) => runEngine(randomUUID(), ["export-clips", input as string, path.join(dir, "clips"), "--clips", tmp, "--format", "mp3"], {}, () => {})) as EngineEvent | null;
-        if (res?.type !== "done") throw new Error(String(res?.message ?? "The clips could not be saved.").slice(0, 300));
-        clips = (res.paths as string[]).length;
-      }
-      lastEpisode = dir;
-      return { ok: true, path: dir, chapters: ep.chapters, clips, clipsSkipped: ep.clips.length > 0 && !withClips };
-    } catch (err) { lastEpisode = dir; return { ok: false, error: String((err as Error).message).slice(0, 300) }; }
+    const { steps, clipCount, clipsSkipped } = episodeSteps(payload, input, name, ep);
+    return episodeResult(dir, ep, await runSteps(dir, steps), clipCount(), clipsSkipped);
+  });
+  // Saves again only the files the last episode export could not save, into the same folder. Files already saved are not touched.
+  handle("retry-episode", async (_e, payload: unknown, input: unknown, name: unknown) => {
+    const ep = episodeInput(payload);
+    if (typeof ep === "string") return { ok: false, error: ep };
+    if (!lastEpisode || !lastFailed.length || !fs.existsSync(lastEpisode)) return { ok: false, error: "There is nothing to retry." };
+    const dir = lastEpisode;
+    const { steps, clipCount, clipsSkipped } = episodeSteps(payload, input, name, ep);
+    return episodeResult(dir, ep, await runSteps(dir, steps, lastFailed), clipCount(), clipsSkipped);
   });
   // "Show in folder" for the result: opens the folder the last episode export made (remembered here, never taken from the window).
   handle("show-episode-folder", () => { if (lastEpisode && fs.existsSync(lastEpisode)) void shell.openPath(lastEpisode); });
@@ -109,9 +142,9 @@ export function registerExports({ mediaFile, knownMedia }: IpcContext) {
       // The transcript only keeps the lines near the viewport in the page; "printing" makes it draw them all, and it says so with data-print-ready.
       await e.sender.executeJavaScript(`new Promise((done) => { const t0 = Date.now(); const check = () => document.documentElement.dataset.printReady || Date.now() - t0 > 10000 ? requestAnimationFrame(() => done(true)) : setTimeout(check, 50); check(); })`);
       const pdf = await e.sender.printToPDF({ pageSize: "A4", printBackground: false });
-      fs.writeFileSync(r.filePath, pdf);
+      await writeStaged(r.filePath, pdf);
       return { ok: true, path: r.filePath };
-    } catch (err) { return { ok: false, error: String((err as Error).message) }; }
+    } catch (err) { return failed(err); }
     finally { await e.sender.executeJavaScript(`document.documentElement.classList.remove("print-large", "printing")`).catch(() => {}); }
   });
 }
