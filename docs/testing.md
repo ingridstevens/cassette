@@ -24,6 +24,16 @@ first run). They cover the main flow (add, Start, rename a speaker, edit a line,
 sample interview and the `?enginefail` error card. CI runs them on every push and pull request in the `e2e` job (Ubuntu only);
 when one fails, the job uploads the Playwright report and traces as the `playwright-report` artifact.
 
+### Screenshot tests
+
+`app/e2e/visual/` holds 12 screenshot tests: three screens (start, transcript, settings) in four looks (light, dark, Arabic
+right to left, text at 150 percent), compared with a small tolerance (0.2 percent of the pixels). They run in the `visual` CI
+job, inside the pinned Playwright container, so fonts and Chromium are identical; a failure uploads the expected, actual and
+diff images as the `visual-report` artifact. The baselines in `app/e2e/visual/__screenshots__/` are only valid there: do not
+make them on your own computer. After a deliberate layout change, run the `build` workflow by hand (Actions, Run workflow) with
+"Update the visual baselines" ticked, download the `visual-baselines` artifact, put its files in that folder and commit them.
+`npm run e2e` does not run these tests.
+
 ## Release checklist (manual)
 
 1. Run each persona's script on the current build, and record the findings in `docs/testing-runs/`.
